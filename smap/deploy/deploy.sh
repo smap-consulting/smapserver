@@ -78,6 +78,7 @@ systemctl stop subscribers_fwd
 fi
 
 # new smap bin
+cp ../install/subscribers.sh /smap_bin
 cp $deploy_from/subscribers.jar /smap_bin
 cp $deploy_from/codebook.jar /smap_bin
 cp -r $deploy_from/subscribers/default /smap_bin

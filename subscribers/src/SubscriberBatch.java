@@ -379,7 +379,6 @@ public class SubscriberBatch {
 					+ "and ((last_updated_time < now() - interval '100 days') or last_updated_time is null) "
 					+ "order by last_updated_time;";
 			pstmt = sd.prepareStatement(sql);
-			ResultSet rs = pstmt.executeQuery();
 			
 			String sqlTemp = "update survey set last_updated_time = ? where s_id = ?";
 			pstmtTemp = sd.prepareStatement(sqlTemp);
@@ -387,11 +386,10 @@ public class SubscriberBatch {
 			/*
 			 * Temporary fix for lack of accurate date when a survey was deleted
 			 */
+			ResultSet rs = pstmt.executeQuery();
 			while(rs.next()) {
 				int sId = rs.getInt("s_id");
-				int projectId = rs.getInt("p_id");
 				String deletedDate = rs.getString("last_updated_time");
-				String surveyIdent = rs.getString("ident");
 				String surveyDisplayName = rs.getString("display_name");
 				
 				// Get deleted date from the display name

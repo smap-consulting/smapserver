@@ -178,6 +178,27 @@ sudo chown -R tomcat7 /smap_bin
 
 fi
 
+# version 16.12
+if [ $version -lt "161202" ]
+then
+	echo '# copy subscriber upstart files'
+	u1604=`lsb_release -r | grep -c "16\.04"`
+	upstart_dir="/etc/init"			
+	service_dir="/etc/systemd/system"
+	if [ $u1604 -eq 1 ]; then
+		sudo cp ../install/config_files/subscribers.service $service_dir
+		sudo chmod 664 $service_dir/subscribers.service
+		sudo cp ../install/config_files/subscribers_fwd.service $service_dir
+		sudo chmod 664 $service_dir/subscribers_fwd.service
+	fi
+	
+	if [ $u1604 -eq 0 ]; then
+		sudo cp ../install/config_files/subscribers.conf $upstart_dir
+		sudo cp ../install/config_files/subscribers_fwd.conf $upstart_dir
+	fi
+
+fi
+
 #####################################################################################
 # All versions
 # Copy the new apache configuration files
@@ -191,5 +212,5 @@ cd ../deploy
 sudo sed -i "s/from pyxform import constants/import constants/g" /smap_bin/pyxform/survey.py
 
 # update version reference
-new_version="161201"
+new_version="161202"
 echo "$new_version" > ~/smap_version

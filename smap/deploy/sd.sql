@@ -637,3 +637,10 @@ delete from dashboard_settings where ds_user_ident not in (select ident from use
 alter table dashboard_settings add constraint ds_user_ident FOREIGN KEY (ds_user_ident)
 	REFERENCES users (ident) MATCH SIMPLE
 	ON UPDATE NO ACTION ON DELETE CASCADE;
+	
+-- Upgrade to 16.12
+-- The following may be required on some servers
+-- alter table survey_change drop constraint survey_change_s_id_fkey;
+--alter table survey_change add constraint survey_change_survey FOREIGN KEY (s_id)
+--	REFERENCES survey (s_id) MATCH SIMPLE
+--	ON UPDATE NO ACTION ON DELETE CASCADE;
