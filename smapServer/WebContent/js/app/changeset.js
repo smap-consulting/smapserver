@@ -1246,7 +1246,7 @@ define([
 			//removeValidationError(container, itemIndex,	"name", itemType);	// validation errors for name removed in validateName
 		}
 		
-		if(!item.deleted && 
+		if(!item.deleted && !item.published &&
 				((itemType === "question" && markup.includeQuestion(item)) || 
 						(itemType === "optionlist") ||
 						(itemType === "option"))) {
