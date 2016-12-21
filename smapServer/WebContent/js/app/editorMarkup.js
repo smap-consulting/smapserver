@@ -81,7 +81,7 @@ define([
 				h[++idx] = '<div class="col-xs-2 ">';
 					h[++idx] = '<div class="question_type';
 						if(question.published) {
-							h[++idx] = ' disabled';
+							h[++idx] = ' readonly';
 						}
 						h[++idx] = '">';
 						h[++idx] = addQType(question.type);
@@ -97,7 +97,7 @@ define([
 						h[++idx] = '" ';
 						
 						if(question.published) {				// Mark disabled if the question has been published
-							h[++idx] = 'disabled="true" ';
+							h[++idx] = 'readonly="true" ';
 						}
 					h[++idx] = 'type="text"></div>';
 
@@ -843,7 +843,7 @@ define([
 						h[++idx] = '" ';
 						
 						if(option.published) {				// Mark disabled if the option has been published
-							h[++idx] = 'disabled="true"';
+							h[++idx] = 'readonly="true"';
 						}
 						h[++idx] = ' type="text" title="Choice Value">';
 					h[++idx] = '</div>';
