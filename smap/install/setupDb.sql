@@ -131,6 +131,8 @@ create TABLE organisation (
 	ft_delete_submitted boolean,
 	ft_send_trail boolean,
 	ft_sync_incomplete boolean,
+	ft_odk_style_menus boolean default true,
+	ft_review_final boolean default true,
 	changed_by text,
 	admin_email text,
 	smtp_host text,				-- Set if email is enabled

@@ -66,6 +66,8 @@ public class OrganisationManager {
 				" ft_delete_submitted = ?, " +
 				" ft_send_trail = ?, " +
 				" ft_sync_incomplete = ?, " +
+				" ft_odk_style_menus = ?, " +
+				" ft_review_final = ?, " +
 				" admin_email = ?, " +
 				" smtp_host = ?, " +
 				" email_domain = ?, " +
@@ -97,18 +99,20 @@ public class OrganisationManager {
 			pstmt.setBoolean(10, o.ft_delete_submitted);
 			pstmt.setBoolean(11, o.ft_send_trail);
 			pstmt.setBoolean(12, o.ft_sync_incomplete);
-			pstmt.setString(13, o.admin_email);
-			pstmt.setString(14, o.smtp_host);
-			pstmt.setString(15, o.email_domain);
-			pstmt.setString(16, o.email_user);
-			pstmt.setString(17, o.email_password);
-			pstmt.setInt(18, o.email_port);
-			pstmt.setString(19, o.default_email_content);
-			pstmt.setString(20, o.website);
-			pstmt.setString(21, o.locale);
-			pstmt.setString(22, o.timeZone);
-			pstmt.setString(23, userIdent);
-			pstmt.setInt(24, o.id);
+			pstmt.setBoolean(13, o.ft_odk_style_menus);
+			pstmt.setBoolean(14, o.ft_review_final);
+			pstmt.setString(15, o.admin_email);
+			pstmt.setString(16, o.smtp_host);
+			pstmt.setString(17, o.email_domain);
+			pstmt.setString(18, o.email_user);
+			pstmt.setString(19, o.email_password);
+			pstmt.setInt(20, o.email_port);
+			pstmt.setString(21, o.default_email_content);
+			pstmt.setString(22, o.website);
+			pstmt.setString(23, o.locale);
+			pstmt.setString(24, o.timeZone);
+			pstmt.setString(25, userIdent);
+			pstmt.setInt(26, o.id);
 					
 			log.info("Update organisation: " + pstmt.toString());
 			pstmt.executeUpdate();
@@ -158,9 +162,9 @@ public class OrganisationManager {
 				"company_phone, " +
 				"company_email, " +
 				"allow_email, allow_facebook, allow_twitter, can_edit, ft_delete_submitted, ft_send_trail, " +
-				"ft_sync_incomplete, changed_by, admin_email, smtp_host, email_domain, email_user, email_password, " +
+				"ft_sync_incomplete, ft_odk_style_menus, ft_review_final, changed_by, admin_email, smtp_host, email_domain, email_user, email_password, " +
 				"email_port, default_email_content, website, locale, timezone, changed_ts) " +
-				" values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, now());";	
+				" values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, now());";	
 		PreparedStatement pstmt = null;
 		
 		try {
@@ -196,16 +200,18 @@ public class OrganisationManager {
 			pstmt.setBoolean(10, o.ft_delete_submitted);
 			pstmt.setBoolean(11, o.ft_send_trail);
 			pstmt.setBoolean(12, o.ft_sync_incomplete);
-			pstmt.setString(13, userIdent);
-			pstmt.setString(14, o.admin_email);
-			pstmt.setString(15, o.smtp_host);
-			pstmt.setString(16, o.email_domain);
-			pstmt.setString(17, o.email_user);
-			pstmt.setString(18, o.email_password);
-			pstmt.setInt(19, o.email_port);
-			pstmt.setString(20, o.default_email_content);
-			pstmt.setString(21, o.website);
-			pstmt.setString(22, o.locale);
+			pstmt.setBoolean(13, o.ft_odk_style_menus);
+			pstmt.setBoolean(14, o.ft_review_final);
+			pstmt.setString(15, userIdent);
+			pstmt.setString(16, o.admin_email);
+			pstmt.setString(17, o.smtp_host);
+			pstmt.setString(18, o.email_domain);
+			pstmt.setString(19, o.email_user);
+			pstmt.setString(20, o.email_password);
+			pstmt.setInt(21, o.email_port);
+			pstmt.setString(22, o.default_email_content);
+			pstmt.setString(23, o.website);
+			pstmt.setString(24, o.locale);
 			
 			if(o.timeZone == null || o.timeZone.trim().length() == 0) {
 				o.timeZone = "UTC";			// Default time zone for organisation

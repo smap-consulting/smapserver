@@ -471,7 +471,11 @@ $(document).ready(function() {
 				organisation.ft_send_trail = true;
 			} else if(options[i] === "ft_sync_incomplete") {
 				organisation.ft_sync_incomplete = true;
-			}
+			} else if(options[i] === "ft_odk_style_menus") {
+				organisation.ft_odk_style_menus = true;
+			} else if(options[i] === "ft_review_final") {
+				organisation.ft_review_final = true;
+			} 
 		}
 		organisationList[0] = organisation;	
 		var organisationString = JSON.stringify(organisationList);
@@ -916,6 +920,10 @@ function openOrganisationDialog(existing, organisationIndex) {
 				this.checked = org.ft_send_trail;
 			} else if($(this).val() === "ft_sync_incomplete") {
 				this.checked = org.ft_sync_incomplete;
+			} else if($(this).val() === "ft_odk_style_menus") {
+				this.checked = org.ft_odk_style_menus;
+			} else if($(this).val() === "ft_review_final") {
+				this.checked = org.ft_review_final;
 			}
 		});
 		addLanguageOptions($('#o_language'), org.locale);

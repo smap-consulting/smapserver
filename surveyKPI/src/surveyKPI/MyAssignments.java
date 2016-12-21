@@ -406,7 +406,9 @@ public class MyAssignments extends Application {
 			sql = "SELECT " +
 					"o.ft_delete_submitted," +
 					"o.ft_send_trail, " +
-					"o.ft_sync_incomplete " +
+					"o.ft_sync_incomplete, " +
+					"o.ft_odk_style_menus, " +
+					"o.ft_review_final " +
 					"from organisation o, users u " +
 					"where u.o_id = o.id " +
 					"and u.ident = ?;";
@@ -420,6 +422,8 @@ public class MyAssignments extends Application {
 				tr.settings.ft_delete_submitted = resultSet.getBoolean(1);
 				tr.settings.ft_send_trail = resultSet.getBoolean(2);
 				tr.settings.ft_sync_incomplete = resultSet.getBoolean(3);
+				tr.settings.ft_odk_style_menus = resultSet.getBoolean(4);
+				tr.settings.ft_review_final = resultSet.getBoolean(5);
 				tr.settings.ft_location_trigger = GeneralUtilityMethods.isBusinessServer(request.getServerName());
 			}
 			
