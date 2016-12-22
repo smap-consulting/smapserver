@@ -902,7 +902,7 @@ function respondToEventsChoices($context) {
 	 * 
 	 * First add handlers for draggable components
 	 */
-	$('.draggable').prop('draggable', 'true')
+	$('.draggable.option').prop('draggable', 'true')
 	
 	.off('dragstart')
 	.on('dragstart', function(evt){
@@ -916,7 +916,7 @@ function respondToEventsChoices($context) {
 			ev.dataTransfer.setData("list_name", ev.target.dataset.list_name);
 			ev.dataTransfer.setData("index", ev.target.dataset.id);
 		}
-		$('.dropon').addClass("add_drop_button").removeClass("add__button");
+		$('.dropon.add_option').addClass("add_drop_button").removeClass("add__button");
 		
 		return true;
 	})
@@ -924,7 +924,7 @@ function respondToEventsChoices($context) {
 	// clean up after drag
 	.off('dragend')
 	.on('dragend', function(evt){
-		$('.dropon').addClass("add_button").removeClass("add_drop_button").removeClass("over_drop_button");
+		$('.dropon.add_option').addClass("add_button").removeClass("add_drop_button").removeClass("over_drop_button");
 		return false;
 	})
 	
@@ -940,7 +940,7 @@ function respondToEventsChoices($context) {
 	 */
 	
 	// Entering a drop zone
-	$('.dropon')
+	$('.dropon.add_option')
 	
 	.off('dragenter')
 	.on('dragenter', function(evt){
@@ -1493,7 +1493,7 @@ function respondToEvents($context) {
 				ev.dataTransfer.setData("text/plain", ev.target.id);
 			}
 		}
-		$('.dropon').addClass("add_drop_button").removeClass("add__button");
+		$('.dropon.add_question').addClass("add_drop_button").removeClass("add__button");
 		
 		return true;
 	})
@@ -1501,7 +1501,7 @@ function respondToEvents($context) {
 	// clean up after drag
 	.off('dragend')
 	.on('dragend', function(evt){
-		$('.dropon').addClass("add_button").removeClass("add_drop_button").removeClass("over_drop_button");
+		$('.dropon.add_question').addClass("add_button").removeClass("add_drop_button").removeClass("over_drop_button");
 		return false;
 	})
 	
@@ -1517,7 +1517,7 @@ function respondToEvents($context) {
 	 */
 	
 	// Entering a drop zone
-	$('.dropon')
+	$('.dropon.add_question')
 	
 	.off('dragenter')
 	.on('dragenter', function(evt){

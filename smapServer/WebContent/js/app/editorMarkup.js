@@ -136,9 +136,9 @@ define([
 							h[++idx] = '<a button tabindex="-1" class="btn btn-default edit_choice" ';
 							h[++idx]='"><span class="glyphicon glyphicon-edit edit_icon"></span></a>';
 							
-							h[++idx] = '<a button tabindex="-1" class="btn btn-default" data-toggle="collapse"  href="#collapse';
-							h[++idx] = globals.gElementIndex;
-							h[++idx]='"><span class="glyphicon glyphicon-chevron-down edit_icon"></span></a>';
+							//h[++idx] = '<a button tabindex="-1" class="btn btn-default" data-toggle="collapse"  href="#collapse';
+							//h[++idx] = globals.gElementIndex;
+							//h[++idx]='"><span class="glyphicon glyphicon-chevron-down edit_icon"></span></a>';
 						}
 						
 						h[++idx] = '<button tabindex="-1" class="btn btn-default delete_question" data-id="';
@@ -176,13 +176,14 @@ define([
 		
 			h[++idx] = addSubForm(formIndex, qIndex);
 			
-		} else if(question.type.indexOf("select") === 0) {
-			if(!question.error) {	// Only add the options if the question it self does not have any errors
-				
-				h[++idx] = addOptionContainer(question, formIndex, qIndex, undefined);
-
-			}
 		} 
+		//else if(question.type.indexOf("select") === 0) {
+		//	if(!question.error) {	// Only add the options if the question it self does not have any errors
+				
+		//		h[++idx] = addOptionContainer(question, formIndex, qIndex, undefined);
+
+		//	}
+		//} 
 		
 		if(question.type === "begin group") {	/* Add questions up to the end group to this panel */
 			h[++idx] = '<ul class="list-unstyled">';
@@ -279,9 +280,9 @@ define([
 						h[++idx] = '<a button tabindex="-1" class="btn btn-default edit_choice" ';
 						h[++idx]='"><span class="glyphicon glyphicon-edit edit_icon"></span></a>';
 					
-						h[++idx] = '<a button tabindex="-1" class="btn btn-default" data-toggle="collapse"  href="#collapse';
-						h[++idx] = globals.gElementIndex;
-						h[++idx]='"><span class="glyphicon glyphicon-chevron-down edit_icon"></span></a>';	
+						//h[++idx] = '<a button tabindex="-1" class="btn btn-default" data-toggle="collapse"  href="#collapse';
+						//h[++idx] = globals.gElementIndex;
+						//h[++idx]='"><span class="glyphicon glyphicon-chevron-down edit_icon"></span></a>';	
 						
 						h[++idx] = '<button tabindex="-1" class="btn btn-default">';
 						h[++idx]='<span class="glyphicon glyphicon-remove-circle edit_icon delete_ol" data-id="';
@@ -292,16 +293,16 @@ define([
 					h[++idx] = '</div>';
 				h[++idx] = '</div>';		// End of button cell
 				h[++idx] = '</div>';		// End of row
-		h[++idx] = '<div id="collapse';
-		h[++idx] = globals.gElementIndex;
-		h[++idx] = '" class="panel-body collapse';
-		h[++idx] = ' selectquestion';
+		//h[++idx] = '<div id="collapse';
+		//h[++idx] = globals.gElementIndex;
+		//h[++idx] = '" class="panel-body collapse';
+		//h[++idx] = ' selectquestion';
 
-		h[++idx] = '">';
+		//h[++idx] = '">';
 
-		h[++idx] = addOptions(undefined, undefined, list_name);
+		//h[++idx] = addOptions(undefined, undefined, list_name);
 		
-		h[++idx] = '</div>';
+		//h[++idx] = '</div>';
 		h[++idx] = '</li>';
 		
 		
