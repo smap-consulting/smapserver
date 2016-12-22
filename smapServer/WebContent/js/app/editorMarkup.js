@@ -41,8 +41,28 @@ define([
 		refresh: refresh,
 		refreshOptionListControls: refreshOptionListControls,
 		includeQuestion: includeQuestion,
-		addOptionContainer: addOptionContainer
+		addOptionContainer: addOptionContainer,
+		refreshChoiceModal: refreshChoiceModal
 	};
+	
+	/*
+	 * Refresh the choices shown in the choice modal
+	 */
+	function refreshChoiceModal() {
+		
+		var $context = $('#choiceModal').find('.modal-body'),
+			survey = globals.model.survey,
+			question;
+		
+		if(globals.gListName) {
+			$context.empty().append(addOptionContainer(undefined, undefined, undefined, globals.gListName));
+		} else {
+			question = survey.forms[globals.gFormIndex].questions[globals.gItemIndex];
+			$context.empty().append(addOptionContainer(question, globals.gFormIndex, globals.gItemIndex, undefined));
+		}
+		
+		return $context;
+	}
 	
 	/*
 	 * Add a single question

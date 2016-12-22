@@ -80,6 +80,10 @@ define(function() {
 		gMaxOptionList: 0,
 		gLatestOptionList: undefined,	// Hack to record the last option list name added
 		
+		gListName: undefined,					// Choice Modal parameters
+		gFormIndex: undefined,
+		gItemIndex: undefined,
+		
 		gMainTable: undefined,			// Data tables
 		
 		gReports: undefined,			// reports

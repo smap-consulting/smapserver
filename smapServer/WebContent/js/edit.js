@@ -712,10 +712,8 @@ function surveyDetailsDone() {
 function refreshForm() {
 	
 	var $context;
-	
 	$context = markup.refresh();
 	respondToEvents($context);
-	
 
 }
 
@@ -786,18 +784,6 @@ function respondToEventsChoices($context) {
 
 		var labelType = prop === "hint" ? "hint" : "text";
 		updateLabel(type, formIndex, itemIndex, optionList, labelType, newVal, qname, prop); 
-
-	});
-	
-	// validate the name on focus as duplicates may have been removed elsewhere
-	$context.find('.qname').focusin(function(){
-
-		var $this = $(this),
-			$li = $this.closest('li'),
-			formIndex = $li.data("fid"),
-			itemIndex = $li.data("id");
-		
-		changeset.validateItem(formIndex, itemIndex, "question", true); 
 
 	});
 	
@@ -885,10 +871,8 @@ function respondToEventsChoices($context) {
 		
 		console.log("Add an option");
 		$context = question.addOption($this, oId, locn, list_name, fId, qname);
-		respondToEvents($context);				// Add events on to the altered html
-		if($context.attr("id") !== "formList") {
-			respondToEvents($context.prev());		// Add events on the "insert before" button
-		}
+		respondToEventsChoices($context);				// Add events on to the altered html
+		respondToEventsChoices($context.prev());		// Add events on the "insert before" button
 		
 		// Set focus to the new option
 		$context.find('textarea').focus();			// Set focus to the new option
@@ -929,12 +913,8 @@ function respondToEventsChoices($context) {
 		if(typeof ev.target.value !== "undefined" && ev.target.value.length > 0) {
 			ev.dataTransfer.setData("type", ev.target.value);
 		} else {	
-			if(ev.target.id === "") {	// Moving an option
-				ev.dataTransfer.setData("list_name", ev.target.dataset.list_name);
-				ev.dataTransfer.setData("index", ev.target.dataset.id);
-			} else {	// Moving a question
-				ev.dataTransfer.setData("text/plain", ev.target.id);
-			}
+			ev.dataTransfer.setData("list_name", ev.target.dataset.list_name);
+			ev.dataTransfer.setData("index", ev.target.dataset.id);
 		}
 		$('.dropon').addClass("add_drop_button").removeClass("add__button");
 		
@@ -948,7 +928,7 @@ function respondToEventsChoices($context) {
 		return false;
 	})
 	
-	// Don't allow a draggable component to be dropped onto a text field in some other question / option
+	// Don't allow a draggable component to be dropped onto a text field in some other option
 	.off('drop')
 	.on('drop', function(evt){
 		evt.originalEvent.preventDefault();
@@ -1019,54 +999,24 @@ function respondToEventsChoices($context) {
 		ev.preventDefault();
 		ev.stopPropagation();
 		 
-		if(typeof sourceValue !== "undefined" && sourceValue.length > 0) {		// Dropped a new type - Question only
-			type = "question";
-			dropType = true;
-			addQuestion($targetListItem, sourceValue);
+
+		type = "option";
+				
+		targetListName = $targetListItem.data("list_name");
+		targetItemIndex = $targetListItem.data("index");
+				
+		if(sourceListName === targetListName && sourceItemIndex === targetItemIndex) {
+			// Dropped on itself do not move
 		} else {
 			
-			if($targetListItem.hasClass('add_question')) {
-				type = "question";
-				
-				formIndex = $targetListItem.data("findex");
-				$li = $targetListItem.closest('li');
-				if(locn === "after") {
-					$related = $li.prev();
-				} else {
-					$related = $li.next();
-				} 
-				if($related.length === 0) {   // Empty group, location is "after"
-					targetId = $li.parent().closest('li').attr("id");
-				} else {
-					targetId = $related.attr("id");
-				}
-				
-				if(sourceId != targetId) {
-					
-					console.log("Dropped: " + sourceId + " : " + targetId + " : " + sourceValue);
-					
-					$context = question.moveQuestion(formIndex, sourceId, targetId, locn);
-					respondToEvents($context);						// Add events on to the altered html
-				}
-			} else {
-				type = "option";
-				
-				targetListName = $targetListItem.data("list_name");
-				targetItemIndex = $targetListItem.data("index");
-				
-				if(sourceListName === targetListName && sourceItemIndex === targetItemIndex) {
-					// Dropped on itself do not move
-				} else {
-					
-					console.log("Dropped option: " + sourceListName + " : " + sourceItemIndex + 
-							" : " + targetListName + " : " + targetItemIndex);
-					
-					$context = question.moveBeforeOption(sourceListName, sourceItemIndex, 
-							targetListName, targetItemIndex, locn);
-					respondToEvents($context);						// Add events on to the altered html
-				}
-			}
+			console.log("Dropped option: " + sourceListName + " : " + sourceItemIndex + 
+					" : " + targetListName + " : " + targetItemIndex);
+			
+			$context = question.moveBeforeOption(sourceListName, sourceItemIndex, 
+					targetListName, targetItemIndex, locn);
+			respondToEventsChoices($context);			// Add events on to the altered html
 		}
+			
 	
 	});
 
@@ -1081,26 +1031,20 @@ function respondToEvents($context) {
 	$('.edit_choice', $context).off().click(function(index){
 		var $this = $(this),
 			$li = $this.closest('li'),
-			formIndex = $li.data("fid"),
-			itemIndex = $li.data("id"),	
-			listName = $li.data("list_name"),	
-			survey = globals.model.survey,
-			question,
-			optionList = $li.data("list_name"),
-			qname = $li.data("qname"),
-			$context = $('#choiceModal').find('.modal-body');
+			$context;
+			
+		// Set global variables that will be used if this dialog is refreshed
+		globals.gListName = $li.data("list_name");
+		globals.gFormIndex = $li.data("fid");
+		globals.gItemIndex = $li.data("id");
 		
-		if(listName) {
-			$context.empty().append(markup.addOptionContainer(undefined, undefined, undefined, listName));
-		} else {
-			question = survey.forms[formIndex].questions[itemIndex];
-			$context.empty().append(markup.addOptionContainer(question, formIndex, itemIndex, undefined));
-		}
+		$context = markup.refreshChoiceModal();
 		respondToEventsChoices($context);
 		
 		$('#choiceModal').modal("show");
 	});
 	
+
 	// Set option list value
 	/*
 	$context.find('.option-lists', $context).each(function(index){

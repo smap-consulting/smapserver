@@ -100,7 +100,11 @@ define([
 			change.question.$deletedElement.remove();
 		} else {
 			if(refresh) {
-				$context = markup.refresh();
+				if(change.question) {
+					$context = markup.refresh();
+				} else {
+					$context = markup.refreshChoiceModal();
+				}
 			} else {
 				$context = updateHtmlElement(change);
 			}
@@ -1023,7 +1027,7 @@ define([
 						change.option.qName, 
 						true);
 					
-				$button = $('#formList').find('button.l_' + jq(change.option.optionList)).
+				$button = $('#choiceModal').find('button.l_' + jq(change.option.optionList)).
 						filter(function(index) {
 					var $this = $(this);
 					return $this.data("index") == change.option.buttonIndex;
