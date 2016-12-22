@@ -328,7 +328,7 @@ public class ExchangeManager {
 	/*
 	 * Load data from a file into the form
 	 */
-	public void loadFormDataFromFile(
+	public int loadFormDataFromFile(
 			Connection results,
 			PreparedStatement pstmtGetCol, 
 			PreparedStatement pstmtGetChoices,
@@ -348,6 +348,7 @@ public class ExchangeManager {
 		int lonIndex = -1;			// Column containing longitude
 		int latIndex = -1;			// Column containing latitude
 		SimpleDateFormat dateFormatDT = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+		int recordsWritten = 0;
 		
 		PreparedStatement pstmtInsert = null;
 		PreparedStatement pstmtDeleteExisting = null;
@@ -678,6 +679,7 @@ public class ExchangeManager {
 								System.out.println("New key:  " + rs.getInt(1) + " for prikey: " + prikey);
 								form.keyMap.put(prikey, rs.getInt(1));
 							}
+							recordsWritten++;
 						}
 						
 				    }
@@ -695,6 +697,8 @@ public class ExchangeManager {
 			try {if (pstmtInsert != null) {pstmtInsert.close();}} catch (Exception e) {}
 			try {if (pstmtDeleteExisting != null) {pstmtDeleteExisting.close();}} catch (Exception e) {}
 		}
+		
+		return recordsWritten;
 	}
 	
 	public ArrayList<String> getFormsFromXLSX(InputStream inputStream) throws Exception {
