@@ -859,7 +859,18 @@ function respondToEventsChoices($context) {
 
 	});
 	
+	// Add new option after
+	$context.find('.add_option_after').off().click(function() {
+		addNewOption($(this), "after");
+	});
+	
+	// Add new option before
+	$context.find('.add_option_before').off().click(function() {	
+		addNewOption($(this), "before");
+	});
+	
 	// Add new option
+	/*
 	$context.find('.add_option').off().click(function() {
 		var $this = $(this),
 			$context,						// Updated Html
@@ -868,6 +879,7 @@ function respondToEventsChoices($context) {
 			qname = $this.data("qname"),
 			list_name = $this.data("list_name"),
 			locn = $this.data("locn");	// Add before or after the element id referenced by oId
+		
 		
 		console.log("Add an option");
 		$context = question.addOption($this, oId, locn, list_name, fId, qname);
@@ -878,7 +890,7 @@ function respondToEventsChoices($context) {
 		$context.find('textarea').focus();			// Set focus to the new option
 	
 	});
-	
+	*/
 	
 	// Delete option
 	$context.find('.delete_option').off().click(function() {
@@ -1016,10 +1028,27 @@ function respondToEventsChoices($context) {
 					targetListName, targetItemIndex, locn);
 			respondToEventsChoices($context);			// Add events on to the altered html
 		}
-			
-	
 	});
 
+}
+
+/*
+ * Add a new option
+ */
+function addNewOption($this, locn) {
+	var $elem = $this.closest('.editor_element'),
+		oId =  $elem.data("id"),
+		fId =  $elem.data("fid"),
+		qname = $elem.data("qname"),
+		list_name = $elem.data("list_name");
+
+
+	$context = question.addOption($this, oId, "before", list_name, fId, qname);
+	
+	respondToEventsChoices($context);				// Add events on to the altered html
+	
+	// Set focus to the new option
+	$context.find('textarea').focus();			// Set focus to the new option
 }
 
 /*

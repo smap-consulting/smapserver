@@ -1013,12 +1013,12 @@ define([
 		} else if(change.changeType === "option") {
 			if(change.action === "add") {
 					var optionList,
-						$button;
+						$ref;
 				
 				
 				optionList = survey.optionLists[change.option.optionList];
 				
-				// Add the new option to all lists that its in
+				// get the new markup
 				newMarkup = markup.addOneOption(optionList,
 						change.option, 
 						change.option.formIndex, 
@@ -1026,7 +1026,8 @@ define([
 						change.option.optionList, 
 						change.option.qName, 
 						true);
-					
+				
+				/*
 				$button = $('#choiceModal').find('button.l_' + jq(change.option.optionList)).
 						filter(function(index) {
 					var $this = $(this);
@@ -1034,14 +1035,30 @@ define([
 				});
 				$button.before(newMarkup);		
 				$changedRow = $button.prev();
+				*/
 				
+				$ref = $('#choiceModal').find('.editor_element').
+					filter(function(index) {
+						var $this = $(this);
+						return $this.data("index") == change.option.buttonIndex;
+					});
+				
+				if(change.option.locn == "after") {
+					$ref.after(newMarkup);
+					$changedRow = $ref.next();
+				} else {
+					$ref.before(newMarkup);
+					$changedRow = $ref.prev();
+				}
+						
+		
 				/*
 				 * If this option was added by an "add after" button then that button should add future questions
 				 *  after this newly added option.  Hence update the button index.
 				 */
-				if(change.option.locn == "after") {
-					$button.data("index", change.option.itemIndex + 1);
-				}
+				//if(change.option.locn == "after") {
+				//	$button.data("index", change.option.itemIndex + 1);
+				//}
 			
 			} else if(change.action === "delete") {
 				change.option.$deletedElement.prev().remove();	// Remove the add before button
