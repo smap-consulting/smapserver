@@ -40,7 +40,8 @@ define([
 		addMedia: addMedia,
 		refresh: refresh,
 		refreshOptionListControls: refreshOptionListControls,
-		includeQuestion: includeQuestion
+		includeQuestion: includeQuestion,
+		addOptionContainer: addOptionContainer
 	};
 	
 	/*
@@ -111,6 +112,10 @@ define([
 						if(question.type === "begin repeat" 
 								|| question.type === "begin group" 
 								|| question.type.indexOf("select") === 0) {
+							
+							h[++idx] = '<a button tabindex="-1" class="btn btn-default edit_choice" ';
+							h[++idx]='"><span class="glyphicon glyphicon-edit edit_icon"></span></a>';
+							
 							h[++idx] = '<a button tabindex="-1" class="btn btn-default" data-toggle="collapse"  href="#collapse';
 							h[++idx] = globals.gElementIndex;
 							h[++idx]='"><span class="glyphicon glyphicon-chevron-down edit_icon"></span></a>';
@@ -154,51 +159,8 @@ define([
 		} else if(question.type.indexOf("select") === 0) {
 			if(!question.error) {	// Only add the options if the question it self does not have any errors
 				
-				h[++idx] = '<div class="question-controls">';
-					h[++idx] = '<div class="row">';
-						h[++idx] = '<div class="col-md-6">';
-						/*
-							h[++idx] = '<h4>';
-								h[++idx] = localise.set["ed_c_s"];
-							h[++idx] = '</h4>';
-							h[++idx] = '<label class="radio-inline">';
-								h[++idx] = '<input type="radio" name="choiceType" class="choiceType lang" value="list">';
-								h[++idx] = '<span>';
-								h[++idx] = localise.set["ed_cl"];	// Choice List
-								h[++idx] = '</span>';
-							h[++idx] = '</label>';
-							h[++idx] = '<label class="radio-inline">';
-								h[++idx] = '<input type="radio" name="choiceType" class="choiceType lang" value="csv">';
-								h[++idx] = '<span>';
-								h[++idx] = localise.set["ed_csv"];
-								h[++idx] = '</span>';
-							h[++idx] = '</label>';
-							h[++idx] = '<label class="radio-inline">';
-								h[++idx] = '<input type="radio" name="choiceType" class="choiceType lang" value="linked">';
-								h[++idx] = '<span class="lang" data-lang="ed_ls">';
-								h[++idx] = localise.set["ed_ls"];
-								h[++idx] = '</span>';
-							h[++idx] = '</label>';
-						*/	
-						h[++idx] = '</div>';
-						
-						// A control to set option lists
-						h[++idx] = '<div class="col-md-6">';
-							h[++idx] = '<label>';
-								h[++idx] = localise.set["ed_cl"];
-								h[++idx] = ':';
-							h[++idx] = '</label>';
-							h[++idx] = '<div class="input-group">';
-								h[++idx] = '<select class="form-control option-lists">';
-								h[++idx] = getOptionLists();
-								h[++idx] = '</select>';
-								h[++idx] = '<span class="input-group-addon"></span>';
-							h[++idx] = '</div>';
-						h[++idx] = '</div>';
-					h[++idx] = '</div>';
-				h[++idx] = '</div>';
-				
-				h[++idx] = addOptions(question, formIndex, undefined);
+				h[++idx] = addOptionContainer(question, formIndex, qIndex, undefined);
+
 			}
 		} 
 		
@@ -212,6 +174,50 @@ define([
 		return h.join("");
 	}
 	
+	/*
+	 * Add an option container
+	 */
+	function addOptionContainer(question, formIndex, qIndex, listName) {
+		var h = [],
+			idx = -1;
+		
+		h[++idx] = '<div class="question_head" data-fId="';
+		h[++idx] = formIndex;
+		h[++idx] = '" data-id="';
+		h[++idx] = qIndex;
+		h[++idx] = '">';
+		h[++idx] = '<div class="question-controls">';
+			h[++idx] = '<div class="row">';
+				h[++idx] = '<div class="col-md-6">';
+				h[++idx] = '</div>';
+			
+				// A control to set option lists
+				if(!listName) {
+					h[++idx] = '<div class="col-md-6">';
+						h[++idx] = '<label>';
+							h[++idx] = localise.set["ed_cl"];
+							h[++idx] = ':';
+						h[++idx] = '</label>';
+						h[++idx] = '<div class="input-group">';
+							h[++idx] = '<select class="form-control option-lists">';
+							h[++idx] = getOptionLists();
+							h[++idx] = '</select>';
+							h[++idx] = '<span class="input-group-addon"></span>';
+						h[++idx] = '</div>';
+					h[++idx] = '</div>';
+				}
+			h[++idx] = '</div>';
+		h[++idx] = '</div>';
+	
+		if(listName) {
+			h[++idx] = addOptions(undefined, undefined, listName);
+		} else {
+			h[++idx] = addOptions(question, formIndex, undefined);
+		}
+		h[++idx] = '</div>';
+		
+		return h.join("");
+	}
 	/*
 	 * Add a single option list element to the choices view
 	 */
@@ -227,7 +233,7 @@ define([
 		selProperty = selProperty || globals.gSelProperty;
 		
 		if(addNewButton) {
-			h[++idx] = addNewQuestionButton(false, false, undefined, undefined, selProperty);		// TODO
+			h[++idx] = addNewQuestionButton(false, false, undefined, undefined, selProperty);		
 		}
 		
 		h[++idx] = addPanelStyle("choices", undefined, undefined, false, itemId, list_name);
@@ -249,6 +255,10 @@ define([
 				// Add buttons
 				h[++idx] = '<div class="col-xs-2 q_icons_col">';
 					h[++idx] = '<div class="btn-group">';
+					
+						h[++idx] = '<a button tabindex="-1" class="btn btn-default edit_choice" ';
+						h[++idx]='"><span class="glyphicon glyphicon-edit edit_icon"></span></a>';
+					
 						h[++idx] = '<a button tabindex="-1" class="btn btn-default" data-toggle="collapse"  href="#collapse';
 						h[++idx] = globals.gElementIndex;
 						h[++idx]='"><span class="glyphicon glyphicon-chevron-down edit_icon"></span></a>';	

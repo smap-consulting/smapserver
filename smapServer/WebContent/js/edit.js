@@ -555,8 +555,17 @@ $(document).ready(function() {
 			$finalButton = $('.add_final_button', '#formList');
 		
 		addQuestion($finalButton, type);
-		
-
+	});
+	
+	/*
+	 * Choice Editing
+	 */
+	$(".modal-fullscreen").on('show.bs.modal', function () {
+		setTimeout( function() {
+			$(".modal-backdrop").addClass("modal-backdrop-fullscreen");}, 0);
+		});
+	$(".modal-fullscreen").on('hidden.bs.modal', function () {
+		$(".modal-backdrop").addClass("modal-backdrop-fullscreen");
 	});
 	
 });
@@ -711,11 +720,389 @@ function refreshForm() {
 }
 
 /*
+ * The passed in context is for a list of choices
+ */
+function respondToEventsChoices($context) {
+	
+	// Set option list value
+	$context.find('.option-lists', $context).each(function(index){
+		var $this = $(this),
+			$elem = $this.closest('.question_head'),
+			formIndex = $elem.data("fid"),
+			itemIndex = $elem.data("id"),
+			survey = globals.model.survey,
+			question;
+		
+		question = survey.forms[formIndex].questions[itemIndex];
+		if(!optionListExists(question.list_name)) {
+			if(!optionListExists(question.name)) {
+				survey.optionLists[question.name] = {
+						oSeq: [],
+						options: []
+					};
+					markup.refreshOptionListControls();
+			}
+			$this.val(question.name);
+		} else {
+			$this.val(question.list_name);
+		}
+		
+	});
+	
+	// Option list change
+	$context.find('.option-lists').change(function(){
+		var $this = $(this),
+			$elem = $this.closest('.question_head'),
+			formIndex = $elem.data("fid"),
+			itemIndex = $elem.data("id"),
+			survey = globals.model.survey,
+			question;
+	
+		updateLabel("question", formIndex, itemIndex, undefined, "text", $this.val(), undefined, "list_name") ;
+	});
+	
+	// Add tooltips
+	$context.find('.has_tt').tooltip();
+	
+
+	// Respond to clicks on a label text area
+	$context.find('.labelProp').change(function(){
+
+		var $this = $(this),
+			prop = $this.data("prop"),
+			$li = $this.closest('li'),
+			formIndex = $li.data("fid"),
+			itemIndex = $li.data("id"),
+			newVal = $this.val(),
+			type,
+			optionList = $li.data("list_name"),
+			qname = $li.data("qname");
+		
+		if($li.hasClass("option")) {
+			type = "option";
+		} else {
+			type = "question";
+		}
+
+		var labelType = prop === "hint" ? "hint" : "text";
+		updateLabel(type, formIndex, itemIndex, optionList, labelType, newVal, qname, prop); 
+
+	});
+	
+	// validate the name on focus as duplicates may have been removed elsewhere
+	$context.find('.qname').focusin(function(){
+
+		var $this = $(this),
+			$li = $this.closest('li'),
+			formIndex = $li.data("fid"),
+			itemIndex = $li.data("id");
+		
+		changeset.validateItem(formIndex, itemIndex, "question", true); 
+
+	});
+	
+	// Fix issues with dragging and selecting text in text area or input when draggable is set
+	// Mainly a problem with Firefox however in Chrome selecting text by dragging does not work
+	// Refer: http://stackoverflow.com/questions/21680363/prevent-drag-event-to-interfere-with-input-elements-in-firefox-using-html5-drag
+	$context.find('input, textarea').focusin(function() {
+		$(this).closest('.draggable').prop("draggable", false);
+	}).blur(function() {
+        $(this).closest('.draggable').prop("draggable", true);
+        console.log("blur");
+    });
+
+	// validate the option name
+	$context.find('.oname').keyup(function(){
+
+		var $this = $(this),
+			$li = $this.closest('li');
+			formIndex = $li.data("fid"),
+			itemIndex = $li.data("id"),
+			listName = $li.data("list_name"),
+			newVal = $this.val();
+		
+		changeset.validateName(listName, itemIndex, newVal, "option", true);
+		changeset.updateModelWithErrorStatus(listName, itemIndex, "option");		// Update model and DOM
+
+	});
+	
+	// validate the optionlist name
+	$context.find('.olname').keyup(function(){
+
+		var $this = $(this),
+			$li = $this.closest('.question_head'),
+			itemIndex = $li.prop("id"),
+			listName = $li.data("list_name"),
+			newVal = $this.val();
+		
+		changeset.validateName(listName, itemIndex, newVal, "optionlist", true);
+		changeset.updateModelWithErrorStatus(listName, itemIndex, "optionlist");		// Update model and DOM
+
+	});
+	
+	// Update the option name
+	$context.find('.oname').change(function(){
+
+		var $this = $(this),
+			$li = $this.closest('li'),
+			listName = $li.data("list_name"),
+			formIndex = $li.data("fid"),
+			itemIndex = $li.data("id"),
+			qname = $li.data("qname"),
+			newVal = $this.val();
+		
+		updateLabel("option", formIndex, itemIndex, listName, "text", newVal, qname, "value") ;
+		
+	});
+	
+	// Update the option list name
+	$context.find('.olname').change(function(){
+
+		var $this = $(this),
+			$li = $this.closest('.question_head'),
+			oldVal = $li.data("list_name"),
+			newVal = $this.val();
+		
+		// Only apply the update if there is no error on this option list
+		if(!$li.hasClass("error")) {
+			$li.data("list_name", newVal);	// First update the html
+			$('button.add_option',$li).data("list_name", newVal).removeClass('l_' + oldVal)
+				.addClass('l_' + newVal);
+			updateLabel("optionlist", undefined, undefined, undefined, "text", newVal, oldVal, "name") ;
+		}
+
+	});
+	
+	// Add new option
+	$context.find('.add_option').off().click(function() {
+		var $this = $(this),
+			$context,						// Updated Html
+			oId = $this.data("oid"),
+			fId = $this.data("fid"),
+			qname = $this.data("qname"),
+			list_name = $this.data("list_name"),
+			locn = $this.data("locn");	// Add before or after the element id referenced by oId
+		
+		console.log("Add an option");
+		$context = question.addOption($this, oId, locn, list_name, fId, qname);
+		respondToEvents($context);				// Add events on to the altered html
+		if($context.attr("id") !== "formList") {
+			respondToEvents($context.prev());		// Add events on the "insert before" button
+		}
+		
+		// Set focus to the new option
+		$context.find('textarea').focus();			// Set focus to the new option
+	
+	});
+	
+	
+	// Delete option
+	$context.find('.delete_option').off().click(function() {
+		var $this = $(this),
+			$context,						// Updated Html
+			index = $this.data("id"),
+			list_name = $this.data("list_name");
+		
+		bootbox.confirm(localise.set["msg_del_c"], function(result) {
+			if(result) {
+				$context = question.deleteOption(index, list_name);
+			}
+		}); 
+		
+		
+	});
+	
+	
+	/*
+	 * Enable drag and drop to move questions and choices
+	 * 
+	 * First add handlers for draggable components
+	 */
+	$('.draggable').prop('draggable', 'true')
+	
+	.off('dragstart')
+	.on('dragstart', function(evt){
+		var ev = evt.originalEvent;
+		
+		ev.effectAllowed = "move";		// Only allow move, TODO copy
+		
+		if(typeof ev.target.value !== "undefined" && ev.target.value.length > 0) {
+			ev.dataTransfer.setData("type", ev.target.value);
+		} else {	
+			if(ev.target.id === "") {	// Moving an option
+				ev.dataTransfer.setData("list_name", ev.target.dataset.list_name);
+				ev.dataTransfer.setData("index", ev.target.dataset.id);
+			} else {	// Moving a question
+				ev.dataTransfer.setData("text/plain", ev.target.id);
+			}
+		}
+		$('.dropon').addClass("add_drop_button").removeClass("add__button");
+		
+		return true;
+	})
+	
+	// clean up after drag
+	.off('dragend')
+	.on('dragend', function(evt){
+		$('.dropon').addClass("add_button").removeClass("add_drop_button").removeClass("over_drop_button");
+		return false;
+	})
+	
+	// Don't allow a draggable component to be dropped onto a text field in some other question / option
+	.off('drop')
+	.on('drop', function(evt){
+		evt.originalEvent.preventDefault();
+	});
+	
+	
+	/*
+	 * Handle drop on or dragging over a drop zone
+	 */
+	
+	// Entering a drop zone
+	$('.dropon')
+	
+	.off('dragenter')
+	.on('dragenter', function(evt){
+		var ev = evt.originalEvent,
+			$elem = $(ev.target),	
+			targetId = $elem.data('qid');
+		
+		$elem.addClass("over_drop_button").removeClass("add_button").addClass("add_frop_button");
+	
+	})
+	
+	// Leaving a drop zone
+	.off('dragleave')
+	.on('dragleave', function(evt){
+		
+		var ev = evt.originalEvent,
+			$elem = $(ev.target),
+			sourceId = ev.dataTransfer.getData("text/plain"),
+			targetId = $elem.data('qid');
+		
+		$elem.addClass("add_button").removeClass("over_drop_button").addClass("add_drop_button");
+		
+		
+	})
+	
+	.off('dragover')
+	.on('dragover', function(evt){
+		evt.originalEvent.dataTransfer.dropEffect = "move";
+		evt.originalEvent.preventDefault();
+		evt.originalEvent.stopPropagation();
+	})
+	
+	// Drop the question, option or type
+	.off('drop')
+	.on('drop', function(evt){
+		var ev = evt.originalEvent,
+			$targetListItem = $(ev.target),
+			$sourceElem,
+			sourceId = ev.dataTransfer.getData("text/plain"),
+			sourceValue = ev.dataTransfer.getData("type"),		// The type of a new question that is being dropped
+			sourceListName = ev.dataTransfer.getData("list_name"),
+			sourceItemIndex = ev.dataTransfer.getData("index"),
+			targetId = $targetListItem.data('qid'),
+			formIndex,
+			locn = $targetListItem.data("locn"),			// Before or after the target question
+			targetListName,									// For option
+			targetItemIndex,								// For option
+			sourceListName,									// For option
+			sourceItemIndex,								// For option
+			$context,
+			$related,
+			$li,
+			type,											// Question or option									
+			dropType = false;								// Set true if a question type is being dropped
+	
+		ev.preventDefault();
+		ev.stopPropagation();
+		 
+		if(typeof sourceValue !== "undefined" && sourceValue.length > 0) {		// Dropped a new type - Question only
+			type = "question";
+			dropType = true;
+			addQuestion($targetListItem, sourceValue);
+		} else {
+			
+			if($targetListItem.hasClass('add_question')) {
+				type = "question";
+				
+				formIndex = $targetListItem.data("findex");
+				$li = $targetListItem.closest('li');
+				if(locn === "after") {
+					$related = $li.prev();
+				} else {
+					$related = $li.next();
+				} 
+				if($related.length === 0) {   // Empty group, location is "after"
+					targetId = $li.parent().closest('li').attr("id");
+				} else {
+					targetId = $related.attr("id");
+				}
+				
+				if(sourceId != targetId) {
+					
+					console.log("Dropped: " + sourceId + " : " + targetId + " : " + sourceValue);
+					
+					$context = question.moveQuestion(formIndex, sourceId, targetId, locn);
+					respondToEvents($context);						// Add events on to the altered html
+				}
+			} else {
+				type = "option";
+				
+				targetListName = $targetListItem.data("list_name");
+				targetItemIndex = $targetListItem.data("index");
+				
+				if(sourceListName === targetListName && sourceItemIndex === targetItemIndex) {
+					// Dropped on itself do not move
+				} else {
+					
+					console.log("Dropped option: " + sourceListName + " : " + sourceItemIndex + 
+							" : " + targetListName + " : " + targetItemIndex);
+					
+					$context = question.moveBeforeOption(sourceListName, sourceItemIndex, 
+							targetListName, targetItemIndex, locn);
+					respondToEvents($context);						// Add events on to the altered html
+				}
+			}
+		}
+	
+	});
+
+}
+
+/*
  * The passed in context is for a list item containing either a question or an option
  */
 function respondToEvents($context) {
 	
+	// Open choices for editing
+	$('.edit_choice', $context).off().click(function(index){
+		var $this = $(this),
+			$li = $this.closest('li'),
+			formIndex = $li.data("fid"),
+			itemIndex = $li.data("id"),	
+			listName = $li.data("list_name"),	
+			survey = globals.model.survey,
+			question,
+			optionList = $li.data("list_name"),
+			qname = $li.data("qname"),
+			$context = $('#choiceModal').find('.modal-body');
+		
+		if(listName) {
+			$context.empty().append(markup.addOptionContainer(undefined, undefined, undefined, listName));
+		} else {
+			question = survey.forms[formIndex].questions[itemIndex];
+			$context.empty().append(markup.addOptionContainer(question, formIndex, itemIndex, undefined));
+		}
+		respondToEventsChoices($context);
+		
+		$('#choiceModal').modal("show");
+	});
+	
 	// Set option list value
+	/*
 	$context.find('.option-lists', $context).each(function(index){
 		var $this = $(this),
 			$elem = $this.closest('li'),
@@ -751,6 +1138,7 @@ function respondToEvents($context) {
 	
 		updateLabel("question", formIndex, itemIndex, undefined, "text", $this.val(), undefined, "list_name") ;
 	});
+	*/
 	
 	// Repeat count change
 	$context.find('.repeat-counts').change(function(){
@@ -790,7 +1178,7 @@ function respondToEvents($context) {
 		labelType = prop === "hint" ? "hint" : "text";
 		if(prop === "required") {
 			newVal = $this.hasClass("prop_no");		// If set false then newVal will be true
-		} else if (prop === "autoplay" || prop === "autoplay") {
+		} else if (prop === "autoplay") {
 			newVal = $this.val();
 		} else if (prop === "linked_survey") {
 			if($this.hasClass("prop_no")) {
@@ -905,6 +1293,7 @@ function respondToEvents($context) {
 	});
 	
 	// validate the option name
+	/*
 	$context.find('.oname').keyup(function(){
 
 		var $this = $(this),
@@ -932,6 +1321,7 @@ function respondToEvents($context) {
 		changeset.updateModelWithErrorStatus(listName, itemIndex, "optionlist");		// Update model and DOM
 
 	});
+	*/
 	
 	// Update the question name
 	$context.find('.qname').change(function(){
@@ -947,6 +1337,7 @@ function respondToEvents($context) {
 	});
 	
 	// Update the option name
+	/*
 	$context.find('.oname').change(function(){
 
 		var $this = $(this),
@@ -978,6 +1369,7 @@ function respondToEvents($context) {
 		}
 
 	});
+	*/
 	
 	// Selected a media property
 	$context.find('.mediaProp').off().click(function(){
@@ -1050,6 +1442,7 @@ function respondToEvents($context) {
 	});
 	
 	// Add new option
+	/*
 	$context.find('.add_option').off().click(function() {
 		var $this = $(this),
 			$context,						// Updated Html
@@ -1087,7 +1480,7 @@ function respondToEvents($context) {
 		
 		
 	});
-	
+	*/
 	// Select types
 	$context.find('.question_type').off().click(function() {
 		
@@ -1554,7 +1947,7 @@ function updateLabel(type, formIndex, itemIndex, optionList, element, newVal, qn
 		question;
 	
 	if(type === "question") {
-		question = survey.forms[formIndex].questions[itemIndex]
+		question = survey.forms[formIndex].questions[itemIndex];
 		questionType = question.type;
 	}
 	

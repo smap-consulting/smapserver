@@ -501,7 +501,7 @@
    		<div class="modal-content">
    			<div class="modal-header">
      			<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-     			<h4 class="modal-title" id="typeModalLabel">Select Type</h4>
+     			<h4 class="modal-title lang" id="typeModalLabel" data-lang="c_type">type</h4>
    			</div>
    			
    			<div class="modal-body">
@@ -511,12 +511,33 @@
 	    		
 			</div>
 			<div class="modal-footer">
-        		<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        		<button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_close">close</button>
       		</div>
 		</div>
 	</div>
 </div>
 
+<!-- 
+	Modal for editing choices 
+	FullScreen based on http://www.minimit.com/articles/solutions-tutorials/bootstrap-3-transparent-and-fullscreen-modals
+-->
+<div id="choiceModal" class="modal modal-fullscreen fade" tabindex="-1" role="dialog" aria-labelledby="choiceModalLabel" aria-hidden="true">
+	<div class="modal-dialog">
+   		<div class="modal-content">
+   			<div class="modal-header">
+     			<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+     			<h4 class="modal-title lang" data-lang="c_choices" id="choiceModalLabel">choices</h4>
+   			</div>
+   			
+   			<div class="modal-body">	
+			</div>
+			
+			<div class="modal-footer">
+        		<button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_close">close</button>
+      		</div>
+		</div>
+	</div>
+</div>
 
 <!-- Model to edit languages -->
 <div id="editLanguageModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="editLanguageLabel" aria-hidden="true">
