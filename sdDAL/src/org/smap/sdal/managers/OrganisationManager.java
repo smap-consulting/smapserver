@@ -216,7 +216,7 @@ public class OrganisationManager {
 			if(o.timeZone == null || o.timeZone.trim().length() == 0) {
 				o.timeZone = "UTC";			// Default time zone for organisation
 			}
-			pstmt.setString(23, o.timeZone);
+			pstmt.setString(25, o.timeZone);
 			log.info("Insert organisation: " + pstmt.toString());
 			pstmt.executeUpdate();
 			
