@@ -504,6 +504,8 @@ define({
 	"ed_i_tn": "Table Names",
 	"ed_tlf": "Top Level Form",
 	"ed_namedia": "Media cannot be used with this question",
+	"ed_ab": "Add Before",
+	"ed_aa": "Add After",
 	
 	// Managed Forms
 	"mf_fd": "Form Data",

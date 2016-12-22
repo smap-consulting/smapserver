@@ -884,8 +884,8 @@ function respondToEventsChoices($context) {
 	$context.find('.delete_option').off().click(function() {
 		var $this = $(this),
 			$context,						// Updated Html
-			index = $this.data("id"),
-			list_name = $this.data("list_name");
+			index = $this.closest(".editor_element").data("id"),
+			list_name = $this.closest(".editor_element").data("list_name");
 		
 		bootbox.confirm(localise.set["msg_del_c"], function(result) {
 			if(result) {

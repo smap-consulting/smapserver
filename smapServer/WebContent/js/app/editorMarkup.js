@@ -864,7 +864,25 @@ define([
 		h[++idx] = '<div class="row">';
 			
 			// Add option name and value cell
-			h[++idx] = '<div class="col-xs-10">';
+			h[++idx] = '<div class="col-xs-1">';
+				h[++idx] = '<div class="btn-group">';
+					h[++idx] = '<button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span class="edit_icon glyphicon glyphicon-option-vertical"></span> <span class="caret"></span>';
+					h[++idx] = '</button>';
+						h[++idx] = '<ul class="dropdown-menu">';
+							h[++idx] = '<li><a href="#" class="delete_option">';
+							h[++idx] = '<i class="glyphicon glyphicon-trash"></i> '
+							h[++idx] = localise.set["c_del"];
+							h[++idx] = '</a></li>';
+							h[++idx] = '<li><a href="#" class="add_option_before">';
+							h[++idx] = localise.set["ed_ab"];
+							h[++idx] = '</a></li>';
+							h[++idx] = '<li><a href="#" class="add_option_after">';
+							h[++idx] = localise.set["ed_aa"];
+							h[++idx] = '</a></li>';
+						h[++idx] = '</ul>';
+				h[++idx] = '</div>';
+			h[++idx] = '</div>';	// End of menu button
+			h[++idx] = '<div class="col-xs-11">';
 				h[++idx] = '<div class="row">';
 				
 					// Add option name cell
@@ -885,6 +903,7 @@ define([
 			h[++idx] = '</div>';	// End of option name and label cell
 		
 			// Add button bar
+		/*
 		h[++idx] = '<div class="col-xs-2">';
 			h[++idx] = '<div class="btn-group">';
 			h[++idx] = '<button class="btn btn-default" tabindex="-1">';
@@ -895,6 +914,7 @@ define([
 			h[++idx] = '"></span>';
 			h[++idx] = '</button>';		
 		h[++idx] = '</div>';
+		*/
 		
 		h[++idx] = '</div>';	// end of option row
 		h[++idx] = '</li>';
