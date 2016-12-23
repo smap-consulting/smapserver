@@ -210,23 +210,25 @@ define([
 		h[++idx] = '<div class="question-controls">';
 			h[++idx] = '<div class="row">';
 				h[++idx] = '<div class="col-md-6">';
+					h[++idx] = '<form role="form" class="form-horizontal">';
+						// A control to set option lists
+						if(!listName) {
+							h[++idx] = '<div class="form-group">';
+								h[++idx] = '<label class="col-sm-2">';
+									h[++idx] = localise.set["ed_cl"];
+									h[++idx] = ':';
+								h[++idx] = '</label>';
+								h[++idx] = '<div class="col-sm-10">';
+									h[++idx] = '<select class="form-control option-lists">';
+									h[++idx] = getOptionLists();
+									h[++idx] = '</select>';
+								h[++idx] = '</div>';
+							h[++idx] = '</div>';
+						}
+					h[++idx] = '</form>';
 				h[++idx] = '</div>';
-			
-				// A control to set option lists
-				if(!listName) {
-					h[++idx] = '<div class="col-md-6">';
-						h[++idx] = '<label>';
-							h[++idx] = localise.set["ed_cl"];
-							h[++idx] = ':';
-						h[++idx] = '</label>';
-						h[++idx] = '<div class="input-group">';
-							h[++idx] = '<select class="form-control option-lists">';
-							h[++idx] = getOptionLists();
-							h[++idx] = '</select>';
-							h[++idx] = '<span class="input-group-addon"></span>';
-						h[++idx] = '</div>';
-					h[++idx] = '</div>';
-				}
+				h[++idx] = '<div class="col-md-6">';
+				h[++idx] = '</div>';
 			h[++idx] = '</div>';
 		h[++idx] = '</div>';
 	
