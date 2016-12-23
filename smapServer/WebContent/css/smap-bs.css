@@ -311,6 +311,12 @@ tr.deleted td a {
 	cursor: move;	
 }
 
+.over_drop_elem {
+  border-top-style: dashed;
+  border-top-width: 4px;
+
+}
+
 .question-controls {
 	padding: 2px;
 }

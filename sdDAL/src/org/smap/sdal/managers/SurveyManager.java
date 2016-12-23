@@ -875,8 +875,12 @@ public class SurveyManager {
 				if(cascade_filters != null) {
 					try {
 						o.cascadeKeyValues = gson.fromJson(cascade_filters, hmType);
+						for (String key : o.cascadeKeyValues.keySet()) {
+						    s.filters.put(key, key);
+						}
+
 					} catch (Exception e) {
-						log.log(Level.SEVERE, e.getMessage(), e);		// Ignore errors as this service does not support the old non json cascace format
+						log.log(Level.SEVERE, e.getMessage(), e);		// Ignore errors as this service does not support the old non json cascade format
 					}
 				}
 				o.columnName = rsGetOptions.getString(6);

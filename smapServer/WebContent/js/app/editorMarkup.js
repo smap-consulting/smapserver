@@ -412,17 +412,9 @@ define([
 		addButtonClass = after ? 'add_after_button add_button' : 'add_before_button add_button';
 		locn = after ? 'after' : 'before';
 		
-		h[++idx] = '<li>';
-		h[++idx] = '<button tabindex="-1" id="addnewoption_';
-		h[++idx] = globals.gNewOptionButtonIndex++;
-		h[++idx] = '" type="button" class="add_option btn dropon ';
-		h[++idx] = addButtonClass;
-		h[++idx] = ' l_' + list_name; 
-		h[++idx] = '" data-locn="';
-		h[++idx] = locn;
-		h[++idx] = '"';
+		h[++idx] = '<li ';
 		if(typeof index !== "undefined") {
-			h[++idx] = ' data-index="';
+			h[++idx] = ' data-id="';
 			h[++idx] = index;
 			h[++idx] = '"';
 		}
@@ -441,7 +433,12 @@ define([
 			h[++idx] = formIndex;
 			h[++idx] = '"';
 		}
-		h[++idx] = '>Add New Choice</button>';
+		h[++idx] = '>';
+		h[++idx] = '<button tabindex="-1" ';
+		h[++idx] = ' type="button" class="add_option btn dropon option editor_element add_after_button"</button>';
+
+		h[++idx] = localise.set["ed_anc"];
+		h[++idx] = '</button>';
 		h[++idx] = '</li>';
 		
 		return h.join('');
@@ -817,12 +814,13 @@ define([
 							oSeq[i], 
 							list_name, 
 							questionName, 
-							true);
+							true,
+							"before");
 					if(oSeq[i] >= maxIndex) {
 						maxIndex = oSeq[i] + 1;
 					}
 				}
-				h[++idx] = addNewOptionButton(true, list_name, formIndex, questionName, maxIndex); 
+				h[++idx] = addNewOptionButton(true, list_name, formIndex, questionName, -1); 
 			}
 			h[++idx] = '</ul>';
 		}
@@ -832,17 +830,18 @@ define([
 	/*
 	 * Add a single option
 	 */
-	function addOneOption(optionList, option, formIndex, index, list_name, qname, addNewButton) {
+	function addOneOption(optionList, option, formIndex, index, list_name, 
+			qname, addNewDropZone, dropZoneLocation) {
 		var h = [],
 			idx = -1;
 		
 		optionList.maxOption++;
 		
-		if(addNewButton) {
-			h[++idx] = addNewOptionButton(false, list_name, formIndex, undefined, index);
-		}
+		//if(addNewDropZone && (dropZoneLocation === "before")) {		
+		//	h[++idx] = addNewOptionButton(false, list_name, formIndex, undefined, index);
+		//}
 		
-		h[++idx] = '<li class="editor_element option draggable ';
+		h[++idx] = '<li class="editor_element option draggable dropon ';
 		h[++idx] = 'l_' + list_name;				// Add list name as a class
 		if(option.error) {
 			h[++idx] = ' error';
@@ -870,7 +869,6 @@ define([
 					h[++idx] = '</button>';
 						h[++idx] = '<ul class="dropdown-menu">';
 							h[++idx] = '<li><a href="#" class="delete_option">';
-							h[++idx] = '<i class="glyphicon glyphicon-trash"></i> '
 							h[++idx] = localise.set["c_del"];
 							h[++idx] = '</a></li>';
 							h[++idx] = '<li><a href="#" class="add_option_before">';
@@ -919,6 +917,10 @@ define([
 		h[++idx] = '</div>';	// end of option row
 		h[++idx] = '</li>';
 
+		//if(addNewDropZone && dropZoneLocation === "after") {
+		//	h[++idx] = addNewOptionButton(false, list_name, formIndex, undefined, index);
+		//}
+		
 		return h.join("");
 	}
 	

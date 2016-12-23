@@ -426,16 +426,15 @@ define([
 	
 	/*
 	 * Add a new option
-	 * oItem: the html element id for the closest option to where we want to add the new option
+	 * oItem: the HTML element id for the closest option to where we want to add the new option
 	 */
-	function addOption($button, oId, locn, list_name, formIndex, qname) {		
+	function addOption(oId, locn, list_name, formIndex, qname) {		
 		
-		var buttonIndex = $button.data("index"),		
-			seq = 0,
+		var seq = 0,
 			survey = globals.model.survey,
 			value;
 
-		seq = getSequenceOption(buttonIndex, survey.optionLists[list_name]); 
+		seq = getSequenceOption(oId, survey.optionLists[list_name]); 
 		
 		value = getDefaultOptionValue(list_name, seq);
 
@@ -453,7 +452,7 @@ define([
 					
 					// Helper values 
 					formIndex: formIndex,
-					buttonIndex: buttonIndex,
+					optionIndex: oId,
 					qname: qname,
 					locn: locn,							// Whether the new option was added before or after the related option
 				}
@@ -464,7 +463,7 @@ define([
 			change.option.labels.push({text:""});
 		}
 		$context = changeset.add(change);
-		return $context;				// Add events on to the altered html
+		return $context;				// Add events on to the altered HTML
 		
 	}
 	

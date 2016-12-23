@@ -1019,13 +1019,18 @@ define([
 				optionList = survey.optionLists[change.option.optionList];
 				
 				// get the new markup
+				var dropZoneLocation = "after";
+				if(change.option.optionIndex === -1 || change.option.locn === "after") {
+					dropZoneLocation = "before";
+				} 
 				newMarkup = markup.addOneOption(optionList,
 						change.option, 
 						change.option.formIndex, 
 						change.option.itemIndex, 
 						change.option.optionList, 
 						change.option.qName, 
-						true);
+						true,
+						dropZoneLocation);
 				
 				/*
 				$button = $('#choiceModal').find('button.l_' + jq(change.option.optionList)).
@@ -1040,7 +1045,7 @@ define([
 				$ref = $('#choiceModal').find('.editor_element').
 					filter(function(index) {
 						var $this = $(this);
-						return $this.data("index") == change.option.buttonIndex;
+						return $this.data("id") == change.option.optionIndex;
 					});
 				
 				if(change.option.locn == "after") {
@@ -1086,7 +1091,8 @@ define([
 						survey.optionLists[change.property.optionList].oSeq[change.property.itemIndex], 
 						change.property.optionList,
 						change.property.qname,
-						false);
+						false,
+						undefined);
 				
 			} else if(change.property.type === "question") {
 				

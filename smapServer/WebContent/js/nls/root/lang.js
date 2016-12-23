@@ -506,6 +506,7 @@ define({
 	"ed_namedia": "Media cannot be used with this question",
 	"ed_ab": "Add Before",
 	"ed_aa": "Add After",
+	"ed_anc": "Add New Choice",
 	
 	// Managed Forms
 	"mf_fd": "Form Data",
