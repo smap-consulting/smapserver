@@ -211,12 +211,12 @@ define([
 			h[++idx] = '<div class="row">';
 				h[++idx] = '<div class="col-md-6">';
 					h[++idx] = '<form role="form" class="form-horizontal">';
-						// A control to set option lists
+						
+						// A control to set option list name
 						if(!listName) {
 							h[++idx] = '<div class="form-group">';
 								h[++idx] = '<label class="col-sm-2">';
 									h[++idx] = localise.set["ed_cl"];
-									h[++idx] = ':';
 								h[++idx] = '</label>';
 								h[++idx] = '<div class="col-sm-10">';
 									h[++idx] = '<select class="form-control option-lists">';
@@ -225,6 +225,31 @@ define([
 								h[++idx] = '</div>';
 							h[++idx] = '</div>';
 						}
+						
+						// A control to select the filter type
+						h[++idx] = '<div class="form-group">';
+							h[++idx] = '<label class="col-sm-2">';
+								h[++idx] = localise.set["c_filter"];
+							h[++idx] = '</label>';
+							h[++idx] = '<div class="col-sm-10">';
+								h[++idx] = '<select class="form-control" id="filterType">';
+								
+								h[++idx] = '<option value="none">';
+								h[++idx] = localise.set["none"];
+								h[++idx] = '</option>';
+								
+								h[++idx] = '<option value="cascade">';
+								h[++idx] = localise.set["ed_cs"];
+								h[++idx] = '</option>';
+								
+								h[++idx] = '<option value="custom">';
+								h[++idx] = localise.set["ed_cf"];
+								h[++idx] = '</option>';
+								
+								h[++idx] = '</select>';
+							h[++idx] = '</div>';
+						h[++idx] = '</div>';
+						
 					h[++idx] = '</form>';
 				h[++idx] = '</div>';
 				h[++idx] = '<div class="col-md-6">';
@@ -234,8 +259,11 @@ define([
 	
 		if(listName) {
 			h[++idx] = addOptions(undefined, undefined, listName);
+			$('#choiceModalQuestion').html(localise.set["ed_cl"] + ": " + listName);
 		} else {
+			// Opened from a specific question
 			h[++idx] = addOptions(question, formIndex, undefined);
+			$('#choiceModalQuestion').html(localise.set["c_question"] + ": " + question.name);
 		}
 		h[++idx] = '</div>';
 		

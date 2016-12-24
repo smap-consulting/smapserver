@@ -507,6 +507,8 @@ define({
 	"ed_ab": "Add Before",
 	"ed_aa": "Add After",
 	"ed_anc": "Add New Choice",
+	"ed_cs": "Cascading Select",
+	"ed_cf": "Custom Filter",
 	
 	// Managed Forms
 	"mf_fd": "Form Data",
