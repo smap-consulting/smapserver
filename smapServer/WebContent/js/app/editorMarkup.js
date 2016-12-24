@@ -253,6 +253,15 @@ define([
 					h[++idx] = '</form>';
 				h[++idx] = '</div>';
 				h[++idx] = '<div class="col-md-6">';
+					h[++idx] = '<div class="custom_filter_only" style="display:none;">';
+						h[++idx] = '<form role="form" id="custom_filters">';
+						
+							h[+idx] = '<button class="btn btn-block btn-default">';
+							h[++idx] = localise.set["ed_afc"];
+							h[++idx] = '</button>';
+						
+						h[++idx] = '</form>';
+					h[++idx] = '</div>';
 				h[++idx] = '</div>';
 			h[++idx] = '</div>';
 		h[++idx] = '</div>';

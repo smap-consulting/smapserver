@@ -749,8 +749,17 @@ function respondToEventsChoices($context) {
 		
 	});
 	
+	$('#filterType', $context).off().change(function(){
+		var $this = $(this);
+		
+		$('.custom_filter_only').hide();
+		if($this.val() === "custom") {
+			$('.custom_filter_only').show();
+		}
+	});
+	
 	// Option list change
-	$context.find('.option-lists').change(function(){
+	$context.find('.option-lists').off().change(function(){
 		var $this = $(this),
 			$elem = $this.closest('.question_head'),
 			formIndex = $elem.data("fid"),
