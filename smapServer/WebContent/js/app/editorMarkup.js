@@ -55,10 +55,10 @@ define([
 			question;
 		
 		if(globals.gListName) {
-			$context.empty().append(addOptionContainer(undefined, undefined, undefined, globals.gListName));
+			$context.empty().append(addOptionContainer(undefined, undefined, undefined, globals.gListName, survey.filters));
 		} else {
 			question = survey.forms[globals.gFormIndex].questions[globals.gItemIndex];
-			$context.empty().append(addOptionContainer(question, globals.gFormIndex, globals.gItemIndex, undefined));
+			$context.empty().append(addOptionContainer(question, globals.gFormIndex, globals.gItemIndex, undefined, survey.filters));
 		}
 		
 		return $context;
@@ -198,9 +198,10 @@ define([
 	/*
 	 * Add an option container
 	 */
-	function addOptionContainer(question, formIndex, qIndex, listName) {
+	function addOptionContainer(question, formIndex, qIndex, listName, filters) {
 		var h = [],
-			idx = -1;
+			idx = -1,
+			filter;
 		
 		h[++idx] = '<div class="question_head" data-fId="';
 		h[++idx] = formIndex;
@@ -254,8 +255,19 @@ define([
 				h[++idx] = '</div>';
 				h[++idx] = '<div class="col-md-6">';
 					h[++idx] = '<div class="custom_filter_only" style="display:none;">';
-						h[++idx] = '<form role="form" id="custom_filters">';
+						h[++idx] = '<form role="form"">';
 						
+							h[++idx] = '<div id="custom_filters">';
+							for(filter in filters) {
+								h[++idx] = '<div class="checkbox">';
+							    h[++idx] = '<label>';
+							      h[++idx] = '<input type="checkbox"> ';
+							      h[++idx] = filter
+							    h[++idx] = '</label>';
+							    h[++idx] = '</div>';
+							}
+							h[++idx] = '</div>';
+							
 							h[+idx] = '<button class="btn btn-block btn-default">';
 							h[++idx] = localise.set["ed_afc"];
 							h[++idx] = '</button>';
