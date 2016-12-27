@@ -510,6 +510,8 @@ define({
 	"ed_cs": "Cascading Select",
 	"ed_cf": "Custom Filter",
 	"ed_afc": "Add Filter Column",
+	"ed_clab": "Choice Label",
+	"ed_cval": "Choice Value",
 	
 	// Managed Forms
 	"mf_fd": "Form Data",

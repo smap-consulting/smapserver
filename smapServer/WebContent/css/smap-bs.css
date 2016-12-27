@@ -631,7 +631,21 @@ td.completed, td.submitted {
   filter: alpha(opacity=97);
 }
 
+choiceModal table {
+    width:auto;
+}
+
+#choiceModal table td:last-child{
+    width:70%;
+}
+
+#choiceModal .table-responsive {
+  overflow-x: visible !important;
+  overflow-y: visible !important;
+}
+
 /* .modal-fullscreen size: we use Bootstrap media query breakpoints */
+
 
 .modal-fullscreen .modal-dialog {
   margin: 0;
@@ -639,6 +653,7 @@ td.completed, td.submitted {
   margin-left: auto;
   width: 100%;
 }
+
 @media (min-width: 768px) {
   .modal-fullscreen .modal-dialog {
     width: 750px;

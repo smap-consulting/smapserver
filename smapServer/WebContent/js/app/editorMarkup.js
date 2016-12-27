@@ -57,6 +57,7 @@ define([
 		if(globals.gListName) {
 			$context.empty().append(addOptionContainer(undefined, undefined, undefined, globals.gListName, survey.filters));
 		} else {
+			// Choice list opened from a question
 			question = survey.forms[globals.gFormIndex].questions[globals.gItemIndex];
 			$context.empty().append(addOptionContainer(question, globals.gFormIndex, globals.gItemIndex, undefined, survey.filters));
 		}
@@ -463,7 +464,7 @@ define([
 		addButtonClass = after ? 'add_after_button add_button' : 'add_before_button add_button';
 		locn = after ? 'after' : 'before';
 		
-		h[++idx] = '<li ';
+		h[++idx] = '<button type="button" class="add_option btn btn-primary dropon option editor_element add_after_button"';
 		if(typeof index !== "undefined") {
 			h[++idx] = ' data-id="';
 			h[++idx] = index;
@@ -485,12 +486,9 @@ define([
 			h[++idx] = '"';
 		}
 		h[++idx] = '>';
-		h[++idx] = '<button tabindex="-1" ';
-		h[++idx] = ' type="button" class="add_option btn dropon option editor_element add_after_button"</button>';
-
 		h[++idx] = localise.set["ed_anc"];
-		h[++idx] = '</button>';
-		h[++idx] = '</li>';
+		h[++idx] = ' </button>';
+
 		
 		return h.join('');
 	}
@@ -572,6 +570,25 @@ define([
 		}	
 		return h.join('');
 
+	}
+	
+	/*
+	 * One of the questions properties will be featured so that it can be edited in the header without expanding the question
+	 */
+	function addOptionLabel() {
+		
+		var h = [],
+			idx = -1;
+		
+		h[++idx] = '<td class="option">';
+
+			h[++idx] = '<textarea class="labelProp has_tt" title="';
+			h[++idx] = localise.set["ed_clab"];
+			h[++idx] = '">';
+			h[++idx] = '</textarea>';
+		
+		h[++idx] = '</td>';
+		return h.join("");
 	}
 	
 	/*
@@ -855,7 +872,25 @@ define([
 			
 			addOptionSequence(optionList);		// Add an array holding the option sequence if it does not already exist
 			oSeq = optionList.oSeq;
-			h[++idx] = '<ul class="list-unstyled">';
+			
+			h[++idx] = '<div class="table-responsive">';
+			h[++idx] = '<table class="table">';
+			
+			h[++idx] = '<thead class="thead-default"><tr>';
+			
+				h[++idx] = '<th>';
+				h[++idx] = '</th>';
+				
+				h[++idx] = '<th>';
+				h[++idx] = localise.set["ed_cval"];
+				h[++idx] = '</th>';
+				
+				h[++idx] = '<th>';
+				h[++idx] = localise.set["ed_clab"];
+				h[++idx] = '</th>';
+				
+			h[++idx] = '</tr></thead>';
+			h[++idx] = '<tbody>';
 			if(oSeq) {
 				maxIndex = 0;
 				for(i = 0; i < oSeq.length; i++) {
@@ -871,9 +906,11 @@ define([
 						maxIndex = oSeq[i] + 1;
 					}
 				}
-				h[++idx] = addNewOptionButton(true, list_name, formIndex, questionName, -1); 
 			}
-			h[++idx] = '</ul>';
+			h[++idx] = '</tbody>';
+			h[++idx] = '</table>';
+			h[++idx]= '</div>';
+			h[++idx] = addNewOptionButton(true, list_name, formIndex, questionName, -1); 
 		}
 		return h.join("");
 	}
@@ -888,12 +925,7 @@ define([
 		
 		optionList.maxOption++;
 		
-		//if(addNewDropZone && (dropZoneLocation === "before")) {		
-		//	h[++idx] = addNewOptionButton(false, list_name, formIndex, undefined, index);
-		//}
-		
-		h[++idx] = '<li class="editor_element option draggable dropon ';
-		h[++idx] = 'l_' + list_name;				// Add list name as a class
+		h[++idx] = '<tr class="editor_element option draggable dropon ';
 		if(option.error) {
 			h[++idx] = ' error';
 		}
@@ -911,11 +943,10 @@ define([
 		
 		h[++idx] = addErrorMsg(option.errorMsg);
 		
-		h[++idx] = '<div class="row">';
 			
 			// Add option name and value cell
-			h[++idx] = '<div class="col-xs-1">';
-				h[++idx] = '<div class="btn-group">';
+			h[++idx] = '<td>';
+					h[++idx] = '<div class="btn-group">';
 					h[++idx] = '<button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span class="edit_icon glyphicon glyphicon-option-vertical"></span> <span class="caret"></span>';
 					h[++idx] = '</button>';
 						h[++idx] = '<ul class="dropdown-menu">';
@@ -929,13 +960,12 @@ define([
 							h[++idx] = localise.set["ed_aa"];
 							h[++idx] = '</a></li>';
 						h[++idx] = '</ul>';
-				h[++idx] = '</div>';
-			h[++idx] = '</div>';	// End of menu button
-			h[++idx] = '<div class="col-xs-11">';
-				h[++idx] = '<div class="row">';
+					h[++idx] = '</div>';
+			h[++idx] = '</td>';	// End of menu button
+			
+			// Add option name cell
+			h[++idx] = '<td>';
 				
-					// Add option name cell
-					h[++idx] = '<div class="col-xs-12 col-md-3">';
 						h[++idx] = '<input class="oname form-control has_tt" value="';
 						h[++idx] = option.value;
 						h[++idx] = '" ';
@@ -944,34 +974,15 @@ define([
 							h[++idx] = 'readonly="true"';
 						}
 						h[++idx] = ' type="text" title="Choice Value">';
-					h[++idx] = '</div>';
 						
-					// Add featured property
-					h[++idx] = addFeaturedProperty(option, formIndex, index, list_name, qname);
-				h[++idx] = '</div>';	// End of row
-			h[++idx] = '</div>';	// End of option name and label cell
+			h[++idx] = '</td>';	// End of option name and label cell
 		
-			// Add button bar
-		/*
-		h[++idx] = '<div class="col-xs-2">';
-			h[++idx] = '<div class="btn-group">';
-			h[++idx] = '<button class="btn btn-default" tabindex="-1">';
-			h[++idx] = '<span class="glyphicon glyphicon-remove-circle edit_icon delete_option" data-id="';
-			h[++idx] = index;
-			h[++idx] = '" data-list_name="';
-			h[++idx] = list_name;
-			h[++idx] = '"></span>';
-			h[++idx] = '</button>';		
-		h[++idx] = '</div>';
-		*/
+			h[++idx] = addOptionLabel();
+	
 		
-		h[++idx] = '</div>';	// end of option row
-		h[++idx] = '</li>';
+		h[++idx] = '</tr>';
 
-		//if(addNewDropZone && dropZoneLocation === "after") {
-		//	h[++idx] = addNewOptionButton(false, list_name, formIndex, undefined, index);
-		//}
-		
+	
 		return h.join("");
 	}
 	

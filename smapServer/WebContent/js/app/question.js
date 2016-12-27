@@ -426,7 +426,6 @@ define([
 	
 	/*
 	 * Add a new option
-	 * oItem: the HTML element id for the closest option to where we want to add the new option
 	 */
 	function addOption(oId, locn, list_name, formIndex, qname) {		
 		

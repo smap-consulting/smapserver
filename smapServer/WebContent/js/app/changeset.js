@@ -1051,9 +1051,13 @@ define([
 				if(change.option.locn == "after") {
 					$ref.after(newMarkup);
 					$changedRow = $ref.next();
-				} else {
+				} else if(change.option.locn == "before") {
 					$ref.before(newMarkup);
 					$changedRow = $ref.prev();
+				} else {
+					// put at end of table
+					$('#choiceModal tbody').append(newMarkup);
+					$changedRow = $('#choiceModal tbody tr:last');
 				}
 						
 		

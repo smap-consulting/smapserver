@@ -884,19 +884,9 @@ function respondToEventsChoices($context) {
 	
 	// Add new option using the "Add New Choice" button
 	$context.find('.add_option').off().click(function() {
-		var $this = $(this),
-			$ref;
-		
-		/*
-		 * If a choice already exists in this list then create the new choice after it
-		 * Note this button should be at the end of the list
-		 */
-		$ref = $this.prev('li');
-		if($ref.length === 1) {
-			addNewOption($ref, "after");
-		} else {
-			addNewOption($this, "before");
-		}
+		var $this = $(this);
+
+		addNewOption($this, "end");
 	
 	});
 	
@@ -967,12 +957,12 @@ function respondToEventsChoices($context) {
 	.on('dragenter', function(evt){
 		var ev = evt.originalEvent,
 			$elem = $(ev.target),	
-			targetId = $elem.closest('li').data('id');
+			targetId = $elem.closest('tr').data('id');
 		
-		$('li', '#choiceModal').removeClass("over_drop_elem");
+		$('tr', '#choiceModal').removeClass("over_drop_elem");
 		if(typeof(targetId) !== "undefined" && targetId != gDragSourceId) {
 			ev.preventDefault();	
-			$elem.closest('li').addClass("over_drop_elem");
+			$elem.closest('tr').addClass("over_drop_elem");
 		}
 	
 	})
@@ -986,7 +976,7 @@ function respondToEventsChoices($context) {
 			targetId = $elem.closest('li').data('id');
 		
 		if(typeof(targetId) === "undefined") {
-			$('li', '#choiceModal').removeClass("over_drop_elem");
+			$('tr', '#choiceModal').removeClass("over_drop_elem");
 		}
 		
 		
@@ -1003,21 +993,21 @@ function respondToEventsChoices($context) {
 	.off('drop')
 	.on('drop', function(evt){
 		var ev = evt.originalEvent,
-			$targetElem = $(ev.target).closest('li'),
+			$targetElem = $(ev.target).closest('tr'),
 			$sourceElem,
 			sourceId = parseInt(ev.dataTransfer.getData("text")),
 			targetId = $targetElem.data('id'),
 			listName = $targetElem.data('list_name'),
 			$context,
 			$ref,
-			elemBeforeTarget = $targetElem.prev('li').data('id');
+			elemBeforeTarget = $targetElem.prev('tr').data('id');
 	
 		ev.preventDefault();
 		ev.stopPropagation();
 		 
 		console.log("Dropped option: " + sourceId +  " : " + targetId + " : " + elemBeforeTarget);
 		
-		$('li', '#choiceModal').removeClass("over_drop_elem");		
+		$('tr', '#choiceModal').removeClass("over_drop_elem");		
 		if(sourceId === targetId || sourceId === elemBeforeTarget) {
 			// Dropped on itself do not move
 		} else {
