@@ -8,9 +8,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.core.Response;
-
-import koboToolboxApi.Data_CSV;
 import model.DataEndPoint;
 
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
@@ -20,7 +17,7 @@ import org.smap.sdal.model.Survey;
 public class DataManager {
 	
 	private static Logger log =
-			 Logger.getLogger(Data_CSV.class.getName());
+			 Logger.getLogger(DataManager.class.getName());
 
 	public ArrayList<DataEndPoint> getDataEndPoints(Connection sd, 
 			HttpServletRequest request,
