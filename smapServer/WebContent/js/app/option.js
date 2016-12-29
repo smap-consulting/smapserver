@@ -128,7 +128,9 @@ define([
 				if(option.published) {				// Mark disabled if the option has been published
 					h[++idx] = 'readonly="true"';
 				}
-				h[++idx] = ' type="text" title="Choice Value">';
+				h[++idx] = ' type="text" title="';
+				h[++idx] = localise.set["ed_cval"];
+				h[++idx] = '">';
 						
 			h[++idx] = '</td>';	// End of option name and label cell
 		
@@ -462,7 +464,13 @@ define([
 			h[++idx] = '<td class="f';		// Class to hide / show filter
 			h[++idx] = i;
 			h[++idx] = '">';
+			h[++idx] = '<input class="filter form-control has_tt" value="';
 			h[++idx] = filters[filterArray[i]];
+			h[++idx] = '" ';	
+			h[++idx] = ' type="text" title="';
+			h[++idx] = localise.set["ed_fv"];
+			h[++idx] = '">';
+			
 			h[++idx] = '</td>';
 			
 			if(initialiseFilters) {

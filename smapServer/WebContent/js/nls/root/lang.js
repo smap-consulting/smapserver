@@ -512,6 +512,7 @@ define({
 	"ed_afc": "Add Filter Column",
 	"ed_clab": "Choice Label",
 	"ed_cval": "Choice Value",
+	"ed_fv": "Filter Value",
 	
 	// Managed Forms
 	"mf_fd": "Form Data",
