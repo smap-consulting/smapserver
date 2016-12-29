@@ -265,7 +265,7 @@ public class GetXForm {
 							// The text could be an xml fragment
 							try {
 								xfragDoc = builder.parse(new InputSource(
-										new StringReader(trans.getValueXML(template.getQuestionPaths()))));
+										new StringReader(trans.getValueXML(template.getQuestionPaths(), 0))));
 								Element rootFrag = xfragDoc.getDocumentElement();
 								addXmlFrag(outputDoc, valueElement, rootFrag);
 							} catch (Exception e) {
@@ -696,7 +696,7 @@ public class GetXForm {
 		// Add calculate
 		String calculate = null;
 		if(q.getName().equals("instanceName")) {
-			calculate = UtilityMethods.convertAllxlsNames(template.getSurvey().getInstanceName(), false, template.getQuestionPaths());
+			calculate = UtilityMethods.convertAllxlsNames(template.getSurvey().getInstanceName(), false, template.getQuestionPaths(),f.getId());
 			if(calculate == null) {
 				calculate = q.getCalculate(true, template.getQuestionPaths());	// Allow for legacy forms that were loaded before the instance name was set in the survey table
 			}
