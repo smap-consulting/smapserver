@@ -59,6 +59,7 @@ require([
          'app/optionlist',
          'app/editorMarkup',
          'app/changeset',
+         'app/option',
          'moment'], 
 		function(
 				$, 
@@ -74,6 +75,7 @@ require([
 				optionlist,
 				markup,
 				changeset,
+				option,
 				moment) {
 
 
@@ -755,6 +757,9 @@ function respondToEventsChoices($context) {
 		$('.custom_filter_only').hide();
 		if($this.val() === "custom") {
 			$('.custom_filter_only').show();
+			$('#choiceModal table').removeClass("notcustom");
+		} else {
+			$('#choiceModal table').addClass("notcustom");
 		}
 	});
 	
@@ -1056,56 +1061,18 @@ function respondToEvents($context) {
 			$li = $this.closest('li'),
 			$context;
 			
-		// Set global variables that will be used if this dialog is refreshed
+		// Set global variables that will be used if the contents of this dialog are refreshed
 		globals.gListName = $li.data("list_name");
 		globals.gFormIndex = $li.data("fid");
 		globals.gItemIndex = $li.data("id");
+		globals.gSelectedFilters = undefined;
 		
-		$context = markup.refreshChoiceModal();
+		$context = option.refreshChoiceModal();
 		respondToEventsChoices($context);
 		
 		$('#choiceModal').modal("show");
 	});
 	
-
-	// Set option list value
-	/*
-	$context.find('.option-lists', $context).each(function(index){
-		var $this = $(this),
-			$elem = $this.closest('li'),
-			formIndex = $elem.data("fid"),
-			itemIndex = $elem.data("id"),
-			survey = globals.model.survey,
-			question;
-		
-		question = survey.forms[formIndex].questions[itemIndex];
-		if(!optionListExists(question.list_name)) {
-			if(!optionListExists(question.name)) {
-				survey.optionLists[question.name] = {
-						oSeq: [],
-						options: []
-					};
-					markup.refreshOptionListControls();
-			}
-			$this.val(question.name);
-		} else {
-			$this.val(question.list_name);
-		}
-		
-	});
-	
-	// Option list change
-	$context.find('.option-lists').change(function(){
-		var $this = $(this),
-			$elem = $this.closest('li'),
-			formIndex = $elem.data("fid"),
-			itemIndex = $elem.data("id"),
-			survey = globals.model.survey,
-			question;
-	
-		updateLabel("question", formIndex, itemIndex, undefined, "text", $this.val(), undefined, "list_name") ;
-	});
-	*/
 	
 	// Repeat count change
 	$context.find('.repeat-counts').change(function(){
@@ -2072,32 +2039,6 @@ function addForms(data) {
 	$('#form_name').html(h.join(""));
 
 }
-
-/* **********************************************************************************************
- * Error Panel
- */
-
-/*
-function showErrorPanel() {
-	
-    var $panel = $('#toolbar'),
-    	$container = $('#content > .container');
-    
-    $panel.addClass('shown').animate({'margin-left':'0px'});  
-    $container.css({'padding-left':'200px'});
-
-}
-
-function hideErrorPanel() {
-	
-    var $panel = $('#toolbar'),
-    $container = $('#content > .container');
-    
-    $panel.removeClass('shown').animate({'margin-left':'-250px'});  
-    $container.css({'padding-left':'15px'});
-
-}
-*/
 
 
 });

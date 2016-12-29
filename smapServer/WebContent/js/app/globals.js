@@ -83,6 +83,7 @@ define(function() {
 		gListName: undefined,					// Choice Modal parameters
 		gFormIndex: undefined,
 		gItemIndex: undefined,
+		gSelectedFilters: undefined,
 		
 		gMainTable: undefined,			// Data tables
 		

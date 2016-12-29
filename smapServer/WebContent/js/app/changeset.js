@@ -27,8 +27,9 @@ define([
          'modernizr',
          'app/localise',
          'app/globals',
-         'app/editorMarkup'], 
-		function($, modernizr, lang, globals, markup) {
+         'app/editorMarkup',
+         'app/option'], 
+		function($, modernizr, lang, globals, markup, option) {
 	
 	return {	
 		add: add,
@@ -103,7 +104,7 @@ define([
 				if(change.question) {
 					$context = markup.refresh();
 				} else {
-					$context = markup.refreshChoiceModal();
+					$context = option.refreshChoiceModal();
 				}
 			} else {
 				$context = updateHtmlElement(change);
@@ -1023,7 +1024,7 @@ define([
 				if(change.option.optionIndex === -1 || change.option.locn === "after") {
 					dropZoneLocation = "before";
 				} 
-				newMarkup = markup.addOneOption(optionList,
+				newMarkup = option.addOneOption(optionList,
 						change.option, 
 						change.option.formIndex, 
 						change.option.itemIndex, 
@@ -1088,7 +1089,7 @@ define([
 					return $this.data("list_name") == change.property.optionList && $this.data("id") == change.property.itemIndex;
 				});
 				
-				newMarkup = markup.addOneOption(
+				newMarkup = option.addOneOption(
 						survey.optionLists[change.property.optionList],
 						survey.optionLists[change.property.optionList].options[change.property.itemIndex], 
 						change.property.formIndex, 

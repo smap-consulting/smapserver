@@ -644,6 +644,18 @@ choiceModal table {
   overflow-y: visible !important;
 }
 
+/* Allow up to 5 filter columns */
+#choiceModal table.notcustom .f0 { display: none; }
+#choiceModal table.notcustom .f1 { display: none; }
+#choiceModal table.notcustom .f2 { display: none; }
+#choiceModal table.notcustom .f3 { display: none; }
+#choiceModal table.notcustom .f4 { display: none; }
+#choiceModal table.hide0 .f0 { display: none; } 
+#choiceModal table.hide1 .f1 { display: none; } 
+#choiceModal table.hide2 .f2 { display: none; } 
+#choiceModal table.hide3 .f3 { display: none; } 
+#choiceModal table.hide4 .f4 { display: none; } 
+
 /* .modal-fullscreen size: we use Bootstrap media query breakpoints */
 
 
