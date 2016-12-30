@@ -448,6 +448,7 @@ define([
 					sId: survey.id,
 					labels: [],
 					value: value,
+					cascade_filters: {},
 					
 					// Helper values 
 					formIndex: formIndex,

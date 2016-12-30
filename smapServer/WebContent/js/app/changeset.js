@@ -1032,18 +1032,12 @@ define([
 				optionList = survey.optionLists[change.option.optionList];
 				
 				// get the new markup
-				var dropZoneLocation = "after";
-				if(change.option.optionIndex === -1 || change.option.locn === "after") {
-					dropZoneLocation = "before";
-				} 
 				newMarkup = option.addOneOption(optionList,
 						change.option, 
 						change.option.formIndex, 
 						change.option.itemIndex, 
 						change.option.optionList, 
-						change.option.qName, 
-						true,
-						dropZoneLocation);
+						change.option.qName);
 				
 				/*
 				$button = $('#choiceModal').find('button.l_' + jq(change.option.optionList)).
@@ -1107,9 +1101,7 @@ define([
 						change.property.formIndex, 
 						survey.optionLists[change.property.optionList].oSeq[change.property.itemIndex], 
 						change.property.optionList,
-						change.property.qname,
-						false,
-						undefined);
+						change.property.qname);
 				
 			} else if(change.property.type === "question") {
 				

@@ -74,7 +74,7 @@ define([
 	 * Add a single option
 	 */
 	function addOneOption(optionList, option, formIndex, index, list_name, 
-			qname, addNewDropZone, dropZoneLocation, initialiseFilters) {
+			qname, initialiseFilters) {
 		var h = [],
 			idx = -1;
 		
@@ -185,10 +185,6 @@ define([
 							h[++idx] = '</label>';
 							h[++idx] = '<div class="col-sm-10">';
 								h[++idx] = '<select class="form-control" id="filterType">';
-								
-								h[++idx] = '<option value="none">';
-								h[++idx] = localise.set["none"];
-								h[++idx] = '</option>';
 								
 								h[++idx] = '<option value="cascade">';
 								h[++idx] = localise.set["ed_cs"];
@@ -306,8 +302,6 @@ define([
 							oSeq[i], 
 							list_name, 
 							questionName, 
-							true,
-							"before",
 							initialiseFilters);
 					if(oSeq[i] >= maxIndex) {
 						maxIndex = oSeq[i] + 1;
