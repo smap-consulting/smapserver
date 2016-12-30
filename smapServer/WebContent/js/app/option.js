@@ -137,7 +137,7 @@ define([
 			h[++idx] = '</td>';	// End of option name and label cell
 		
 			h[++idx] = addFilterColumnBody(option.cascade_filters, initialiseFilters);
-			h[++idx] = addOptionLabel();
+			h[++idx] = addOptionLabel(option);
 	
 		
 		h[++idx] = '</tr>';
@@ -341,17 +341,36 @@ define([
 	/*
 	 * One of the questions properties will be featured so that it can be edited in the header without expanding the question
 	 */
-	function addOptionLabel() {
+	function addOptionLabel(option) {
 		
 		var h = [],
-			idx = -1;
+			idx = -1,
+			selProperty = globals.gSelProperty;
 		
 		h[++idx] = '<td class="option">';
-
-			h[++idx] = '<textarea class="labelProp has_tt" title="';
-			h[++idx] = localise.set["ed_clab"];
-			h[++idx] = '">';
-			h[++idx] = '</textarea>';
+			if(selProperty === "media") {
+				h[++idx] = markup.addMedia("Image", 
+						option.labels[globals.gLanguage].image, 
+						option.labels[globals.gLanguage].imageUrl, 
+						option.labels[globals.gLanguage].imageThumb);
+		        
+				h[++idx] = markup.addMedia("Video", 
+						option.labels[globals.gLanguage].video, 
+						option.labels[globals.gLanguage].videoUrl, 
+						option.labels[globals.gLanguage].videoThumb);
+				
+				h[++idx] = markup.addMedia("Audio", 
+						option.labels[globals.gLanguage].audio, 
+						option.labels[globals.gLanguage].audioUrl, 
+						option.labels[globals.gLanguage].audioThumb);	
+			} else {
+		
+				h[++idx] = '<textarea class="labelProp has_tt" title="';
+				h[++idx] = localise.set["ed_clab"];
+				h[++idx] = '">';
+				h[++idx] = option.labels[globals.gLanguage].text;
+				h[++idx] = '</textarea>';
+			}
 		
 		h[++idx] = '</td>';
 		return h.join("");
@@ -479,6 +498,59 @@ define([
 		}
 		
 		return h.join("");
+	}
+	
+	/*
+	 * Add a media type
+	 */
+	function addOptionMedia(label, mediaIdent, url, thumbUrl) {
+		var h = [],
+			idx = -1,
+			emptyMedia = '<div class="emptyMedia text-center">Empty</div>',
+			lcLabel = label.toLowerCase();
+		
+		h[++idx] = '<div class="col-sm-3 ';
+		h[++idx] = lcLabel;
+		h[++idx] = 'Element">';
+		if(mediaIdent) {
+			h[++idx] = '<a target="_blank" href="';
+			h[++idx] = url
+			h[++idx] = '"';
+		} else {
+			h[++idx] = "<div";
+		}
+		h[++idx] = ' class="thumbnail preview">';
+
+		if(mediaIdent) {
+			if(thumbUrl || (lcLabel === "image" && url)) {
+				h[++idx] = '<img height="100" width="100" src="';
+				if(thumbUrl) {
+					h[++idx] = thumbUrl;
+				} else {
+					h[++idx] = url;
+				}
+				h[++idx] = '">';
+			} else {
+				h[++idx] = addQType(lcLabel)
+			}
+		} else {
+			h[++idx] = emptyMedia;
+		}
+
+		if(mediaIdent) {
+			h[++idx] = '</a>';
+		} else {
+			h[++idx] = '</div>';
+		}
+	    h[++idx] = '<a type="button" class="btn btn-default mediaProp form-control" data-element="';
+	    h[++idx] = label.toLowerCase();
+	    h[++idx] = '">';
+	    h[++idx] = lcLabel;
+	    h[++idx] = '</a>';
+	 
+	    h[++idx] = '</div>';
+	    
+	    return h.join("");
 	}
 	
 });

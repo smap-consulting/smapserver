@@ -934,6 +934,13 @@ function respondToEventsChoices($context) {
 		
 	});
 	
+	// Selected a media property
+	$context.find('.mediaProp').off().click(function(){
+		
+		var $this = $(this);
+		mediaPropSelected($this);
+
+	});
 	
 	/*
 	 * Enable drag and drop to move choices
