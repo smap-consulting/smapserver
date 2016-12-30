@@ -876,7 +876,7 @@ function respondToEventsChoices($context) {
 		newVal[filterName] = fVal;
 		$elem.data("filters", newVal);
 		
-		updateLabel("option", formIndex, itemIndex, listName, "text", newVal, qname, "cascadeKeyValues") ;
+		updateLabel("option", formIndex, itemIndex, listName, "text", newVal, qname, "cascade_filters") ;
 		
 	});
 	

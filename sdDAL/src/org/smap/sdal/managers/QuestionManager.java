@@ -878,7 +878,7 @@ public class QuestionManager {
 				pstmtInsertOption.setString(3, transId + ":label" );
 				pstmtInsertOption.setString(4, o.value );
 				pstmtInsertOption.setString(5, GeneralUtilityMethods.cleanName(o.value, false, false, false) );
-				pstmtInsertOption.setString(6, gson.toJson(o.cascadeKeyValues));			
+				pstmtInsertOption.setString(6, gson.toJson(o.cascade_filters));			
 				
 				log.info("Insert option: " + pstmtInsertOption.toString());
 				pstmtInsertOption.executeUpdate();
@@ -1137,7 +1137,7 @@ public class QuestionManager {
 					
 						String sql = "update option set  " + property + " = ? "
 								+ " where l_id = ? "
-								+ " and ovalue = ?;";
+								+ " and " + property + " = ?;";
 						
 						pstmtOtherProperties = sd.prepareStatement(sql);
 							

@@ -95,7 +95,7 @@ define([
 		h[++idx] = '" data-list_name="';
 		h[++idx] = list_name;
 		h[++idx] = '" data-filters=';
-		h[++idx] = JSON.stringify(option.cascadeKeyValues);
+		h[++idx] = JSON.stringify(option.cascade_filters);
 		h[++idx] = '>';
 		
 		h[++idx] = addOptionErrorMsg(option.errorMsg);
@@ -136,7 +136,7 @@ define([
 						
 			h[++idx] = '</td>';	// End of option name and label cell
 		
-			h[++idx] = addFilterColumnBody(option.cascadeKeyValues, initialiseFilters);
+			h[++idx] = addFilterColumnBody(option.cascade_filters, initialiseFilters);
 			h[++idx] = addOptionLabel();
 	
 		

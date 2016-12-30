@@ -283,7 +283,7 @@ define([
 				/*
 				 * Filter values should be saved as a json string
 				 */
-				if(change.property.type === "option" && change.property.prop === "cascadeKeyValues") {
+				if(change.property.type === "option" && change.property.prop === "cascade_filters") {
 					change.property.newVal = JSON.stringify(change.property.newVal);
 					change.property.oldVal = JSON.stringify(change.property.oldVal);
 				}

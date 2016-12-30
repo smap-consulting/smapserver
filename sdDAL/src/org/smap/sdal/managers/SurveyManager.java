@@ -874,8 +874,8 @@ public class SurveyManager {
 				String cascade_filters = rsGetOptions.getString(5);
 				if(cascade_filters != null) {
 					try {
-						o.cascadeKeyValues = gson.fromJson(cascade_filters, hmType);
-						for (String key : o.cascadeKeyValues.keySet()) {
+						o.cascade_filters = gson.fromJson(cascade_filters, hmType);
+						for (String key : o.cascade_filters.keySet()) {
 						    s.filters.put(key, key);
 						}
 
