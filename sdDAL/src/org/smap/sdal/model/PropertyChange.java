@@ -21,7 +21,6 @@ public class PropertyChange {
 	public String languageName;		// Language to be updated
 	public boolean allLanguages;	// Set to true if all languages are to be updated with the same value	
 	public String repeat_path;
-	public String path;				// Original path to an option's label
 	
 	// Change properties - Identifies the change to be applied
 	public String newVal;			// New value to be applied (For example labels)

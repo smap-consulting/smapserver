@@ -1108,10 +1108,7 @@ public class QuestionManager {
 					ResultSet rs = pstmtGetOldLabelId.executeQuery();
 					if(rs.next()) {
 						oldLabelId = rs.getString(1);
-					} else {
-						// Try to set the labelId from the passed in path property, this will exist if this option has previously been saved to the database
-						oldLabelId = p.path;		// Probably the option has been dragged into a new list
-					}
+					} 
 					
 					pstmtUpdateValue = sd.prepareStatement(sqlUpdateValue);
 					pstmtUpdateValue.setString(1, p.newVal);

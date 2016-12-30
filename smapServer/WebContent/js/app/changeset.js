@@ -250,9 +250,9 @@ define([
 					item_orig = optionListOrig.options[change.property.itemIndex];	
 				}
 				change.property.name = item.value;
-				if(change.changeType === "property") {
-					setOptionTypeSpecificChanges(change.property.prop, change, survey);
-				}
+				//if(change.changeType === "property") {
+				//	setOptionTypeSpecificChanges(change.property.prop, change, survey);
+				//}
 			}
 			
 			if(change.changeType === "label") {
@@ -299,9 +299,10 @@ define([
 				change.question.id = item.id;
 				change.question.name = item.name;
 				change.question.path = item.path;
-			} else {
-				change.question.path = getFormPath(form) + "/" + change.question.name;
-			}
+			} 
+			//else {
+			//	change.question.path = getFormPath(form) + "/" + change.question.name;
+			//}
 		} else if(change.changeType === "option") {
 			if(change.action === "delete") {
 				item = survey.optionLists[change.option.optionList].options[change.option.itemIndex];
@@ -344,15 +345,17 @@ define([
 					break;
 				}
 			}
-		} else if(type === "name") {
-			var form = survey.forms[change.property.formIndex];
-			change.property.path = getFormPath(form) + "/" + change.property.newVal;				
-		}
+		} 
+		
+		//else if(type === "name") {
+		//	var form = survey.forms[change.property.formIndex];
+		//	change.property.path = getFormPath(form) + "/" + change.property.newVal;				
+		//}
 	}
 	
 	/*
 	 * Annotate an option change item with changes that are dependent on the type of the property
-	 */
+	 *
 	function setOptionTypeSpecificChanges(type, change, survey) {
 		var i;
 		if(type === "value") {
@@ -360,6 +363,7 @@ define([
 			change.property.path = getFormPath(form) + "/" + change.property.qname + "/" + change.property.newVal;			
 		}
 	}
+	*/
 	
 	/*
 	 * Remove duplicate updates.  This simplifies the analysis of changes to a survey
