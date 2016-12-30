@@ -1650,7 +1650,7 @@ define([
 			$changedRow = $('#question' + container + '_' + itemIndex);
 		} else if(itemType === "option") {
 			item = survey.optionLists[container].options[itemIndex];
-			$changedRow = $('li.option.l_' + jq(container), '#formList').filter(function(index){
+			$changedRow = $('tr.option', '#choiceModal').filter(function(index){
 				var $this = $(this);
 				return $this.data("id") == itemIndex;
 			});

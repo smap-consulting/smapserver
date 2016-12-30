@@ -62,7 +62,7 @@ define([
 		$("input", "#custom_filters").prop("checked", false);
 		for (i = 0; i < filterArray.length; i++) {
 			if(globals.gSelectedFilters[filterArray[i]] === true) {
-				$("input[value='" + filter + "']", "#custom_filters").prop("checked", true);
+				$("input[value='" + filterArray[i] + "']", "#custom_filters").prop("checked", true);
 			}
 			$('table', '#choiceModal').removeClass("hide" + i);
 		}
@@ -201,6 +201,9 @@ define([
 					h[++idx] = '</form>';
 				h[++idx] = '</div>';
 				h[++idx] = '<div class="col-md-6">';
+					h[++idx] = '<button class="btn btn-primary pull-right exitOptions">';
+						h[++idx] = localise.set["c_back"];
+					h[++idx] = '</button>';
 					h[++idx] = '<div class="custom_filter_only" style="display:none;">';
 						h[++idx] = '<form role="form"">';
 						
@@ -330,13 +333,6 @@ define([
 		}
 	}
 	
-	/*
-	 * Show an error message if this option is in error
-	 * TODO
-	 */
-	function addOptionErrorMsg(msg) {
-		
-	}
 	
 	/*
 	 * One of the questions properties will be featured so that it can be edited in the header without expanding the question
@@ -364,12 +360,12 @@ define([
 						option.labels[globals.gLanguage].audioUrl, 
 						option.labels[globals.gLanguage].audioThumb);	
 			} else {
-		
 				h[++idx] = '<textarea class="labelProp has_tt" title="';
 				h[++idx] = localise.set["ed_clab"];
 				h[++idx] = '">';
 				h[++idx] = option.labels[globals.gLanguage].text;
 				h[++idx] = '</textarea>';
+				h[++idx] = addOptionErrorMsg(option.errorMsg);
 			}
 		
 		h[++idx] = '</td>';
@@ -551,6 +547,16 @@ define([
 	    h[++idx] = '</div>';
 	    
 	    return h.join("");
+	}
+	
+	function addOptionErrorMsg(msg) {
+		var h = [],
+			idx = -1;
+		
+		h[++idx] = '<div class="error-msg pull-right">';
+		h[++idx] = msg;
+		h[++idx] = '</div>';
+		return h.join("");
 	}
 	
 });

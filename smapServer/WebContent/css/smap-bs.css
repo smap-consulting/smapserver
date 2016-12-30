@@ -82,13 +82,13 @@ tr.deleted td a {
 	color: red !important;
 }
 
-#formList .error > .panel-heading, #formList .error.option {
+#formList .error > .panel-heading, #choiceModal .error.option {
 	color:#a94442;
 	background-color:#f2dede;
 	border-color:#ebccd1;
 }
 
-#formList .warning > .panel-heading, #formList .warning.option {
+#formList .warning > .panel-heading, #choiceModal .warning.option {
 	color:#a94442;
 	background-color:#ff8533;
 	border-color:#ebccd1;

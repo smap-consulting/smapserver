@@ -726,6 +726,10 @@ function refreshForm() {
  */
 function respondToEventsChoices($context) {
 	
+	$('.exitOptions', $context).off().click(function(){
+		$('.editorContent').toggle();;
+	});
+	
 	// Set option list value
 	$context.find('.option-lists', $context).each(function(index){
 		var $this = $(this),
@@ -783,23 +787,14 @@ function respondToEventsChoices($context) {
 	$context.find('.labelProp').change(function(){
 
 		var $this = $(this),
-			prop = $this.data("prop"),
-			$li = $this.closest('li'),
-			formIndex = $li.data("fid"),
-			itemIndex = $li.data("id"),
+			$elem = $this.closest('tr'),
+			formIndex = $elem.data("fid"),
+			itemIndex = $elem.data("id"),
 			newVal = $this.val(),
-			type,
-			optionList = $li.data("list_name"),
-			qname = $li.data("qname");
+			optionList = $elem.data("list_name"),
+			qname = $elem.data("qname");
 		
-		if($li.hasClass("option")) {
-			type = "option";
-		} else {
-			type = "question";
-		}
-
-		var labelType = prop === "hint" ? "hint" : "text";
-		updateLabel(type, formIndex, itemIndex, optionList, labelType, newVal, qname, prop); 
+		updateLabel("option", formIndex, itemIndex, optionList, "text", newVal, qname, "label"); 
 
 	});
 	
@@ -817,10 +812,10 @@ function respondToEventsChoices($context) {
 	$context.find('.oname').keyup(function(){
 
 		var $this = $(this),
-			$li = $this.closest('li');
-			formIndex = $li.data("fid"),
-			itemIndex = $li.data("id"),
-			listName = $li.data("list_name"),
+			$elem = $this.closest('tr');
+			formIndex = $elem.data("fid"),
+			itemIndex = $elem.data("id"),
+			listName = $elem.data("list_name"),
 			newVal = $this.val();
 		
 		changeset.validateName(listName, itemIndex, newVal, "option", true);
@@ -1108,7 +1103,7 @@ function respondToEvents($context) {
 		$context = option.refreshChoiceModal();
 		respondToEventsChoices($context);
 		
-		$('#choiceModal').modal("show");
+		$('.editorContent').toggle();
 	});
 	
 	
@@ -1207,15 +1202,9 @@ function respondToEvents($context) {
 			type,
 			optionList = $li.data("list_name"),
 			qname = $li.data("qname");
-		
-		if($li.hasClass("option")) {
-			type = "option";
-		} else {
-			type = "question";
-		}
 
 		var labelType = prop === "hint" ? "hint" : "text";
-		updateLabel(type, formIndex, itemIndex, optionList, labelType, newVal, qname, prop); 
+		updateLabel("question", formIndex, itemIndex, optionList, labelType, newVal, qname, prop); 
 
 	});
 	
