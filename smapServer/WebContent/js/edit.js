@@ -952,9 +952,9 @@ function respondToEventsChoices($context) {
 		
 
 		ev.dataTransfer.setData("text", $elem.closest('li').data('id'));
-		gDragSourceId = $elem.closest('li').data('id');
+		gDragSourceId = $elem.closest('tr').data('id');
 		
-		console.log("Draggable item id: " + $elem.closest('li').data('id'));
+		console.log("Draggable item id: " + $elem.closest('tr').data('id'));
 		//$('.dropon.add_option').addClass("add_drop_button").removeClass("add_button");
 		
 		return true;
@@ -985,12 +985,16 @@ function respondToEventsChoices($context) {
 	.on('dragenter', function(evt){
 		var ev = evt.originalEvent,
 			$elem = $(ev.target),	
-			targetId = $elem.closest('tr').data('id');
+			targetId = $elem.closest('tr').data('id'),
+			btnId = $elem.data('id');
 		
 		$('tr', '#choiceModal').removeClass("over_drop_elem");
 		if(typeof(targetId) !== "undefined" && targetId != gDragSourceId) {
 			ev.preventDefault();	
 			$elem.closest('tr').addClass("over_drop_elem");
+		} else if(typeof(btnId) !== "undefined" && btnId == -1) {
+			ev.preventDefault();
+			$elem.addClass("over_drop_button").removeClass("add_button");
 		}
 	
 	})
@@ -1001,11 +1005,14 @@ function respondToEventsChoices($context) {
 		
 		var ev = evt.originalEvent,
 			$elem = $(ev.target),
-			targetId = $elem.closest('li').data('id');
+			targetId = $elem.closest('tr').data('id'),
+			btnId = $elem.data('id');
 		
-		if(typeof(targetId) === "undefined") {
+		if(typeof(btnId) !== "undefined" && btnId == -1) {
+			$elem.addClass("add_button").removeClass("over_drop_button");
+		} else if(typeof(targetId) === "undefined") {
 			$('tr', '#choiceModal').removeClass("over_drop_elem");
-		}
+		} 
 		
 		
 	})
@@ -1021,30 +1028,31 @@ function respondToEventsChoices($context) {
 	.off('drop')
 	.on('drop', function(evt){
 		var ev = evt.originalEvent,
-			$targetElem = $(ev.target).closest('tr'),
+			$elem = $(ev.target),
+			$targetElem = $elem.closest('tr'),
 			$sourceElem,
-			sourceId = parseInt(ev.dataTransfer.getData("text")),
+			sourceId = gDragSourceId,
 			targetId = $targetElem.data('id'),
+			btnId = $elem.data('id'),
 			listName = $targetElem.data('list_name'),
 			$context,
-			$ref,
-			elemBeforeTarget = $targetElem.prev('tr').data('id');
+			$elemBeforeTarget = $targetElem.prev('tr'),
+			elemBeforeTargetId = $elemBeforeTarget.data('id'),
+			$choiceBeforeButton = $("tr", "#choiceModal").last();
 	
 		ev.preventDefault();
 		ev.stopPropagation();
 		 
-		console.log("Dropped option: " + sourceId +  " : " + targetId + " : " + elemBeforeTarget);
 		
 		$('tr', '#choiceModal').removeClass("over_drop_elem");		
-		if(sourceId === targetId || sourceId === elemBeforeTarget) {
+		if(sourceId === targetId || sourceId === elemBeforeTargetId) {
 			// Dropped on itself do not move
 		} else {
 			
-			if(targetId === -1) {
+			if(btnId === -1) {
 				// Dropped on final add choice button
-				$ref = $targetElem.prev('li');
-				targetId = elemBeforeTarget;
-				listName = $ref.data('list_name')
+				targetId = $choiceBeforeButton.data('id');
+				listName = $choiceBeforeButton.data('list_name')
 				$context = question.moveBeforeOption(listName, sourceId, listName, targetId, "after");
 			} else {
 				$context = question.moveBeforeOption(listName, sourceId, listName, targetId, "before");
@@ -1249,37 +1257,6 @@ function respondToEvents($context) {
 
 	});
 	
-	// validate the option name
-	/*
-	$context.find('.oname').keyup(function(){
-
-		var $this = $(this),
-			$li = $this.closest('li');
-			formIndex = $li.data("fid"),
-			itemIndex = $li.data("id"),
-			listName = $li.data("list_name"),
-			newVal = $this.val();
-		
-		changeset.validateName(listName, itemIndex, newVal, "option", true);
-		changeset.updateModelWithErrorStatus(listName, itemIndex, "option");		// Update model and DOM
-
-	});
-	
-	// validate the optionlist name
-	$context.find('.olname').keyup(function(){
-
-		var $this = $(this),
-			$li = $this.closest('li'),
-			itemIndex = $li.prop("id"),
-			listName = $li.data("list_name"),
-			newVal = $this.val();
-		
-		changeset.validateName(listName, itemIndex, newVal, "optionlist", true);
-		changeset.updateModelWithErrorStatus(listName, itemIndex, "optionlist");		// Update model and DOM
-
-	});
-	*/
-	
 	// Update the question name
 	$context.find('.qname').change(function(){
 
@@ -1292,41 +1269,6 @@ function respondToEvents($context) {
 		updateLabel("question", formIndex, itemIndex, undefined, "text", newVal, undefined, "name") ;
 
 	});
-	
-	// Update the option name
-	/*
-	$context.find('.oname').change(function(){
-
-		var $this = $(this),
-			$li = $this.closest('li'),
-			listName = $li.data("list_name"),
-			formIndex = $li.data("fid"),
-			itemIndex = $li.data("id"),
-			qname = $li.data("qname"),
-			newVal = $this.val();
-		
-		updateLabel("option", formIndex, itemIndex, listName, "text", newVal, qname, "value") ;
-		
-	});
-	
-	// Update the option list name
-	$context.find('.olname').change(function(){
-
-		var $this = $(this),
-			$li = $this.closest('li'),
-			oldVal = $li.data("list_name"),
-			newVal = $this.val();
-		
-		// Only apply the update if there is no error on this option list
-		if(!$li.hasClass("error")) {
-			$li.data("list_name", newVal);	// First update the html
-			$('button.add_option',$li).data("list_name", newVal).removeClass('l_' + oldVal)
-				.addClass('l_' + newVal);
-			updateLabel("optionlist", undefined, undefined, undefined, "text", newVal, oldVal, "name") ;
-		}
-
-	});
-	*/
 	
 	// Selected a media property
 	$context.find('.mediaProp').off().click(function(){
@@ -1398,46 +1340,6 @@ function respondToEvents($context) {
 		
 	});
 	
-	// Add new option
-	/*
-	$context.find('.add_option').off().click(function() {
-		var $this = $(this),
-			$context,						// Updated Html
-			oId = $this.data("oid"),
-			fId = $this.data("fid"),
-			qname = $this.data("qname"),
-			list_name = $this.data("list_name"),
-			locn = $this.data("locn");	// Add before or after the element id referenced by oId
-		
-		console.log("Add an option");
-		$context = question.addOption($this, oId, locn, list_name, fId, qname);
-		respondToEvents($context);				// Add events on to the altered html
-		if($context.attr("id") !== "formList") {
-			respondToEvents($context.prev());		// Add events on the "insert before" button
-		}
-		
-		// Set focus to the new option
-		$context.find('textarea').focus();			// Set focus to the new option
-	
-	});
-	
-	
-	// Delete option
-	$context.find('.delete_option').off().click(function() {
-		var $this = $(this),
-			$context,						// Updated Html
-			index = $this.data("id"),
-			list_name = $this.data("list_name");
-		
-		bootbox.confirm(localise.set["msg_del_c"], function(result) {
-			if(result) {
-				$context = question.deleteOption(index, list_name);
-			}
-		}); 
-		
-		
-	});
-	*/
 	// Select types
 	$context.find('.question_type').off().click(function() {
 		
@@ -1538,7 +1440,7 @@ function respondToEvents($context) {
 			$elem = $(ev.target),	
 			targetId = $elem.data('qid');
 		
-		$elem.addClass("over_drop_button").removeClass("add_button").addClass("add_frop_button");
+		$elem.addClass("over_drop_button").removeClass("add_button").addClass("add_drop_button");
 	
 	})
 	
