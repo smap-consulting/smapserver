@@ -832,9 +832,9 @@ function respondToEventsChoices($context) {
 	$context.find('.olname').keyup(function(){
 
 		var $this = $(this),
-			$li = $this.closest('.question_head'),
-			itemIndex = $li.prop("id"),
-			listName = $li.data("list_name"),
+			$elem = $this.closest('.question_head'),
+			itemIndex = $elem.prop("id"),
+			listName = $elem.data("list_name"),
 			newVal = $this.val();
 		
 		changeset.validateName(listName, itemIndex, newVal, "optionlist", true);
@@ -846,14 +846,37 @@ function respondToEventsChoices($context) {
 	$context.find('.oname').change(function(){
 
 		var $this = $(this),
-			$li = $this.closest('li'),
-			listName = $li.data("list_name"),
-			formIndex = $li.data("fid"),
-			itemIndex = $li.data("id"),
-			qname = $li.data("qname"),
+			$elem = $this.closest('tr'),
+			listName = $elem.data("list_name"),
+			formIndex = $elem.data("fid"),
+			itemIndex = $elem.data("id"),
+			qname = $elem.data("qname"),
 			newVal = $this.val();
 		
 		updateLabel("option", formIndex, itemIndex, listName, "text", newVal, qname, "value") ;
+		
+	});
+	
+	// Update the filter values
+	$context.find('.filter').change(function(){
+
+		var $this = $(this),
+			$elem = $this.closest('tr'),
+			$f = $this.closest('td'),
+			listName = $elem.data("list_name"),
+			formIndex = $elem.data("fid"),
+			itemIndex = $elem.data("id"),
+			qname = $elem.data("qname"),
+			currentFilters = $elem.data("filters"),
+			filterName = $f.data("f_name"),
+			fVal = $this.val(),
+			newVal;
+		
+		newVal = currentFilters;
+		newVal[filterName] = fVal;
+		$elem.data("filters", newVal);
+		
+		updateLabel("option", formIndex, itemIndex, listName, "text", newVal, qname, "cascadeKeyValues") ;
 		
 	});
 	

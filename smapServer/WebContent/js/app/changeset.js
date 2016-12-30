@@ -279,6 +279,14 @@ define([
 				if(item_orig) {
 					change.property.oldVal = item_orig[change.property.prop];
 				}
+				
+				/*
+				 * Filter values should be saved as a json string
+				 */
+				if(change.property.type === "option" && change.property.prop === "cascadeKeyValues") {
+					change.property.newVal = JSON.stringify(change.property.newVal);
+					change.property.oldVal = JSON.stringify(change.property.oldVal);
+				}
 			}
 				
 			change.property.languageName = survey.languages[change.property.language].name;			// For logging the event
@@ -663,7 +671,7 @@ define([
 				option[property.prop] = property.newVal;	
 				
 				if(property.propType === "text") {
-					if(property.prop !== "value" 
+					if(property.prop === "label" 
 						|| !survey.optionLists[property.optionList].options[property.itemIndex].labels[property.language][property.propType]
 						|| survey.optionLists[property.optionList].options[property.itemIndex].labels[property.language][property.propType] === "") {
 							survey.optionLists[property.optionList].options[property.itemIndex].labels[property.language][property.propType] = property.newVal;

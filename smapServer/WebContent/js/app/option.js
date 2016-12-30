@@ -94,7 +94,9 @@ define([
 		h[++idx] = qname;
 		h[++idx] = '" data-list_name="';
 		h[++idx] = list_name;
-		h[++idx] = '">';
+		h[++idx] = '" data-filters=';
+		h[++idx] = JSON.stringify(option.cascadeKeyValues);
+		h[++idx] = '>';
 		
 		h[++idx] = addOptionErrorMsg(option.errorMsg);
 		
@@ -463,6 +465,8 @@ define([
 		for(i = 0; i < filterArray.length; i++) {
 			h[++idx] = '<td class="f';		// Class to hide / show filter
 			h[++idx] = i;
+			h[++idx] = '" data-f_name="';
+			h[++idx] = filterArray[i];
 			h[++idx] = '">';
 			h[++idx] = '<input class="filter form-control has_tt" value="';
 			h[++idx] = filters[filterArray[i]];
