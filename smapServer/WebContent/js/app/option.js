@@ -33,7 +33,8 @@ define([
 
 	return {	
 		refreshChoiceModal: refreshChoiceModal,
-		addOneOption: addOneOption
+		addOneOption: addOneOption,
+		resetFilterColumns: resetFilterColumns
 	};
 	
 	var filterArray = [];
@@ -63,8 +64,8 @@ define([
 		for (i = 0; i < filterArray.length; i++) {
 			if(globals.gSelectedFilters[filterArray[i]] === true) {
 				$("input[value='" + filterArray[i] + "']", "#custom_filters").prop("checked", true);
+				$('table', '#choiceModal').removeClass("hide" + i);
 			}
-			$('table', '#choiceModal').removeClass("hide" + i);
 		}
 		
 		return $context;
@@ -97,8 +98,6 @@ define([
 		h[++idx] = '" data-filters=';
 		h[++idx] = JSON.stringify(option.cascade_filters);
 		h[++idx] = '>';
-		
-		h[++idx] = addOptionErrorMsg(option.errorMsg);
 		
 			
 			// Add option name and value cell
@@ -144,6 +143,19 @@ define([
 
 	
 		return h.join("");
+	}
+	
+	function resetFilterColumns() {
+		var i;
+		
+		for (i = 0; i < filterArray.length; i++) {
+			if(globals.gSelectedFilters[filterArray[i]] === true) {
+				$('table', '#choiceModal').removeClass("hide" + i);
+			} else {
+				$('table', '#choiceModal').addClass("hide" + i);
+			}
+			
+		}
 	}
 	
 	/*

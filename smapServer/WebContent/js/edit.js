@@ -767,6 +767,14 @@ function respondToEventsChoices($context) {
 		}
 	});
 	
+	$('input', '#custom_filters').off().change(function(){
+		var $this = $(this);
+		
+		globals.gSelectedFilters[$this.val()] = $this.prop("checked");
+		option.resetFilterColumns();
+		
+	});
+	
 	// Option list change
 	$context.find('.option-lists').off().change(function(){
 		var $this = $(this),
