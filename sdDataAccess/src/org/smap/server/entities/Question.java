@@ -54,6 +54,8 @@ public class Question {
 	private int seq = -1;
 	
 	private int l_id;
+	
+	private String listname;
 
 	private boolean published;
 
@@ -150,6 +152,10 @@ public class Question {
 	
 	public int getListId() {
 		return l_id;
+	}
+	
+	public String getListName() {
+		return listname;
 	}
 	
 	public boolean isPublished() {
@@ -321,6 +327,13 @@ public class Question {
 		l_id = v;
 	}
 	
+	/*
+	 * Applicable to select type questions, the list id links the question to the set of choices
+	 * A list id will already be set if the question was read from the database else the question came from an xml file
+	 * If no list id then
+	 *   If a listname has been set for the question use the list id for that list, creating it if the list has not already been created
+	 *   Else create a list based on the question name
+	 */
 	public void setListId(Connection sd, int sId) {
 		
 		if(this.l_id == 0) {		// No list has been set for this question
@@ -328,46 +341,52 @@ public class Question {
 			// Create a list name if the question is a select type
 			if(this.qType.startsWith("select")) {
 				
-				String sqlCheck = "select count(*) from listname where s_id = ? and name = ?;";
+				String sqlCheck = "select l_id from listname where s_id = ? and name = ?;";
+				PreparedStatement pstmtCheck = null;
 				
 				String sql = "insert into listname (s_id, name) values(?, ?);";
-				PreparedStatement pstmt = null;
+				PreparedStatement pstmtCreate = null;
 				
 				try {
-					String listname = this.name;
 					
-					// Cater for the situation where the select question name is not unique
-					pstmt = sd.prepareStatement(sqlCheck);
-					pstmt.setInt(1, sId);
-					pstmt.setString(2, listname);
-					ResultSet rs = pstmt.executeQuery();
-					if(rs.next()) {
-						int count = rs.getInt(1);
-						if(count > 0) {
-							String rand  = String.valueOf(UUID.randomUUID());
-							rand = rand.substring(0, 3);
-							listname += "_" + rand;
-						}
+					// Set the list name to the question name if a list name has not already been specified
+					if(listname == null) {
+						listname = this.name;
 					}
 					
-					// Add the new list
-					if(pstmt != null) try {pstmt.close();} catch(Exception e) {};
-					pstmt = sd.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
-					pstmt.setInt(1, sId);
-					pstmt.setString(2, listname);
-					pstmt.executeUpdate();
-					
-					rs = pstmt.getGeneratedKeys();
-					rs.next();
-					this.l_id = rs.getInt(1);
-					
+					// Get the list id for this list
+					pstmtCheck = sd.prepareStatement(sqlCheck);
+					pstmtCheck.setInt(1, sId);
+					pstmtCheck.setString(2, listname);
+					ResultSet rs = pstmtCheck.executeQuery();
+					if(rs.next()) {
+						this.l_id = rs.getInt(1);
+					} else {
+						pstmtCreate = sd.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+						pstmtCreate.setInt(1, sId);
+						pstmtCreate.setString(2, listname);
+						pstmtCreate.executeUpdate();
+						
+						ResultSet rsCreate = pstmtCreate.getGeneratedKeys();
+						rsCreate.next();
+						this.l_id = rsCreate.getInt(1);
+					}
+			
 				} catch (Exception e) {
 					e.printStackTrace();
 				} finally {
-					if(pstmt != null) try {pstmt.close();} catch(Exception e) {};
+					if(pstmtCreate != null) try {pstmtCreate.close();} catch(Exception e) {};
 				}
 			}
 			
+		} else {
+			// Get the list name
+			try {
+				this.listname = GeneralUtilityMethods.getListName(sd, this.l_id);
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 		
 	}
@@ -503,6 +522,7 @@ public class Question {
 	
 	public void setCascadeInstance(String v) {
 		cascade_instance = v;
+		listname = v;
 	}
 	
 	public void setAutoPlay(String v) {

@@ -217,8 +217,22 @@ define([
 						h[++idx] = localise.set["c_back"];
 					h[++idx] = '</button>';
 					h[++idx] = '<div class="custom_filter_only" style="display:none;">';
-						h[++idx] = '<form role="form"">';
+						h[++idx] = '<form role="form" class="form-horizontal">';
 						
+							h[++idx] = '<div class="form-group">';
+								h[++idx] = '<label class="col-sm-2">';
+								h[++idx] = localise.set["ed_choice_f"];
+								h[++idx] = '</label>';
+								h[++idx] = '<div class="col-sm-8">';
+									h[++idx] = '<textarea id="choiceFilter" class="input-block" form-control has_tt" type="text">';
+									h[++idx] = question.choice_filter;
+									h[++idx] = '</textarea>';
+								h[++idx] = '</div>';
+							h[++idx] = '</div>';
+							
+							
+				
+								
 							h[++idx] = '<div id="custom_filters">';
 							filterArray = [];
 							for(filter in filters) {

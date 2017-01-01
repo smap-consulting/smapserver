@@ -787,6 +787,18 @@ function respondToEventsChoices($context) {
 		updateLabel("question", formIndex, itemIndex, undefined, "text", $this.val(), undefined, "list_name") ;
 	});
 	
+	// Choice filter change
+	$context.find('#choiceFilter').off().change(function(){
+		var $this = $(this),
+			$elem = $this.closest('.question_head'),
+			formIndex = $elem.data("fid"),
+			itemIndex = $elem.data("id"),
+			survey = globals.model.survey,
+			question;
+	
+		updateLabel("question", formIndex, itemIndex, undefined, "text", $this.val(), undefined, "nodeset") ;
+	});
+	
 	// Add tooltips
 	$context.find('.has_tt').tooltip();
 	

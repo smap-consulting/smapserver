@@ -513,6 +513,7 @@ define({
 	"ed_clab": "Choice Label",
 	"ed_cval": "Choice Value",
 	"ed_fv": "Filter Value",
+	"ed_choice_f": "Choice Filter",
 	
 	// Managed Forms
 	"mf_fd": "Form Data",

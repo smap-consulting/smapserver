@@ -1649,6 +1649,13 @@ public class SurveyManager {
 							ci.property.newVal = "0";
 						}
 						
+					} else if(ci.property.prop.equals("nodeset")) {
+						// Convert the passed in filter to a nodeset
+						String listname = GeneralUtilityMethods.getListNameForQuestion(sd, ci.property.qId);
+						ci.property.newVal = GeneralUtilityMethods.getNodesetFromChoiceFilter(ci.property.newVal, listname);
+						
+						System.out.println("write to nodeset based on listname and filter: " + ci.property.newVal);
+						
 					} else if(ci.property.type.equals("optionlist")) {
 						// Get the list id for this option list
 						String sqlGetListId = "select l_id from listname where s_id = ? and name = ?;";

@@ -155,9 +155,13 @@ public class QuestionManager {
 				+ "constraint_msg, "
 				+ "required_msg, "
 				+ "autoplay, "
-				+ "accuracy"
+				+ "accuracy,"
+				+ "nodeset,"
+				+ "nodeset_value,"
+				+ "nodeset_label,"
+				+ "cascade_instance"
 				+ ") " 
-				+ "values (nextval('q_seq'), ?, ?, ?, ?, ?, ?, ?, ?, ?, ? ,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);";
+				+ "values (nextval('q_seq'), ?, ?, ?, ?, ?, ?, ?, ?, ?, ? ,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);";
 		
 		PreparedStatement pstmtUpdateSeq = null;
 		String sqlUpdateSeq = "update question set seq = seq + 1 where f_id = ? and seq >= ?;";
@@ -273,6 +277,21 @@ public class QuestionManager {
 				pstmtInsertQuestion.setString(19, q.required_msg);
 				pstmtInsertQuestion.setString(20, q.autoplay);
 				pstmtInsertQuestion.setString(21, q.accuracy);
+				
+				String nodeset = null;
+				String nodeset_value = null;
+				String nodeset_label = null;
+				String cascade_instance = null;
+				if(q.type.startsWith("select")) {
+					nodeset = GeneralUtilityMethods.getNodesetFromChoiceFilter(q.choice_filter, q.list_name);
+					nodeset_value = "name";
+					nodeset_label = "jr:itext(itextId)";
+					cascade_instance = q.list_name;
+				}
+				pstmtInsertQuestion.setString(22, nodeset);
+				pstmtInsertQuestion.setString(23, nodeset_value);
+				pstmtInsertQuestion.setString(24, nodeset_label);
+				pstmtInsertQuestion.setString(25, cascade_instance);
 				
 				log.info("Insert question: " + pstmtInsertQuestion.toString());
 				pstmtInsertQuestion.executeUpdate();
