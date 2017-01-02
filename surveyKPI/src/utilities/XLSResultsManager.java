@@ -52,6 +52,7 @@ import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.managers.LogManager;
+import org.smap.sdal.managers.SurveyManager;
 import org.smap.sdal.model.TableColumn;
 import surveyKPI.ExportSurveyXls;
 
@@ -242,19 +243,6 @@ public class XLSResultsManager {
 				ArrayList <FormDesc> formList = new ArrayList<FormDesc> ();					// A list of all the forms
 				FormDesc topForm = null;	
 				
-				/*
-				 * Get the details on the date filter
-				 */
-				if(dateId > 0) {
-					String sqlDateFilter = "select f_id, column_name from question where q_id = ?";
-					pstmtDateFilter = sd.prepareStatement(sqlDateFilter);
-					pstmtDateFilter.setInt(1, dateId);
-					ResultSet rs = pstmtDateFilter.executeQuery();
-					if(rs.next()) {
-						dateForm = rs.getInt("f_id");
-						dateName = rs.getString("column_name");
-					}
-				}
 				
 				/*
 				 * Get the tables / forms in this survey 
@@ -296,6 +284,24 @@ public class XLSResultsManager {
 					fd.maxRepeats = 1;	// Default
 					if(fd.flat && fd.parent != null) {
 						fd.maxRepeats = getMaxRepeats(sd, connectionResults, sId, Integer.parseInt(fd.f_id));
+					}
+				}
+				
+				/*
+				 * Get the details on the date filter
+				 */
+				if(dateId == SurveyManager.UPLOAD_TIME_ID) {
+					dateForm = Integer.parseInt(topForm.f_id);
+					dateName = "_upload_time";
+				} else if(dateId > 0) {
+					
+					String sqlDateFilter = "select f_id, column_name from question where q_id = ?";
+					pstmtDateFilter = sd.prepareStatement(sqlDateFilter);
+					pstmtDateFilter.setInt(1, dateId);
+					ResultSet rs = pstmtDateFilter.executeQuery();
+					if(rs.next()) {
+						dateForm = rs.getInt("f_id");
+						dateName = rs.getString("column_name");
 					}
 				}
 				

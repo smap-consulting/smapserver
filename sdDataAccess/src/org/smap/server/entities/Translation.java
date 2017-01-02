@@ -87,8 +87,8 @@ public class Translation implements Serializable{
 	}
 	
 	// Return the value embedded in markup
-	public String getValueXML(HashMap<String, String> questionPaths) throws Exception {
-		return "<t>" + UtilityMethods.convertAllxlsNames(value, true, questionPaths) + "</t>";
+	public String getValueXML(HashMap<String, String> questionPaths, int f_id) throws Exception {
+		return "<t>" + UtilityMethods.convertAllxlsNames(value, true, questionPaths, f_id) + "</t>";
 	}
 	
 	public boolean getEnabled() {

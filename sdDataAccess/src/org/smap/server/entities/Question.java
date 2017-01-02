@@ -220,7 +220,7 @@ public class Question {
 		String v = relevant;
 		
 		if(convertToXPath) {
-			v = UtilityMethods.convertAllxlsNames(v, false, questionPaths);
+			v = UtilityMethods.convertAllxlsNames(v, false, questionPaths, f_id);
 		}
 		return v;
 	}
@@ -229,7 +229,7 @@ public class Question {
 		String v = calculate;
 		
 		if(convertToXPath) {
-			v = UtilityMethods.convertAllxlsNames(v, false, questionPaths);
+			v = UtilityMethods.convertAllxlsNames(v, false, questionPaths, f_id);
 		}
 		
 		return v;
@@ -239,7 +239,7 @@ public class Question {
 		String v = constraint;
 		
 		if(convertToXPath) {
-			v = UtilityMethods.convertAllxlsNames(v, false, questionPaths);
+			v = UtilityMethods.convertAllxlsNames(v, false, questionPaths, f_id);
 		}
 		
 		return v;
@@ -258,7 +258,7 @@ public class Question {
 		String v = appearance;
 		
 		if(convertToXPath) {
-			v = UtilityMethods.convertAllxlsNames(v, false, questionPaths);
+			v = UtilityMethods.convertAllxlsNames(v, false, questionPaths, f_id);
 		}
 		
 		return v;

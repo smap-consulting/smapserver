@@ -29,6 +29,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.smap.sdal.managers.RoleManager;
+import org.smap.sdal.managers.SurveyManager;
 import org.smap.sdal.model.ChangeItem;
 import org.smap.sdal.model.Form;
 import org.smap.sdal.model.KeyValue;
@@ -1226,21 +1227,25 @@ public class GeneralUtilityMethods {
 		
 		PreparedStatement pstmt = null;
 		
-		try {
-		
-			pstmt = sd.prepareStatement(sql);
-			pstmt.setInt(1, sId);
-			pstmt.setInt(2, qId);
-			ResultSet rs = pstmt.executeQuery();
-			if(rs.next()) {
-				column_name = rs.getString(1);	
-			}
+		if(qId == SurveyManager.UPLOAD_TIME_ID) {
+			column_name = "_upload_time";
+		} else {
+			try {
 			
-		} catch(SQLException e) {
-			log.log(Level.SEVERE,"Error", e);
-			throw e;
-		} finally {
-			try {if (pstmt != null) { pstmt.close();}} catch (SQLException e) {}
+				pstmt = sd.prepareStatement(sql);
+				pstmt.setInt(1, sId);
+				pstmt.setInt(2, qId);
+				ResultSet rs = pstmt.executeQuery();
+				if(rs.next()) {
+					column_name = rs.getString(1);	
+				}
+				
+			} catch(SQLException e) {
+				log.log(Level.SEVERE,"Error", e);
+				throw e;
+			} finally {
+				try {if (pstmt != null) { pstmt.close();}} catch (SQLException e) {}
+			}
 		}
 		
 		return column_name;
