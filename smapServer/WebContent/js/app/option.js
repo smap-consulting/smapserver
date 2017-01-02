@@ -99,6 +99,15 @@ define([
 		h[++idx] = JSON.stringify(option.cascade_filters);
 		h[++idx] = '>';
 		
+			// Add select for cascade selects
+			h[++idx] = '<td class="cascade">';
+				h[++idx] = '<input type="checkbox" name="isSelected" value="';
+				h[++idx] = "";
+				h[++idx] = '" ';
+				if(idx !== false) {
+					h[++idx] = 'checked="checked"';
+				} 
+			h[++idx] = '</td>';
 			
 			// Add option name and value cell
 			h[++idx] = '<td>';
@@ -219,41 +228,75 @@ define([
 					h[++idx] = '<div class="custom_filter_only" style="display:none;">';
 						h[++idx] = '<form role="form" class="form-horizontal">';
 						
+							if(!listName) {
+								h[++idx] = '<div class="form-group">';
+									h[++idx] = '<label class="col-sm-2">';
+									h[++idx] = localise.set["ed_choice_f"];
+									h[++idx] = '</label>';
+									h[++idx] = '<div class="col-sm-8">';
+										h[++idx] = '<textarea id="choiceFilter" class="input-block" form-control has_tt" type="text">';
+										h[++idx] = question.choice_filter;
+										h[++idx] = '</textarea>';
+									h[++idx] = '</div>';
+								h[++idx] = '</div>';
+							}
+							
+							h[++idx] = '<div id="custom_filters">';
+								filterArray = [];
+								for(filter in filters) {
+									filterArray.push(filter);	// Save filters as ordered array
+									h[++idx] = '<div class="checkbox">';
+								    h[++idx] = '<label>';
+								      h[++idx] = '<input type="checkbox" value="';
+								      h[++idx] = filter;
+								      h[++idx] = '"> ';
+								      h[++idx] = filter
+								    h[++idx] = '</label>';
+								    h[++idx] = '</div>';
+								}
+								h[++idx] = '<button class="btn btn-block btn-default">';
+								h[++idx] = localise.set["ed_afc"];
+								h[++idx] = '</button>';
+							h[++idx] = '</div>';
+						h[++idx] = '</form>';
+					h[++idx] = '</div>';  // Custom filter only
+					
+					h[++idx] = '<div class="cascade_filter_only" style="display:none;">';
+						h[++idx] = '<form role="form" class="form-horizontal">';
+
 							h[++idx] = '<div class="form-group">';
 								h[++idx] = '<label class="col-sm-2">';
-								h[++idx] = localise.set["ed_choice_f"];
+									h[++idx] = localise.set["ed_cspq"];
 								h[++idx] = '</label>';
-								h[++idx] = '<div class="col-sm-8">';
-									h[++idx] = '<textarea id="choiceFilter" class="input-block" form-control has_tt" type="text">';
-									h[++idx] = question.choice_filter;
-									h[++idx] = '</textarea>';
+								h[++idx] = '<div class="col-sm-10">';
+									h[++idx] = '<select class="form-control" id="previousSelect">';
+							
+										h[++idx] = '<option value="x">';
+										h[++idx] = "a question";
+										h[++idx] = '</option>';
+										
+									h[++idx] = '</select>';
 								h[++idx] = '</div>';
 							h[++idx] = '</div>';
-							
-							
-				
+			
+							h[++idx] = '<div class="form-group">';
+								h[++idx] = '<div id="cascade_filters">';
+									h[++idx] = '<label class="col-sm-2">';
+										h[++idx] = localise.set["ed_csp"];
+									h[++idx] = '</label>';
+									h[++idx] = '<div class="col-sm-10">';
+										h[++idx] = '<select class="form-control" id="previousSelect">';
 								
-							h[++idx] = '<div id="custom_filters">';
-							filterArray = [];
-							for(filter in filters) {
-								filterArray.push(filter);	// Save filters as ordered array
-								h[++idx] = '<div class="checkbox">';
-							    h[++idx] = '<label>';
-							      h[++idx] = '<input type="checkbox" value="';
-							      h[++idx] = filter;
-							      h[++idx] = '"> ';
-							      h[++idx] = filter
-							    h[++idx] = '</label>';
-							    h[++idx] = '</div>';
-							}
+											h[++idx] = '<option value="x">';
+											h[++idx] = "a question";
+											h[++idx] = '</option>';
+											
+										h[++idx] = '</select>';
+									h[++idx] = '</div>';
+								h[++idx] = '</div>';
 							h[++idx] = '</div>';
-							
-							h[+idx] = '<button class="btn btn-block btn-default">';
-							h[++idx] = localise.set["ed_afc"];
-							h[++idx] = '</button>';
-						
 						h[++idx] = '</form>';
-					h[++idx] = '</div>';
+					h[++idx] = '</div>';	// Cascade filter only
 				h[++idx] = '</div>';
 			h[++idx] = '</div>';
 		h[++idx] = '</div>';
@@ -302,6 +345,9 @@ define([
 			h[++idx] = '<table class="table notcustom hide0 hide1 hide2 hide3 hide4">';
 			
 			h[++idx] = '<thead class="thead-default"><tr>';
+			
+				h[++idx] = '<th class="cascade">';
+				h[++idx] = '</th>';
 			
 				h[++idx] = '<th>';
 				h[++idx] = '</th>';

@@ -656,6 +656,8 @@ choiceModal table {
 #choiceModal table.hide3 .f3 { display: none; } 
 #choiceModal table.hide4 .f4 { display: none; } 
 
+#choiceModal table.notcascade .cascade { display: none; }
+
 /* .modal-fullscreen size: we use Bootstrap media query breakpoints */
 
 

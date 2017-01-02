@@ -508,6 +508,8 @@ define({
 	"ed_aa": "Add After",
 	"ed_anc": "Add New Choice",
 	"ed_cs": "Cascading Select",
+	"ed_cspq": "Previous Select Question",
+	"ed_csp": "Previous Selection",
 	"ed_cf": "Custom Filter",
 	"ed_afc": "Add Filter Column",
 	"ed_clab": "Choice Label",

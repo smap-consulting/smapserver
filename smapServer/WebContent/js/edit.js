@@ -31,7 +31,8 @@ require.config({
     	bootbox: 'bootbox.min',
     	toggle: 'bootstrap-toggle.min',
     	moment: 'moment-with-locales.min',
-    	lang_location: '..'
+    	lang_location: '..',
+    	icheck: '/wb/plugins/iCheck/icheck.min'
 
     },
     shim: {
@@ -40,7 +41,8 @@ require.config({
         'jquery.autosize.min': ['jquery'],
         'bootstrap.file-input': ['bootstrap.min'],
     	'bootbox': ['bootstrap.min'],
-       	'toggle': ['bootstrap.min']
+       	'toggle': ['bootstrap.min'],
+    	'icheck': ['jquery']
         
     }
 });
@@ -60,7 +62,8 @@ require([
          'app/editorMarkup',
          'app/changeset',
          'app/option',
-         'moment'], 
+         'moment',
+         'icheck'], 
 		function(
 				$, 
 				common, 
@@ -755,15 +758,24 @@ function respondToEventsChoices($context) {
 		
 	});
 	
+	// Style checkboxes
+	$('[type="checkbox"]', '#choiceModal').iCheck({
+	    checkboxClass: 'icheckbox_square-green',
+	    radioClass: 'iradio_square-green'
+	});
+	
 	$('#filterType', $context).off().change(function(){
 		var $this = $(this);
 		
-		$('.custom_filter_only').hide();
+
 		if($this.val() === "custom") {
 			$('.custom_filter_only').show();
-			$('#choiceModal table').removeClass("notcustom");
+			$('.cascade_filter_only').hide();
+			$('#choiceModal table').addClass("notcascade").removeClass("notcustom");
 		} else {
-			$('#choiceModal table').addClass("notcustom");
+			$('.custom_filter_only').hide();
+			$('.cascade_filter_only').show();
+			$('#choiceModal table').removeClass("notcascade").addClass("notcustom");
 		}
 	});
 	
