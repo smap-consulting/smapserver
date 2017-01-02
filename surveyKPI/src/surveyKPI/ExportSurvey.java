@@ -30,6 +30,7 @@ import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.managers.LogManager;
 import org.smap.sdal.managers.RoleManager;
+import org.smap.sdal.managers.SurveyManager;
 import org.smap.sdal.model.SqlFrag;
 import org.smap.sdal.model.TableColumn;
 
@@ -846,7 +847,7 @@ public class ExportSurvey extends Application {
 		sql.append(" where _bad is false ");				
 		
 		String sqlRestrictToDateRange = null;
-		if(dateId > 0 && (f.parkey == null || f.parkey.equals("0"))) {	// Top level form with date filtering
+		if((dateId > 0 || dateId == SurveyManager.UPLOAD_TIME_ID)  && (f.parkey == null || f.parkey.equals("0"))) {	// Top level form with date filtering
 			String dateName = GeneralUtilityMethods.getColumnNameFromId(sd, sId, dateId);
 			sqlRestrictToDateRange = GeneralUtilityMethods.getDateRange(startDate, endDate, dateName);
 			if(sqlRestrictToDateRange.trim().length() > 0) {
