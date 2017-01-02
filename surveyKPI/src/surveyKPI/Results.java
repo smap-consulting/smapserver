@@ -39,6 +39,7 @@ import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.managers.LogManager;
+import org.smap.sdal.managers.SurveyManager;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;

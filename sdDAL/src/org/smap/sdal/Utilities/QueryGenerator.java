@@ -23,13 +23,10 @@ import java.sql.Connection;
 import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.logging.Logger;
-
-import javax.ws.rs.core.Response;
 
 import org.smap.sdal.managers.RoleManager;
 import org.smap.sdal.model.ColDesc;
@@ -217,7 +214,7 @@ public class QueryGenerator {
 		}
 		
 		String sqlRestrictToDateRange = null;
-		if(dateId > 0 ) {
+		if(dateId != 0) {
 			String dateName = GeneralUtilityMethods.getColumnNameFromId(connectionSD, sId, dateId);
 			sqlRestrictToDateRange = GeneralUtilityMethods.getDateRange(startDate, endDate, dateName);
 			if(sqlRestrictToDateRange.trim().length() > 0) {
