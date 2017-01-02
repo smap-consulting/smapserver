@@ -82,13 +82,13 @@ tr.deleted td a {
 	color: red !important;
 }
 
-#formList .error > .panel-heading, #choiceModal .error.option {
+#formList .error > .panel-heading, #choiceView .error.option {
 	color:#a94442;
 	background-color:#f2dede;
 	border-color:#ebccd1;
 }
 
-#formList .warning > .panel-heading, #choiceModal .warning.option {
+#formList .warning > .panel-heading, #choiceView .warning.option {
 	color:#a94442;
 	background-color:#ff8533;
 	border-color:#ebccd1;
@@ -229,7 +229,7 @@ tr.deleted td a {
 	z-index: 10;
 }
 
-#formList {
+#formList, #choiceView {
 	position: relative;
 	top: 55px;
 }
@@ -631,32 +631,28 @@ td.completed, td.submitted {
   filter: alpha(opacity=97);
 }
 
-choiceModal table {
-    width:auto;
-}
-
-#choiceModal table td:last-child{
+#choiceView table td:last-child{
     width:70%;
 }
 
-#choiceModal .table-responsive {
+#choiceView .table-responsive {
   overflow-x: visible !important;
   overflow-y: visible !important;
 }
 
 /* Allow up to 5 filter columns */
-#choiceModal table.notcustom .f0 { display: none; }
-#choiceModal table.notcustom .f1 { display: none; }
-#choiceModal table.notcustom .f2 { display: none; }
-#choiceModal table.notcustom .f3 { display: none; }
-#choiceModal table.notcustom .f4 { display: none; }
-#choiceModal table.hide0 .f0 { display: none; } 
-#choiceModal table.hide1 .f1 { display: none; } 
-#choiceModal table.hide2 .f2 { display: none; } 
-#choiceModal table.hide3 .f3 { display: none; } 
-#choiceModal table.hide4 .f4 { display: none; } 
+#choiceView table.notcustom .f0 { display: none; }
+#choiceView table.notcustom .f1 { display: none; }
+#choiceView table.notcustom .f2 { display: none; }
+#choiceView table.notcustom .f3 { display: none; }
+#choiceView table.notcustom .f4 { display: none; }
+#choiceView table.hide0 .f0 { display: none; } 
+#choiceView table.hide1 .f1 { display: none; } 
+#choiceView table.hide2 .f2 { display: none; } 
+#choiceView table.hide3 .f3 { display: none; } 
+#choiceView table.hide4 .f4 { display: none; } 
 
-#choiceModal table.notcascade .cascade { display: none; }
+#choiceView table.notcascade .cascade { display: none; }
 
 /* .modal-fullscreen size: we use Bootstrap media query breakpoints */
 

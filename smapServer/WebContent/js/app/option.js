@@ -32,7 +32,7 @@ define([
 		function($, modernizr, lang, globals, markup, changeset) {
 
 	return {	
-		refreshChoiceModal: refreshChoiceModal,
+		refreshChoiceView: refreshChoiceView,
 		addOneOption: addOneOption,
 		resetFilterColumns: resetFilterColumns
 	};
@@ -42,9 +42,9 @@ define([
 	/*
 	 * Refresh the choices shown in the choice modal
 	 */
-	function refreshChoiceModal() {
+	function refreshChoiceView() {
 		
-		var $context = $('#choiceModal').find('.modal-body'),
+		var $context = $('#choiceView').find('.choice-content'),
 			survey = globals.model.survey,
 			question,
 			filter;
@@ -64,9 +64,15 @@ define([
 		for (i = 0; i < filterArray.length; i++) {
 			if(globals.gSelectedFilters[filterArray[i]] === true) {
 				$("input[value='" + filterArray[i] + "']", "#custom_filters").prop("checked", true);
-				$('table', '#choiceModal').removeClass("hide" + i);
+				$('table', '#choiceView').removeClass("hide" + i);
 			}
 		}
+		
+		// Set the custom filter view by default
+		$('#filterType').val("custom");
+		$('.custom_filter_only').show();
+		$('.cascade_filter_only').hide();
+		$('#choiceView table').addClass("notcascade").removeClass("notcustom");
 		
 		return $context;
 	}
@@ -159,9 +165,9 @@ define([
 		
 		for (i = 0; i < filterArray.length; i++) {
 			if(globals.gSelectedFilters[filterArray[i]] === true) {
-				$('table', '#choiceModal').removeClass("hide" + i);
+				$('table', '#choiceView').removeClass("hide" + i);
 			} else {
-				$('table', '#choiceModal').addClass("hide" + i);
+				$('table', '#choiceView').addClass("hide" + i);
 			}
 			
 		}
@@ -270,11 +276,7 @@ define([
 								h[++idx] = '</label>';
 								h[++idx] = '<div class="col-sm-10">';
 									h[++idx] = '<select class="form-control" id="previousSelect">';
-							
-										h[++idx] = '<option value="x">';
-										h[++idx] = "a question";
-										h[++idx] = '</option>';
-										
+										h[++idx] = addSelectQuestions(question);
 									h[++idx] = '</select>';
 								h[++idx] = '</div>';
 							h[++idx] = '</div>';
@@ -303,11 +305,11 @@ define([
 	
 		if(listName) {
 			h[++idx] = addOptions(undefined, undefined, listName);
-			$('#choiceModalQuestion').html(localise.set["ed_cl"] + ": " + listName);
+			$('#choiceViewQuestion').html(localise.set["ed_cl"] + ": " + listName);
 		} else {
 			// Opened from a specific question
 			h[++idx] = addOptions(question, formIndex, undefined);
-			$('#choiceModalQuestion').html(localise.set["c_question"] + ": " + question.name);
+			$('#choiceViewQuestion').html(localise.set["c_question"] + ": " + question.name);
 		}
 		h[++idx] = '</div>';
 		
@@ -628,6 +630,33 @@ define([
 		h[++idx] = '<div class="error-msg pull-right">';
 		h[++idx] = msg;
 		h[++idx] = '</div>';
+		return h.join("");
+	}
+	
+	function addSelectQuestions(choiceQuestion) {
+		var survey = globals.model.survey,
+			h = [],
+			idx = -1,
+			i, j,
+			form,
+			question;
+			
+		for(i = 0; i < survey.forms.length; i++) {
+			form = survey.forms[i];
+			for(j = 0; j < form.qSeq.length; j++) {
+				question = form.questions[form.qSeq[j]];
+				if(!question.soft_deleted && question.type === "select1") {
+					if(choiceQuestion && choiceQuestion.name === question.name) {
+						continue;		// Skip question being edited
+					}
+					h[++idx] = '<option value="';
+					h[++idx] = question.list_name;
+					h[++idx] = '">';
+					h[++idx] = question.name;
+					h[++idx] = '</option>';
+				}
+			}
+		}
 		return h.join("");
 	}
 	

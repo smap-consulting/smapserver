@@ -403,7 +403,7 @@ define([
 			seq;
 		
 		seq = getSequenceOption(index, survey.optionLists[list_name]);
-		$deletedElement = $('#choiceModal').find('li.option.l_' + list_name).
+		$deletedElement = $('#choiceView').find('li.option.l_' + list_name).
 				filter(function() {
 			var $this = $(this);
 			return $this.data("id") == index;

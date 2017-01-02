@@ -104,7 +104,7 @@ define([
 				if(change.question) {
 					$context = markup.refresh();
 				} else {
-					$context = option.refreshChoiceModal();
+					$context = option.refreshChoiceView();
 				}
 			} else {
 				$context = updateHtmlElement(change);
@@ -1039,17 +1039,8 @@ define([
 						change.option.optionList, 
 						change.option.qName);
 				
-				/*
-				$button = $('#choiceModal').find('button.l_' + jq(change.option.optionList)).
-						filter(function(index) {
-					var $this = $(this);
-					return $this.data("index") == change.option.buttonIndex;
-				});
-				$button.before(newMarkup);		
-				$changedRow = $button.prev();
-				*/
 				
-				$ref = $('#choiceModal').find('.editor_element').
+				$ref = $('#choiceView').find('.editor_element').
 					filter(function(index) {
 						var $this = $(this);
 						return $this.data("id") == change.option.optionIndex;
@@ -1063,8 +1054,8 @@ define([
 					$changedRow = $ref.prev();
 				} else {
 					// put at end of table
-					$('#choiceModal tbody').append(newMarkup);
-					$changedRow = $('#choiceModal tbody tr:last');
+					$('#choiceView tbody').append(newMarkup);
+					$changedRow = $('#choiceView tbody tr:last');
 				}
 						
 		
@@ -1650,7 +1641,7 @@ define([
 			$changedRow = $('#question' + container + '_' + itemIndex);
 		} else if(itemType === "option") {
 			item = survey.optionLists[container].options[itemIndex];
-			$changedRow = $('tr.option', '#choiceModal').filter(function(index){
+			$changedRow = $('tr.option', '#choiceView').filter(function(index){
 				var $this = $(this);
 				return $this.data("id") == itemIndex;
 			});

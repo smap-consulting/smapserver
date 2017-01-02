@@ -759,7 +759,7 @@ function respondToEventsChoices($context) {
 	});
 	
 	// Style checkboxes
-	$('[type="checkbox"]', '#choiceModal').iCheck({
+	$('[type="checkbox"]', '#choiceView').iCheck({
 	    checkboxClass: 'icheckbox_square-green',
 	    radioClass: 'iradio_square-green'
 	});
@@ -771,11 +771,11 @@ function respondToEventsChoices($context) {
 		if($this.val() === "custom") {
 			$('.custom_filter_only').show();
 			$('.cascade_filter_only').hide();
-			$('#choiceModal table').addClass("notcascade").removeClass("notcustom");
+			$('#choiceView table').addClass("notcascade").removeClass("notcustom");
 		} else {
 			$('.custom_filter_only').hide();
 			$('.cascade_filter_only').show();
-			$('#choiceModal table').removeClass("notcascade").addClass("notcustom");
+			$('#choiceView table').removeClass("notcascade").addClass("notcustom");
 		}
 	});
 	
@@ -1022,7 +1022,7 @@ function respondToEventsChoices($context) {
 			targetId = $elem.closest('tr').data('id'),
 			btnId = $elem.data('id');
 		
-		$('tr', '#choiceModal').removeClass("over_drop_elem");
+		$('tr', '#choiceView').removeClass("over_drop_elem");
 		if(typeof(targetId) !== "undefined" && targetId != gDragSourceId) {
 			ev.preventDefault();	
 			$elem.closest('tr').addClass("over_drop_elem");
@@ -1045,7 +1045,7 @@ function respondToEventsChoices($context) {
 		if(typeof(btnId) !== "undefined" && btnId == -1) {
 			$elem.addClass("add_button").removeClass("over_drop_button");
 		} else if(typeof(targetId) === "undefined") {
-			$('tr', '#choiceModal').removeClass("over_drop_elem");
+			$('tr', '#choiceView').removeClass("over_drop_elem");
 		} 
 		
 		
@@ -1072,13 +1072,13 @@ function respondToEventsChoices($context) {
 			$context,
 			$elemBeforeTarget = $targetElem.prev('tr'),
 			elemBeforeTargetId = $elemBeforeTarget.data('id'),
-			$choiceBeforeButton = $("tr", "#choiceModal").last();
+			$choiceBeforeButton = $("tr", "#choiceView").last();
 	
 		ev.preventDefault();
 		ev.stopPropagation();
 		 
 		
-		$('tr', '#choiceModal').removeClass("over_drop_elem");		
+		$('tr', '#choiceView').removeClass("over_drop_elem");		
 		if(sourceId === targetId || sourceId === elemBeforeTargetId) {
 			// Dropped on itself do not move
 		} else {
@@ -1132,7 +1132,7 @@ function respondToEvents($context) {
 		globals.gItemIndex = $li.data("id");
 		globals.gSelectedFilters = undefined;
 		
-		$context = option.refreshChoiceModal();
+		$context = option.refreshChoiceView();
 		respondToEventsChoices($context);
 		
 		$('.editorContent').toggle();
