@@ -1758,8 +1758,7 @@ define([
 						container,
 						itemIndex,
 						"name",
-						"The " + itemDesc + " name must only contain letters, numbers, " +
-								"underscores, dashes and periods.",
+						localise.set["ed_vq"],
 						itemType,
 						"error");	
 			
@@ -1775,7 +1774,7 @@ define([
 									container,
 									itemIndex,
 									"name",
-									"For a location question the nane must be 'the_geom'.",
+									localise.set["ed_gl"],
 									itemType,
 									"error");
 						} 
@@ -1784,7 +1783,7 @@ define([
 								container,
 								itemIndex,
 								"name",
-								"Only location questions can have a name of 'the_geom'.",
+								localise.set["ed_ogl"],
 								itemType,
 								"error");
 					}
@@ -1798,8 +1797,7 @@ define([
 						container,
 						itemIndex,
 						"name",
-						"The " + itemDesc + " name must start with a letter, underscore or colon and only contain letters, numbers, " +
-								"underscores, dashes, periods and colons.",
+						localise.set["ed_vc"],
 						itemType,
 						"error");	
 			

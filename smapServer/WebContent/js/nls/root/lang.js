@@ -504,6 +504,11 @@ define({
 	"ed_i_tn": "Table Names",
 	"ed_tlf": "Top Level Form",
 	"ed_namedia": "Media cannot be used with this question",
+	"ed_vc": "The choice name must only contain letters, numbers. underscores, dashes, periods and colons",
+	"ed_vq": "The question name must start with a letter, underscore or colon and only contain letters, numbers, underscores, dashes, periods and colons",
+	"ed_gl": "For a location question the nane must be 'the_geom'",
+	"ed_ogl": "Only location questions can have a name of 'the_geom'",
+	"ed_ns": "Add a new survey using the 'File' menu before adding questions",
 	
 	// Managed Forms
 	"mf_fd": "Form Data",

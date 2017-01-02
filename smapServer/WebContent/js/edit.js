@@ -1390,52 +1390,58 @@ function addQuestion($this, type) {
 		$li,
 		formIndex = $this.data("findex"),
 		itemIndex,
-		forms = survey.forms,
+		forms,
 		justAddedQuestionId,
 		availableGroups,
 		$textArea,
 		textAreaVal,
 		locn = $this.data("locn");	// Add before or after the element id referenced by qIdx
 	
-	$li = $this.closest('li');
-	if(locn === "after") {
-		$related = $li.prev();
+	if(!survey) {
+		alert(localise.set["ed_ns"]);
 	} else {
-		$related = $li.next();
-	} 
-	if($related.length === 0) {   // Empty group, location is "after"
-		qId = $li.parent().closest('li').attr("id");
-	} else {
-		qId = $related.attr("id");
-	}
-	
-	if(prop === "group") {		// Extend a group
-		availableGroups = $this.data("groups").split(":");
-		$context = question.setGroupEnd(formIndex, qId, locn ,undefined, undefined, availableGroups);
-	} else {
-		$context = question.add(formIndex, qId, locn, type, undefined);
-	}
-	
-	respondToEvents($context);				// Add events on to the altered html
-	if($context.attr("id") !== "formList") {
-		respondToEvents($context.prev());		// Add events on the "insert before" button
-	}
-	
-	// Set focus to the new question
-	justAddedQuestionID = '#question' + formIndex +  '_' + (forms[formIndex].questions.length - 1);
-	$textArea = $('textarea', justAddedQuestionID);
-	textAreaVal = $textArea.val();
-	$textArea.val("").focus().val(textAreaVal);		// Should set text entry to end of text field	
-	
-	// Add an end group question if a new group has been created
-	if(type === "begin group") {
-		itemIndex = forms[formIndex].questions.length - 1;
-		name = survey.forms[formIndex].questions[itemIndex].name + "_groupEnd" ;
-		$context = question.add(formIndex, "question" + formIndex + "_" + itemIndex, 
-				"after", 
-				"end group",
-				name);
-		respondToEvents($context);	
+		forms = survey.forms;
+		
+		$li = $this.closest('li');
+		if(locn === "after") {
+			$related = $li.prev();
+		} else {
+			$related = $li.next();
+		} 
+		if($related.length === 0) {   // Empty group, location is "after"
+			qId = $li.parent().closest('li').attr("id");
+		} else {
+			qId = $related.attr("id");
+		}
+		
+		if(prop === "group") {		// Extend a group
+			availableGroups = $this.data("groups").split(":");
+			$context = question.setGroupEnd(formIndex, qId, locn ,undefined, undefined, availableGroups);
+		} else {
+			$context = question.add(formIndex, qId, locn, type, undefined);
+		}
+		
+		respondToEvents($context);				// Add events on to the altered html
+		if($context.attr("id") !== "formList") {
+			respondToEvents($context.prev());		// Add events on the "insert before" button
+		}
+		
+		// Set focus to the new question
+		justAddedQuestionID = '#question' + formIndex +  '_' + (forms[formIndex].questions.length - 1);
+		$textArea = $('textarea', justAddedQuestionID);
+		textAreaVal = $textArea.val();
+		$textArea.val("").focus().val(textAreaVal);		// Should set text entry to end of text field	
+		
+		// Add an end group question if a new group has been created
+		if(type === "begin group") {
+			itemIndex = forms[formIndex].questions.length - 1;
+			name = survey.forms[formIndex].questions[itemIndex].name + "_groupEnd" ;
+			$context = question.add(formIndex, "question" + formIndex + "_" + itemIndex, 
+					"after", 
+					"end group",
+					name);
+			respondToEvents($context);	
+		}
 	}
 }
 
