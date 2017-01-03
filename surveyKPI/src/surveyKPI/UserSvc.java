@@ -38,6 +38,7 @@ import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.apache.commons.io.FileUtils;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.SDDataSource;
+import org.smap.sdal.managers.LogManager;
 import org.smap.sdal.managers.UserManager;
 import org.smap.sdal.model.Alert;
 import org.smap.sdal.model.User;
@@ -70,6 +71,8 @@ public class UserSvc extends Application {
 	private static Logger log =
 			 Logger.getLogger(UserSvc.class.getName());
 
+	LogManager lm = new LogManager();		// Application log
+	
 	private class AlertStatus {
 		public String lastalert;
 		public boolean seen;
@@ -322,6 +325,7 @@ public class UserSvc extends Application {
 				}
 				
 				log.info("userevent: " + request.getRemoteUser() + (u.password == null ? " : updated user details : " : " : updated password : ") + u.name);
+				lm.writeLog(connectionSD, -1, request.getRemoteUser(), "user details", (u.password == null ? "updated user details" : "updated password"));
 				pstmt.executeUpdate();
 			}
 			

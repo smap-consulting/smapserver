@@ -1,16 +1,12 @@
 package org.smap.server.utilities;
 
-import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
-import java.util.UUID;
 import java.util.regex.Pattern;
 
 import org.smap.model.IE;
 import org.smap.server.entities.Option;
-import org.smap.server.entities.Question;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
@@ -138,7 +134,8 @@ public class UtilityMethods {
 	public static String convertAllxlsNames(
 			String input, 
 			boolean forLabel,
-			HashMap<String, String> questionPaths) throws Exception {
+			HashMap<String, String> questionPaths,
+			int f_id) throws Exception {
 		
 		if(input == null) {
 			return input;
@@ -170,12 +167,27 @@ public class UtilityMethods {
 			}
 			
 			// Add the question path
+			String searchName = qname;
+			if(searchName.equals("the_geom")) {
+				searchName = f_id + searchName;
+			}
 			String qPath = questionPaths.get(qname);
 			if(qPath == null) {
-				throw new Exception("Question path not found for question: " + qname);
+				if(qname.equals("the_geom")) {
+					// Try and find any geometry in the survey
+					for (String key : questionPaths.keySet()) {
+					    if(key.endsWith("the_geom")) {
+					    	qPath = questionPaths.get(key);
+					    	break;
+					    }
+					}
+				}
+				
+				if(qPath == null) {
+					throw new Exception("Question path not found for question: " + qname);
+				}
 			}
 			output.append(qPath);
-			//output.append(getQuestionPath(sd, sId, qname));
 
 			
 			// If for a label close the wrapping html

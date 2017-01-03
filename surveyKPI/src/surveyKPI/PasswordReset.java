@@ -33,6 +33,7 @@ import javax.ws.rs.core.Response.Status;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.Utilities.UtilityMethodsEmail;
 import org.smap.sdal.managers.EmailManager;
+import org.smap.sdal.managers.LogManager;
 import org.smap.sdal.model.EmailServer;
 import org.smap.sdal.model.Organisation;
 
@@ -56,6 +57,8 @@ public class PasswordReset extends Application {
 		
 	private static Logger log =
 			 Logger.getLogger(PasswordReset.class.getName());
+	
+	LogManager lm = new LogManager();		// Application log
 	
 	/*
 	 * Send an email with a link for a one time logon
@@ -225,6 +228,9 @@ public class PasswordReset extends Application {
 				response = Response.ok().build();
 				log.info("Password updated");
 				count++;
+				
+				log.info("userevent: " + ident + "reset password / forgot password");
+				lm.writeLog(connectionSD, -1, ident, "user details", "reset password / forgot password");
 			} 
 			
 			if(count == 0) {

@@ -32,6 +32,8 @@ public class Organisation {
 	public boolean ft_delete_submitted;
 	public boolean ft_send_trail;
 	public boolean ft_sync_incomplete;
+	public boolean ft_odk_style_menus;
+	public boolean ft_review_final;
 	public String changed_by;
 	public String changed_ts;
 	public String admin_email;

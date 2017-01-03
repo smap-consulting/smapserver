@@ -516,6 +516,11 @@ define({
 	"ed_cval": "Choice Value",
 	"ed_fv": "Filter Value",
 	"ed_choice_f": "Choice Filter",
+	"ed_vc": "The choice name must only contain letters, numbers. underscores, dashes, periods and colons",
+	"ed_vq": "The question name must start with a letter, underscore or colon and only contain letters, numbers, underscores, dashes, periods and colons",
+	"ed_gl": "For a location question the nane must be 'the_geom'",
+	"ed_ogl": "Only location questions can have a name of 'the_geom'",
+	"ed_ns": "Add a new survey using the 'File' menu before adding questions",
 	
 	// Managed Forms
 	"mf_fd": "Form Data",
@@ -562,6 +567,8 @@ define({
 	"u_det_o_ft": "FieldTask Options",
 	"u_ft_del": "Delete submitted results from the phone",
 	"u_ft_ld": "Send location data on path of user",
+	"u_ft_os": "Enable ODK style menus to delete, submit, edit and get new forms",
+	"u_ft_rv": "Allow finalised forms to be opened for review",
 	"u_det_o_email": "Email Options",
 	"u_det_o_other": "Other Options",
 	"u_other_edit": "Allow editing of results",

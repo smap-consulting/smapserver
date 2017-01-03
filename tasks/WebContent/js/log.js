@@ -154,7 +154,7 @@ require([
 	    		        .on( 'change', function () {
 	    		            table
 	    		                .column( colIdx )
-	    		                .search( $(this).val() )
+	    		                .search( "^" + $(this).val() + "$", true, false, false )
 	    		                .draw();
 	    		        } );
 	    		

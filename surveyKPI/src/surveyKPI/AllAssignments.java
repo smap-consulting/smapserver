@@ -1027,6 +1027,7 @@ public class AllAssignments extends Application {
 		
 		PreparedStatement pstmtDeleteExisting = null;
 		
+		String uploadedFileName = null;
 		String fileName = null;
 		String filePath = null;
 		File savedFile = null;									// The uploaded file
@@ -1040,6 +1041,7 @@ public class AllAssignments extends Application {
 		HashMap<String, File> mediaFiles = new HashMap<String, File> ();
 		HashMap<String, File> formFileMap = null;
 		ArrayList<String> responseMsg = new ArrayList<String> ();
+		int recordsWritten = 0;
 		
 		Connection results = ResultsDataSource.getConnection("surveyKPI-AllAssignments-LoadTasks From File");
 		boolean superUser = false;
@@ -1084,6 +1086,8 @@ public class AllAssignments extends Application {
 						", Content type = "+item.getContentType()+
 						", File Size = "+item.getSize());
 					
+					uploadedFileName = item.getName();
+					
 					if(item.getSize() > 0) {
 					    contentType = item.getContentType();
 					    
@@ -1108,9 +1112,6 @@ public class AllAssignments extends Application {
 			if(contentType == null) {
 				throw new Exception("Missing file");
 			}
-			
-			lm.writeLog(sd, sId, request.getRemoteUser(), "import data", "Import data from a file for survey: " + sName);
-			log.info("userevent: " + request.getRemoteUser() + " : loading file into survey: " + sId + " Previous contents are" + (clear_existing ? " deleted" : " preserved"));
 			
 			/*
 			 * Get the forms for this survey 
@@ -1173,12 +1174,6 @@ public class AllAssignments extends Application {
 				dataFiles.add(savedFile);
 			} 
 
-			for(int i = 0; i < formList.size(); i++) {
-				System.out.println("Form: " + formList.get(i).name);
-			}
-			for(int i = 0; i < dataFiles.size(); i++) {
-				System.out.println("File: " + dataFiles.get(i).getName());
-			}
 			
 			/*
 			 * Get a mapping between form name and file name
@@ -1231,24 +1226,6 @@ public class AllAssignments extends Application {
 			for(int formIdx = 0; formIdx < formList.size(); formIdx++) {
 				
 				FormDesc formDesc = formList.get(formIdx);
-				System.out.println("Form: " + formDesc.name);
-				/*
-				formDesc.columnList = GeneralUtilityMethods.getColumnsInForm(
-						sd,
-						results,
-						sId,
-						request.getRemoteUser(),
-						formDesc.parent,
-						formDesc.f_id,
-						formDesc.table_name,
-						false,		// Don't include Read Only
-						true,		// Include parent key
-						false,		// Don't include "bad" columns
-						false,		// Don't include instance id
-						true,		// Include other meta data
-						superUser,
-						false);
-						*/
 				
 				File f = formFileMap.get(formDesc.name);
 				
@@ -1258,7 +1235,7 @@ public class AllAssignments extends Application {
 						isCSV = true;
 					}
 					
-					xm.loadFormDataFromFile(results, 
+					int count = xm.loadFormDataFromFile(results, 
 							pstmtGetCol, 
 							pstmtGetChoices, 
 							f, 
@@ -1269,6 +1246,11 @@ public class AllAssignments extends Application {
 							responseMsg,
 							basePath,
 							localisation);
+					
+					if(formIdx == 0) {
+						recordsWritten = count;
+					}
+					
 				} else {
 					responseMsg.add(localisation.getString("imp_no_file") + ": " + formDesc.name);
 					log.info("No file of data for form: " + formDesc.name);
@@ -1276,6 +1258,24 @@ public class AllAssignments extends Application {
 			}				
 
 			results.commit();
+			
+			StringBuffer logMessage = new StringBuffer("");
+			logMessage.append(recordsWritten);
+			logMessage.append(" "); 
+			logMessage.append(localisation.getString("imp_frm"));
+			logMessage.append(" "); 
+			logMessage.append(uploadedFileName);
+			logMessage.append(" "); 
+			logMessage.append(localisation.getString("imp_fs"));
+			logMessage.append(" "); 
+			logMessage.append(sName);
+			logMessage.append(" "); 
+			logMessage.append(localisation.getString("imp_pr"));
+			logMessage.append(" "); 
+			logMessage.append((clear_existing ? localisation.getString("imp_del") : localisation.getString("imp_pres")));
+			
+			lm.writeLog(sd, sId, request.getRemoteUser(), "import data", logMessage.toString());
+			log.info("userevent: " + request.getRemoteUser() + " : loading file into survey: " + sId + " Previous contents are" + (clear_existing ? " deleted" : " preserved"));  // Write user event in english only
 			
 			Gson gson = new GsonBuilder().disableHtmlEscaping().create();
 			

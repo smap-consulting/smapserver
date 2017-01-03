@@ -44,6 +44,7 @@ import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.Utilities.UtilityMethodsEmail;
 import org.smap.sdal.managers.LogManager;
 import org.smap.sdal.managers.RoleManager;
+import org.smap.sdal.managers.SurveyManager;
 import org.smap.sdal.model.SqlFrag;
 import org.smap.sdal.model.SqlFragParam;
 import org.smap.sdal.model.TableColumn;
@@ -384,7 +385,7 @@ public class Items extends Application {
 				 */
 				// Get date column information
 				QuestionInfo date = null;
-				if(dateId != 0 && (startDate != null || endDate != null)) {
+				if((dateId != 0) && (startDate != null || endDate != null)) {
 					date = new QuestionInfo(sId, dateId, sd, false, "", urlprefix);	// Not interested in label any language will do
 					tables.add(date.getTableName(), date.getFId(), date.getParentFId());
 					log.info("Date name: " + date.getColumnName() + " Date Table: " + date.getTableName());

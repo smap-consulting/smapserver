@@ -112,6 +112,8 @@ public class OrganisationList extends Application {
 					+ "ft_delete_submitted,"
 					+ "ft_send_trail,"
 					+ "ft_sync_incomplete,"
+					+ "ft_odk_style_menus,"
+					+ "ft_review_final,"
 					+ "changed_by, "
 					+ "changed_ts," 
 					+ "admin_email, "
@@ -146,6 +148,8 @@ public class OrganisationList extends Application {
 				org.ft_delete_submitted = resultSet.getBoolean("ft_delete_submitted");
 				org.ft_send_trail = resultSet.getBoolean("ft_send_trail");
 				org.ft_sync_incomplete = resultSet.getBoolean("ft_sync_incomplete");
+				org.ft_odk_style_menus = resultSet.getBoolean("ft_odk_style_menus");
+				org.ft_review_final = resultSet.getBoolean("ft_review_final");
 				org.changed_by = resultSet.getString("changed_by");
 				org.changed_ts = resultSet.getString("changed_ts");
 				org.admin_email = resultSet.getString("admin_email");

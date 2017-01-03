@@ -969,7 +969,7 @@ function exportSurveyURL (
 	if(format === "xls" && merge_select_multiple === true) {
 		url += "&merge_select_multiple=true";
 	}
-	url+="&forms=" + forms;
+	url += "&forms=" + forms;
 	url += "&exp_ro=" + exp_ro;
 	if(typeof embedImages !== "undefined") {
 		url += "&embedimages=" + embedImages;
@@ -981,7 +981,7 @@ function exportSurveyURL (
 	if(xlstype != "html") {
 		url += "&filetype=" + xlstype;
 	}
-	if(dateQuestionId > 0) {
+	if(dateQuestionId > 0 || dateQuestionId == -100) {	// -100 is a pseudo ID for Upload Time
 		url += "&dateId=" + dateQuestionId;
 		if(exp_from_date) {
 			url += "&from=" + exp_from_date;
@@ -1014,7 +1014,7 @@ function exportSurveyMediaURL (sId, filename, form, mediaQuestion, nameQuestions
 		url+="&namequestions=" + nameQuestions;
 	}
 
-	if(dateQuestionId > 0) {
+	if(dateQuestionId > 0 || dateQuestionId == -100) {	// -100 is a pseudo ID for Upload Time
 		url += "&dateId=" + dateQuestionId;
 		if(exp_from_date) {
 			url += "&from=" + exp_from_date;
@@ -1089,7 +1089,7 @@ function exportSurveyOSMURL (sId, filename, forms, exp_ro,
 		url += "?exp_ro=" + exp_ro;
 	}
 	
-	if(dateQuestionId > 0) {
+	if(dateQuestionId > 0 || dateQuestionId == -100) {	// -100 is a pseudo ID for Upload Time
 		url += "&dateId=" + dateQuestionId;
 		if(exp_from_date) {
 			url += "&from=" + exp_from_date;
@@ -1127,7 +1127,7 @@ function exportSurveyShapeURL (sId, filename, form, format, exp_ro, language,
 	url += "&exp_ro=" + exp_ro;
 	url += "&language=" + language;
 		
-	if(dateQuestionId > 0) {
+	if(dateQuestionId > 0 || dateQuestionId == -100) {	// -100 is a pseudo ID for Upload Time
 		url += "&dateId=" + dateQuestionId;
 		if(exp_from_date) {
 			url += "&from=" + exp_from_date;
