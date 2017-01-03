@@ -281,9 +281,13 @@ $(document).ready(function() {
 	$('#project_name').change(function() {
 		globals.gCurrentProject = $('#project_name option:selected').val();
 		globals.gCurrentSurvey = -1;
+		globals.gCurrentTaskGroup = undefined;
 
 		getPanels(globals.gCurrentProject);				
-		saveCurrentProject(globals.gCurrentProject, globals.gCurrentSurvey);	// Save the current project id, survey id
+		saveCurrentProject(globals.gCurrentProject, 
+				globals.gCurrentSurvey, 
+				globals.gCurrentTaskGroup);	// Save the current project id, survey id
+		
 		getViewSurveys({sId:"-1"});				// Update the survey list to match the new project
  	 });
 	

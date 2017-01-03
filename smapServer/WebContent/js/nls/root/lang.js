@@ -215,6 +215,7 @@ define({
 	"c_license": "License Number",
 	"c_in": "in",
 	"c_rev": "Reverse",
+	"c_for": "For",
 	
 	// File Types
 	"ft": "File Type",

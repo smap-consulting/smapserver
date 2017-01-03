@@ -649,3 +649,5 @@ alter table dashboard_settings add constraint ds_user_ident FOREIGN KEY (ds_user
 alter table organisation add column ft_odk_style_menus boolean default true;
 alter table organisation add column ft_review_final boolean default true;
 
+-- Upgrade to 17.01
+

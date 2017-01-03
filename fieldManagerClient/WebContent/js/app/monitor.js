@@ -344,8 +344,14 @@ function setcontrols() {
 function projectChanged() {
 	globals.gCurrentProject = $('#project_name option:selected').val();
 	globals.gCurrentSurvey = -1;
+	globals.gCurrentTaskGroup = undefined;
+	
 	loadSurveys(globals.gCurrentProject, undefined, false, true);			// Get surveys
-	saveCurrentProject(globals.gCurrentProject, globals.gCurrentSurvey);	// Save the current project id
+	
+	saveCurrentProject(globals.gCurrentProject, 
+			globals.gCurrentSurvey, 
+			globals.gCurrentTaskGroup);
+	
 	refreshData(globals.gCurrentProject, "_all");
 }
 

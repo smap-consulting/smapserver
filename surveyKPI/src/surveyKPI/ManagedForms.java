@@ -80,12 +80,12 @@ public class ManagedForms extends Application {
 	@GET
 	@Path("/config/{sId}/{dpId}")
 	@Produces("application/json")
-	public Response getConfig(@Context HttpServletRequest request,
+	public Response getReportConfig(@Context HttpServletRequest request,
 			@PathParam("sId") int sId,
 			@PathParam("dpId") int managedId) { 
 		
 		// Authorisation - Access
-		Connection sd = SDDataSource.getConnection("surveyKPI-GetConfig");
+		Connection sd = SDDataSource.getConnection("surveyKPI-GetReportConfig");
 		boolean superUser = false;
 		try {
 			superUser = GeneralUtilityMethods.isSuperUser(sd, request.getRemoteUser());
@@ -98,13 +98,13 @@ public class ManagedForms extends Application {
 		}
 		// End Authorisation
 		
-		Connection cResults = ResultsDataSource.getConnection("surveyKPI-GetConfig");
+		Connection cResults = ResultsDataSource.getConnection("surveyKPI-GetReportConfig");
 		Response response = null;
 		Gson gson=  new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd").create();
 		try {
 			int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser(), 0);
 			ManagedFormsManager qm = new ManagedFormsManager();
-			ManagedFormConfig mfc = qm.getColumns(sd, cResults, sId, managedId, request.getRemoteUser(), oId, superUser);
+			ManagedFormConfig mfc = qm.getManagedFormConfig(sd, cResults, sId, managedId, request.getRemoteUser(), oId, superUser);
 			/*
 			 * Remove data that is only used on the server
 			 */
@@ -122,8 +122,8 @@ public class ManagedForms extends Application {
 			log.log(Level.SEVERE, "Error", e);
 		    response = Response.serverError().entity(e.getMessage()).build();
 		} finally {
-			SDDataSource.closeConnection("surveyKPI-GetConfig", sd);
-			ResultsDataSource.closeConnection("surveyKPI-GetConfig", cResults);
+			SDDataSource.closeConnection("surveyKPI-GetReportConfig", sd);
+			ResultsDataSource.closeConnection("surveyKPI-GetReportConfig", cResults);
 		}
 
 
@@ -140,7 +140,7 @@ public class ManagedForms extends Application {
 			@PathParam("pId") int pId) { 
 		
 		// Authorisation - Access
-		Connection sd = SDDataSource.getConnection("surveyKPI-GetSurveys");
+		Connection sd = SDDataSource.getConnection("surveyKPI-GetManagedForms");
 		a.isAuthorised(sd, request.getRemoteUser());
 		a.isValidProject(sd, request.getRemoteUser(), pId);
 		// End Authorisation
@@ -158,7 +158,7 @@ public class ManagedForms extends Application {
 			log.log(Level.SEVERE, "SQL Error", e);
 		    response = Response.serverError().entity(e.getMessage()).build();			
 		} finally {
-			SDDataSource.closeConnection("surveyKPI-GetConfig", sd);
+			SDDataSource.closeConnection("surveyKPI-GetManagedForms", sd);
 		}
 
 
@@ -809,7 +809,7 @@ public class ManagedForms extends Application {
 	 */
 	@GET
 	@Produces("application/json")
-	@Path("/getconfig/{sId}/{key}")
+	@Path("/getreportconfig/{sId}/{key}")
 	public Response getManageConfig(
 			@Context HttpServletRequest request, 
 			@PathParam("sId") int sId,

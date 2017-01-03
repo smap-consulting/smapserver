@@ -122,9 +122,9 @@ $(document).ready(function() {
 	for (i = 0; i < pArray.length; i++) {
 		param = pArray[i].split("=");
 		if ( param[0] === "id" ) {
-			dont_get_current_survey = true;		// USe the passed in survey id
+			dont_get_current_survey = true;		// Use the passed in survey id
 			globals.gCurrentSurvey = param[1];
-			saveCurrentProject(-1, globals.gCurrentSurvey);	// Save the current survey id
+			saveCurrentProject(-1, globals.gCurrentSurvey, undefined);	// Save the current survey id
 		} else if ( param[0] === "new" ) {
 			dont_get_current_survey = true;		// Don't get any survey details
 			globals.gCurrentSurvey = -1;
@@ -379,7 +379,12 @@ $(document).ready(function() {
 	$('#project_name').change(function() {
 		globals.gCurrentProject = $('#project_name option:selected').val();
 		globals.gCurrentSurvey = -1;
-		saveCurrentProject(globals.gCurrentProject, globals.gCurrentSurvey);	// Save the current project id
+		globals.gCurrentTaskGroup = undefined;
+		
+		saveCurrentProject(globals.gCurrentProject, 
+				globals.gCurrentSurvey, 
+				globals.gCurrentTaskGroup);
+		
 		getSurveyList();
  	 });
 	
@@ -492,7 +497,7 @@ $(document).ready(function() {
 			changeset.setHasChanges(0);		// Clear any existing changes from a previous form
 			
 			if(globals.gExistingSurvey) {
-				globals.gCurrentSurvey = $('#survey_name option:selected').val();	
+				globals.gCurrentSurvey = $('#survey_name option:selected').val();
 				saveCurrentProject(globals.gCurrentProject, globals.gCurrentSurvey);	// Save the new survey id as the current survey
 				getSurveyDetails(surveyDetailsDone);
 			} else {
@@ -1718,32 +1723,6 @@ function addForms(data) {
 	$('#form_name').html(h.join(""));
 
 }
-
-/* **********************************************************************************************
- * Error Panel
- */
-
-/*
-function showErrorPanel() {
-	
-    var $panel = $('#toolbar'),
-    	$container = $('#content > .container');
-    
-    $panel.addClass('shown').animate({'margin-left':'0px'});  
-    $container.css({'padding-left':'200px'});
-
-}
-
-function hideErrorPanel() {
-	
-    var $panel = $('#toolbar'),
-    $container = $('#content > .container');
-    
-    $panel.removeClass('shown').animate({'margin-left':'-250px'});  
-    $container.css({'padding-left':'15px'});
-
-}
-*/
 
 
 });

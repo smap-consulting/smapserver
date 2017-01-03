@@ -674,9 +674,15 @@ function projectChanged() {
 
 	globals.gCurrentProject = $('#project_name option:selected').val();
 	globals.gCurrentSurvey = -1;
+	globals.gCurrentTaskGroup = undefined;
+	
 	loadSurveys(globals.gCurrentProject, undefined, false, false, surveyChanged);			// Get surveys
 	refreshTaskGroupData();		// Get the task groups from the server
-	saveCurrentProject(globals.gCurrentProject, globals.gCurrentSurvey);	// Save the current project id
+	
+	saveCurrentProject(globals.gCurrentProject, 
+			globals.gCurrentSurvey, 
+			globals.gCurrentTaskGroup);
+	
 	getUsers(globals.gCurrentProject);										// Get the users that have access to this project
 	$('#project_select').val(globals.gCurrentProject);	// Set the source project equal to the current project
 	

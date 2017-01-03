@@ -69,11 +69,11 @@ public class CustomReports extends Application {
 	}
 	
 	/*
-	 * Return the management configuration
+	 * Return the custom reports
 	 */
 	@GET
 	@Produces("application/json")
-	public Response getConfig(@Context HttpServletRequest request,
+	public Response getCustomREports(@Context HttpServletRequest request,
 			@QueryParam("negateType") boolean negateType,
 			@QueryParam("type") String type) { 
 		
@@ -98,7 +98,7 @@ public class CustomReports extends Application {
 			log.log(Level.SEVERE, "Error", e);
 		    response = Response.serverError().entity(e.getMessage()).build();
 		} finally {
-			SDDataSource.closeConnection("surveyKPI-GetConfig", sd);
+			SDDataSource.closeConnection("surveyKPI-CustomReports", sd);
 		}
 
 
@@ -155,7 +155,7 @@ public class CustomReports extends Application {
 		    response = Response.serverError().entity(e.getMessage()).build();
 		} finally {
 			
-			SDDataSource.closeConnection("surveyKPI-Survey", sd);
+			SDDataSource.closeConnection("surveyKPI-CustomReports", sd);
 			
 		}
 
@@ -190,7 +190,7 @@ public class CustomReports extends Application {
 		}
 		
 		// Authorisation - Access
-		Connection sd = SDDataSource.getConnection("surveyKPI-CustomReports");
+		Connection sd = SDDataSource.getConnection("surveyKPI-ExportOversight");
 		a.isAuthorised(sd, request.getRemoteUser());
 		// End Authorisation
 		
@@ -199,7 +199,7 @@ public class CustomReports extends Application {
 			filetype = "xlsx";
 		}
 		
-		Connection cResults = ResultsDataSource.getConnection("surveyKPI-GetConfig");
+		Connection cResults = ResultsDataSource.getConnection("surveyKPI-ExportOversight");
 		
 		try {
 			
@@ -233,8 +233,8 @@ public class CustomReports extends Application {
 			// Prepend the message with "Error: ", this will be removed by the client
 			responseVal = Response.status(Status.OK).entity("Error: " + e.getMessage()).build();
 		} finally {
-			SDDataSource.closeConnection("surveyKPI-Survey", sd);
-			ResultsDataSource.closeConnection("surveyKPI-GetConfig", cResults);
+			SDDataSource.closeConnection("surveyKPI-ExportOversight", sd);
+			ResultsDataSource.closeConnection("surveyKPI-ExportOversight", cResults);
 		}
 
 		return responseVal;

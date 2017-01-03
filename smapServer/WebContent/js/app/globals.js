@@ -66,7 +66,6 @@ define(function() {
 		gHasItems: false,			// Set true if there are questions or choice lists in the survey
 		gNewQuestionButtonIndex: 0,	// Manage creation of unique identifier for buttons that add new questions
 		gNewOptionButtonIndex: 0,
-		gCurrentFormId: 0,
 		gSId: 0,
 		gLanguage: 0,
 		gLanguage1: 0,
