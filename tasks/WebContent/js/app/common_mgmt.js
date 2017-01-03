@@ -120,6 +120,9 @@ window.gTasks = {
 				 getSurveyConfig(globals.gCurrentSurvey, 0);
 			 }
 			 getReport(gReport);
+			 
+			 $('.main_survey').html($('#survey_name option:selected').text());
+			 
 		 } else {
 			 // No managed surveys in this project
 			 $('#trackingTable').empty();
@@ -267,8 +270,6 @@ window.gTasks = {
 		 	hColSort = [],
 		 	hDups = [],
 		 	hColSortIdx = -1;
-		 
-		 $('#survey_title').html($('#survey_name option:selected').text());
 		 
 		 
 		 if(globals.gMainTable) {
@@ -1069,7 +1070,7 @@ window.gTasks = {
 		 
 			 addHourglass();
 			 $.ajax({
-				 url: "/surveyKPI/managed/getconfig/" + globals.gCurrentSurvey + "/db",
+				 url: "/surveyKPI/managed/getreportconfig/" + globals.gCurrentSurvey + "/db",
 				 cache: false,
 				 dataType: 'json',
 				 success: function(data) {

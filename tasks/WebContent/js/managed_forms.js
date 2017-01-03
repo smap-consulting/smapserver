@@ -176,6 +176,13 @@ require([
 		});
 		
 		/*
+		 * Setup dialog to change the current survey
+		 */
+		$("#changeSurveys").click(function() {
+			$("#surveySelect").modal("show");
+		});
+		
+		/*
 		 * Set up dialog to edit a record
 		 */
 		$('#editRecord').on('show.bs.modal', function (event) {
