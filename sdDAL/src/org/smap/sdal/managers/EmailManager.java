@@ -129,7 +129,6 @@ public class EmailManager {
 			props.setProperty("mail.smtp.timeout", "60000");
 			props.setProperty("mail.smtp.writetimeout", "60000");
 			Session session = Session.getInstance(props, authenticator);
-			//session.setDebug(true);
 			Message msg = new MimeMessage(session);
 			if(type.equals("notify")) {
 				rt = Message.RecipientType.BCC;
@@ -175,22 +174,18 @@ public class EmailManager {
 				    txtMessage.append(docURL);
 			    }
 		    } else if(type.equals("reset")) {
-			    //txtMessage.append("Goto");
 		    	txtMessage.append(localisation.getString("c_goto"));
 			    txtMessage.append(" " + scheme + "://");
 			    txtMessage.append(serverName);
 			    txtMessage.append("/resetPassword.html?token=");
 			    txtMessage.append(uuid);
 			    txtMessage.append(" ");
-			    //txtMessage.append("to reset your password");
 			    txtMessage.append(localisation.getString("email_rp"));
 			    txtMessage.append("\n\n");
-			    //txtMessage.append("Your user name is: ");
 			    txtMessage.append(localisation.getString("email_un"));
 			    txtMessage.append(": ");
 			    txtMessage.append(identString.toString());
 			    txtMessage.append("\n\n ");
-			    //txtMessage.append("The link is valid for");
 			    txtMessage.append(localisation.getString("email_vf"));
 			    txtMessage.append(" ");
 			    txtMessage.append(interval);
@@ -206,12 +201,10 @@ public class EmailManager {
 			    txtMessage.append(adminName);
 			    txtMessage.append(" ");
 			    txtMessage.append(localisation.getString("email_hga"));
-			    //txtMessage.append("has given you access to a Smap server with address");
 			    txtMessage.append(" " + scheme + "://");
 			    txtMessage.append(serverName);
 			    txtMessage.append("\n");
 			    txtMessage.append(localisation.getString("email_sp"));
-			    //txtMessage.append("You will need to specify your password before you can log on.  To do this click on the following link");
 			    txtMessage.append(" " + scheme + "://");
 			    txtMessage.append(serverName);
 			    txtMessage.append("/resetPassword.html?token=");
@@ -232,7 +225,6 @@ public class EmailManager {
 
 		    } else if(type.equals("notify")) {
 		    	txtMessage.append(localisation.getString("email_ian"));
-			    //txtMessage.append("This email is a notification from");
 		    	txtMessage.append(" " + scheme + "://");
 			    txtMessage.append(serverName);
 			    txtMessage.append(". ");
@@ -273,7 +265,7 @@ public class EmailManager {
 		    
 		} catch(MessagingException me) {
 			log.log(Level.SEVERE, "Messaging Exception");
-			throw new Exception("Cannot send email, " + me.getMessage());
+			throw new Exception(localisation.getString("email_cs") + "  " + me.getMessage());
 		}
 		
 		
