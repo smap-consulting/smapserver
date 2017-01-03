@@ -811,6 +811,12 @@ function respondToEventsChoices($context) {
 		updateLabel("question", formIndex, itemIndex, undefined, "text", $this.val(), undefined, "nodeset") ;
 	});
 	
+	// Previous question for cascading select changes
+	$context.find('#previousSelect').off().change(function(){
+		var $this = $(this);	
+		option.setPreviousChoices($this.val());	
+	});
+	
 	// Add tooltips
 	$context.find('.has_tt').tooltip();
 	

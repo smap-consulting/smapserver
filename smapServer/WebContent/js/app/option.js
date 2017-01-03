@@ -34,7 +34,8 @@ define([
 	return {	
 		refreshChoiceView: refreshChoiceView,
 		addOneOption: addOneOption,
-		resetFilterColumns: resetFilterColumns
+		resetFilterColumns: resetFilterColumns,
+		setPreviousChoices: setPreviousChoices
 	};
 	
 	var filterArray = [];
@@ -282,19 +283,12 @@ define([
 							h[++idx] = '</div>';
 			
 							h[++idx] = '<div class="form-group">';
-								h[++idx] = '<div id="cascade_filters">';
-									h[++idx] = '<label class="col-sm-2">';
-										h[++idx] = localise.set["ed_csp"];
-									h[++idx] = '</label>';
-									h[++idx] = '<div class="col-sm-10">';
-										h[++idx] = '<select class="form-control" id="previousSelect">';
-								
-											h[++idx] = '<option value="x">';
-											h[++idx] = "a question";
-											h[++idx] = '</option>';
-											
-										h[++idx] = '</select>';
-									h[++idx] = '</div>';
+								h[++idx] = '<label class="col-sm-2">';
+									h[++idx] = localise.set["ed_csp"];
+								h[++idx] = '</label>';
+								h[++idx] = '<div class="col-sm-10">';
+									h[++idx] = '<select class="form-control" id="previousSelectChoice">';	
+									h[++idx] = '</select>';
 								h[++idx] = '</div>';
 							h[++idx] = '</div>';
 						h[++idx] = '</form>';
@@ -633,6 +627,9 @@ define([
 		return h.join("");
 	}
 	
+	/*
+	 * Add a list of select questions that can be selected as the preceeding question for a cascade select
+	 */
 	function addSelectQuestions(choiceQuestion) {
 		var survey = globals.model.survey,
 			h = [],
@@ -658,6 +655,35 @@ define([
 			}
 		}
 		return h.join("");
+	}
+	
+	/*
+	 * Set the choices that can be selected as the preceeding choice for a cascade select
+	 */
+	function setPreviousChoices(listname) {
+		
+		var survey = globals.model.survey,
+			h = [],
+			idx = -1,
+			i,
+			option,
+			optionList = survey.optionLists[listname],
+			oSeq;
+			
+		addOptionSequence(optionList);		// Add an array holding the option sequence if it does not already exist
+		oSeq = optionList.oSeq;
+		
+		for(i = 0; i < oSeq.length; i++) {
+
+			option = optionList.options[oSeq[i]];
+				
+			h[++idx] = '<option value="';
+				h[++idx] = option.value;
+				h[++idx] = '">';
+				h[++idx] = option.value;
+			h[++idx] = '</option>';
+		}
+		$("#previousSelectChoice").html(h.join(""));
 	}
 	
 });
