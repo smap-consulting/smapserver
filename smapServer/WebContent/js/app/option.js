@@ -32,18 +32,20 @@ define([
 		function($, modernizr, lang, globals, markup, changeset) {
 
 	return {	
-		refreshChoiceView: refreshChoiceView,
+		createChoiceView: createChoiceView,
+		setupChoiceView: setupChoiceView,
 		addOneOption: addOneOption,
 		resetFilterColumns: resetFilterColumns,
-		setPreviousChoices: setPreviousChoices
+		setPreviousChoices: setPreviousChoices,
+		getOptionTable: getOptionTable
 	};
 	
 	var filterArray = [];
 	
 	/*
-	 * Refresh the choices shown in the choice modal
+	 * Create a choice view
 	 */
-	function refreshChoiceView() {
+	function createChoiceView() {
 		
 		var $context = $('#choiceView').find('.choice-content'),
 			survey = globals.model.survey,
@@ -57,6 +59,10 @@ define([
 			question = survey.forms[globals.gFormIndex].questions[globals.gItemIndex];
 			$context.empty().append(addOptionContainer(question, globals.gFormIndex, globals.gItemIndex, undefined, survey.filters));
 		}
+		
+		return $context;
+	}
+	function setupChoiceView() {
 		
 		/*
 		 * show filter columns that should be visible
@@ -73,9 +79,8 @@ define([
 		$('#filterType').val("custom");
 		$('.custom_filter_only').show();
 		$('.cascade_filter_only').hide();
-		$('#choiceView table').addClass("notcascade").removeClass("notcustom");
+		$('#choiceView table').addClass("notcascade").removeClass("notcustom");	
 		
-		return $context;
 	}
 
 	/*
@@ -83,8 +88,10 @@ define([
 	 */
 	function addOneOption(optionList, option, formIndex, index, list_name, 
 			qname, initialiseFilters) {
+		
 		var h = [],
-			idx = -1;
+			idx = -1,
+			prevChoice = $("#previousSelectChoice").val();
 		
 		optionList.maxOption++;
 		
@@ -108,11 +115,11 @@ define([
 		
 			// Add select for cascade selects
 			h[++idx] = '<td class="cascade">';
-				h[++idx] = '<input type="checkbox" name="isSelected" value="';
+				h[++idx] = '<input type="checkbox" class="cascadeFilter" name="isSelected" value="';
 				h[++idx] = "";
 				h[++idx] = '" ';
 				if(idx !== false) {
-					h[++idx] = 'checked="checked"';
+					h[++idx] = addCascadeChecked(option.cascade_filters, prevChoice);
 				} 
 			h[++idx] = '</td>';
 			
@@ -297,6 +304,20 @@ define([
 			h[++idx] = '</div>';
 		h[++idx] = '</div>';
 	
+		h[++idx] = '<div id="optionTable">';	
+		h[++idx] = '</div>';	// Option Table
+		h[++idx] = '</div>';		// Question Head
+		
+		return h.join("");
+	}
+
+	/*
+	 * Refresh the table of options
+	 */
+	function getOptionTable(question, formIndex, listName) {
+		var h = [],
+			idx = -1;
+		
 		if(listName) {
 			h[++idx] = addOptions(undefined, undefined, listName);
 			$('#choiceViewQuestion').html(localise.set["ed_cl"] + ": " + listName);
@@ -305,11 +326,9 @@ define([
 			h[++idx] = addOptions(question, formIndex, undefined);
 			$('#choiceViewQuestion').html(localise.set["c_question"] + ": " + question.name);
 		}
-		h[++idx] = '</div>';
 		
 		return h.join("");
 	}
-
 	
 	/*
 	 * Show the options
@@ -531,7 +550,7 @@ define([
 	}
 	
 	/*
-	 * Add the table headings for filter columns
+	 * Add the table body for filter columns
 	 */
 	function addFilterColumnBody(filters, initialiseFilters) {
 		
@@ -636,7 +655,8 @@ define([
 			idx = -1,
 			i, j,
 			form,
-			question;
+			question,
+			first = true;
 			
 		for(i = 0; i < survey.forms.length; i++) {
 			form = survey.forms[i];
@@ -646,7 +666,11 @@ define([
 					if(choiceQuestion && choiceQuestion.name === question.name) {
 						continue;		// Skip question being edited
 					}
-					h[++idx] = '<option value="';
+					h[++idx] = '<option ';
+					if(first) {
+						h[++idx] = 'selected ';
+					}
+					h[++idx] = 'value="';
 					h[++idx] = question.list_name;
 					h[++idx] = '">';
 					h[++idx] = question.name;
@@ -654,6 +678,7 @@ define([
 				}
 			}
 		}
+	
 		return h.join("");
 	}
 	
@@ -677,13 +702,35 @@ define([
 
 			option = optionList.options[oSeq[i]];
 				
-			h[++idx] = '<option value="';
+			h[++idx] = '<option ';
+				if(i == 0) {
+					h[++idx] = 'selected ';
+				}
+				h[++idx] = 'value="';
 				h[++idx] = option.value;
 				h[++idx] = '">';
 				h[++idx] = option.value;
 			h[++idx] = '</option>';
 		}
 		$("#previousSelectChoice").html(h.join(""));
+	}
+	
+	/*
+	 * Set the checkbox checked if the cascade filter matches the previously selected choice
+	 */
+	function addCascadeChecked (filters, prevChoice) {
+		
+		var match = false;
+		
+		if(filters["_smap_cascade"] && filters["_smap_cascade"] == prevChoice) {
+			match = true;
+		}
+		
+		if(match) {
+			return 'checked="checked"';
+		} else {
+			return '';
+		}
 	}
 	
 });

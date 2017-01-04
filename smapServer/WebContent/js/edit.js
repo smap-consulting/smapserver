@@ -759,10 +759,11 @@ function respondToEventsChoices($context) {
 	});
 	
 	// Style checkboxes
-	$('[type="checkbox"]', '#choiceView').iCheck({
+	$('[type="checkbox"]', $context).iCheck({
 	    checkboxClass: 'icheckbox_square-green',
 	    radioClass: 'iradio_square-green'
 	});
+	
 	
 	$('#filterType', $context).off().change(function(){
 		var $this = $(this);
@@ -779,6 +780,7 @@ function respondToEventsChoices($context) {
 		}
 	});
 	
+	// Respond to columns of filters being hidden or made visible
 	$('input', '#custom_filters').off().change(function(){
 		var $this = $(this);
 		
@@ -792,9 +794,7 @@ function respondToEventsChoices($context) {
 		var $this = $(this),
 			$elem = $this.closest('.question_head'),
 			formIndex = $elem.data("fid"),
-			itemIndex = $elem.data("id"),
-			survey = globals.model.survey,
-			question;
+			itemIndex = $elem.data("id");
 	
 		updateLabel("question", formIndex, itemIndex, undefined, "text", $this.val(), undefined, "list_name") ;
 	});
@@ -804,9 +804,7 @@ function respondToEventsChoices($context) {
 		var $this = $(this),
 			$elem = $this.closest('.question_head'),
 			formIndex = $elem.data("fid"),
-			itemIndex = $elem.data("id"),
-			survey = globals.model.survey,
-			question;
+			itemIndex = $elem.data("id");
 	
 		updateLabel("question", formIndex, itemIndex, undefined, "text", $this.val(), undefined, "nodeset") ;
 	});
@@ -815,6 +813,16 @@ function respondToEventsChoices($context) {
 	$context.find('#previousSelect').off().change(function(){
 		var $this = $(this);	
 		option.setPreviousChoices($this.val());	
+	});
+	
+	// Previous choice for cascading select changes
+	$context.find('#previousSelectChoice').off().change(function(){
+		var $this = $(this),
+			survey = globals.model.survey,
+			question = survey.forms[globals.gFormIndex].questions[globals.gItemIndex];
+		
+		$('#optionTable').html(option.getOptionTable(question, globals.gFormIndex, globals.gListName));
+		respondToEventsChoices($('#optionTable'));
 	});
 	
 	// Add tooltips
@@ -892,26 +900,18 @@ function respondToEventsChoices($context) {
 	
 	// Update the filter values
 	$context.find('.filter').change(function(){
-
-		var $this = $(this),
-			$elem = $this.closest('tr'),
-			$f = $this.closest('td'),
-			listName = $elem.data("list_name"),
-			formIndex = $elem.data("fid"),
-			itemIndex = $elem.data("id"),
-			qname = $elem.data("qname"),
-			currentFilters = $elem.data("filters"),
-			filterName = $f.data("f_name"),
-			fVal = $this.val(),
-			newVal;
-		
-		newVal = currentFilters;
-		newVal[filterName] = fVal;
-		$elem.data("filters", newVal);
-		
-		updateLabel("option", formIndex, itemIndex, listName, "text", newVal, qname, "cascade_filters") ;
-		
+		updateFilterValues($(this), false);
 	});
+	
+	// Update the cascade filter values
+	$('.cascadeFilter').on('ifChecked', function(event) {
+			updateFilterValues($(this), true, true);
+		});
+	
+	// Update the cascade filter values
+	$('.cascadeFilter').on('ifUnchecked', function(event) {
+			updateFilterValues($(this), true, false);
+		});
 	
 	// Update the option list name
 	$context.find('.olname').change(function(){
@@ -1130,7 +1130,9 @@ function respondToEvents($context) {
 	$('.edit_choice', $context).off().click(function(index){
 		var $this = $(this),
 			$li = $this.closest('li'),
-			$context;
+			$context,
+			survey,
+			question;
 			
 		// Set global variables that will be used if the contents of this dialog are refreshed
 		globals.gListName = $li.data("list_name");
@@ -1138,7 +1140,20 @@ function respondToEvents($context) {
 		globals.gItemIndex = $li.data("id");
 		globals.gSelectedFilters = undefined;
 		
-		$context = option.refreshChoiceView();
+		$context = option.createChoiceView();
+
+		// Set the previous choices list box
+		var prevListName = $('#previousSelect').val();
+		if(prevListName) {
+			option.setPreviousChoices(prevListName);
+		}
+		
+		// Show the table of options
+		survey = globals.model.survey,
+		question = survey.forms[globals.gFormIndex].questions[globals.gItemIndex];
+		$('#optionTable').html(option.getOptionTable(question, globals.gFormIndex, globals.gListName));
+		option.setupChoiceView();
+		
 		respondToEventsChoices($context);
 		
 		$('.editorContent').toggle();
@@ -2005,5 +2020,41 @@ function addForms(data) {
 
 }
 
+/*
+ * User has changed the filter value on an option
+ */
+function updateFilterValues($this, isCascade, isChecked) {
+	
+	var $elem = $this.closest('tr'),
+		$f = $this.closest('td'),
+		listName = $elem.data("list_name"),
+		formIndex = $elem.data("fid"),
+		itemIndex = $elem.data("id"),
+		qname = $elem.data("qname"),
+		currentFilters,
+		filterName,
+		fVal,
+		newVal;
+
+	if(isCascade) {
+		filterName = "_smap_cascade";
+		if(isChecked) {
+			fVal = $("#previousSelectChoice").val();
+		} else {
+			fVal = undefined;
+		}
+		currentFilters = {};
+	} else {
+		filterName = $f.data("f_name");
+		fVal = $this.val();
+		currentFilters = $elem.data("filters")
+	}
+	
+	newVal = currentFilters;
+	newVal[filterName] = fVal;
+	$elem.data("filters", newVal);
+	
+	updateLabel("option", formIndex, itemIndex, listName, "text", newVal, qname, "cascade_filters") ;
+}
 
 });

@@ -104,7 +104,8 @@ define([
 				if(change.question) {
 					$context = markup.refresh();
 				} else {
-					$context = option.refreshChoiceView();
+					$context = option.createChoiceView();
+					option.setupChoiceView();
 				}
 			} else {
 				$context = updateHtmlElement(change);

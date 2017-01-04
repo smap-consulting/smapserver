@@ -1152,15 +1152,15 @@ public class QuestionManager {
 					if(GeneralUtilityMethods.columnType(sd, "option", property) != null) {
 					
 						String sql = "update option set  " + property + " = ? "
-								+ " where l_id = ? "
-								+ " and " + property + " = ?;";
+								+ "where l_id = ? "
+								+ "and ovalue = ?";
 						
 						pstmtOtherProperties = sd.prepareStatement(sql);
 							
 						// Update the option
 						pstmtOtherProperties.setString(1, p.newVal );
 						pstmtOtherProperties.setInt(2, listId );
-						pstmtOtherProperties.setString(3, p.oldVal );
+						pstmtOtherProperties.setString(3, p.name );
 						
 						log.info("Update option: " + pstmtOtherProperties.toString());
 						pstmtOtherProperties.executeUpdate();
