@@ -60,9 +60,12 @@ define([
 			$context.empty().append(addOptionContainer(question, globals.gFormIndex, globals.gItemIndex, undefined, survey.filters));
 		}
 		
+		// Set the custom filter view by default
+		$('#filterType').val("custom");
+		
 		return $context;
 	}
-	function setupChoiceView() {
+	function setupChoiceView(filterType) {
 		
 		/*
 		 * show filter columns that should be visible
@@ -75,11 +78,15 @@ define([
 			}
 		}
 		
-		// Set the custom filter view by default
-		$('#filterType').val("custom");
-		$('.custom_filter_only').show();
-		$('.cascade_filter_only').hide();
-		$('#choiceView table').addClass("notcascade").removeClass("notcustom");	
+		if(filterType === "custom") {
+			$('.custom_filter_only').show();
+			$('.cascade_filter_only').hide();
+			$('#choiceView table').addClass("notcascade").removeClass("notcustom");	
+		} else {
+			$('.custom_filter_only').hide();
+			$('.cascade_filter_only').show();
+			$('#choiceView table').removeClass("notcascade").addClass("notcustom");
+		}
 		
 	}
 
@@ -91,78 +98,81 @@ define([
 		
 		var h = [],
 			idx = -1,
-			prevChoice = $("#previousSelectChoice").val();
+			prevChoice = $("#previousSelectChoice").val(),
+			filterType = $('#filterType').val();
 		
 		optionList.maxOption++;
 		
-		h[++idx] = '<tr class="editor_element option draggable dropon ';
-		if(option.error) {
-			h[++idx] = ' error';
-		}
-		
-		// Add the option index 
-		h[++idx] = '" data-id="';
-		h[++idx] = index;
-		h[++idx] = '" data-fid="';					
-		h[++idx] = formIndex;
-		h[++idx] = '" data-qname="';
-		h[++idx] = qname;
-		h[++idx] = '" data-list_name="';
-		h[++idx] = list_name;
-		h[++idx] = '" data-filters=';
-		h[++idx] = JSON.stringify(option.cascade_filters);
-		h[++idx] = '>';
-		
-			// Add select for cascade selects
-			h[++idx] = '<td class="cascade">';
-				h[++idx] = '<input type="checkbox" class="cascadeFilter" name="isSelected" value="';
-				h[++idx] = "";
-				h[++idx] = '" ';
-				if(idx !== false) {
-					h[++idx] = addCascadeChecked(option.cascade_filters, prevChoice);
-				} 
-			h[++idx] = '</td>';
+		if(filterType !== "cascade" || showCascadeOption(option.cascade_filters, prevChoice,  option.value) ) {
+			h[++idx] = '<tr class="editor_element option draggable dropon ';
+			if(option.error) {
+				h[++idx] = ' error';
+			}
 			
-			// Add option name and value cell
-			h[++idx] = '<td>';
-					h[++idx] = '<div class="btn-group">';
-					h[++idx] = '<button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span class="edit_icon glyphicon glyphicon-option-vertical"></span> <span class="caret"></span>';
-					h[++idx] = '</button>';
-						h[++idx] = '<ul class="dropdown-menu">';
-							h[++idx] = '<li><a href="#" class="delete_option">';
-							h[++idx] = localise.set["c_del"];
-							h[++idx] = '</a></li>';
-							h[++idx] = '<li><a href="#" class="add_option_before">';
-							h[++idx] = localise.set["ed_ab"];
-							h[++idx] = '</a></li>';
-							h[++idx] = '<li><a href="#" class="add_option_after">';
-							h[++idx] = localise.set["ed_aa"];
-							h[++idx] = '</a></li>';
-						h[++idx] = '</ul>';
-					h[++idx] = '</div>';
-			h[++idx] = '</td>';	// End of menu button
+			// Add the option index 
+			h[++idx] = '" data-id="';
+			h[++idx] = index;
+			h[++idx] = '" data-fid="';					
+			h[++idx] = formIndex;
+			h[++idx] = '" data-qname="';
+			h[++idx] = qname;
+			h[++idx] = '" data-list_name="';
+			h[++idx] = list_name;
+			h[++idx] = '" data-filters=';
+			h[++idx] = JSON.stringify(option.cascade_filters);
+			h[++idx] = '>';
 			
-			// Add option name cell
-			h[++idx] = '<td>';
+				// Add select for cascade selects
+				h[++idx] = '<td class="cascade">';
+					h[++idx] = '<input type="checkbox" class="cascadeFilter" name="isSelected" value="';
+					h[++idx] = "";
+					h[++idx] = '" ';
+					if(idx !== false) {
+						h[++idx] = addCascadeChecked(option.cascade_filters, prevChoice);
+					} 
+				h[++idx] = '</td>';
 				
-				h[++idx] = '<input class="oname form-control has_tt" value="';
-				h[++idx] = option.value;
-				h[++idx] = '" ';
-						
-				if(option.published) {				// Mark disabled if the option has been published
-					h[++idx] = 'readonly="true"';
-				}
-				h[++idx] = ' type="text" title="';
-				h[++idx] = localise.set["ed_cval"];
-				h[++idx] = '">';
-						
-			h[++idx] = '</td>';	// End of option name and label cell
+				// Add option name and value cell
+				h[++idx] = '<td>';
+						h[++idx] = '<div class="btn-group">';
+						h[++idx] = '<button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span class="edit_icon glyphicon glyphicon-option-vertical"></span> <span class="caret"></span>';
+						h[++idx] = '</button>';
+							h[++idx] = '<ul class="dropdown-menu">';
+								h[++idx] = '<li><a href="#" class="delete_option">';
+								h[++idx] = localise.set["c_del"];
+								h[++idx] = '</a></li>';
+								h[++idx] = '<li><a href="#" class="add_option_before">';
+								h[++idx] = localise.set["ed_ab"];
+								h[++idx] = '</a></li>';
+								h[++idx] = '<li><a href="#" class="add_option_after">';
+								h[++idx] = localise.set["ed_aa"];
+								h[++idx] = '</a></li>';
+							h[++idx] = '</ul>';
+						h[++idx] = '</div>';
+				h[++idx] = '</td>';	// End of menu button
+				
+				// Add option name cell
+				h[++idx] = '<td>';
+					
+					h[++idx] = '<input class="oname form-control has_tt" value="';
+					h[++idx] = option.value;
+					h[++idx] = '" ';
+							
+					if(option.published) {				// Mark disabled if the option has been published
+						h[++idx] = 'readonly="true"';
+					}
+					h[++idx] = ' type="text" title="';
+					h[++idx] = localise.set["ed_cval"];
+					h[++idx] = '">';
+							
+				h[++idx] = '</td>';	// End of option name and label cell
+			
+				h[++idx] = addFilterColumnBody(option.cascade_filters, initialiseFilters);
+				h[++idx] = addOptionLabel(option);
 		
-			h[++idx] = addFilterColumnBody(option.cascade_filters, initialiseFilters);
-			h[++idx] = addOptionLabel(option);
-	
-		
-		h[++idx] = '</tr>';
+			
+			h[++idx] = '</tr>';
+		}
 
 	
 		return h.join("");
@@ -731,6 +741,36 @@ define([
 		} else {
 			return '';
 		}
+	}
+	
+	/*
+	 * As this is the cascade view options should only be shown if their filter value is empty or 
+	 *  matches the prevChoice
+	 */
+	function showCascadeOption (filters, prevChoice, optionValue) {
+		
+		var show = false,
+			i,
+			inOptionList = false,
+			listname = $('#previousSelect').val(),
+			survey = globals.model.survey,
+			optionList = survey.optionLists[listname],
+			oSeq = optionList.oSeq,
+			option;
+		
+		for(i = 0; i < oSeq.length; i++) {
+			option = optionList.options[oSeq[i]];
+			if(filters["_smap_cascade"] == option.value) {
+				inOptionList = true;
+				break;
+			}
+		}
+					
+		if(!filters["_smap_cascade"] || filters["_smap_cascade"] == prevChoice || !inOptionList) {
+			show = true;
+		}
+		
+		return show;
 	}
 	
 });

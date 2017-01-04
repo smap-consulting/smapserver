@@ -105,7 +105,7 @@ define([
 					$context = markup.refresh();
 				} else {
 					$context = option.createChoiceView();
-					option.setupChoiceView();
+					option.setupChoiceView($('#filterType').val());
 				}
 			} else {
 				$context = updateHtmlElement(change);

@@ -766,18 +766,14 @@ function respondToEventsChoices($context) {
 	
 	
 	$('#filterType', $context).off().change(function(){
-		var $this = $(this);
+		var $this = $(this),
+			survey = globals.model.survey,
+			question = survey.forms[globals.gFormIndex].questions[globals.gItemIndex];
+	
+		$('#optionTable').html(option.getOptionTable(question, globals.gFormIndex, globals.gListName));
+		respondToEventsChoices($('#optionTable'));
 		
-
-		if($this.val() === "custom") {
-			$('.custom_filter_only').show();
-			$('.cascade_filter_only').hide();
-			$('#choiceView table').addClass("notcascade").removeClass("notcustom");
-		} else {
-			$('.custom_filter_only').hide();
-			$('.cascade_filter_only').show();
-			$('#choiceView table').removeClass("notcascade").addClass("notcustom");
-		}
+		option.setupChoiceView($this.val());
 	});
 	
 	// Respond to columns of filters being hidden or made visible
@@ -811,8 +807,13 @@ function respondToEventsChoices($context) {
 	
 	// Previous question for cascading select changes
 	$context.find('#previousSelect').off().change(function(){
-		var $this = $(this);	
+		var $this = $(this),
+			survey = globals.model.survey,
+			question = survey.forms[globals.gFormIndex].questions[globals.gItemIndex];
+		
 		option.setPreviousChoices($this.val());	
+		$('#optionTable').html(option.getOptionTable(question, globals.gFormIndex, globals.gListName));
+		respondToEventsChoices($('#optionTable'));
 	});
 	
 	// Previous choice for cascading select changes
@@ -1152,7 +1153,7 @@ function respondToEvents($context) {
 		survey = globals.model.survey,
 		question = survey.forms[globals.gFormIndex].questions[globals.gItemIndex];
 		$('#optionTable').html(option.getOptionTable(question, globals.gFormIndex, globals.gListName));
-		option.setupChoiceView();
+		option.setupChoiceView("custom");
 		
 		respondToEventsChoices($context);
 		
