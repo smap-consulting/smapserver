@@ -327,6 +327,7 @@ define({
 	"msg_del_q": "Are you sure you want to delete this question?",
 	"msg_del_cl": "Are you sure you want to delete this choice list?",
 	"msg_del_c": "Are you sure you want to delete this choice?",
+	"msg_rep_f": "Are you sure you want to replace this choice filter",
 	"msg_n_v": "Not valid",
 	"msg_u_f": "Error upload failed",
 	"msg_u_nt": "No nfc tags found",

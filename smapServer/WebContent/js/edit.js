@@ -768,12 +768,25 @@ function respondToEventsChoices($context) {
 	$('#filterType', $context).off().change(function(){
 		var $this = $(this),
 			survey = globals.model.survey,
-			question = survey.forms[globals.gFormIndex].questions[globals.gItemIndex];
-	
-		$('#optionTable').html(option.getOptionTable(question, globals.gFormIndex, globals.gListName));
-		respondToEventsChoices($('#optionTable'));
+			question = survey.forms[globals.gFormIndex].questions[globals.gItemIndex],
+			filterType = $this.val(),
+			choiceFilter,
+			proceed = true;
+
+		if(filterType === "cascade") {
+			choiceFilter = $('#choiceFilter').val();
+			if(choiceFilter && choiceFilter.indexOf("_smap_cascade") < 0) {
+				proceed = confirm(localise.set["msg_rep_f"] + ": " + choiceFilter + "?");
+			}
+		}
 		
-		option.setupChoiceView($this.val());
+		if(proceed) {
+			$('#optionTable').html(option.getOptionTable(question, globals.gFormIndex, globals.gListName));
+			respondToEventsChoices($('#optionTable'));
+			option.setupChoiceView($this.val());
+		} else {
+			$this.val("custom")
+		}
 	});
 	
 	// Respond to columns of filters being hidden or made visible
@@ -792,7 +805,7 @@ function respondToEventsChoices($context) {
 			formIndex = $elem.data("fid"),
 			itemIndex = $elem.data("id");
 	
-		updateLabel("question", formIndex, itemIndex, undefined, "text", $this.val(), undefined, "list_name") ;
+		updateLabel("question", formIndex, itemIndex, undefined, "text", $this.val(), undefined, "list_name");
 	});
 	
 	// Choice filter change
@@ -802,7 +815,7 @@ function respondToEventsChoices($context) {
 			formIndex = $elem.data("fid"),
 			itemIndex = $elem.data("id");
 	
-		updateLabel("question", formIndex, itemIndex, undefined, "text", $this.val(), undefined, "nodeset") ;
+		updateLabel("question", formIndex, itemIndex, undefined, "text", $this.val(), undefined, "nodeset");
 	});
 	
 	// Previous question for cascading select changes
