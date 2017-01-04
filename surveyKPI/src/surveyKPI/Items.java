@@ -257,7 +257,7 @@ public class Items extends Application {
 						cols.append(tName + "." + c.name + " as " +  c.name);
 						
 					}  else {
-						cols.append(c.name);
+						cols.append(tName + "." + c.name + " as " +  c.name);
 						
 					}
 					
