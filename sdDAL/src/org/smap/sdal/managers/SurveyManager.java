@@ -679,7 +679,7 @@ public class SurveyManager {
 				+ "order by c_id desc; ";
 		PreparedStatement pstmtGetChanges = sd.prepareStatement(sqlGetChanges);
 		
-		// Get the changes that have been made to this survey
+		// Get the surveys that can be linked to
 		ResultSet rsGetLinkable = null;
 		String sqlGetLinkable = "select s.s_id, s.display_name "
 				+ "from survey s, project p "

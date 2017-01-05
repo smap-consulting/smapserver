@@ -38,6 +38,7 @@ import org.smap.sdal.model.ManifestInfo;
 import org.smap.sdal.model.Option;
 import org.smap.sdal.model.RoleColumnFilter;
 import org.smap.sdal.model.SqlFrag;
+import org.smap.sdal.model.SurveyLinkDetails;
 import org.smap.sdal.model.TableColumn;
 
 import com.google.gson.Gson;
@@ -3162,17 +3163,103 @@ public class GeneralUtilityMethods {
 	}
 
 	/*
+	 * Get the surveys that link to the provided survey
+	 */
+	public static ArrayList<SurveyLinkDetails> getLinkingSurveys(Connection sd, int sId) {
+		
+		ArrayList<SurveyLinkDetails> sList = new ArrayList<SurveyLinkDetails> ();
+		
+		String sql = "select q.q_id, f.f_id, s.s_id "
+				+ "from question q, form f, survey s "
+				+ "where q.f_id = f.f_id "
+				+ "and f.s_id = s.s_id "
+				+ "and q.linked_survey = ?";
+		PreparedStatement pstmt = null;
+		
+		try {
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setInt(1,sId);
+			log.info("Getting linking surveys: " + pstmt.toString() );
+			
+			ResultSet rs = pstmt.executeQuery();
+			if(rs.next()) {
+				SurveyLinkDetails sld = new SurveyLinkDetails();
+				sld.toSurveyId = sId;
+				
+				sld.fromQuestionId = rs.getInt(1);
+				sld.fromFormId = rs.getInt(2);
+				sld.fromSurveyId = rs.getInt(3);
+
+				if(sld.fromSurveyId != sld.toSurveyId) {
+					sList.add(sld);
+				}
+				
+			}
+			
+		} catch (Exception e) {
+			log.log(Level.SEVERE, "Exception", e);
+		} finally {
+			try {if (pstmt != null) {pstmt.close();	}} catch (SQLException e) {	}
+		}
+		
+		return sList;
+	}
+	
+	/*
+	 * Get the surveys that the provided form links to
+	 */
+	public static ArrayList<SurveyLinkDetails> getLinkedSurveys(Connection sd, int sId) {
+		
+		ArrayList<SurveyLinkDetails> sList = new ArrayList<SurveyLinkDetails> ();
+		
+		String sql = "select q.q_id, f.f_id, q.linked_survey "
+				+ "from question q, form f, survey s "
+				+ "where q.f_id = f.f_id "
+				+ "and f.s_id = s.s_id "
+				+ "and s.s_id = ? "
+				+ "and q.linked_survey != 0";
+		PreparedStatement pstmt = null;
+		
+		try {
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setInt(1,sId);
+			log.info("Getting linked surveys: " + pstmt.toString() );
+			
+			ResultSet rs = pstmt.executeQuery();
+			if(rs.next()) {
+				SurveyLinkDetails sld = new SurveyLinkDetails();
+				sld.fromSurveyId = sId;
+				sld.fromQuestionId = rs.getInt(1);
+				sld.fromFormId = rs.getInt(2);
+				
+				sld.toSurveyId = rs.getInt(3);
+
+				if(sld.fromSurveyId != sld.toSurveyId) {
+					sList.add(sld);
+				}
+				
+			}
+			
+		} catch (Exception e) {
+			log.log(Level.SEVERE, "Exception", e);
+		} finally {
+			try {if (pstmt != null) {pstmt.close();	}} catch (SQLException e) {	}
+		}
+		
+		return sList;
+	}
+	/*
 	 * Get the main results table for a survey if it exists
 	 */
 	public static String getMainResultsTable(Connection sd, Connection conn, int sId) {
 		String table = null;
 		
-		String sqlGetMainForm = "select table_name from form where s_id = ? and parentform = 0;";
+		String sql = "select table_name from form where s_id = ? and parentform = 0";
 		PreparedStatement pstmt = null;
 		
 		try {
 			
-			pstmt = sd.prepareStatement(sqlGetMainForm);
+			pstmt = sd.prepareStatement(sql);
 			pstmt.setInt(1,sId);
 			
 			log.info("Getting main form: " + pstmt.toString() );
