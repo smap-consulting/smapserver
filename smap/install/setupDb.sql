@@ -81,23 +81,6 @@ DROP SEQUENCE IF EXISTS regions_seq CASCADE;
 CREATE SEQUENCE regions_seq START 10;
 ALTER SEQUENCE regions_seq OWNER TO ws;
 
-DROP SEQUENCE IF EXISTS log_seq CASCADE;
-CREATE SEQUENCE log_seq START 1;
-ALTER SEQUENCE log_seq OWNER TO ws;
-
--- Log table
-DROP TABLE IF EXISTS log CASCADE;
-create TABLE log (
-	id integer DEFAULT NEXTVAL('log_seq') CONSTRAINT pk_log PRIMARY KEY,
-	log_time TIMESTAMP WITH TIME ZONE,
-	s_id integer,
-	o_id integer REFERENCES organisation(id) ON DELETE CASCADE,
-	user_ident text,
-	event text,	
-	note text
-	);
-ALTER TABLE log OWNER TO ws;
-
 -- Server level defaults
 DROP TABLE IF EXISTS server CASCADE;
 create TABLE server (
@@ -148,6 +131,23 @@ create TABLE organisation (
 	);
 CREATE UNIQUE INDEX idx_organisation ON organisation(name);
 ALTER TABLE organisation OWNER TO ws;
+
+DROP SEQUENCE IF EXISTS log_seq CASCADE;
+CREATE SEQUENCE log_seq START 1;
+ALTER SEQUENCE log_seq OWNER TO ws;
+
+-- Log table
+DROP TABLE IF EXISTS log CASCADE;
+create TABLE log (
+	id integer DEFAULT NEXTVAL('log_seq') CONSTRAINT pk_log PRIMARY KEY,
+	log_time TIMESTAMP WITH TIME ZONE,
+	s_id integer,
+	o_id integer REFERENCES organisation(id) ON DELETE CASCADE,
+	user_ident text,
+	event text,	
+	note text
+	);
+ALTER TABLE log OWNER TO ws;
 
 DROP TABLE IF EXISTS project CASCADE;
 create TABLE project (
