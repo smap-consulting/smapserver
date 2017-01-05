@@ -50,7 +50,8 @@ define([
 		var $context = $('#choiceView').find('.choice-content'),
 			survey = globals.model.survey,
 			question,
-			filter;
+			filter,
+			filterType = "custom";
 		
 		if(globals.gListName) {
 			$context.empty().append(addOptionContainer(undefined, undefined, undefined, globals.gListName, survey.filters));
@@ -60,8 +61,14 @@ define([
 			$context.empty().append(addOptionContainer(question, globals.gFormIndex, globals.gItemIndex, undefined, survey.filters));
 		}
 		
+		for(filter in survey.filters) {
+			if (filter === "_smap_cascade") {
+				filterType = "cascade";
+				break;
+			}
+		}
 		// Set the custom filter view by default
-		$('#filterType').val("custom");
+		$('#filterType').val(filterType);
 		
 		return $context;
 	}
@@ -755,9 +762,11 @@ define([
 			listname = $('#previousSelect').val(),
 			survey = globals.model.survey,
 			optionList = survey.optionLists[listname],
-			oSeq = optionList.oSeq,
+			oSeq,
 			option;
 		
+		addOptionSequence(optionList);		// Add an array holding the option sequence if it does not already exist
+		oSeq = optionList.oSeq
 		for(i = 0; i < oSeq.length; i++) {
 			option = optionList.options[oSeq[i]];
 			if(filters["_smap_cascade"] == option.value) {

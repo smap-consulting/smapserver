@@ -781,6 +781,7 @@ function respondToEventsChoices($context) {
 		}
 		
 		if(proceed) {
+			setCascadeFilter();
 			$('#optionTable').html(option.getOptionTable(question, globals.gFormIndex, globals.gListName));
 			respondToEventsChoices($('#optionTable'));
 			option.setupChoiceView($this.val());
@@ -912,17 +913,17 @@ function respondToEventsChoices($context) {
 		
 	});
 	
-	// Update the filter values
+	// Update the filter values when a custom filter value is changed
 	$context.find('.filter').change(function(){
-		updateFilterValues($(this), false);
+		updateFilterValues($(this), false, undefined);
 	});
 	
-	// Update the cascade filter values
+	// Update the cascade filter values when a cascade filter value is checked
 	$('.cascadeFilter').on('ifChecked', function(event) {
 			updateFilterValues($(this), true, true);
 		});
 	
-	// Update the cascade filter values
+	// Update the cascade filter values when a cascade filter value is un-checked
 	$('.cascadeFilter').on('ifUnchecked', function(event) {
 			updateFilterValues($(this), true, false);
 		});
@@ -1166,7 +1167,7 @@ function respondToEvents($context) {
 		survey = globals.model.survey,
 		question = survey.forms[globals.gFormIndex].questions[globals.gItemIndex];
 		$('#optionTable').html(option.getOptionTable(question, globals.gFormIndex, globals.gListName));
-		option.setupChoiceView("custom");
+		option.setupChoiceView($('#filterType').val());
 		
 		respondToEventsChoices($context);
 		
@@ -2069,6 +2070,16 @@ function updateFilterValues($this, isCascade, isChecked) {
 	$elem.data("filters", newVal);
 	
 	updateLabel("option", formIndex, itemIndex, listName, "text", newVal, qname, "cascade_filters") ;
+}
+
+/*
+ * Set the choice filter to a value appropriate for cascade selects
+ */
+function setCascadeFilter() {
+	var filter = "selected(${" + $('#previousSelect').val() + "}, _smap_cascade)";
+	$('#choiceFilter').val(filter);
+	updateLabel("question", globals.gFormIndex, 
+			globals.gItemIndex, undefined, "text", filter, undefined, "nodeset");
 }
 
 });
