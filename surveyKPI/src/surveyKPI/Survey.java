@@ -289,7 +289,8 @@ public class Survey extends Application {
 	@GET
 	@Produces("application/json")
 	public Response getSurveyMeta(@Context HttpServletRequest request,
-			@PathParam("sId") int sId) { 
+			@PathParam("sId") int sId,
+			@QueryParam("extended") boolean extended) { 
 		
 		Response response = null;
 		String topTableName = null;
@@ -316,21 +317,24 @@ public class Survey extends Application {
 		PreparedStatement pstmtTables = null;
 		PreparedStatement pstmtGeom = null;
 		
-
 		try {
-			String sqlTables = "SELECT DISTINCT f.table_name, f.name, f_id, f.parentform FROM form f " +
-					"where f.s_id = ? " + 
-					"order by f.table_name;";		
+			String sqlTables = "select "
+					+ "f.table_name, f.name, f_id, f.parentform "
+					+ "from form f "
+					+ "where f.s_id = ? " 
+					+ "order by f.table_name";		
 			pstmtTables = connectionSD.prepareStatement(sqlTables);	
 			
-			String sqlGeom = "SELECT q.q_id " +
-					"FROM form f, question q " + 
-					" where f.f_id = q.f_id " +
-					" AND (q.qtype='geopoint' " +
-					" OR q.qtype='geopolygon' OR q.qtype='geolinestring'" +
-					" OR q.qtype='geoshape' OR q.qtype='geotrace') " +
-					" AND f.f_id = ?" + 
-					" AND f.s_id = ?; ";
+			String sqlGeom = "select q.q_id "
+					+ "from form f, question q "
+					+ "where f.f_id = q.f_id "
+					+ "and (q.qtype='geopoint' "
+						+ "or q.qtype='geopolygon' "
+						+ "or q.qtype='geolinestring' "
+						+ "or q.qtype='geoshape' "
+						+ "or q.qtype='geotrace') "
+					+ "and f.f_id = ? "
+					+ "and f.s_id = ?";
 			pstmtGeom = connectionSD.prepareStatement(sqlTables);	
 			
 			// Add the sId to the response so that it is available in the survey meta object
@@ -357,7 +361,7 @@ public class Survey extends Application {
 			bbox[1] = 90;
 			bbox[2] = -180;
 			bbox[3] = -90;
-			while (resultSet.next()) {								
+			while (resultSet.next()) {							
 					
 				String tableName = resultSet.getString(1);
 				String formName = resultSet.getString(2);
@@ -369,8 +373,7 @@ public class Survey extends Application {
 				String bounds = null;
 				
 				try {
-					sql = "SELECT COUNT(*) FROM " + tableName + ";";
-					log.info(sql);
+					sql = "select count(*) from " + tableName;
 					try {if (pstmt2 != null) {pstmt2.close();}} catch (SQLException e) {}
 					pstmt2 = connectionRel.prepareStatement(sql);
 					resultSetTable = pstmt2.executeQuery();
@@ -395,9 +398,8 @@ public class Survey extends Application {
 				// Get the table bounding box
 				try {
 					if(has_geom) {
-						sql = "SELECT ST_Extent(the_geom) as table_extent FROM " +
-								 tableName + ";";
-						log.info(sql);
+						sql = "select ST_Extent(the_geom) as table_extent "
+								+ "from " + tableName;
 						try {if (pstmt3 != null) {pstmt3.close();}} catch (SQLException e) {}
 						pstmt3 = connectionRel.prepareStatement(sql);
 						resultSetBounds = pstmt3.executeQuery();
@@ -424,7 +426,6 @@ public class Survey extends Application {
 							
 							try {if (pstmt2 != null) {pstmt2.close();}} catch (SQLException e) {}
 							pstmt2 = connectionRel.prepareStatement(sql);
-							log.info("Get max, min dates: " + pstmt2.toString());
 							resultSetTable = pstmt2.executeQuery();
 							if(resultSetTable.next()) {
 								di.first = resultSetTable.getDate(1);
@@ -463,17 +464,16 @@ public class Survey extends Application {
 			 * The maximum and minimum value for these dates will be added when 
 			 * the results data for each table is checked
 			 */
-			sql = "SELECT q.q_id, q.qname, f.f_id, q.column_name " +
-					"FROM form f, question q " + 
-					"where f.f_id = q.f_id " +
-					"AND (q.qtype='date' " +
-					"OR q.qtype='dateTime') " +
-					"AND f.s_id = ?; "; 	
+			sql = "select q.q_id, q.qname, f.f_id, q.column_name "
+					+ "from form f, question q "
+					+ "where f.f_id = q.f_id "
+					+ "and (q.qtype='date' "
+						+ "or q.qtype='dateTime') "
+					+ "and f.s_id = ?"; 	
 			
 
 			pstmt = connectionSD.prepareStatement(sql);
 			pstmt.setInt(1, sId);
-			log.info("Get dates: " + pstmt.toString());
 			resultSet = pstmt.executeQuery();
 			
 			while (resultSet.next()) {	
@@ -527,16 +527,14 @@ public class Survey extends Application {
 				jo.put("bbox", bb);
 			} 
 			
-
-			
 			/*
 			 * Get other survey details
 			 */
-			sql = "SELECT s.display_name, s.deleted, s.p_id, s.ident, s.model " +
-					"FROM survey s " + 
-					"where s.s_id = ?;";
+			sql = "select "
+					+ "s.display_name, s.deleted, s.p_id, s.ident, s.model "
+					+ "from survey s "
+					+ "where s.s_id = ?";
 			
-			log.info(sql);
 			if(pstmt != null) try {pstmt.close();}catch(Exception e) {}
 			pstmt = connectionSD.prepareStatement(sql);
 			pstmt.setInt(1, sId);
