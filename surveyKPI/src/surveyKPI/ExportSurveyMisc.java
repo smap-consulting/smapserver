@@ -51,6 +51,7 @@ import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.managers.LogManager;
 import org.smap.sdal.managers.SpssManager;
 import org.smap.sdal.model.ColDesc;
+import org.smap.sdal.model.ExportForm;
 import org.smap.sdal.model.OptionDesc;
 import org.smap.sdal.model.SqlDesc;
 import org.w3c.dom.Document;
@@ -73,11 +74,6 @@ public class ExportSurveyMisc extends Application {
 			 Logger.getLogger(ExportSurveyMisc.class.getName());
 	
 	LogManager lm = new LogManager();		// Application log
-	
-	private class ExportForm {
-		int sId;
-		int fId;
-	}
 	
 	/*
 	 * Export as:
@@ -135,6 +131,7 @@ public class ExportSurveyMisc extends Application {
 		
 		/*
 		 * Get the list of forms and surveys to be exported
+		 * Needs to be done prior to authorisation as it includes the list of surveys
 		 */
 		System.out.println("Form List: " + forms);
 		ArrayList<ExportForm> formList = null;
@@ -143,16 +140,7 @@ public class ExportSurveyMisc extends Application {
 			Type type = new TypeToken<ArrayList<ExportForm>>(){}.getType();
 			Gson gson=  new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
 			formList = gson.fromJson(forms, type);
-			
-			// Debug
-			for(int i = 0; i < formList.size(); i++) {
-				System.out.println("   Survey: " + formList.get(i).sId);
-				System.out.println("   Form: " + formList.get(i).fId);
-				System.out.println();
-			}
 		}
-		
-		
 		
 		// Authorisation - Access
 		Connection connectionSD = SDDataSource.getConnection("surveyKPI-ExportSurveyMisc");
@@ -191,14 +179,14 @@ public class ExportSurveyMisc extends Application {
 			Connection connectionResults = null;
 			PreparedStatement pstmtDefLang = null;
 			PreparedStatement pstmtDefLang2 = null;
+			PreparedStatement pstmtGetTable = null;
 			
 			try {
 		
 				// Get the users locale
 				Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(connectionSD, request.getRemoteUser()));
 				localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
-				
-				
+						
 				/*
 				 * Get the name of the database
 				 */
@@ -234,6 +222,40 @@ public class ExportSurveyMisc extends Application {
 					}
 				}
 
+				
+				String sqlGetTable = "select table_name, parentform from form "
+						+ "where s_id = ? "
+						+ "and f_id = ?;";	
+				pstmtGetTable = connectionSD.prepareStatement(sqlGetTable);
+				
+				if(formList == null) {
+					// TODO Get a list of forms from the single form type request
+					System.out.println("TODO: Get list of forms");
+				} else {
+					// Add the table name to each form
+					for(ExportForm ef : formList) {
+
+						pstmtGetTable.setInt(1, ef.sId);
+						pstmtGetTable.setInt(2, ef.fId);
+						ResultSet rs = pstmtGetTable.executeQuery();
+						if(rs.next()) {
+							ef.table = rs.getString(1);
+							ef.parent = rs.getInt(2);
+						} else {
+							String msg = "Exporting survey to " + format + ", Form not found:" + ef.sId + ":" + ef.fId;
+							log.info(msg);
+							throw new Exception(msg);
+						}
+					}
+				}
+				
+				for(int i = 0; i < formList.size(); i++) {
+					System.out.println("   Survey: " + formList.get(i).sId);
+					System.out.println("   Form: " + formList.get(i).fId);
+					System.out.println("   Table: " + formList.get(i).table);
+					System.out.println();
+				}
+				
 				// Get the SQL for this query
 				SqlDesc sqlDesc = QueryGenerator.gen(connectionSD, 
 						connectionResults,
@@ -255,7 +277,9 @@ public class ExportSurveyMisc extends Application {
 						startDate,
 						endDate,
 						dateId,
-						superUser);
+						superUser,
+						formList,
+						formList.size() - 1);
 
 				String basePath = GeneralUtilityMethods.getBasePath(request);					
 				String filepath = basePath + "/temp/" + String.valueOf(UUID.randomUUID());	// Use a random sequence to keep survey name unique
@@ -455,7 +479,8 @@ public class ExportSurveyMisc extends Application {
 			} finally {	
 
 				try {if (pstmtDefLang != null) {pstmtDefLang.close();}} catch (SQLException e) {}
-				try {if (pstmtDefLang2 != null) {pstmtDefLang2.close();}} catch (SQLException e) {}				
+				try {if (pstmtDefLang2 != null) {pstmtDefLang2.close();}} catch (SQLException e) {}	
+				try {if (pstmtGetTable != null) {pstmtGetTable.close();}} catch (SQLException e) {}	
 				
 				SDDataSource.closeConnection("surveyKPI-ExportSurvey", connectionSD);
 				ResultsDataSource.closeConnection("surveyKPI-ExportSurvey", connectionResults);

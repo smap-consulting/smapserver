@@ -30,6 +30,7 @@ import java.util.logging.Logger;
 
 import org.smap.sdal.managers.RoleManager;
 import org.smap.sdal.model.ColDesc;
+import org.smap.sdal.model.ExportForm;
 import org.smap.sdal.model.OptionDesc;
 import org.smap.sdal.model.SqlDesc;
 import org.smap.sdal.model.SqlFrag;
@@ -64,11 +65,13 @@ public class QueryGenerator {
 			Date startDate,
 			Date endDate,
 			int dateId,
-			boolean superUser) throws Exception {
+			boolean superUser,
+			ArrayList<ExportForm> formList,
+			int formListIdx) throws Exception {
 		
 		SqlDesc sqlDesc = new SqlDesc();
 		
-		PreparedStatement  pstmt = null;
+
 		PreparedStatement pstmtCols = null;
 		PreparedStatement pstmtGeom = null;
 		PreparedStatement pstmtQType = null;
@@ -77,25 +80,10 @@ public class QueryGenerator {
 		PreparedStatement pstmtListLabels = null;
 		try {
 
-			/*
-			 * Get the tables / forms in this survey 
-			 */
-			String sql = "SELECT f_id, table_name, parentform FROM form" +
-					" WHERE s_id = ? " +
-					" AND f_id = ?;";	
-
-			pstmt = connectionSD.prepareStatement(sql);
-			pstmt.setInt(1, sId);
-			pstmt.setInt(2, fId);
-			ResultSet resultSet = pstmt.executeQuery();
-			if(!resultSet.next()) {
-				String msg = "Exporting survey to " + format + ", Form not found:" + sId + ":" + fId;
-				log.info(msg);
-				throw new Exception(msg);
-			}
+			ExportForm form = formList.get(formListIdx);
 			
-			sqlDesc.target_table = resultSet.getString("table_name");
-			int parentForm = resultSet.getInt("parentform");
+			
+			sqlDesc.target_table = form.table;
 			
 			/*
 			 * Prepare the statement to get the list labels
@@ -136,13 +124,11 @@ public class QueryGenerator {
 			 * Create an object describing the sql query recursively from the target table
 			 */
 			getSqlDesc(
-					sqlDesc, sId,
-					sqlDesc.target_table,
-					parentForm,
+					sqlDesc, 
+					sId,
 					0, 
 					language,
 					format,
-					pstmt, 
 					pstmtCols,
 					pstmtGeom,
 					pstmtQType,
@@ -151,23 +137,22 @@ public class QueryGenerator {
 					urlprefix,
 					wantUrl,
 					exp_ro,
-					excludeParents,
 					labelListMap,
 					connectionSD, 
 					connectionResults,
 					requiredColumns,
 					namedQuestions,
 					user,
-					fId,
 					startDate,
 					endDate,
 					dateId,
-					superUser
+					superUser,
+					formList,
+					formListIdx
 					);
 		} catch (Exception e) {
 			throw new Exception(e.getMessage()); 
 		} finally {
-			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 			try {if (pstmtCols != null) {pstmtCols.close();}} catch (SQLException e) {}
 			try {if (pstmtGeom != null) {pstmtGeom.close();}} catch (SQLException e) {}
 			try {if (pstmtQType != null) {pstmtQType.close();}} catch (SQLException e) {}
@@ -274,15 +259,13 @@ public class QueryGenerator {
 	 *  The order of fields is from highest form to lowest form
 	 * 
 	 */
+
 	private  static void getSqlDesc(
 			SqlDesc sqlDesc, 
 			int sId, 
-			String tName, 
-			int parentForm, 
 			int level, 
 			String language,
 			String format,
-			PreparedStatement pstmt, 
 			PreparedStatement pstmtCols,
 			PreparedStatement pstmtGeom,
 			PreparedStatement pstmtQType,
@@ -291,62 +274,56 @@ public class QueryGenerator {
 			String urlprefix,
 			boolean wantUrl,
 			boolean exp_ro,
-			boolean excludeParents,
 			HashMap<ArrayList<OptionDesc>, String> labelListMap,
 			Connection connectionSD,
 			Connection connectionResults,
 			ArrayList<String> requiredColumns,
 			ArrayList<String> namedQuestions,
 			String user,
-			int fId,
 			Date startDate,
 			Date endDate,
 			int dateId,
-			boolean superUser) throws SQLException {
+			boolean superUser,
+			ArrayList<ExportForm> formList,
+			int formListIdx
+			) throws SQLException {
 		
 		int colLimit = 10000;
 		if(format.equals("shape")) {	// Shape files limited to 244 columns plus the geometry column
 			colLimit = 244;
 		}
-		if(parentForm > 0 && !excludeParents) {
-			pstmt.setInt(1, sId);
-			pstmt.setInt(2, parentForm);
-			log.info("sql: " + pstmt.toString());
-			ResultSet resultSet = pstmt.executeQuery();
+		
+		ExportForm form = formList.get(formListIdx);
+		
+		if(formListIdx > 0) {
 			
-			if (resultSet.next()) {
-	
-				String nextTableName = resultSet.getString("table_name");
-				int nextParentForm = resultSet.getInt("parentform");
-				getSqlDesc(sqlDesc, 
-						sId, 
-						nextTableName, 
-						nextParentForm, 
-						level + 1,
-						language,
-						format,
-						pstmt,
-						pstmtCols, 
-						pstmtGeom,
-						pstmtQType,
-						pstmtQLabel,
-						pstmtListLabels,
-						urlprefix,
-						wantUrl,
-						exp_ro,
-						excludeParents,
-						labelListMap,
-						connectionSD,
-						connectionResults,
-						requiredColumns,
-						namedQuestions,
-						user,
-						parentForm,
-						startDate,
-						endDate,
-						dateId,
-						superUser);
-			}
+			getSqlDesc(
+					sqlDesc, 
+					sId, 
+					level + 1,
+					language,
+					format,
+					pstmtCols, 
+					pstmtGeom,
+					pstmtQType,
+					pstmtQLabel,
+					pstmtListLabels,
+					urlprefix,
+					wantUrl,
+					exp_ro,
+					labelListMap,
+					connectionSD,
+					connectionResults,
+					requiredColumns,
+					namedQuestions,
+					user,
+					startDate,
+					endDate,
+					dateId,
+					superUser,
+					formList,
+					formListIdx - 1
+					);
 		}
 
 		
@@ -355,9 +332,9 @@ public class QueryGenerator {
 				connectionResults,
 				sId,
 				user,
-				parentForm,
-				fId,
-				tName,
+				form.parent,
+				form.fId,
+				form.table,
 				exp_ro,
 				false,		// Don't include parent key
 				false,		// Don't include "bad" columns
@@ -399,7 +376,7 @@ public class QueryGenerator {
 			}
 			
 			if(type.equals("geometry")) {
-				String sqlGeom = "SELECT GeometryType(" + name + ") FROM " + tName + ";";
+				String sqlGeom = "SELECT GeometryType(" + name + ") FROM " + form.table + ";";
 
 				pstmtGeom = connectionResults.prepareStatement(sqlGeom);
 				log.info("Get geometry type: " + pstmtGeom.toString());
@@ -448,14 +425,14 @@ public class QueryGenerator {
 				if(!wantThisOne) {
 					continue;
 				}
-			} else if(name.equals("prikey") && parentForm > 0) {	// Only return the primary key of the top level survey form
+			} else if(name.equals("prikey") && form.parent > 0) {	// Only return the primary key of the top level survey form
 				continue;
 			}
 			
 			if(sqlDesc.numberFields <= colLimit || type.equals("geometry")) {
 				
 				// Get the question type
-				pstmtQType.setString(1, tName);
+				pstmtQType.setString(1, form.table);
 				if(name.contains("__")) {
 					// Select multiple question
 					String [] mNames = name.split("__");
@@ -508,11 +485,11 @@ public class QueryGenerator {
 				if(sqlDesc.geometry_type != null && type.equals("geometry") && (format.equals("vrt") || format.equals("csv") || format.equals("stata") || format.equals("thingsat"))) {
 					//colBuf.append("ST_AsText(");
 					if(sqlDesc.geometry_type.equals("wkbPoint") && (format.equals("csv") || format.equals("stata") || format.equals("spss")) ) {		// Split location into Lon, Lat
-						colBuf.append("ST_Y(" + tName + "." + name + ") as lat, ST_X(" + tName + "." + name + ") as lon");
+						colBuf.append("ST_Y(" + form.table + "." + name + ") as lat, ST_X(" + form.table + "." + name + ") as lon");
 						sqlDesc.colNames.add(new ColDesc("lat", type, qType, label, null, false));
 						sqlDesc.colNames.add(new ColDesc("lon", type, qType, label, null, false));
 					} else {																								// Use well known text
-						colBuf.append("ST_AsText(" + tName + "." + name + ") as the_geom");
+						colBuf.append("ST_AsText(" + form.table + "." + name + ") as the_geom");
 						sqlDesc.colNames.add(new ColDesc("the_geom", type, qType, label, null, false));
 					}
 				} else {
@@ -524,9 +501,9 @@ public class QueryGenerator {
 					}
 				
 					if(isAttachment && wantUrl) {	// Add the url prefix to the file
-						colBuf.append("'" + urlprefix + "' || " + tName + "." + name);
+						colBuf.append("'" + urlprefix + "' || " + form.table + "." + name);
 					} else {
-						colBuf.append(tName + "." + name);
+						colBuf.append(form.table + "." + name);
 					}
 				
 					if(qType != null && qType.equals("date")) {
@@ -561,11 +538,11 @@ public class QueryGenerator {
 				idx++;
 				sqlDesc.numberFields++;
 			} else {
-				log.info("Warning: Field dropped during shapefile generation: " + tName + "." + name);
+				log.info("Warning: Field dropped during shapefile generation: " + form.table + "." + name);
 			}
 		}
 		
-		sqlDesc.tables.add(tName);
+		sqlDesc.tables.add(form.table);
 		if(sqlDesc.cols == null) {
 			sqlDesc.cols = colBuf.toString();
 		} else {
