@@ -602,7 +602,7 @@ define([
 											oSeq: [],
 											options: []
 										};
-										markup.refreshOptionListControls();
+										option.refreshOptionListControls();
 									}
 								}
 		

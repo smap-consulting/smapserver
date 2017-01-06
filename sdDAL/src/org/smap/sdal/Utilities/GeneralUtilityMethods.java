@@ -2463,13 +2463,15 @@ public class GeneralUtilityMethods {
 		
 		StringBuffer nodeset = new StringBuffer("");
 		
+		nodeset.append("instance('");
+		nodeset.append(listName);
+		nodeset.append("')");
+		nodeset.append("/root/item");
 		if(choice_filter != null) {
-			nodeset.append("instance('");
-			nodeset.append(listName);
-			nodeset.append("')/root/item[");
+			nodeset.append("[");
 			nodeset.append(choice_filter);
 			nodeset.append("]");
-		}
+		} 
 		
 		return nodeset.toString().trim();
 		

@@ -158,7 +158,7 @@ public class JdbcQuestionManager {
 		String nodeset_label = null;
 		String cascade_instance = null;
 		if(q.getType().startsWith("select")) {
-			nodeset = q.getNodeset();
+			nodeset = q.getNodeset(false, null);
 			if(nodeset == null || nodeset.trim().length() == 0) {
 				// the remaining item list values
 				nodeset_value = "name";

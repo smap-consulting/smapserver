@@ -287,8 +287,13 @@ public class Question {
 		return relativePath;
 	}
 	
-	public String getNodeset() {
-		return nodeset;
+	public String getNodeset(boolean convertToXPath, HashMap<String, String> questionPaths) throws Exception {
+		String v = nodeset;
+		
+		if(convertToXPath) {
+			v = UtilityMethods.convertAllxlsNames(v, false, questionPaths, f_id);
+		}
+		return v;
 	}
 	
 	public String getNodesetValue() {

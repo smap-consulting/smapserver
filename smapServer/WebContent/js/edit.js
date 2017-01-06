@@ -749,7 +749,7 @@ function respondToEventsChoices($context) {
 						oSeq: [],
 						options: []
 					};
-					markup.refreshOptionListControls();
+					option.refreshOptionListControls();
 			}
 			$this.val(question.name);
 		} else {
@@ -778,16 +778,21 @@ function respondToEventsChoices($context) {
 			if(choiceFilter && choiceFilter.indexOf("_smap_cascade") < 0) {
 				proceed = confirm(localise.set["msg_rep_f"] + ": " + choiceFilter + "?");
 			}
+			
+			if(proceed) {
+				setCascadeFilter();
+			} else {
+				$this.val("custom")
+			}
 		}
 		
-		if(proceed) {
-			setCascadeFilter();
+		if(filterType !== "none") {
 			$('#optionTable').html(option.getOptionTable(question, globals.gFormIndex, globals.gListName));
 			respondToEventsChoices($('#optionTable'));
-			option.setupChoiceView($this.val());
-		} else {
-			$this.val("custom")
 		}
+		option.setupChoiceView($this.val());
+		
+		
 	});
 	
 	// Respond to columns of filters being hidden or made visible

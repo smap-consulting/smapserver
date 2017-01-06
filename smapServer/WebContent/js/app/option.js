@@ -32,6 +32,7 @@ define([
 		function($, modernizr, lang, globals, markup, changeset) {
 
 	return {	
+		refreshOptionListControls: refreshOptionListControls,
 		createChoiceView: createChoiceView,
 		setupChoiceView: setupChoiceView,
 		addOneOption: addOneOption,
@@ -43,6 +44,14 @@ define([
 	var filterArray = [];
 	
 	/*
+	 * Refresh the select controls that show the available option lists
+	 */
+	function refreshOptionListControls() {
+		var $selector = $(".option-lists");
+		$selector.html(getOptionLists());
+	}
+	
+	/*
 	 * Create a choice view
 	 */
 	function createChoiceView() {
@@ -51,7 +60,7 @@ define([
 			survey = globals.model.survey,
 			question,
 			filter,
-			filterType = "custom";
+			filterType = "none";
 		
 		if(globals.gListName) {
 			$context.empty().append(addOptionContainer(undefined, undefined, undefined, globals.gListName, survey.filters));
@@ -61,17 +70,22 @@ define([
 			$context.empty().append(addOptionContainer(question, globals.gFormIndex, globals.gItemIndex, undefined, survey.filters));
 		}
 		
+		if(survey.filters.length > 0) {
+			filterType = "custom";
+		}
 		for(filter in survey.filters) {
 			if (filter === "_smap_cascade") {
 				filterType = "cascade";
 				break;
 			}
 		}
+
 		// Set the custom filter view by default
 		$('#filterType').val(filterType);
 		
 		return $context;
 	}
+	
 	function setupChoiceView(filterType) {
 		
 		/*
@@ -89,10 +103,14 @@ define([
 			$('.custom_filter_only').show();
 			$('.cascade_filter_only').hide();
 			$('#choiceView table').addClass("notcascade").removeClass("notcustom");	
-		} else {
+		} else if(filterType === "cascade") {
 			$('.custom_filter_only').hide();
 			$('.cascade_filter_only').show();
 			$('#choiceView table').removeClass("notcascade").addClass("notcustom");
+		} else {
+			$('.custom_filter_only').hide();
+			$('.cascade_filter_only').hide();
+			$('#choiceView table').addClass("notcascade").addClass("notcustom");	
 		}
 		
 	}
@@ -237,6 +255,10 @@ define([
 							h[++idx] = '</label>';
 							h[++idx] = '<div class="col-sm-10">';
 								h[++idx] = '<select class="form-control" id="filterType">';
+								
+								h[++idx] = '<option value="none">';
+								h[++idx] = localise.set["c_none"];
+								h[++idx] = '</option>';
 								
 								h[++idx] = '<option value="cascade">';
 								h[++idx] = localise.set["ed_cs"];

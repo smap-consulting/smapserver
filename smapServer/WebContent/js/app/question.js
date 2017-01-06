@@ -28,8 +28,9 @@ define([
          'app/localise',
          'app/globals',
          'app/editorMarkup',
-         'app/changeset'], 
-		function($, modernizr, lang, globals, markup, changeset) {
+         'app/changeset',
+         'app/option'], 
+		function($, modernizr, lang, globals, markup, changeset, option) {
 
 	return {	
 		init: init,
@@ -121,7 +122,7 @@ define([
 					oSeq: [],
 					options: []
 				};
-				markup.refreshOptionListControls();
+				option.refreshOptionListControls();
 			}
 		}
 		

@@ -38,7 +38,6 @@ define([
 		addQuestions: addQuestions,
 		addMedia: addMedia,
 		refresh: refresh,
-		refreshOptionListControls: refreshOptionListControls,
 		includeQuestion: includeQuestion
 	};
 	
@@ -955,15 +954,6 @@ define([
 		return h.join("");
 
 	}
-	
-	/*
-	 * Refresh the select controls that show the available option lists
-	 */
-	function refreshOptionListControls() {
-		var $selector = $(".option-lists");
-		$selector.html(getOptionLists());
-	}
-	
 	
 	/*
 	 * Return true for those questions that are of interest to the editor
