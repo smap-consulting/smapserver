@@ -444,10 +444,10 @@ public class XLSFormManager {
 			}
 			
 			// Add any filter columns
-			if(o.cascadeKeyValues != null && o.cascadeKeyValues.size() > 0) {
-				List<String> keyList = new ArrayList<String>(o.cascadeKeyValues.keySet());
+			if(o.cascade_filters != null && o.cascade_filters.size() > 0) {
+				List<String> keyList = new ArrayList<String>(o.cascade_filters.keySet());
 	        	for(String k : keyList) {
-	        		String v = o.cascadeKeyValues.get(k);
+	        		String v = o.cascade_filters.get(k);
 	        		
 	        		Integer colIndex = filterIndexes.get(k);
 	        		if(colIndex == null) {

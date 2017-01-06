@@ -185,10 +185,7 @@ public class GetXForm {
     	// Add forms to bind elements
     	if(firstForm != null) {		
     		populateForm(sd, outputDoc, modelElement, BIND, firstForm, isWebForms);
-    	}
-
-    	
-    	   	
+    	} 	   	
     }
 
     /*
@@ -461,7 +458,6 @@ public class GetXForm {
     				
     				if(subForm.getRepeats(true, template.getQuestionPaths()) != null) {
     					// Add the calculation for repeat count
-    					//questionElement = outputDoc.createElement(UtilityMethods.getLastFromPath(q.getPath()) + "_count");
     					questionElement = outputDoc.createElement(q.getName() + "_count");
     					currentParent.appendChild(questionElement);
     				}
@@ -486,7 +482,6 @@ public class GetXForm {
 
     			} else {
     					
-      				//questionElement = outputDoc.createElement(UtilityMethods.getLastFromPath(q.getPath()));
     				questionElement = outputDoc.createElement(q.getName());
     				if(q.getDefaultAnswer() != null) {
     					questionElement.setTextContent(q.getDefaultAnswer());
@@ -548,7 +543,6 @@ public class GetXForm {
     				repeatElement.setAttribute("nodeset", subForm.getPath(null));
     				String repeats = subForm.getRepeats(true, template.getQuestionPaths());
     				if(repeats != null) {		// Add the path to the repeat count question
-    					//String repeatCountPath = q.getPath() + "_count";
     					String repeatCountPath = template.getQuestionPaths().get(q.getName()) + "_count";
     					repeatElement.setAttribute("jr:count", repeatCountPath);
     					repeatElement.setAttribute("jr:noAddRemove", "true()");
@@ -572,11 +566,8 @@ public class GetXForm {
     			if(qType.equals("end group")) {
     				
        				currentParent = elementStack.pop();
-       				// currentParentPath = pathStack.pop();
        				
     			} else if (qType.equals("begin group")) {
-    				//pathStack.push(currentParentPath);
-            		//currentParentPath = currentParentPath + "/" + q.getName();
             		
        				elementStack.push(currentParent);
     				currentParent = questionElement;
@@ -649,9 +640,7 @@ public class GetXForm {
 		}
 		
 		// Add reference
-		//String reference = q.getPath();
 		String reference = getQuestionReference(template.getQuestionPaths(), f.getId(), q.getName());
-		//String reference = template.getQuestionPaths().get(q.getName());
 		if(q.getType().equals("begin repeat") && count) {
 			reference += "_count";					// Reference is to the calculate question for this form
 		}
@@ -768,9 +757,7 @@ public class GetXForm {
 
 		// Add the reference attribute
 		if(questionElement != null) {
-			// String reference = parentXPath + "/" + q.getName();
 			String path = getQuestionReference(template.getQuestionPaths(), f.getId(), q.getName());
-			//String path = template.getQuestionPaths().get(q.getName());
 			questionElement.setAttribute("ref", path);
 		}
 		
@@ -844,7 +831,7 @@ public class GetXForm {
 		// Add the itemset
 		if(cascade) {
 			Element isElement = outputXML.createElement("itemset");
-			isElement.setAttribute("nodeset", q.getNodeset());			
+			isElement.setAttribute("nodeset", q.getNodeset(true, template.getQuestionPaths()));			
 		
 			Element vElement = outputXML.createElement("value");
 			vElement.setAttribute("ref", q.getNodesetValue());

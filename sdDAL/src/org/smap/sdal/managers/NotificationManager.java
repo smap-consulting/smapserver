@@ -55,6 +55,8 @@ public class NotificationManager {
 	private static Logger log =
 			 Logger.getLogger(NotificationManager.class.getName());
 	
+	LogManager lm = new LogManager();		// Application log
+	
 	/*
 	 * Get all Enabled notifications
 	 * Used by Subscriber to do forwarding
@@ -357,6 +359,7 @@ public class NotificationManager {
 		log.info("Get notifications:: " + pstmtGetNotifications.toString());
 		rsNotifications = pstmtGetNotifications.executeQuery();
 		while(rsNotifications.next()) {
+			boolean writeToMonitor = true;
 			log.info("++++++ Notification: " + rsNotifications.getString(1) + " " + rsNotifications.getString(2));
 			String target = rsNotifications.getString(1);
 			String notifyDetailsString = rsNotifications.getString(2);
@@ -438,10 +441,10 @@ public class NotificationManager {
 							emailList.add(email);
 						}
 					}
-					
+							
 					// Convert emails into a comma separated string
 					String emails = "";
-					for(String email : emailList) {			
+					for(String email : emailList) {		
 						if(isValidEmail(email)) {
 							if(emails.length() > 0) {
 								emails += ",";
@@ -451,62 +454,68 @@ public class NotificationManager {
 							log.info("Email Notifications: Discarding invalid email: " + email);
 						}
 					}
-					
-					log.info("userevent: " + remoteUser + " sending email of '" + logContent + "' to " + emails);
-					
-					// Set the subject
-					String subject = "";
-					if(nd.subject != null && nd.subject.trim().length() > 0) {
-						subject = nd.subject;
-					} else {
-						if(serverName != null && serverName.contains("smap")) {
-							subject = "Smap ";
-						}
-						subject += localisation.getString("c_notify");
-					}
-					
-					String from = "smap";
-					if(nd.from != null && nd.from.trim().length() > 0) {
-						from = nd.from;
-					}
-					String content = null;
-					if(nd.content != null && nd.content.trim().length() > 0) {
-						content = nd.content;
-					} else {
-						content = organisation.default_email_content;
-					}
-					
-					notify_details = "Sending email to: " + emails + " containing link " + logContent;
-					
-					log.info("+++ emailing to: " + emails + " docUrl: " + logContent + 
-							" from: " + from + 
-							" subject: " + subject +
-							" smtp_host: " + emailServer.smtpHost +
-							" email_domain: " + emailServer.emailDomain);
-					try {
-						EmailManager em = new EmailManager();
 						
-						em.sendEmail(
-								emails, 
-								null, 
-								"notify", 
-								subject, 
-								content,
-								from,		
-								null, 
-								null, 
-								null, 
-								docURL, 
-								filePath,
-								filename,
-								organisation.getAdminEmail(), 
-								emailServer,
-								scheme,
-								serverName,
-								localisation);
-					} catch(Exception e) {
-						status = "error";
-						error_details = e.getMessage();
+					if(emails.trim().length() > 0) {
+						log.info("userevent: " + remoteUser + " sending email of '" + logContent + "' to " + emails);
+						
+						// Set the subject
+						String subject = "";
+						if(nd.subject != null && nd.subject.trim().length() > 0) {
+							subject = nd.subject;
+						} else {
+							if(serverName != null && serverName.contains("smap")) {
+								subject = "Smap ";
+							}
+							subject += localisation.getString("c_notify");
+						}
+						
+						String from = "smap";
+						if(nd.from != null && nd.from.trim().length() > 0) {
+							from = nd.from;
+						}
+						String content = null;
+						if(nd.content != null && nd.content.trim().length() > 0) {
+							content = nd.content;
+						} else {
+							content = organisation.default_email_content;
+						}
+						
+						notify_details = "Sending email to: " + emails + " containing link " + logContent;
+						
+						log.info("+++ emailing to: " + emails + " docUrl: " + logContent + 
+								" from: " + from + 
+								" subject: " + subject +
+								" smtp_host: " + emailServer.smtpHost +
+								" email_domain: " + emailServer.emailDomain);
+						try {
+							EmailManager em = new EmailManager();
+							
+							em.sendEmail(
+									emails, 
+									null, 
+									"notify", 
+									subject, 
+									content,
+									from,		
+									null, 
+									null, 
+									null, 
+									docURL, 
+									filePath,
+									filename,
+									organisation.getAdminEmail(), 
+									emailServer,
+									scheme,
+									serverName,
+									localisation);
+						} catch(Exception e) {
+							status = "error";
+							error_details = e.getMessage();
+						}
+					} else {
+						log.log(Level.INFO, "Info: List of email recipients is empty");
+						lm.writeLog(sd, sId, "subscriber", "email", localisation.getString("email_nr"));
+						writeToMonitor = false;
 					}
 				} else {
 					status = "error";
@@ -521,14 +530,15 @@ public class NotificationManager {
 			}
 			
 			// Write log message
-			pstmtNotificationLog.setInt(1, organisation.id);
-			pstmtNotificationLog.setInt(2, pId);
-			pstmtNotificationLog.setInt(3, sId);
-			pstmtNotificationLog.setString(4, notify_details);
-			pstmtNotificationLog.setString(5, status);
-			pstmtNotificationLog.setString(6, error_details);
-			log.info("Writing notification log: " + pstmtNotificationLog.toString());
-			pstmtNotificationLog.executeUpdate();
+			if(writeToMonitor) {
+				pstmtNotificationLog.setInt(1, organisation.id);
+				pstmtNotificationLog.setInt(2, pId);
+				pstmtNotificationLog.setInt(3, sId);
+				pstmtNotificationLog.setString(4, notify_details);
+				pstmtNotificationLog.setString(5, status);
+				pstmtNotificationLog.setString(6, error_details);
+				pstmtNotificationLog.executeUpdate();
+			}
 		}
 			
 		/*

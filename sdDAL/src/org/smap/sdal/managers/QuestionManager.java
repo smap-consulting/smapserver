@@ -155,9 +155,13 @@ public class QuestionManager {
 				+ "constraint_msg, "
 				+ "required_msg, "
 				+ "autoplay, "
-				+ "accuracy"
+				+ "accuracy,"
+				+ "nodeset,"
+				+ "nodeset_value,"
+				+ "nodeset_label,"
+				+ "cascade_instance"
 				+ ") " 
-				+ "values (nextval('q_seq'), ?, ?, ?, ?, ?, ?, ?, ?, ?, ? ,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);";
+				+ "values (nextval('q_seq'), ?, ?, ?, ?, ?, ?, ?, ?, ?, ? ,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);";
 		
 		PreparedStatement pstmtUpdateSeq = null;
 		String sqlUpdateSeq = "update question set seq = seq + 1 where f_id = ? and seq >= ?;";
@@ -273,6 +277,21 @@ public class QuestionManager {
 				pstmtInsertQuestion.setString(19, q.required_msg);
 				pstmtInsertQuestion.setString(20, q.autoplay);
 				pstmtInsertQuestion.setString(21, q.accuracy);
+				
+				String nodeset = null;
+				String nodeset_value = null;
+				String nodeset_label = null;
+				String cascade_instance = null;
+				if(q.type.startsWith("select")) {
+					nodeset = GeneralUtilityMethods.getNodesetFromChoiceFilter(q.choice_filter, q.list_name);
+					nodeset_value = "name";
+					nodeset_label = "jr:itext(itextId)";
+					cascade_instance = q.list_name;
+				}
+				pstmtInsertQuestion.setString(22, nodeset);
+				pstmtInsertQuestion.setString(23, nodeset_value);
+				pstmtInsertQuestion.setString(24, nodeset_label);
+				pstmtInsertQuestion.setString(25, cascade_instance);
 				
 				log.info("Insert question: " + pstmtInsertQuestion.toString());
 				pstmtInsertQuestion.executeUpdate();
@@ -878,7 +897,7 @@ public class QuestionManager {
 				pstmtInsertOption.setString(3, transId + ":label" );
 				pstmtInsertOption.setString(4, o.value );
 				pstmtInsertOption.setString(5, GeneralUtilityMethods.cleanName(o.value, false, false, false) );
-				pstmtInsertOption.setString(6, gson.toJson(o.cascadeKeyValues));			
+				pstmtInsertOption.setString(6, gson.toJson(o.cascade_filters));			
 				
 				log.info("Insert option: " + pstmtInsertOption.toString());
 				pstmtInsertOption.executeUpdate();
@@ -1108,10 +1127,7 @@ public class QuestionManager {
 					ResultSet rs = pstmtGetOldLabelId.executeQuery();
 					if(rs.next()) {
 						oldLabelId = rs.getString(1);
-					} else {
-						// Try to set the labelId from the passed in path property, this will exist if this option has previously been saved to the database
-						oldLabelId = p.path;		// Probably the option has been dragged into a new list
-					}
+					} 
 					
 					pstmtUpdateValue = sd.prepareStatement(sqlUpdateValue);
 					pstmtUpdateValue.setString(1, p.newVal);
@@ -1136,15 +1152,15 @@ public class QuestionManager {
 					if(GeneralUtilityMethods.columnType(sd, "option", property) != null) {
 					
 						String sql = "update option set  " + property + " = ? "
-								+ " where l_id = ? "
-								+ " and ovalue = ?;";
+								+ "where l_id = ? "
+								+ "and ovalue = ?";
 						
 						pstmtOtherProperties = sd.prepareStatement(sql);
 							
 						// Update the option
 						pstmtOtherProperties.setString(1, p.newVal );
 						pstmtOtherProperties.setInt(2, listId );
-						pstmtOtherProperties.setString(3, p.oldVal );
+						pstmtOtherProperties.setString(3, p.name );
 						
 						log.info("Update option: " + pstmtOtherProperties.toString());
 						pstmtOtherProperties.executeUpdate();

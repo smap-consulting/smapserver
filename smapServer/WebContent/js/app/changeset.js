@@ -27,8 +27,9 @@ define([
          'modernizr',
          'app/localise',
          'app/globals',
-         'app/editorMarkup'], 
-		function($, modernizr, lang, globals, markup) {
+         'app/editorMarkup',
+         'app/option'], 
+		function($, modernizr, lang, globals, markup, option) {
 	
 	return {	
 		add: add,
@@ -100,7 +101,12 @@ define([
 			change.question.$deletedElement.remove();
 		} else {
 			if(refresh) {
-				$context = markup.refresh();
+				if(change.question) {
+					$context = markup.refresh();
+				} else {
+					$context = option.createChoiceView();
+					option.setupChoiceView($('#filterType').val());
+				}
 			} else {
 				$context = updateHtmlElement(change);
 			}
@@ -245,9 +251,9 @@ define([
 					item_orig = optionListOrig.options[change.property.itemIndex];	
 				}
 				change.property.name = item.value;
-				if(change.changeType === "property") {
-					setOptionTypeSpecificChanges(change.property.prop, change, survey);
-				}
+				//if(change.changeType === "property") {
+				//	setOptionTypeSpecificChanges(change.property.prop, change, survey);
+				//}
 			}
 			
 			if(change.changeType === "label") {
@@ -274,6 +280,14 @@ define([
 				if(item_orig) {
 					change.property.oldVal = item_orig[change.property.prop];
 				}
+				
+				/*
+				 * Filter values should be saved as a json string
+				 */
+				if(change.property.type === "option" && change.property.prop === "cascade_filters") {
+					change.property.newVal = JSON.stringify(change.property.newVal);
+					change.property.oldVal = JSON.stringify(change.property.oldVal);
+				}
 			}
 				
 			change.property.languageName = survey.languages[change.property.language].name;			// For logging the event
@@ -286,9 +300,10 @@ define([
 				change.question.id = item.id;
 				change.question.name = item.name;
 				change.question.path = item.path;
-			} else {
-				change.question.path = getFormPath(form) + "/" + change.question.name;
-			}
+			} 
+			//else {
+			//	change.question.path = getFormPath(form) + "/" + change.question.name;
+			//}
 		} else if(change.changeType === "option") {
 			if(change.action === "delete") {
 				item = survey.optionLists[change.option.optionList].options[change.option.itemIndex];
@@ -331,15 +346,17 @@ define([
 					break;
 				}
 			}
-		} else if(type === "name") {
-			var form = survey.forms[change.property.formIndex];
-			change.property.path = getFormPath(form) + "/" + change.property.newVal;				
-		}
+		} 
+		
+		//else if(type === "name") {
+		//	var form = survey.forms[change.property.formIndex];
+		//	change.property.path = getFormPath(form) + "/" + change.property.newVal;				
+		//}
 	}
 	
 	/*
 	 * Annotate an option change item with changes that are dependent on the type of the property
-	 */
+	 *
 	function setOptionTypeSpecificChanges(type, change, survey) {
 		var i;
 		if(type === "value") {
@@ -347,6 +364,7 @@ define([
 			change.property.path = getFormPath(form) + "/" + change.property.qname + "/" + change.property.newVal;			
 		}
 	}
+	*/
 	
 	/*
 	 * Remove duplicate updates.  This simplifies the analysis of changes to a survey
@@ -584,7 +602,7 @@ define([
 											oSeq: [],
 											options: []
 										};
-										markup.refreshOptionListControls();
+										option.refreshOptionListControls();
 									}
 								}
 		
@@ -658,7 +676,7 @@ define([
 				option[property.prop] = property.newVal;	
 				
 				if(property.propType === "text") {
-					if(property.prop !== "value" 
+					if(property.prop === "label" 
 						|| !survey.optionLists[property.optionList].options[property.itemIndex].labels[property.language][property.propType]
 						|| survey.optionLists[property.optionList].options[property.itemIndex].labels[property.language][property.propType] === "") {
 							survey.optionLists[property.optionList].options[property.itemIndex].labels[property.language][property.propType] = property.newVal;
@@ -1009,35 +1027,46 @@ define([
 		} else if(change.changeType === "option") {
 			if(change.action === "add") {
 					var optionList,
-						$button;
+						$ref;
 				
 				
 				optionList = survey.optionLists[change.option.optionList];
 				
-				// Add the new option to all lists that its in
-				newMarkup = markup.addOneOption(optionList,
+				// get the new markup
+				newMarkup = option.addOneOption(optionList,
 						change.option, 
 						change.option.formIndex, 
 						change.option.itemIndex, 
 						change.option.optionList, 
-						change.option.qName, 
-						true);
-					
-				$button = $('#formList').find('button.l_' + jq(change.option.optionList)).
-						filter(function(index) {
-					var $this = $(this);
-					return $this.data("index") == change.option.buttonIndex;
-				});
-				$button.before(newMarkup);		
-				$changedRow = $button.prev();
+						change.option.qName);
 				
+				
+				$ref = $('#choiceView').find('.editor_element').
+					filter(function(index) {
+						var $this = $(this);
+						return $this.data("id") == change.option.optionIndex;
+					});
+				
+				if(change.option.locn == "after") {
+					$ref.after(newMarkup);
+					$changedRow = $ref.next();
+				} else if(change.option.locn == "before") {
+					$ref.before(newMarkup);
+					$changedRow = $ref.prev();
+				} else {
+					// put at end of table
+					$('#choiceView tbody').append(newMarkup);
+					$changedRow = $('#choiceView tbody tr:last');
+				}
+						
+		
 				/*
 				 * If this option was added by an "add after" button then that button should add future questions
 				 *  after this newly added option.  Hence update the button index.
 				 */
-				if(change.option.locn == "after") {
-					$button.data("index", change.option.itemIndex + 1);
-				}
+				//if(change.option.locn == "after") {
+				//	$button.data("index", change.option.itemIndex + 1);
+				//}
 			
 			} else if(change.action === "delete") {
 				change.option.$deletedElement.prev().remove();	// Remove the add before button
@@ -1058,14 +1087,13 @@ define([
 					return $this.data("list_name") == change.property.optionList && $this.data("id") == change.property.itemIndex;
 				});
 				
-				newMarkup = markup.addOneOption(
+				newMarkup = option.addOneOption(
 						survey.optionLists[change.property.optionList],
 						survey.optionLists[change.property.optionList].options[change.property.itemIndex], 
 						change.property.formIndex, 
 						survey.optionLists[change.property.optionList].oSeq[change.property.itemIndex], 
 						change.property.optionList,
-						change.property.qname,
-						false);
+						change.property.qname);
 				
 			} else if(change.property.type === "question") {
 				
@@ -1491,7 +1519,10 @@ define([
 			getReferenceNames(item.calculation, refQuestions);
 		}
 		for(i = 0; i < item.labels.length; i++) {
-			getReferenceNames(item.labels[i].text, refQuestions);
+			var text = item.labels[i].text;
+			if(typeof text === "string") {
+				getReferenceNames(item.labels[i].text, refQuestions);
+			}
 		}
 
 		
@@ -1614,7 +1645,7 @@ define([
 			$changedRow = $('#question' + container + '_' + itemIndex);
 		} else if(itemType === "option") {
 			item = survey.optionLists[container].options[itemIndex];
-			$changedRow = $('li.option.l_' + jq(container), '#formList').filter(function(index){
+			$changedRow = $('tr.option', '#choiceView').filter(function(index){
 				var $this = $(this);
 				return $this.data("id") == itemIndex;
 			});
