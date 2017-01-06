@@ -2455,6 +2455,27 @@ public class GeneralUtilityMethods {
 		return choice_filter.toString().trim();
 		
 	}
+	
+	/*
+	 * Get the nodeset from a choice filter
+	 */
+	public static String getNodesetFromChoiceFilter(String choice_filter, String listName) {
+		
+		StringBuffer nodeset = new StringBuffer("");
+		
+		nodeset.append("instance('");
+		nodeset.append(listName);
+		nodeset.append("')");
+		nodeset.append("/root/item");
+		if(choice_filter != null) {
+			nodeset.append("[");
+			nodeset.append(choice_filter);
+			nodeset.append("]");
+		} 
+		
+		return nodeset.toString().trim();
+		
+	}
 
 	/*
 	 * Convert all xml fragments embedded in the supplied string to names
@@ -2710,7 +2731,6 @@ public class GeneralUtilityMethods {
 	 */
 	public static int getQuestionIdFromName(Connection sd, int sId, String name) throws SQLException {
 		
-		boolean external = false;
 		String sql = "select q_id "
 				+ "from question q "
 				+ "where q.qname = ? "
@@ -2856,6 +2876,69 @@ public class GeneralUtilityMethods {
 			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 			try {if (pstmtUpdate != null) {pstmtUpdate.close();}} catch (SQLException e) {}
 		}	
+		
+	}
+	
+	/*
+	 * Get the list name from the list id
+	 */
+	public static String getListName(Connection sd, int l_id) throws SQLException {
+		
+		String listName = null;
+		String sql = "select name "
+				+ "from listname l "
+				+ "where l.l_id = ?";
+		
+		PreparedStatement pstmt = null;
+		
+		try {
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setInt(1, l_id);
+			ResultSet rs = pstmt.executeQuery();
+			if(rs.next()) {
+				listName = rs.getString(1);
+			}
+			
+		} catch(SQLException e) {
+			log.log(Level.SEVERE,"Error", e);
+			throw e;
+		} finally {
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+		}	
+		
+		return listName;
+		
+	}
+	
+	/*
+	 * Get the list name from the question id
+	 */
+	public static String getListNameForQuestion(Connection sd, int qId) throws SQLException {
+		
+		String listName = null;
+		String sql = "select l.name "
+				+ "from listname l, question q "
+				+ "where q.l_id = l.l_id "
+				+ "and q.q_id = ?";
+		
+		PreparedStatement pstmt = null;
+		
+		try {
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setInt(1, qId);
+			ResultSet rs = pstmt.executeQuery();
+			if(rs.next()) {
+				listName = rs.getString(1);
+			}
+			
+		} catch(SQLException e) {
+			log.log(Level.SEVERE,"Error", e);
+			throw e;
+		} finally {
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+		}	
+		
+		return listName;
 		
 	}
 	

@@ -497,10 +497,10 @@ CREATE TABLE question (
 	appearance text,
 	enabled BOOLEAN default true,
 	path text,
-	nodeset text,
-	nodeset_value text,
-	nodeset_label text,
-	cascade_instance text,
+	nodeset text,						-- the xpath to an itemset containing choices, includes filter defn
+	nodeset_value text,					-- name of value column for choice list when stored as an itemset
+	nodeset_label text,					-- name of label column for choice list when stored as an itemset
+	cascade_instance text,				-- Identical to list name (deprecate)
 	list_name text,						-- Name of a set of options common across multiple questions
 	published boolean default false,		-- Set true when a survey has been published for data collection
 										--  Once a survey has been published there are constraints on the

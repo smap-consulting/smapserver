@@ -33,6 +33,7 @@ public class Survey {
 	public ArrayList<Language> languages = new ArrayList<Language> (); 
 	public ArrayList<ServerSideCalculate> sscList  = new ArrayList<ServerSideCalculate> ();
 	public ArrayList<ManifestValue> surveyManifest  = new ArrayList<ManifestValue> ();
+	public HashMap<String, String> filters = new HashMap<String, String> ();
 	public ArrayList<ChangeLog> changes  = new ArrayList<ChangeLog> ();
 	public Instance instance = new Instance();	// Data from an instance (a submitted survey)
 	public String pdfTemplateName;

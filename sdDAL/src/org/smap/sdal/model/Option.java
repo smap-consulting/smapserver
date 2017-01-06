@@ -20,7 +20,7 @@ public class Option {
 	public String externalLabel;								// Only one label used for external files (TODO)
 	public String text_id;
 	public String path;
-	public HashMap<String, String> cascadeKeyValues = null;
+	public HashMap<String, String> cascade_filters = null;
 	
 	// Used in updates
 	public String optionList;	

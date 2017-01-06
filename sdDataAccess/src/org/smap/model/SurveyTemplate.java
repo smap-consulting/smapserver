@@ -1038,7 +1038,6 @@ public class SurveyTemplate {
 				}
 				fm.update(f);
 			}
-			//fPersist.persist(formArray);
 	
 			/*
 			 * Persist the options
@@ -1064,7 +1063,6 @@ public class SurveyTemplate {
 				o.setListId(q.getListId());
 				o.setSeq(q.oSeq++);
 				o.setCascadeFilters();	// Set the filter value based on the key value pairs
-				//oPersist.persist(o);
 				om.write(o);
 			}
 			

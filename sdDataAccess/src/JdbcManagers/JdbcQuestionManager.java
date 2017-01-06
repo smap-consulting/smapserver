@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Stack;
 import java.util.logging.Logger;
 
+import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.server.entities.Form;
 import org.smap.server.entities.Option;
 import org.smap.server.entities.Question;
@@ -151,10 +152,30 @@ public class JdbcQuestionManager {
 		pstmt.setString(19, q.getRequiredMsg());
 		pstmt.setString(20, q.getAppearance(false, null));
 		pstmt.setString(21, "not used");		// path deprecated
-		pstmt.setString(22, q.getNodeset());
-		pstmt.setString(23, q.getNodesetValue());
-		pstmt.setString(24, q.getNodesetLabel());
-		pstmt.setString(25, q.getCascadeInstance());
+		
+		String nodeset = null;
+		String nodeset_value = null;
+		String nodeset_label = null;
+		String cascade_instance = null;
+		if(q.getType().startsWith("select")) {
+			nodeset = q.getNodeset(false, null);
+			if(nodeset == null || nodeset.trim().length() == 0) {
+				// the remaining item list values
+				nodeset_value = "name";
+				nodeset_label = "jr:itext(itextId)";
+				cascade_instance = q.getListName();
+			} else {
+				nodeset_value = q.getNodesetValue();
+				nodeset_label = q.getNodesetLabel();
+				cascade_instance = q.getCascadeInstance();
+			}
+			
+		}	
+		pstmt.setString(22, nodeset);
+		pstmt.setString(23, nodeset_value);
+		pstmt.setString(24, nodeset_label);
+		pstmt.setString(25, cascade_instance);
+		
 		pstmt.setString(26, q.getColumnName());
 		pstmt.setBoolean(27, q.isPublished());
 		pstmt.setInt(28, q.getListId());

@@ -13,6 +13,7 @@
 
 	<title>Form Builder</title>
 	
+	<link href="/css/wb/plugins/iCheck/custom.css" rel="stylesheet">
 	<link rel="shortcut icon" href="favicon.ico" />
 	<link rel="stylesheet" href="css/normalize.css" />
 	<link rel="stylesheet" href="/css/bootstrap.min.css" /> 
@@ -115,8 +116,6 @@
 	        		<span class="badge">0</span></a></li>
 	 		<li><a type="button" tabindex="-1"  data-lang="c_test" 
 	 				class="btn btn-primary lang m_test_survey" href="#" target="_blank">Test</a></li>
-			
-	           
 	                      
 		    <!-- 
 		   	<li><a id="m_undo" href="#">Undo</a></li>
@@ -138,7 +137,7 @@
 	</header>
 
 
-	<div id="content">
+	<div id="content" class="editorContent">
 		<div class="container-fluid">
 			<div class="row">
 				<div class="col-md-12">
@@ -148,7 +147,7 @@
 			</div>
 		</div>
 	</div>
-	<div id="toolbar">
+	<div id="toolbar" class="editorContent">
 		<div class="row margin-bottom" id="error-nav-btns" style="display:none;">
 			<div class="col-xs-6">
   				<button type="button" id="next-warning" class="btn btn-warning"><span class="badge warning-count">0</span></button>
@@ -157,9 +156,16 @@
   				<button type="button" id="next-error" class="btn btn-danger"><span class="badge error-count">0</span></button>
   			</div>
 		</div>
-
 		<div id="toolbar_types"></div>
-		
+	</div>
+	
+	<div id="choiceView" class="editorContent" style="display:none;">
+		<div class="container-fluid">
+			<div class="row">
+	     		<h4><span class="modal-title lang" data-lang="c_choices" id="choiceViewLabel">choices</span> - <span id="choiceViewQuestion"></span></h4>	   			
+	   		</div>
+	   		<div class="choice-content"></div>
+		</div>
 	</div>	
 	
 <div class="col-md-12 text-center">
@@ -501,7 +507,7 @@
    		<div class="modal-content">
    			<div class="modal-header">
      			<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-     			<h4 class="modal-title" id="typeModalLabel">Select Type</h4>
+     			<h4 class="modal-title lang" id="typeModalLabel" data-lang="c_type">type</h4>
    			</div>
    			
    			<div class="modal-body">
@@ -511,12 +517,11 @@
 	    		
 			</div>
 			<div class="modal-footer">
-        		<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        		<button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_close">close</button>
       		</div>
 		</div>
 	</div>
 </div>
-
 
 <!-- Model to edit languages -->
 <div id="editLanguageModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="editLanguageLabel" aria-hidden="true">

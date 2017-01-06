@@ -58,27 +58,43 @@ public class JdbcOptionManager {
 			+ "from option where ";
 	String sqlGetByListId = "l_id = ?;";
 	
+	String sqlOptionExists = "select o_id from option where l_id = ? and ovalue = ?;";
+	PreparedStatement pstmtOptionExists = null;
+	
+	ResultSet rs = null;
+	
 	/*
 	 * Constructor
 	 */
 	public JdbcOptionManager(Connection sd) throws SQLException {
 		pstmt = sd.prepareStatement(sql);
 		pstmtGetByListId = sd.prepareStatement(sqlGet + sqlGetByListId);
+		pstmtOptionExists = sd.prepareStatement(sqlOptionExists);
 	}
 	
 	/*
 	 * Write the option to the database
+	 * Only write this option if it has not already been added to this choice list
+	 *   If more than one question share the same choice list each maintains its own list of options and 
+	 *   duplicates can be created
 	 */
 	public void write(Option o) throws SQLException {
-		pstmt.setInt(1, o.getSeq());
-		pstmt.setString(2, o.getLabel());
-		pstmt.setString(3, o.getLabelId());
-		pstmt.setString(4, o.getValue());
-		pstmt.setString(5, o.getCascadeFilters());
-		pstmt.setBoolean(6, o.getExternalFile());
-		pstmt.setString(7, o.getColumnName());
-		pstmt.setInt(8,  o.getListId());
-		pstmt.executeUpdate();
+		
+		pstmtOptionExists.setInt(1, o.getListId());
+		pstmtOptionExists.setString(2, o.getValue());
+		rs = pstmtOptionExists.executeQuery();
+		
+		if(!rs.next()) {
+			pstmt.setInt(1, o.getSeq());
+			pstmt.setString(2, o.getLabel());
+			pstmt.setString(3, o.getLabelId());
+			pstmt.setString(4, o.getValue());
+			pstmt.setString(5, o.getCascadeFilters());
+			pstmt.setBoolean(6, o.getExternalFile());
+			pstmt.setString(7, o.getColumnName());
+			pstmt.setInt(8,  o.getListId());
+			pstmt.executeUpdate();
+		}
 	}
 	
 
@@ -96,6 +112,8 @@ public class JdbcOptionManager {
 	public void close() {
 		try {if(pstmt != null) {pstmt.close();}} catch(Exception e) {};
 		try {if(pstmtGetByListId != null) {pstmtGetByListId.close();}} catch(Exception e) {};
+		try {if(pstmtOptionExists != null) {pstmtOptionExists.close();}} catch(Exception e) {};
+		try {if(rs != null) {rs.close();}} catch(Exception e) {};
 	}
 	
 	private List <Option> getOptionList(PreparedStatement pstmt) throws SQLException {

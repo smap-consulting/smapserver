@@ -874,9 +874,13 @@ public class SurveyManager {
 				String cascade_filters = rsGetOptions.getString(5);
 				if(cascade_filters != null) {
 					try {
-						o.cascadeKeyValues = gson.fromJson(cascade_filters, hmType);
+						o.cascade_filters = gson.fromJson(cascade_filters, hmType);
+						for (String key : o.cascade_filters.keySet()) {
+						    s.filters.put(key, key);
+						}
+
 					} catch (Exception e) {
-						log.log(Level.SEVERE, e.getMessage(), e);		// Ignore errors as this service does not support the old non json cascace format
+						log.log(Level.SEVERE, e.getMessage(), e);		// Ignore errors as this service does not support the old non json cascade format
 					}
 				}
 				o.columnName = rsGetOptions.getString(6);
@@ -1644,6 +1648,13 @@ public class SurveyManager {
 						} else {
 							ci.property.newVal = "0";
 						}
+						
+					} else if(ci.property.prop.equals("nodeset")) {
+						// Convert the passed in filter to a nodeset
+						String listname = GeneralUtilityMethods.getListNameForQuestion(sd, ci.property.qId);
+						ci.property.newVal = GeneralUtilityMethods.getNodesetFromChoiceFilter(ci.property.newVal, listname);
+						
+						System.out.println("write to nodeset based on listname and filter: " + ci.property.newVal);
 						
 					} else if(ci.property.type.equals("optionlist")) {
 						// Get the list id for this option list

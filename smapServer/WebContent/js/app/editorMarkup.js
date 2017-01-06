@@ -32,14 +32,12 @@ define([
 	
 	return {	
 		addOneQuestion: addOneQuestion,
-		addOneOption: addOneOption,
 		addPanelStyle: addPanelStyle,
 		addQType: addQType,
 		addFeaturedProperty: addFeaturedProperty,
 		addQuestions: addQuestions,
 		addMedia: addMedia,
 		refresh: refresh,
-		refreshOptionListControls: refreshOptionListControls,
 		includeQuestion: includeQuestion
 	};
 	
@@ -111,9 +109,13 @@ define([
 						if(question.type === "begin repeat" 
 								|| question.type === "begin group" 
 								|| question.type.indexOf("select") === 0) {
-							h[++idx] = '<a button tabindex="-1" class="btn btn-default" data-toggle="collapse"  href="#collapse';
-							h[++idx] = globals.gElementIndex;
-							h[++idx]='"><span class="glyphicon glyphicon-chevron-down edit_icon"></span></a>';
+							
+							h[++idx] = '<a button tabindex="-1" class="btn btn-default edit_choice" ';
+							h[++idx]='"><span class="glyphicon glyphicon-edit edit_icon"></span></a>';
+							
+							//h[++idx] = '<a button tabindex="-1" class="btn btn-default" data-toggle="collapse"  href="#collapse';
+							//h[++idx] = globals.gElementIndex;
+							//h[++idx]='"><span class="glyphicon glyphicon-chevron-down edit_icon"></span></a>';
 						}
 						
 						h[++idx] = '<button tabindex="-1" class="btn btn-default delete_question" data-id="';
@@ -151,55 +153,6 @@ define([
 		
 			h[++idx] = addSubForm(formIndex, qIndex);
 			
-		} else if(question.type.indexOf("select") === 0) {
-			if(!question.error) {	// Only add the options if the question it self does not have any errors
-				
-				h[++idx] = '<div class="question-controls">';
-					h[++idx] = '<div class="row">';
-						h[++idx] = '<div class="col-md-6">';
-						/*
-							h[++idx] = '<h4>';
-								h[++idx] = localise.set["ed_c_s"];
-							h[++idx] = '</h4>';
-							h[++idx] = '<label class="radio-inline">';
-								h[++idx] = '<input type="radio" name="choiceType" class="choiceType lang" value="list">';
-								h[++idx] = '<span>';
-								h[++idx] = localise.set["ed_cl"];	// Choice List
-								h[++idx] = '</span>';
-							h[++idx] = '</label>';
-							h[++idx] = '<label class="radio-inline">';
-								h[++idx] = '<input type="radio" name="choiceType" class="choiceType lang" value="csv">';
-								h[++idx] = '<span>';
-								h[++idx] = localise.set["ed_csv"];
-								h[++idx] = '</span>';
-							h[++idx] = '</label>';
-							h[++idx] = '<label class="radio-inline">';
-								h[++idx] = '<input type="radio" name="choiceType" class="choiceType lang" value="linked">';
-								h[++idx] = '<span class="lang" data-lang="ed_ls">';
-								h[++idx] = localise.set["ed_ls"];
-								h[++idx] = '</span>';
-							h[++idx] = '</label>';
-						*/	
-						h[++idx] = '</div>';
-						
-						// A control to set option lists
-						h[++idx] = '<div class="col-md-6">';
-							h[++idx] = '<label>';
-								h[++idx] = localise.set["ed_cl"];
-								h[++idx] = ':';
-							h[++idx] = '</label>';
-							h[++idx] = '<div class="input-group">';
-								h[++idx] = '<select class="form-control option-lists">';
-								h[++idx] = getOptionLists();
-								h[++idx] = '</select>';
-								h[++idx] = '<span class="input-group-addon"></span>';
-							h[++idx] = '</div>';
-						h[++idx] = '</div>';
-					h[++idx] = '</div>';
-				h[++idx] = '</div>';
-				
-				h[++idx] = addOptions(question, formIndex, undefined);
-			}
 		} 
 		
 		if(question.type === "begin group") {	/* Add questions up to the end group to this panel */
@@ -212,6 +165,7 @@ define([
 		return h.join("");
 	}
 	
+
 	/*
 	 * Add a single option list element to the choices view
 	 */
@@ -227,7 +181,7 @@ define([
 		selProperty = selProperty || globals.gSelProperty;
 		
 		if(addNewButton) {
-			h[++idx] = addNewQuestionButton(false, false, undefined, undefined, selProperty);		// TODO
+			h[++idx] = addNewQuestionButton(false, false, undefined, undefined, selProperty);		
 		}
 		
 		h[++idx] = addPanelStyle("choices", undefined, undefined, false, itemId, list_name);
@@ -249,9 +203,13 @@ define([
 				// Add buttons
 				h[++idx] = '<div class="col-xs-2 q_icons_col">';
 					h[++idx] = '<div class="btn-group">';
-						h[++idx] = '<a button tabindex="-1" class="btn btn-default" data-toggle="collapse"  href="#collapse';
-						h[++idx] = globals.gElementIndex;
-						h[++idx]='"><span class="glyphicon glyphicon-chevron-down edit_icon"></span></a>';	
+					
+						h[++idx] = '<a button tabindex="-1" class="btn btn-default edit_choice" ';
+						h[++idx]='"><span class="glyphicon glyphicon-edit edit_icon"></span></a>';
+					
+						//h[++idx] = '<a button tabindex="-1" class="btn btn-default" data-toggle="collapse"  href="#collapse';
+						//h[++idx] = globals.gElementIndex;
+						//h[++idx]='"><span class="glyphicon glyphicon-chevron-down edit_icon"></span></a>';	
 						
 						h[++idx] = '<button tabindex="-1" class="btn btn-default">';
 						h[++idx]='<span class="glyphicon glyphicon-remove-circle edit_icon delete_ol" data-id="';
@@ -262,16 +220,6 @@ define([
 					h[++idx] = '</div>';
 				h[++idx] = '</div>';		// End of button cell
 				h[++idx] = '</div>';		// End of row
-		h[++idx] = '<div id="collapse';
-		h[++idx] = globals.gElementIndex;
-		h[++idx] = '" class="panel-body collapse';
-		h[++idx] = ' selectquestion';
-
-		h[++idx] = '">';
-
-		h[++idx] = addOptions(undefined, undefined, list_name);
-		
-		h[++idx] = '</div>';
 		h[++idx] = '</li>';
 		
 		
@@ -367,50 +315,6 @@ define([
 		h[++idx] = 'type="button" class="add_option_list add_button add_after_button add_final_button btn">';
 		h[++idx] = 'Add New Choice List'; 	
 		h[++idx] = '</button>';
-		h[++idx] = '</li>';
-		
-		return h.join('');
-	}
-	
-	function addNewOptionButton(after, list_name, formIndex, qname, index) {
-		var h = [],
-			idx = -1,
-			addButtonClass,
-			locn;
-		
-		addButtonClass = after ? 'add_after_button add_button' : 'add_before_button add_button';
-		locn = after ? 'after' : 'before';
-		
-		h[++idx] = '<li>';
-		h[++idx] = '<button tabindex="-1" id="addnewoption_';
-		h[++idx] = globals.gNewOptionButtonIndex++;
-		h[++idx] = '" type="button" class="add_option btn dropon ';
-		h[++idx] = addButtonClass;
-		h[++idx] = ' l_' + list_name; 
-		h[++idx] = '" data-locn="';
-		h[++idx] = locn;
-		h[++idx] = '"';
-		if(typeof index !== "undefined") {
-			h[++idx] = ' data-index="';
-			h[++idx] = index;
-			h[++idx] = '"';
-		}
-		if(typeof list_name !== "undefined") {
-			h[++idx] = ' data-list_name="';
-			h[++idx] = list_name;
-			h[++idx] = '"';
-		}
-		if(typeof qname !== "undefined") {
-			h[++idx] = ' data-qname="';
-			h[++idx] = qname;
-			h[++idx] = '"';
-		}
-		if(typeof formIndex !== "undefined") {
-			h[++idx] = ' data-fid="';
-			h[++idx] = formIndex;
-			h[++idx] = '"';
-		}
-		h[++idx] = '>Add New Choice</button>';
 		h[++idx] = '</li>';
 		
 		return h.join('');
@@ -751,126 +655,6 @@ define([
 		return h.join("");
 	}
 	
-	
-	/*
-	 * Show the options
-	 */
-	function addOptions(question, formIndex, list_name) {
-		var survey = globals.model.survey,
-			optionList,
-			questionName,
-			oSeq,
-			maxIndex,
-			h = [],
-			idx = -1,
-			i;
-		
-		if(!list_name) {		// Options attached to a question
-			list_name = question.list_name;
-			questionName = question.name;
-		} 
-		optionList = survey.optionLists[list_name];
-		
-		if(typeof optionList !== "undefined") {
-			optionList.maxOption = 0;
-			
-			addOptionSequence(optionList);		// Add an array holding the option sequence if it does not already exist
-			oSeq = optionList.oSeq;
-			h[++idx] = '<ul class="list-unstyled">';
-			if(oSeq) {
-				maxIndex = 0;
-				for(i = 0; i < oSeq.length; i++) {
-					h[++idx] = addOneOption(optionList,
-							optionList.options[oSeq[i]], 
-							formIndex, 
-							oSeq[i], 
-							list_name, 
-							questionName, 
-							true);
-					if(oSeq[i] >= maxIndex) {
-						maxIndex = oSeq[i] + 1;
-					}
-				}
-				h[++idx] = addNewOptionButton(true, list_name, formIndex, questionName, maxIndex); 
-			}
-			h[++idx] = '</ul>';
-		}
-		return h.join("");
-	}
-
-	/*
-	 * Add a single option
-	 */
-	function addOneOption(optionList, option, formIndex, index, list_name, qname, addNewButton) {
-		var h = [],
-			idx = -1;
-		
-		optionList.maxOption++;
-		
-		if(addNewButton) {
-			h[++idx] = addNewOptionButton(false, list_name, formIndex, undefined, index);
-		}
-		
-		h[++idx] = '<li class="editor_element option draggable ';
-		h[++idx] = 'l_' + list_name;				// Add list name as a class
-		if(option.error) {
-			h[++idx] = ' error';
-		}
-		
-		// Add the option index 
-		h[++idx] = '" data-id="';
-		h[++idx] = index;
-		h[++idx] = '" data-fid="';					
-		h[++idx] = formIndex;
-		h[++idx] = '" data-qname="';
-		h[++idx] = qname;
-		h[++idx] = '" data-list_name="';
-		h[++idx] = list_name;
-		h[++idx] = '">';
-		
-		h[++idx] = addErrorMsg(option.errorMsg);
-		
-		h[++idx] = '<div class="row">';
-			
-			// Add option name and value cell
-			h[++idx] = '<div class="col-xs-10">';
-				h[++idx] = '<div class="row">';
-				
-					// Add option name cell
-					h[++idx] = '<div class="col-xs-12 col-md-3">';
-						h[++idx] = '<input class="oname form-control has_tt" value="';
-						h[++idx] = option.value;
-						h[++idx] = '" ';
-						
-						if(option.published) {				// Mark disabled if the option has been published
-							h[++idx] = 'readonly="true"';
-						}
-						h[++idx] = ' type="text" title="Choice Value">';
-					h[++idx] = '</div>';
-						
-					// Add featured property
-					h[++idx] = addFeaturedProperty(option, formIndex, index, list_name, qname);
-				h[++idx] = '</div>';	// End of row
-			h[++idx] = '</div>';	// End of option name and label cell
-		
-			// Add button bar
-		h[++idx] = '<div class="col-xs-2">';
-			h[++idx] = '<div class="btn-group">';
-			h[++idx] = '<button class="btn btn-default" tabindex="-1">';
-			h[++idx] = '<span class="glyphicon glyphicon-remove-circle edit_icon delete_option" data-id="';
-			h[++idx] = index;
-			h[++idx] = '" data-list_name="';
-			h[++idx] = list_name;
-			h[++idx] = '"></span>';
-			h[++idx] = '</button>';		
-		h[++idx] = '</div>';
-		
-		h[++idx] = '</div>';	// end of option row
-		h[++idx] = '</li>';
-
-		return h.join("");
-	}
-	
 	/*
 	 * Add subform
 	 */
@@ -1007,19 +791,7 @@ define([
 		}
 	}
 	
-	/*
-	 * Add the array containing the option sequence
-	 */
-	function addOptionSequence(optionList) {
-		var i;
-		
-		if(!optionList.oSeq) {
-			optionList.oSeq = [];
-			for(i = 0; i < optionList.options.length; i++) {
-				optionList.oSeq[i] = i;
-			}
-		}
-	}
+
 	
 	/*
 	 * Add a media type
@@ -1181,46 +953,6 @@ define([
 		
 		return h.join("");
 
-	}
-	
-	/*
-	 * Refresh the select controls that show the available option lists
-	 */
-	function refreshOptionListControls() {
-		var $selector = $(".option-lists");
-		$selector.html(getOptionLists());
-	}
-	
-	/*
-	 * Get an array of option list names sorted alphabetically
-	 */
-	function getOptionLists() {
-		
-		var lists = survey = globals.model.survey.optionLists,
-			name,
-			nameArray = [],
-			h = [],
-			idx = -1,
-			i;
-
-		// get the names into an array so they can be sorted
-		for (name in lists) {
-			if (lists.hasOwnProperty(name)) {
-			    nameArray.push(name);
-			}
-		}
-		// Sort array of list names
-		nameArray.sort();
-		
-		// Create html
-		for(i = 0; i < nameArray.length; i++) {
-			h[++idx] = '<option value ="';
-			h[++idx] = nameArray[i];
-			h[++idx] = '">';
-			h[++idx] = nameArray[i];
-			h[++idx] = '</option>';
-		}
-		return h.join("");
 	}
 	
 	/*

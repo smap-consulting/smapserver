@@ -31,7 +31,8 @@ require.config({
     	bootbox: 'bootbox.min',
     	toggle: 'bootstrap-toggle.min',
     	moment: 'moment-with-locales.min',
-    	lang_location: '..'
+    	lang_location: '..',
+    	icheck: '/wb/plugins/iCheck/icheck.min'
 
     },
     shim: {
@@ -40,7 +41,8 @@ require.config({
         'jquery.autosize.min': ['jquery'],
         'bootstrap.file-input': ['bootstrap.min'],
     	'bootbox': ['bootstrap.min'],
-       	'toggle': ['bootstrap.min']
+       	'toggle': ['bootstrap.min'],
+    	'icheck': ['jquery']
         
     }
 });
@@ -59,7 +61,9 @@ require([
          'app/optionlist',
          'app/editorMarkup',
          'app/changeset',
-         'moment'], 
+         'app/option',
+         'moment',
+         'icheck'], 
 		function(
 				$, 
 				common, 
@@ -74,6 +78,7 @@ require([
 				optionlist,
 				markup,
 				changeset,
+				option,
 				moment) {
 
 
@@ -81,7 +86,9 @@ var	gMode = "survey",
 	gTempQuestions = [],
 	$gCurrentRow,			// Currently selected row
 	gCollapsedPanels = [],
-	gTempLanguages = [];
+	gTempLanguages = [],
+	gDragCounter,
+	gDragSourceId;
 
 // Media globals
 var gUrl,			// url to submit to
@@ -555,8 +562,17 @@ $(document).ready(function() {
 			$finalButton = $('.add_final_button', '#formList');
 		
 		addQuestion($finalButton, type);
-		
-
+	});
+	
+	/*
+	 * Choice Editing
+	 */
+	$(".modal-fullscreen").on('show.bs.modal', function () {
+		setTimeout( function() {
+			$(".modal-backdrop").addClass("modal-backdrop-fullscreen");}, 0);
+		});
+	$(".modal-fullscreen").on('hidden.bs.modal', function () {
+		$(".modal-backdrop").addClass("modal-backdrop-fullscreen");
 	});
 	
 });
@@ -703,22 +719,24 @@ function surveyDetailsDone() {
 function refreshForm() {
 	
 	var $context;
-	
 	$context = markup.refresh();
 	respondToEvents($context);
-	
 
 }
 
 /*
- * The passed in context is for a list item containing either a question or an option
+ * The passed in context is for a list of choices
  */
-function respondToEvents($context) {
+function respondToEventsChoices($context) {
+	
+	$('.exitOptions', $context).off().click(function(){
+		$('.editorContent').toggle();;
+	});
 	
 	// Set option list value
 	$context.find('.option-lists', $context).each(function(index){
 		var $this = $(this),
-			$elem = $this.closest('li'),
+			$elem = $this.closest('.question_head'),
 			formIndex = $elem.data("fid"),
 			itemIndex = $elem.data("id"),
 			survey = globals.model.survey,
@@ -731,7 +749,7 @@ function respondToEvents($context) {
 						oSeq: [],
 						options: []
 					};
-					markup.refreshOptionListControls();
+					option.refreshOptionListControls();
 			}
 			$this.val(question.name);
 		} else {
@@ -740,17 +758,428 @@ function respondToEvents($context) {
 		
 	});
 	
-	// Option list change
-	$context.find('.option-lists').change(function(){
+	// Style checkboxes
+	$('[type="checkbox"]', $context).iCheck({
+	    checkboxClass: 'icheckbox_square-green',
+	    radioClass: 'iradio_square-green'
+	});
+	
+	
+	$('#filterType', $context).off().change(function(){
 		var $this = $(this),
-			$elem = $this.closest('li'),
+			survey = globals.model.survey,
+			question = survey.forms[globals.gFormIndex].questions[globals.gItemIndex],
+			filterType = $this.val(),
+			choiceFilter,
+			proceed = true;
+
+		if(filterType === "cascade") {
+			choiceFilter = $('#choiceFilter').val();
+			if(choiceFilter && choiceFilter.indexOf("_smap_cascade") < 0) {
+				proceed = confirm(localise.set["msg_rep_f"] + ": " + choiceFilter + "?");
+			}
+			
+			if(proceed) {
+				setCascadeFilter();
+				option.addCascadeToFilters();  // Make sure _smap_cascade is in the list of filters
+			} else {
+				$this.val("custom");
+			}
+		}
+		
+		if(filterType !== "none") {
+			$('#optionTable').html(option.getOptionTable(question, globals.gFormIndex, globals.gListName));
+			respondToEventsChoices($('#optionTable'));
+		}
+		option.setupChoiceView($this.val());
+		
+		
+	});
+	
+	// Respond to columns of filters being hidden or made visible
+	$('input', '#custom_filters').off().change(function(){
+		var $this = $(this);
+		
+		globals.gSelectedFilters[$this.val()] = $this.prop("checked");
+		option.resetFilterColumns();
+		
+	});
+	
+	// Option list change
+	$context.find('.option-lists').off().change(function(){
+		var $this = $(this),
+			$elem = $this.closest('.question_head'),
+			formIndex = $elem.data("fid"),
+			itemIndex = $elem.data("id");
+	
+		updateLabel("question", formIndex, itemIndex, undefined, "text", $this.val(), undefined, "list_name");
+	});
+	
+	// Choice filter change
+	$context.find('#choiceFilter').off().change(function(){
+		var $this = $(this),
+			$elem = $this.closest('.question_head'),
+			formIndex = $elem.data("fid"),
+			itemIndex = $elem.data("id");
+	
+		updateLabel("question", formIndex, itemIndex, undefined, "text", $this.val(), undefined, "nodeset");
+	});
+	
+	// Previous question for cascading select changes
+	$context.find('#previousSelect').off().change(function(){
+		var $this = $(this),
+			survey = globals.model.survey,
+			question = survey.forms[globals.gFormIndex].questions[globals.gItemIndex];
+		
+		option.setPreviousChoices($this.val());	
+		$('#optionTable').html(option.getOptionTable(question, globals.gFormIndex, globals.gListName));
+		respondToEventsChoices($('#optionTable'));
+	});
+	
+	// Previous choice for cascading select changes
+	$context.find('#previousSelectChoice').off().change(function(){
+		var $this = $(this),
+			survey = globals.model.survey,
+			question = survey.forms[globals.gFormIndex].questions[globals.gItemIndex];
+		
+		$('#optionTable').html(option.getOptionTable(question, globals.gFormIndex, globals.gListName));
+		respondToEventsChoices($('#optionTable'));
+	});
+	
+	// Add tooltips
+	$context.find('.has_tt').tooltip();
+	
+
+	// Respond to clicks on a label text area
+	$context.find('.labelProp').change(function(){
+
+		var $this = $(this),
+			$elem = $this.closest('tr'),
 			formIndex = $elem.data("fid"),
 			itemIndex = $elem.data("id"),
-			survey = globals.model.survey,
-			question;
-	
-		updateLabel("question", formIndex, itemIndex, undefined, "text", $this.val(), undefined, "list_name") ;
+			newVal = $this.val(),
+			optionList = $elem.data("list_name"),
+			qname = $elem.data("qname");
+		
+		updateLabel("option", formIndex, itemIndex, optionList, "text", newVal, qname, "label"); 
+
 	});
+	
+	// Fix issues with dragging and selecting text in text area or input when draggable is set
+	// Mainly a problem with Firefox however in Chrome selecting text by dragging does not work
+	// Refer: http://stackoverflow.com/questions/21680363/prevent-drag-event-to-interfere-with-input-elements-in-firefox-using-html5-drag
+	$context.find('input, textarea').focusin(function() {
+		$(this).closest('.draggable').prop("draggable", false);
+	}).blur(function() {
+        $(this).closest('.draggable').prop("draggable", true);
+        console.log("blur");
+    });
+
+	// validate the option name
+	$context.find('.oname').keyup(function(){
+
+		var $this = $(this),
+			$elem = $this.closest('tr');
+			formIndex = $elem.data("fid"),
+			itemIndex = $elem.data("id"),
+			listName = $elem.data("list_name"),
+			newVal = $this.val();
+		
+		changeset.validateName(listName, itemIndex, newVal, "option", true);
+		changeset.updateModelWithErrorStatus(listName, itemIndex, "option");		// Update model and DOM
+
+	});
+	
+	// validate the optionlist name
+	$context.find('.olname').keyup(function(){
+
+		var $this = $(this),
+			$elem = $this.closest('.question_head'),
+			itemIndex = $elem.prop("id"),
+			listName = $elem.data("list_name"),
+			newVal = $this.val();
+		
+		changeset.validateName(listName, itemIndex, newVal, "optionlist", true);
+		changeset.updateModelWithErrorStatus(listName, itemIndex, "optionlist");		// Update model and DOM
+
+	});
+	
+	// Update the option name
+	$context.find('.oname').change(function(){
+
+		var $this = $(this),
+			$elem = $this.closest('tr'),
+			listName = $elem.data("list_name"),
+			formIndex = $elem.data("fid"),
+			itemIndex = $elem.data("id"),
+			qname = $elem.data("qname"),
+			newVal = $this.val();
+		
+		updateLabel("option", formIndex, itemIndex, listName, "text", newVal, qname, "value") ;
+		
+	});
+	
+	// Update the filter values when a custom filter value is changed
+	$context.find('.filter').change(function(){
+		updateFilterValues($(this), false, undefined);
+	});
+	
+	// Update the cascade filter values when a cascade filter value is checked
+	$('.cascadeFilter').on('ifChecked', function(event) {
+			updateFilterValues($(this), true, true);
+		});
+	
+	// Update the cascade filter values when a cascade filter value is un-checked
+	$('.cascadeFilter').on('ifUnchecked', function(event) {
+			updateFilterValues($(this), true, false);
+		});
+	
+	// Update the option list name
+	$context.find('.olname').change(function(){
+
+		var $this = $(this),
+			$li = $this.closest('.question_head'),
+			oldVal = $li.data("list_name"),
+			newVal = $this.val();
+		
+		// Only apply the update if there is no error on this option list
+		if(!$li.hasClass("error")) {
+			$li.data("list_name", newVal);	// First update the HTML
+			//$('button.add_option',$li).data("list_name", newVal).removeClass('l_' + oldVal)
+			//	.addClass('l_' + newVal);
+			updateLabel("optionlist", undefined, undefined, undefined, "text", newVal, oldVal, "name") ;
+		}
+
+	});
+	
+	// Add new option after
+	$context.find('.add_option_after').off().click(function() {
+		var $this = $(this).closest('.editor_element');
+		addNewOption($this, "after");
+	});
+	
+	// Add new option before
+	$context.find('.add_option_before').off().click(function() {	
+		var $this = $(this).closest('.editor_element');
+		addNewOption($this, "before");
+	});
+	
+	// Add new option using the "Add New Choice" button
+	$context.find('.add_option').off().click(function() {
+		var $this = $(this);
+
+		addNewOption($this, "end");
+	
+	});
+	
+	// Delete option
+	$context.find('.delete_option').off().click(function() {
+		var $this = $(this),
+			$context,						// Updated Html
+			index = $this.closest(".editor_element").data("id"),
+			list_name = $this.closest(".editor_element").data("list_name");
+		
+		bootbox.confirm(localise.set["msg_del_c"], function(result) {
+			if(result) {
+				$context = question.deleteOption(index, list_name);
+			}
+		}); 
+		
+		
+	});
+	
+	// Selected a media property
+	$context.find('.mediaProp').off().click(function(){
+		
+		var $this = $(this);
+		mediaPropSelected($this);
+
+	});
+	
+	/*
+	 * Enable drag and drop to move choices
+	 * 
+	 * First add handlers for draggable components
+	 */
+	$('.draggable.option').prop('draggable', 'true')
+	
+	.off('dragstart')
+	.on('dragstart', function(evt){
+		var ev = evt.originalEvent,
+			$elem = $(ev.target);
+		
+		ev.effectAllowed = "move";		// Only allow move, TODO copy
+		gDragCounter = 0;
+		
+
+		ev.dataTransfer.setData("text", $elem.closest('li').data('id'));
+		gDragSourceId = $elem.closest('tr').data('id');
+		
+		console.log("Draggable item id: " + $elem.closest('tr').data('id'));
+		//$('.dropon.add_option').addClass("add_drop_button").removeClass("add_button");
+		
+		return true;
+	})
+	
+	// clean up after drag
+	.off('dragend')
+	.on('dragend', function(evt){
+		//$('.dropon.add_option').addClass("add_button").removeClass("add_drop_button").removeClass("over_drop_button");
+		return false;
+	})
+	
+	// Don't allow a draggable component to be dropped onto a text field in some other option
+	.off('drop')
+	.on('drop', function(evt){
+		evt.originalEvent.preventDefault();
+	});
+	
+	
+	/*
+	 * Handle drop on or dragging over a drop zone
+	 */
+	
+	// Entering a drop zone
+	$('.dropon.option')
+	
+	.off('dragenter')
+	.on('dragenter', function(evt){
+		var ev = evt.originalEvent,
+			$elem = $(ev.target),	
+			targetId = $elem.closest('tr').data('id'),
+			btnId = $elem.data('id');
+		
+		$('tr', '#choiceView').removeClass("over_drop_elem");
+		if(typeof(targetId) !== "undefined" && targetId != gDragSourceId) {
+			ev.preventDefault();	
+			$elem.closest('tr').addClass("over_drop_elem");
+		} else if(typeof(btnId) !== "undefined" && btnId == -1) {
+			ev.preventDefault();
+			$elem.addClass("over_drop_button").removeClass("add_button");
+		}
+	
+	})
+	
+	// Leaving a drop zone
+	.off('dragleave')
+	.on('dragleave', function(evt){
+		
+		var ev = evt.originalEvent,
+			$elem = $(ev.target),
+			targetId = $elem.closest('tr').data('id'),
+			btnId = $elem.data('id');
+		
+		if(typeof(btnId) !== "undefined" && btnId == -1) {
+			$elem.addClass("add_button").removeClass("over_drop_button");
+		} else if(typeof(targetId) === "undefined") {
+			$('tr', '#choiceView').removeClass("over_drop_elem");
+		} 
+		
+		
+	})
+	
+	.off('dragover')
+	.on('dragover', function(evt){
+		evt.originalEvent.dataTransfer.dropEffect = "move";
+		evt.originalEvent.preventDefault();
+		evt.originalEvent.stopPropagation();
+	})
+	
+	// Drop the option
+	.off('drop')
+	.on('drop', function(evt){
+		var ev = evt.originalEvent,
+			$elem = $(ev.target),
+			$targetElem = $elem.closest('tr'),
+			$sourceElem,
+			sourceId = gDragSourceId,
+			targetId = $targetElem.data('id'),
+			btnId = $elem.data('id'),
+			listName = $targetElem.data('list_name'),
+			$context,
+			$elemBeforeTarget = $targetElem.prev('tr'),
+			elemBeforeTargetId = $elemBeforeTarget.data('id'),
+			$choiceBeforeButton = $("tr", "#choiceView").last();
+	
+		ev.preventDefault();
+		ev.stopPropagation();
+		 
+		
+		$('tr', '#choiceView').removeClass("over_drop_elem");		
+		if(sourceId === targetId || sourceId === elemBeforeTargetId) {
+			// Dropped on itself do not move
+		} else {
+			
+			if(btnId === -1) {
+				// Dropped on final add choice button
+				targetId = $choiceBeforeButton.data('id');
+				listName = $choiceBeforeButton.data('list_name')
+				$context = question.moveBeforeOption(listName, sourceId, listName, targetId, "after");
+			} else {
+				$context = question.moveBeforeOption(listName, sourceId, listName, targetId, "before");
+			}
+			respondToEventsChoices($context);			// Add events on to the altered html
+		}
+	});
+
+}
+
+/*
+ * Add a new option
+ */
+function addNewOption($elem, locn) {
+	var oId =  $elem.data("id"),
+		fId =  $elem.data("fid"),
+		qname = $elem.data("qname"),
+		list_name = $elem.data("list_name");
+
+
+	$context = question.addOption(oId, locn, list_name, fId, qname);
+	
+	respondToEventsChoices($context);				// Add events on to the altered html
+	
+	// Set focus to the new option
+	$context.find('textarea').focus();			// Set focus to the new option
+}
+
+/*
+ * The passed in context is for a list item containing either a question or an option
+ */
+function respondToEvents($context) {
+	
+	// Open choices for editing
+	$('.edit_choice', $context).off().click(function(index){
+		var $this = $(this),
+			$li = $this.closest('li'),
+			$context,
+			survey,
+			question;
+			
+		// Set global variables that will be used if the contents of this dialog are refreshed
+		globals.gListName = $li.data("list_name");
+		globals.gFormIndex = $li.data("fid");
+		globals.gItemIndex = $li.data("id");
+		globals.gSelectedFilters = undefined;
+		
+		$context = option.createChoiceView();
+
+		// Set the previous choices list box
+		var prevListName = $('#previousSelect').val();
+		if(prevListName) {
+			option.setPreviousChoices(prevListName);
+		}
+		
+		// Show the table of options
+		survey = globals.model.survey,
+		question = survey.forms[globals.gFormIndex].questions[globals.gItemIndex];
+		$('#optionTable').html(option.getOptionTable(question, globals.gFormIndex, globals.gListName));
+		option.setupChoiceView($('#filterType').val());
+		
+		respondToEventsChoices($context);
+		
+		$('.editorContent').toggle();
+	});
+	
 	
 	// Repeat count change
 	$context.find('.repeat-counts').change(function(){
@@ -790,7 +1219,7 @@ function respondToEvents($context) {
 		labelType = prop === "hint" ? "hint" : "text";
 		if(prop === "required") {
 			newVal = $this.hasClass("prop_no");		// If set false then newVal will be true
-		} else if (prop === "autoplay" || prop === "autoplay") {
+		} else if (prop === "autoplay") {
 			newVal = $this.val();
 		} else if (prop === "linked_survey") {
 			if($this.hasClass("prop_no")) {
@@ -847,15 +1276,9 @@ function respondToEvents($context) {
 			type,
 			optionList = $li.data("list_name"),
 			qname = $li.data("qname");
-		
-		if($li.hasClass("option")) {
-			type = "option";
-		} else {
-			type = "question";
-		}
 
 		var labelType = prop === "hint" ? "hint" : "text";
-		updateLabel(type, formIndex, itemIndex, optionList, labelType, newVal, qname, prop); 
+		updateLabel("question", formIndex, itemIndex, optionList, labelType, newVal, qname, prop); 
 
 	});
 	
@@ -904,35 +1327,6 @@ function respondToEvents($context) {
 
 	});
 	
-	// validate the option name
-	$context.find('.oname').keyup(function(){
-
-		var $this = $(this),
-			$li = $this.closest('li');
-			formIndex = $li.data("fid"),
-			itemIndex = $li.data("id"),
-			listName = $li.data("list_name"),
-			newVal = $this.val();
-		
-		changeset.validateName(listName, itemIndex, newVal, "option", true);
-		changeset.updateModelWithErrorStatus(listName, itemIndex, "option");		// Update model and DOM
-
-	});
-	
-	// validate the optionlist name
-	$context.find('.olname').keyup(function(){
-
-		var $this = $(this),
-			$li = $this.closest('li'),
-			itemIndex = $li.prop("id"),
-			listName = $li.data("list_name"),
-			newVal = $this.val();
-		
-		changeset.validateName(listName, itemIndex, newVal, "optionlist", true);
-		changeset.updateModelWithErrorStatus(listName, itemIndex, "optionlist");		// Update model and DOM
-
-	});
-	
 	// Update the question name
 	$context.find('.qname').change(function(){
 
@@ -943,39 +1337,6 @@ function respondToEvents($context) {
 			newVal = $this.val();
 		
 		updateLabel("question", formIndex, itemIndex, undefined, "text", newVal, undefined, "name") ;
-
-	});
-	
-	// Update the option name
-	$context.find('.oname').change(function(){
-
-		var $this = $(this),
-			$li = $this.closest('li'),
-			listName = $li.data("list_name"),
-			formIndex = $li.data("fid"),
-			itemIndex = $li.data("id"),
-			qname = $li.data("qname"),
-			newVal = $this.val();
-		
-		updateLabel("option", formIndex, itemIndex, listName, "text", newVal, qname, "value") ;
-		
-	});
-	
-	// Update the option list name
-	$context.find('.olname').change(function(){
-
-		var $this = $(this),
-			$li = $this.closest('li'),
-			oldVal = $li.data("list_name"),
-			newVal = $this.val();
-		
-		// Only apply the update if there is no error on this option list
-		if(!$li.hasClass("error")) {
-			$li.data("list_name", newVal);	// First update the html
-			$('button.add_option',$li).data("list_name", newVal).removeClass('l_' + oldVal)
-				.addClass('l_' + newVal);
-			updateLabel("optionlist", undefined, undefined, undefined, "text", newVal, oldVal, "name") ;
-		}
 
 	});
 	
@@ -1049,45 +1410,6 @@ function respondToEvents($context) {
 		
 	});
 	
-	// Add new option
-	$context.find('.add_option').off().click(function() {
-		var $this = $(this),
-			$context,						// Updated Html
-			oId = $this.data("oid"),
-			fId = $this.data("fid"),
-			qname = $this.data("qname"),
-			list_name = $this.data("list_name"),
-			locn = $this.data("locn");	// Add before or after the element id referenced by oId
-		
-		console.log("Add an option");
-		$context = question.addOption($this, oId, locn, list_name, fId, qname);
-		respondToEvents($context);				// Add events on to the altered html
-		if($context.attr("id") !== "formList") {
-			respondToEvents($context.prev());		// Add events on the "insert before" button
-		}
-		
-		// Set focus to the new option
-		$context.find('textarea').focus();			// Set focus to the new option
-	
-	});
-	
-	
-	// Delete option
-	$context.find('.delete_option').off().click(function() {
-		var $this = $(this),
-			$context,						// Updated Html
-			index = $this.data("id"),
-			list_name = $this.data("list_name");
-		
-		bootbox.confirm(localise.set["msg_del_c"], function(result) {
-			if(result) {
-				$context = question.deleteOption(index, list_name);
-			}
-		}); 
-		
-		
-	});
-	
 	// Select types
 	$context.find('.question_type').off().click(function() {
 		
@@ -1156,7 +1478,7 @@ function respondToEvents($context) {
 				ev.dataTransfer.setData("text/plain", ev.target.id);
 			}
 		}
-		$('.dropon').addClass("add_drop_button").removeClass("add__button");
+		$('.dropon.add_question').addClass("add_drop_button").removeClass("add__button");
 		
 		return true;
 	})
@@ -1164,7 +1486,7 @@ function respondToEvents($context) {
 	// clean up after drag
 	.off('dragend')
 	.on('dragend', function(evt){
-		$('.dropon').addClass("add_button").removeClass("add_drop_button").removeClass("over_drop_button");
+		$('.dropon.add_question').addClass("add_button").removeClass("add_drop_button").removeClass("over_drop_button");
 		return false;
 	})
 	
@@ -1180,7 +1502,7 @@ function respondToEvents($context) {
 	 */
 	
 	// Entering a drop zone
-	$('.dropon')
+	$('.dropon.add_question')
 	
 	.off('dragenter')
 	.on('dragenter', function(evt){
@@ -1188,7 +1510,7 @@ function respondToEvents($context) {
 			$elem = $(ev.target),	
 			targetId = $elem.data('qid');
 		
-		$elem.addClass("over_drop_button").removeClass("add_button").addClass("add_frop_button");
+		$elem.addClass("over_drop_button").removeClass("add_button").addClass("add_drop_button");
 	
 	})
 	
@@ -1560,7 +1882,7 @@ function updateLabel(type, formIndex, itemIndex, optionList, element, newVal, qn
 		question;
 	
 	if(type === "question") {
-		question = survey.forms[formIndex].questions[itemIndex]
+		question = survey.forms[formIndex].questions[itemIndex];
 		questionType = question.type;
 	}
 	
@@ -1719,31 +2041,51 @@ function addForms(data) {
 
 }
 
-/* **********************************************************************************************
- * Error Panel
+/*
+ * User has changed the filter value on an option
  */
+function updateFilterValues($this, isCascade, isChecked) {
+	
+	var $elem = $this.closest('tr'),
+		$f = $this.closest('td'),
+		listName = $elem.data("list_name"),
+		formIndex = $elem.data("fid"),
+		itemIndex = $elem.data("id"),
+		qname = $elem.data("qname"),
+		currentFilters,
+		filterName,
+		fVal,
+		newVal;
+
+	if(isCascade) {
+		filterName = "_smap_cascade";
+		if(isChecked) {
+			fVal = $("#previousSelectChoice").val();
+		} else {
+			fVal = undefined;
+		}
+		currentFilters = {};
+	} else {
+		filterName = $f.data("f_name");
+		fVal = $this.val();
+		currentFilters = $elem.data("filters")
+	}
+	
+	newVal = currentFilters;
+	newVal[filterName] = fVal;
+	$elem.data("filters", newVal);
+	
+	updateLabel("option", formIndex, itemIndex, listName, "text", newVal, qname, "cascade_filters") ;
+}
 
 /*
-function showErrorPanel() {
-	
-    var $panel = $('#toolbar'),
-    	$container = $('#content > .container');
-    
-    $panel.addClass('shown').animate({'margin-left':'0px'});  
-    $container.css({'padding-left':'200px'});
-
+ * Set the choice filter to a value appropriate for cascade selects
+ */
+function setCascadeFilter() {
+	var filter = "selected(${" + $('#previousSelect').val() + "}, _smap_cascade)";
+	$('#choiceFilter').val(filter);
+	updateLabel("question", globals.gFormIndex, 
+			globals.gItemIndex, undefined, "text", filter, undefined, "nodeset");
 }
-
-function hideErrorPanel() {
-	
-    var $panel = $('#toolbar'),
-    $container = $('#content > .container');
-    
-    $panel.removeClass('shown').animate({'margin-left':'-250px'});  
-    $container.css({'padding-left':'15px'});
-
-}
-*/
-
 
 });
