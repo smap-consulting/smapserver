@@ -781,8 +781,9 @@ function respondToEventsChoices($context) {
 			
 			if(proceed) {
 				setCascadeFilter();
+				option.addCascadeToFilters();  // Make sure _smap_cascade is in the list of filters
 			} else {
-				$this.val("custom")
+				$this.val("custom");
 			}
 		}
 		

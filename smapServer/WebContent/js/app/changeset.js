@@ -1519,7 +1519,10 @@ define([
 			getReferenceNames(item.calculation, refQuestions);
 		}
 		for(i = 0; i < item.labels.length; i++) {
-			getReferenceNames(item.labels[i].text, refQuestions);
+			var text = item.labels[i].text;
+			if(typeof text === "string") {
+				getReferenceNames(item.labels[i].text, refQuestions);
+			}
 		}
 
 		

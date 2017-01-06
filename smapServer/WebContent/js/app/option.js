@@ -38,7 +38,8 @@ define([
 		addOneOption: addOneOption,
 		resetFilterColumns: resetFilterColumns,
 		setPreviousChoices: setPreviousChoices,
-		getOptionTable: getOptionTable
+		getOptionTable: getOptionTable,
+		addCascadeToFilters: addCascadeToFilters
 	};
 	
 	var filterArray = [];
@@ -367,6 +368,28 @@ define([
 		}
 		
 		return h.join("");
+	}
+	
+	/*
+	 * Add _smap_cascade to filters if not already there
+	 */
+	function addCascadeToFilters() {
+		var i,
+			hasCascade = false;
+		
+		for(i = 0; i < filterArray.length; i++) {
+			if(filterArray[i] === "_smap_cascade") {
+				hasCascade = true;
+			}
+		}
+		if(!hasCascade) {
+			filterArray.push("_smap_cascade");
+		}
+		
+		if(!globals.gSelected) {
+			globals.gSelected = {};
+		}
+		globals.gSelected["_smap_cascade"] = true;
 	}
 	
 	/*
