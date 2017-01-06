@@ -1,14 +1,9 @@
 package surveyKPI;
 
-import java.io.DataInputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.PrintStream;
 import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
-import java.io.Writer;
+import java.lang.reflect.Type;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.sql.Connection;
@@ -16,16 +11,13 @@ import java.sql.DatabaseMetaData;
 import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Locale;
 import java.util.Map;
 import java.util.ResourceBundle;
-import java.util.Set;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -35,7 +27,6 @@ import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Context;
@@ -45,14 +36,12 @@ import javax.ws.rs.core.Response.Status;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.OutputKeys;
-import javax.xml.transform.Result;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.smap.sdal.Utilities.ApplicationException;
 import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
@@ -66,6 +55,10 @@ import org.smap.sdal.model.OptionDesc;
 import org.smap.sdal.model.SqlDesc;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
 
 /*
  * Various types of export related to a survey
@@ -81,6 +74,10 @@ public class ExportSurveyMisc extends Application {
 	
 	LogManager lm = new LogManager();		// Application log
 	
+	private class ExportForm {
+		int sId;
+		int fId;
+	}
 	
 	/*
 	 * Export as:
@@ -94,7 +91,10 @@ public class ExportSurveyMisc extends Application {
 	 *  writes the result to a file that is zipped and then downloaded.
 	 * For all of these formats the SQL is created from the passed in form and includes
 	 *  all columns from the parent forms.
-	 * A parameter excludeparents=true to only return the single form
+	 * 
+	 * A list of forms and surveys can be specified in forms
+	 * Alternatively a single form can be specified in form and its parents will also be included unless excludeparents=true 
+	 * 
 	 */
 	@GET
 	@Path("/shape")
@@ -109,6 +109,7 @@ public class ExportSurveyMisc extends Application {
 			@QueryParam("from") Date startDate,
 			@QueryParam("to") Date endDate,
 			@QueryParam("dateId") int dateId,
+			@QueryParam("forms") String forms,
 			@Context HttpServletResponse response) {
 
 		ResponseBuilder builder = Response.ok();
@@ -132,6 +133,27 @@ public class ExportSurveyMisc extends Application {
 		    }
 		}
 		
+		/*
+		 * Get the list of forms and surveys to be exported
+		 */
+		System.out.println("Form List: " + forms);
+		ArrayList<ExportForm> formList = null;
+		
+		if(forms != null) {
+			Type type = new TypeToken<ArrayList<ExportForm>>(){}.getType();
+			Gson gson=  new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
+			formList = gson.fromJson(forms, type);
+			
+			// Debug
+			for(int i = 0; i < formList.size(); i++) {
+				System.out.println("   Survey: " + formList.get(i).sId);
+				System.out.println("   Form: " + formList.get(i).fId);
+				System.out.println();
+			}
+		}
+		
+		
+		
 		// Authorisation - Access
 		Connection connectionSD = SDDataSource.getConnection("surveyKPI-ExportSurveyMisc");
 		boolean superUser = false;
@@ -139,8 +161,15 @@ public class ExportSurveyMisc extends Application {
 			superUser = GeneralUtilityMethods.isSuperUser(connectionSD, request.getRemoteUser());
 		} catch (Exception e) {
 		}
+		
 		a.isAuthorised(connectionSD, request.getRemoteUser());
-		a.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false, superUser);
+		if(formList != null) {
+			for(int i = 0; i < formList.size(); i++) {
+				a.isValidSurvey(connectionSD, request.getRemoteUser(), formList.get(i).sId, false, superUser);
+			}
+		} else {
+			a.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false, superUser);
+		}
 		// End Authorisation
 
 		lm.writeLog(connectionSD, sId, request.getRemoteUser(), "view", "Export as: " + format);
