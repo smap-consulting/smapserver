@@ -225,6 +225,8 @@ public class Items extends Application {
 						true,	// Include "bad"
 						true,	// Include instanceId
 						true,	// Include other meta data
+						true,	// Include preloads
+						true,	//Include instance names
 						superUser,
 						false		// HXL only include with XLS exports
 						);		

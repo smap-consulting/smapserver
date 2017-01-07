@@ -296,6 +296,8 @@ public class ManagedForms extends Application {
 						false, 
 						false, 
 						false,	// Don't include other meta data
+						true,	// Include preloads
+						true,	// Include instancename
 						superUser,
 						false		// HXL only include with XLS exports
 						);

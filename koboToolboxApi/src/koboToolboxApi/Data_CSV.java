@@ -200,6 +200,8 @@ public class Data_CSV extends Application {
 						false,		// Don't include "bad" columns
 						false,		// Don't include instance id
 						true,		// Include other meta data
+						true,		// Include preloads
+						true,		// Include instancename
 						superUser,
 						false		// TODO include HXL processing
 						);

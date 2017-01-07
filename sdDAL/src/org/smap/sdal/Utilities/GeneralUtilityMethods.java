@@ -2081,6 +2081,8 @@ public class GeneralUtilityMethods {
 			boolean includeBad,
 			boolean includeInstanceId,
 			boolean includeOtherMeta,
+			boolean includePreloads,
+			boolean includeInstanceName,
 			boolean superUser,
 			boolean hxl) throws SQLException {
 		
@@ -2266,6 +2268,10 @@ public class GeneralUtilityMethods {
 					continue;
 				}
 				
+				if(cName.equals("instancename") && !includeInstanceName) {
+					continue;
+				}
+				
 				if(!includeRO && ro) {
 					continue;			// Drop read only columns if they are not selected to be exported				
 				}
@@ -2310,7 +2316,9 @@ public class GeneralUtilityMethods {
 					c.readonly = ro;
 					c.hxlCode = hxlCode;
 					if(GeneralUtilityMethods.isPropertyType(source_param, question_column_name)) {
-						columnList.add(c);
+						if(includePreloads) {
+							columnList.add(c);
+						}
 					} else {
 						realQuestions.add(c);
 					}
@@ -3265,7 +3273,7 @@ public class GeneralUtilityMethods {
 			log.info("Getting linking surveys: " + pstmt.toString() );
 			
 			ResultSet rs = pstmt.executeQuery();
-			if(rs.next()) {
+			while(rs.next()) {
 				SurveyLinkDetails sld = new SurveyLinkDetails();
 				sld.toSurveyId = sId;
 				
@@ -3286,6 +3294,42 @@ public class GeneralUtilityMethods {
 		}
 		
 		return sList;
+	}
+	
+	/*
+	 * Get the question that links to the provide survey from the provided form
+	 */
+	public static int getLinkingQuestion(Connection sd, int formFromId, int surveyToId) {
+		
+		int questionId = 0;
+		
+		String sql = "select q.q_id "
+				+ "from question q, form f "
+				+ "where q.f_id = f.f_id "
+				+ "and f.f_id = ? "
+				+ "and q.linked_survey = ?";
+		PreparedStatement pstmt = null;
+		
+		try {
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setInt(1, formFromId);
+			pstmt.setInt(2, surveyToId);
+			log.info("Getting linking surveys: " + pstmt.toString() );
+			
+			ResultSet rs = pstmt.executeQuery();
+			if(rs.next()) {
+				
+				questionId = rs.getInt(1);
+				
+			}
+			
+		} catch (Exception e) {
+			log.log(Level.SEVERE, "Exception", e);
+		} finally {
+			try {if (pstmt != null) {pstmt.close();	}} catch (SQLException e) {	}
+		}
+		
+		return questionId;
 	}
 	
 	/*

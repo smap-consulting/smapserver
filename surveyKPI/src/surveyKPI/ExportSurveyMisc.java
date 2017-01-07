@@ -61,6 +61,8 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 
+import utilities.FormListManager;
+
 /*
  * Various types of export related to a survey
  *    
@@ -133,7 +135,6 @@ public class ExportSurveyMisc extends Application {
 		 * Get the list of forms and surveys to be exported
 		 * Needs to be done prior to authorisation as it includes the list of surveys
 		 */
-		System.out.println("Form List: " + forms);
 		ArrayList<ExportForm> formList = null;
 		
 		if(forms != null) {
@@ -152,8 +153,13 @@ public class ExportSurveyMisc extends Application {
 		
 		a.isAuthorised(connectionSD, request.getRemoteUser());
 		if(formList != null) {
+			HashMap<Integer, String> checkedSurveys = new HashMap<Integer, String> ();
 			for(int i = 0; i < formList.size(); i++) {
-				a.isValidSurvey(connectionSD, request.getRemoteUser(), formList.get(i).sId, false, superUser);
+				int survey = formList.get(i).sId;
+				if(checkedSurveys.get(new Integer(survey)) == null) {
+					a.isValidSurvey(connectionSD, request.getRemoteUser(), formList.get(i).sId, false, superUser);
+					checkedSurveys.put(new Integer(survey), "checked");
+				}
 			}
 		} else {
 			a.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false, superUser);
@@ -179,7 +185,6 @@ public class ExportSurveyMisc extends Application {
 			Connection connectionResults = null;
 			PreparedStatement pstmtDefLang = null;
 			PreparedStatement pstmtDefLang2 = null;
-			PreparedStatement pstmtGetTable = null;
 			
 			try {
 		
@@ -222,38 +227,14 @@ public class ExportSurveyMisc extends Application {
 					}
 				}
 
-				
-				String sqlGetTable = "select table_name, parentform from form "
-						+ "where s_id = ? "
-						+ "and f_id = ?;";	
-				pstmtGetTable = connectionSD.prepareStatement(sqlGetTable);
-				
+				/*
+				 * Update the form list with additional info
+				 */
+				FormListManager flm = new FormListManager();
 				if(formList == null) {
-					// TODO Get a list of forms from the single form type request
-					System.out.println("TODO: Get list of forms");
+					formList = flm.getFormList(connectionSD, sId, fId);
 				} else {
-					// Add the table name to each form
-					for(ExportForm ef : formList) {
-
-						pstmtGetTable.setInt(1, ef.sId);
-						pstmtGetTable.setInt(2, ef.fId);
-						ResultSet rs = pstmtGetTable.executeQuery();
-						if(rs.next()) {
-							ef.table = rs.getString(1);
-							ef.parent = rs.getInt(2);
-						} else {
-							String msg = "Exporting survey to " + format + ", Form not found:" + ef.sId + ":" + ef.fId;
-							log.info(msg);
-							throw new Exception(msg);
-						}
-					}
-				}
-				
-				for(int i = 0; i < formList.size(); i++) {
-					System.out.println("   Survey: " + formList.get(i).sId);
-					System.out.println("   Form: " + formList.get(i).fId);
-					System.out.println("   Table: " + formList.get(i).table);
-					System.out.println();
+					flm.setFormList(connectionSD, formList);
 				}
 				
 				// Get the SQL for this query
@@ -480,7 +461,6 @@ public class ExportSurveyMisc extends Application {
 
 				try {if (pstmtDefLang != null) {pstmtDefLang.close();}} catch (SQLException e) {}
 				try {if (pstmtDefLang2 != null) {pstmtDefLang2.close();}} catch (SQLException e) {}	
-				try {if (pstmtGetTable != null) {pstmtGetTable.close();}} catch (SQLException e) {}	
 				
 				SDDataSource.closeConnection("surveyKPI-ExportSurvey", connectionSD);
 				ResultsDataSource.closeConnection("surveyKPI-ExportSurvey", connectionResults);

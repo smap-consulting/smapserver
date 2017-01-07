@@ -171,30 +171,60 @@ public class QueryGenerator {
 		shpSqlBuf.append(sqlDesc.cols);
 		shpSqlBuf.append(" from ");
 
-		int numTables = sqlDesc.tables.size();
-		for(int i = 0; i < numTables; i++) {
+		/*
+		 * Add the tables
+		 */
+		for(int i = 0; i < formList.size(); i++) {
+			ExportForm ef = formList.get(i);
 			if(i > 0) {
 				shpSqlBuf.append(",");
 			}
-			shpSqlBuf.append(sqlDesc.tables.get(i));
+			shpSqlBuf.append(ef.table);
 		}
 		
 		shpSqlBuf.append(" where ");
-		shpSqlBuf.append(sqlDesc.tables.get(0));
-		shpSqlBuf.append("._bad='false'");
+		
+		/*
+		 * Exclude "bad" records
+		 */
+		for(int i = 0; i < formList.size(); i++) {
+			ExportForm ef = formList.get(i);
+			if(i > 0) {
+				shpSqlBuf.append(" and ");
+			}
+			shpSqlBuf.append(ef.table);
+			shpSqlBuf.append("._bad='false'");
+		}
+		
 		
 		if(format.equals("shape") && sqlDesc.geometry_type != null) {
 			shpSqlBuf.append(" and " + sqlDesc.target_table + ".the_geom is not null");
 		}
-		if(numTables > 1) {
-			for(int i = 0; i < numTables - 1; i++) {
+		
+		/*
+		 * The form list is in order of Parent to child forms
+		 */
+		if(formList.size() > 1) {
+			for(int i = 1; i < formList.size(); i++) {
 				
 				shpSqlBuf.append(" and ");
 				
-				shpSqlBuf.append(sqlDesc.tables.get(i));
-				shpSqlBuf.append(".prikey = ");
-				shpSqlBuf.append(sqlDesc.tables.get(i+1));
-				shpSqlBuf.append(".parkey");
+				ExportForm form = formList.get(i);
+				ExportForm prevForm = formList.get(i - 1);
+
+				shpSqlBuf.append(prevForm.table);
+				if(form.fromQuestionId > 0) {
+					shpSqlBuf.append("._hrk = ");
+				} else {
+					shpSqlBuf.append(".prikey = ");
+				}
+				shpSqlBuf.append(form.table);
+				if(form.fromQuestionId > 0) {
+					shpSqlBuf.append(".");
+					shpSqlBuf.append(GeneralUtilityMethods.getColumnNameFromId(connectionSD, form.sId, form.fromQuestionId));
+				} else {
+					shpSqlBuf.append(".parkey");
+				}
 			}
 		}
 		
@@ -326,7 +356,6 @@ public class QueryGenerator {
 					);
 		}
 
-		
 		ArrayList<TableColumn> cols = GeneralUtilityMethods.getColumnsInForm(
 				connectionSD,
 				connectionResults,
@@ -336,17 +365,18 @@ public class QueryGenerator {
 				form.fId,
 				form.table,
 				exp_ro,
-				false,		// Don't include parent key
-				false,		// Don't include "bad" columns
-				false,		// Don't include instance id
-				true,		// Include other meta data
+				false,				// Don't include parent key
+				false,				// Don't include "bad" columns
+				false,				// Don't include instance id
+				(formListIdx == 0),	// Include other meta data
+				(formListIdx == 0),	// Include preloads
+				(formListIdx == 0),	// Include Instance Name
 				superUser,
 				false		// HXL only include with XLS exports
 				);
 		
 		StringBuffer colBuf = new StringBuffer();
 		int idx = 0;
-		//for(int i = 1; i <= rsMetaData.getColumnCount(); i++) {
 		for(TableColumn col : cols) {
 			
 			String name = null;
@@ -425,7 +455,7 @@ public class QueryGenerator {
 				if(!wantThisOne) {
 					continue;
 				}
-			} else if(name.equals("prikey") && form.parent > 0) {	// Only return the primary key of the top level survey form
+			} else if(name.equals("prikey") && (formListIdx != 0)) {	// Only return the primary key of the top level form
 				continue;
 			}
 			
@@ -483,7 +513,6 @@ public class QueryGenerator {
 				 * Specify SQL functions
 				 */
 				if(sqlDesc.geometry_type != null && type.equals("geometry") && (format.equals("vrt") || format.equals("csv") || format.equals("stata") || format.equals("thingsat"))) {
-					//colBuf.append("ST_AsText(");
 					if(sqlDesc.geometry_type.equals("wkbPoint") && (format.equals("csv") || format.equals("stata") || format.equals("spss")) ) {		// Split location into Lon, Lat
 						colBuf.append("ST_Y(" + form.table + "." + name + ") as lat, ST_X(" + form.table + "." + name + ") as lon");
 						sqlDesc.colNames.add(new ColDesc("lat", type, qType, label, null, false));
@@ -524,11 +553,13 @@ public class QueryGenerator {
 						name = name.replaceFirst("_", "x");	// Shape files must start with alpha's
 					}
 					colBuf.append(name);
+					if(form.surveyLevel > 0) {
+						colBuf.append("_");
+						colBuf.append(form.surveyLevel);	// Differentiate questions from different surveys
+					}
 					
 					sqlDesc.colNames.add(new ColDesc(name, type, qType, label, optionListLabels, needsReplace));
 				}
-				
-
 				
 				// Add the option labels to a hashmap to ensure they are unique
 				if(optionListLabels != null) {
@@ -542,7 +573,6 @@ public class QueryGenerator {
 			}
 		}
 		
-		sqlDesc.tables.add(form.table);
 		if(sqlDesc.cols == null) {
 			sqlDesc.cols = colBuf.toString();
 		} else {
