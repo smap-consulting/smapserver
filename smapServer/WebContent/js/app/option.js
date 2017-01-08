@@ -17,7 +17,32 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 /*
- * Functions for manipulating an option in the editor
+ * Functions for manipulating a choice in the editor
+ * 
+ *  Filter Model
+ *    globals.gFilterArray:				Filters in display order
+ *    survey.filters	Filters with state of shown or not shown
+ *  
+ *    Create choice view
+ *    	initialise model
+ *    	createChoiceView()
+ *    	Set select controls
+ *      getOptionTable()
+ *      setupChoiceView()
+ *      	Hide and show dom elements dependent on view
+ *      Add response to events
+ *      
+ *    if filter type changes:
+ *    	getOptionTable()
+ *  	setupChoiceView()
+ *      Add response to events
+		
+ *    if model changes:  (filter added or removed)
+ *    	update model
+ *    	update filter select dom elements
+ *    	getOptionTable()
+ *  	setupChoiceView()
+ *      Add response to events
  */
 
 "use strict";
@@ -34,15 +59,16 @@ define([
 	return {	
 		refreshOptionListControls: refreshOptionListControls,
 		createChoiceView: createChoiceView,
-		setupChoiceView: setupChoiceView,
+		setupChoiceView: setupChoiceView,						// On create of option view
 		addOneOption: addOneOption,
 		resetFilterColumns: resetFilterColumns,
 		setPreviousChoices: setPreviousChoices,
 		getOptionTable: getOptionTable,
-		addCascadeToFilters: addCascadeToFilters
+		addFilter: addFilter,
+		addFilterSelectList: addFilterSelectList
 	};
 	
-	var filterArray = [];
+	globals.gFilterArray = [];			// Filters in repeatable order
 	
 	/*
 	 * Refresh the select controls that show the available option lists
@@ -57,19 +83,20 @@ define([
 	 */
 	function createChoiceView() {
 		
-		var $context = $('#choiceView').find('.choice-content'),
+		var $cv = $('#choiceView').find('.choice-content'),
 			survey = globals.model.survey,
 			question,
 			filter,
 			filterType = "none";
 		
 		if(globals.gListName) {
-			$context.empty().append(addOptionContainer(undefined, undefined, undefined, globals.gListName, survey.filters));
+			$cv.empty().append(addOptionContainer(undefined, undefined, undefined, globals.gListName));
 		} else {
 			// Choice list opened from a question
 			question = survey.forms[globals.gFormIndex].questions[globals.gItemIndex];
-			$context.empty().append(addOptionContainer(question, globals.gFormIndex, globals.gItemIndex, undefined, survey.filters));
+			$cv.empty().append(addOptionContainer(question, globals.gFormIndex, globals.gItemIndex, undefined));
 		}
+		addFilterSelectList(survey.filters);
 		
 		if(survey.filters.length > 0) {
 			filterType = "custom";
@@ -84,18 +111,16 @@ define([
 		// Set the custom filter view by default
 		$('#filterType').val(filterType);
 		
-		return $context;
+		return $cv;
 	}
 	
 	function setupChoiceView(filterType) {
-		
+		var survey = globals.model.survey;
 		/*
 		 * show filter columns that should be visible
 		 */
-		$("input", "#custom_filters").prop("checked", false);
-		for (i = 0; i < filterArray.length; i++) {
-			if(globals.gSelectedFilters[filterArray[i]] === true) {
-				$("input[value='" + filterArray[i] + "']", "#custom_filters").prop("checked", true);
+		for (i = 0; i < globals.gFilterArray.length; i++) {
+			if(survey.filters[globals.gFilterArray[i]] === true) {
 				$('table', '#choiceView').removeClass("hide" + i);
 			}
 		}
@@ -114,13 +139,17 @@ define([
 			$('#choiceView table').addClass("notcascade").addClass("notcustom");	
 		}
 		
+		$('[type="checkbox"]', '#choiceView').iCheck({
+		    checkboxClass: 'icheckbox_square-green',
+		    radioClass: 'iradio_square-green'
+		});
+		
 	}
 
 	/*
 	 * Add a single option
 	 */
-	function addOneOption(optionList, option, formIndex, index, list_name, 
-			qname, initialiseFilters) {
+	function addOneOption(optionList, option, formIndex, index, list_name, qname) {
 		
 		var h = [],
 			idx = -1,
@@ -193,7 +222,7 @@ define([
 							
 				h[++idx] = '</td>';	// End of option name and label cell
 			
-				h[++idx] = addFilterColumnBody(option.cascade_filters, initialiseFilters);
+				h[++idx] = addFilterColumnBody(option.cascade_filters);
 				h[++idx] = addOptionLabel(option);
 		
 			
@@ -205,10 +234,11 @@ define([
 	}
 	
 	function resetFilterColumns() {
-		var i;
+		var i,
+			survey = globals.model.survey;
 		
-		for (i = 0; i < filterArray.length; i++) {
-			if(globals.gSelectedFilters[filterArray[i]] === true) {
+		for (i = 0; i < globals.gFilterArray.length; i++) {
+			if(survey.filters[globals.gFilterArray[i]] === true) {
 				$('table', '#choiceView').removeClass("hide" + i);
 			} else {
 				$('table', '#choiceView').addClass("hide" + i);
@@ -220,7 +250,7 @@ define([
 	/*
 	 * Add an option container
 	 */
-	function addOptionContainer(question, formIndex, qIndex, listName, filters) {
+	function addOptionContainer(question, formIndex, qIndex, listName) {
 		var h = [],
 			idx = -1,
 			filter;
@@ -296,23 +326,11 @@ define([
 							}
 							
 							h[++idx] = '<div id="custom_filters">';
-								filterArray = [];
-								for(filter in filters) {
-									filterArray.push(filter);	// Save filters as ordered array
-									h[++idx] = '<div class="checkbox">';
-								    h[++idx] = '<label>';
-								      h[++idx] = '<input type="checkbox" value="';
-								      h[++idx] = filter;
-								      h[++idx] = '"> ';
-								      h[++idx] = filter
-								    h[++idx] = '</label>';
-								    h[++idx] = '</div>';
-								}
-								h[++idx] = '<button class="btn btn-block btn-default">';
-								h[++idx] = localise.set["ed_afc"];
-								h[++idx] = '</button>';
 							h[++idx] = '</div>';
 						h[++idx] = '</form>';
+						h[++idx] = '<button id="addFilter" class="btn btn-default">';
+						h[++idx] = localise.set["ed_afc"];
+						h[++idx] = '</button>';
 					h[++idx] = '</div>';  // Custom filter only
 					
 					h[++idx] = '<div class="cascade_filter_only" style="display:none;">';
@@ -371,25 +389,60 @@ define([
 	}
 	
 	/*
-	 * Add _smap_cascade to filters if not already there
+	 * Add filter to filters if not already there
 	 */
-	function addCascadeToFilters() {
+	function addFilter(filter) {
 		var i,
-			hasCascade = false;
+			hasFilter = false,
+			survey = globals.model.survey;
 		
-		for(i = 0; i < filterArray.length; i++) {
-			if(filterArray[i] === "_smap_cascade") {
-				hasCascade = true;
+		for(i = 0; i < globals.gFilterArray.length; i++) {
+			if(globals.gFilterArray[i] === filter) {
+				hasFilter = true;
 			}
 		}
-		if(!hasCascade) {
-			filterArray.push("_smap_cascade");
+		if(!hasFilter) {
+			globals.gFilterArray.push(filter);
 		}
 		
-		if(!globals.gSelected) {
-			globals.gSelected = {};
+		if(!survey.filters) {
+			survey.filters = {};
 		}
-		globals.gSelected["_smap_cascade"] = true;
+		survey.filters[filter] = true;
+	}
+	
+	/*
+	 * Add the filters as  a select list
+	 */
+	function addFilterSelectList(filters) {
+		var h = [],
+			idx = -1,
+			survey = globals.model.survey;
+		
+		globals.gFilterArray = [];
+		for(filter in filters) {
+			globals.gFilterArray.push(filter);	// Save filters as ordered array
+			h[++idx] = '<div class="checkbox">';
+		    h[++idx] = '<label>';
+		      h[++idx] = '<input type="checkbox" ';
+		      if(survey.filters[filter]) {
+		    	  h[++idx] = 'checked=true';
+		      }
+		      h[++idx] = 'value="';
+		      h[++idx] = filter;
+		      h[++idx] = '"> ';
+		      h[++idx] = filter
+		    h[++idx] = '</label>';
+		    h[++idx] = '</div>';
+		}
+		
+		$('#custom_filters').html(h.join(""));
+		
+		// Style checkboxes
+		$('[type="checkbox"]', '#custom_filters').iCheck({
+		    checkboxClass: 'icheckbox_square-green',
+		    radioClass: 'iradio_square-green'
+		});
 	}
 	
 	/*
@@ -443,18 +496,13 @@ define([
 			h[++idx] = '<tbody>';
 			if(oSeq) {
 				maxIndex = 0;
-				if(!globals.gSelectedFilters) {
-					initialiseFilters = true;
-					globals.gSelectedFilters = {};
-				}
 				for(i = 0; i < oSeq.length; i++) {
 					h[++idx] = addOneOption(optionList,
 							optionList.options[oSeq[i]], 
 							formIndex, 
 							oSeq[i], 
 							list_name, 
-							questionName, 
-							initialiseFilters);
+							questionName);
 					if(oSeq[i] >= maxIndex) {
 						maxIndex = oSeq[i] + 1;
 					}
@@ -600,11 +648,11 @@ define([
 			h = [],
 			idx = -1;
 		
-		for(i = 0; i < filterArray.length; i++) {
+		for(i = 0; i < globals.gFilterArray.length; i++) {
 			h[++idx] = '<th class="f';		// Class to hide / show filter
 			h[++idx] = i;
 			h[++idx] = '">';
-			h[++idx] = filterArray[i];
+			h[++idx] = globals.gFilterArray[i];
 			h[++idx] = '</th>';
 		}
 		
@@ -614,20 +662,20 @@ define([
 	/*
 	 * Add the table body for filter columns
 	 */
-	function addFilterColumnBody(filters, initialiseFilters) {
+	function addFilterColumnBody(filters) {
 		
 		var i,
 			h = [],
 			idx = -1;
 		
-		for(i = 0; i < filterArray.length; i++) {
+		for(i = 0; i < globals.gFilterArray.length; i++) {
 			h[++idx] = '<td class="f';		// Class to hide / show filter
 			h[++idx] = i;
 			h[++idx] = '" data-f_name="';
-			h[++idx] = filterArray[i];
+			h[++idx] = globals.gFilterArray[i];
 			h[++idx] = '">';
 			h[++idx] = '<input class="filter form-control has_tt" value="';
-			h[++idx] = filters[filterArray[i]];
+			h[++idx] = filters[globals.gFilterArray[i]];
 			h[++idx] = '" ';	
 			h[++idx] = ' type="text" title="';
 			h[++idx] = localise.set["ed_fv"];
@@ -635,11 +683,6 @@ define([
 			
 			h[++idx] = '</td>';
 			
-			if(initialiseFilters) {
-				if(filters[filterArray[i]]) {
-					globals.gSelectedFilters[filterArray[i]] = true;
-				}
-			}
 		}
 		
 		return h.join("");

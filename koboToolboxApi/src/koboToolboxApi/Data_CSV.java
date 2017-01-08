@@ -23,9 +23,6 @@ import javax.servlet.http.HttpServletResponse;
 import managers.DataManager;
 import model.DataEndPoint;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-
 import java.io.PrintWriter;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -44,16 +41,11 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Context;
-import javax.ws.rs.core.Response;
-
 import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.managers.LogManager;
-import org.smap.sdal.managers.SurveyManager;
-import org.smap.sdal.model.Form;
-import org.smap.sdal.model.Survey;
 import org.smap.sdal.model.TableColumn;
 
 /*

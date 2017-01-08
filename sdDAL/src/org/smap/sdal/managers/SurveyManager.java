@@ -876,7 +876,7 @@ public class SurveyManager {
 					try {
 						o.cascade_filters = gson.fromJson(cascade_filters, hmType);
 						for (String key : o.cascade_filters.keySet()) {
-						    s.filters.put(key, key);
+						    s.filters.put(key, true);
 						}
 
 					} catch (Exception e) {

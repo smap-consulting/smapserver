@@ -523,6 +523,37 @@
 	</div>
 </div>
 
+<!-- Modal to add/remove a filter -->
+<div id="filterModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="filterModalLabel" aria-hidden="true">
+	<div class="modal-dialog">
+   		<div class="modal-content">
+   			<div class="modal-header">
+     			<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+     			<h4 class="modal-title lang" id="filterModalLabel" data-lang="c_filter">filter</h4>
+   			</div>
+   			
+   			<div class="modal-body">
+   				<div class="container-fluid">
+		  			<form role="form" class="form-horizontal" id="me_edit_form">
+						<div class="form-group">
+							<label for="filter_name" data-lang="c_name" class="lang col-sm-2 control-label">name</label>
+							<div class="col-sm-10">
+								<input type="text" id="filter_name" required class="form-control">
+							</div>
+						</div>
+					</form>
+		  		</div>
+	    		
+			</div>
+			<div class="modal-footer">
+        		<button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_close">close</button>
+        		<button id="filterModalSave" type="button" data-dismiss="modal" class="btn btn-primary lang" data-lang="c_save">save</button>
+      		</div>
+		</div>
+	</div>
+</div>
+
+
 <!-- Model to edit languages -->
 <div id="editLanguageModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="editLanguageLabel" aria-hidden="true">
 	<div class="modal-dialog">

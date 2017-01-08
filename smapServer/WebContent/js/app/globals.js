@@ -84,6 +84,7 @@ define(function() {
 		gFormIndex: undefined,
 		gItemIndex: undefined,
 		gSelectedFilters: undefined,
+		gFilterArray: undefined,
 		
 		gMainTable: undefined,			// Data tables
 		

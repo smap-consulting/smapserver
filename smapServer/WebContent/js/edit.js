@@ -173,7 +173,7 @@ $(document).ready(function() {
 	 * Switch between choices view and question view
 	 */
 	updateViewControls();
-	$('#viewType').change(function(){
+	$('#viewType').change(function() {
 		globals.gIsQuestionView = $(this).prop('checked');
 		updateViewControls();
 		refreshForm();
@@ -567,35 +567,22 @@ $(document).ready(function() {
 	/*
 	 * Choice Editing
 	 */
-	$(".modal-fullscreen").on('show.bs.modal', function () {
-		setTimeout( function() {
-			$(".modal-backdrop").addClass("modal-backdrop-fullscreen");}, 0);
-		});
-	$(".modal-fullscreen").on('hidden.bs.modal', function () {
-		$(".modal-backdrop").addClass("modal-backdrop-fullscreen");
+	$('#filterModalSave').off().click(function(){
+		var survey = globals.model.survey,
+			question = survey.forms[globals.gFormIndex].questions[globals.gItemIndex];
+		
+		option.addFilter($('#filter_name').val());
+		$('#optionTable').html(option.getOptionTable(question, globals.gFormIndex, globals.gListName));
+		option.setupChoiceView($('#filterType').val());
+		option.addFilterSelectList(survey.filters);
+		respondToEventsChoices($('#optionTable'));
+	});
+	
+	$("#filterModal").on("shown.bs.modal", function() {
+	    $("#filter_name").focus();
 	});
 	
 });
-
-/*
- * Modify controls that are dependent on the view being either for questions or choices
- */
-function updateViewControls() {
-	
-	if(globals.gSelProperty !== "media") {		// media is the only common attribute between question and option view
-		globals.gSelProperty = "label";
-	}
-	if(globals.gIsQuestionView) {
-		$('.q_only').show();
-		$('.o_only').hide();
-		globals.gSelLabel = $('#selProperty > li.q_only.default').text();
-	} else {
-		$('.q_only').hide();
-		$('.o_only').show();
-		globals.gSelLabel = $('#selProperty > li.o_only.default').text();
-	}
-	$('#propSelected').text(globals.gSelLabel);
-}
 
 /*
  * Set all the questions to either required or not required
@@ -729,8 +716,12 @@ function refreshForm() {
  */
 function respondToEventsChoices($context) {
 	
-	$('.exitOptions', $context).off().click(function(){
+	$('.exitOptions', $context).off().click(function() {
 		$('.editorContent').toggle();;
+	});
+	
+	$('#addFilter', $context).off().click(function() {
+		$('#filterModal').modal('show');	
 	});
 	
 	// Set option list value
@@ -758,12 +749,6 @@ function respondToEventsChoices($context) {
 		
 	});
 	
-	// Style checkboxes
-	$('[type="checkbox"]', $context).iCheck({
-	    checkboxClass: 'icheckbox_square-green',
-	    radioClass: 'iradio_square-green'
-	});
-	
 	
 	$('#filterType', $context).off().change(function(){
 		var $this = $(this),
@@ -781,7 +766,7 @@ function respondToEventsChoices($context) {
 			
 			if(proceed) {
 				setCascadeFilter();
-				option.addCascadeToFilters();  // Make sure _smap_cascade is in the list of filters
+				option.addFilter("_smap_cascade");  // Make sure _smap_cascade is in the list of filters
 			} else {
 				$this.val("custom");
 			}
@@ -798,9 +783,10 @@ function respondToEventsChoices($context) {
 	
 	// Respond to columns of filters being hidden or made visible
 	$('input', '#custom_filters').off().change(function(){
-		var $this = $(this);
+		var $this = $(this),
+		survey = globals.model.survey;
 		
-		globals.gSelectedFilters[$this.val()] = $this.prop("checked");
+		survey.filters[$this.val()] = $this.prop("checked");
 		option.resetFilterColumns();
 		
 	});
@@ -1159,7 +1145,6 @@ function respondToEvents($context) {
 		globals.gListName = $li.data("list_name");
 		globals.gFormIndex = $li.data("fid");
 		globals.gItemIndex = $li.data("id");
-		globals.gSelectedFilters = undefined;
 		
 		$context = option.createChoiceView();
 
@@ -1701,7 +1686,7 @@ function mediaPropSelected($this) {
 }
 
 /*
- * Add a new question after an add new question button identified by $this is seelected
+ * Add a new question after an add new question button identified by $this is selected
  */
 function addQuestion($this, type) {
 	var $context,						// Updated Html
@@ -2086,6 +2071,26 @@ function setCascadeFilter() {
 	$('#choiceFilter').val(filter);
 	updateLabel("question", globals.gFormIndex, 
 			globals.gItemIndex, undefined, "text", filter, undefined, "nodeset");
+}
+
+/*
+ * Modify controls that are dependent on the view being either for questions or choices
+ */
+function updateViewControls() {
+	
+	if(globals.gSelProperty !== "media") {		// media is the only common attribute between question and option view
+		globals.gSelProperty = "label";
+	}
+	if(globals.gIsQuestionView) {
+		$('.q_only').show();
+		$('.o_only').hide();
+		globals.gSelLabel = $('#selProperty > li.q_only.default').text();
+	} else {
+		$('.q_only').hide();
+		$('.o_only').show();
+		globals.gSelLabel = $('#selProperty > li.o_only.default').text();
+	}
+	$('#propSelected').text(globals.gSelLabel);
 }
 
 });

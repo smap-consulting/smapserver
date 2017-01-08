@@ -18,15 +18,12 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
 import managers.DataManager;
 import model.DataEndPoint;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
-import java.io.PrintWriter;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -45,8 +42,6 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.Status;
-
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONObject;
 import org.smap.sdal.Utilities.Authorise;
@@ -55,11 +50,7 @@ import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.managers.CustomReportsManager;
 import org.smap.sdal.managers.LogManager;
-import org.smap.sdal.managers.RoleManager;
-import org.smap.sdal.managers.SurveyManager;
 import org.smap.sdal.managers.TableDataManager;
-import org.smap.sdal.model.SqlFrag;
-import org.smap.sdal.model.Survey;
 import org.smap.sdal.model.TableColumn;
 
 /*
