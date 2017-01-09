@@ -1,9 +1,5 @@
 package org.smap.sdal.model;
 
-import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.Date;
-
 /*
  * Contains details of a change to a question or option property including labels
  */

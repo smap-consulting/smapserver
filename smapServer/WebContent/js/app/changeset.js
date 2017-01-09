@@ -280,14 +280,6 @@ define([
 				if(item_orig) {
 					change.property.oldVal = item_orig[change.property.prop];
 				}
-				
-				/*
-				 * Filter values should be saved as a json string
-				 */
-				if(change.property.type === "option" && change.property.prop === "cascade_filters") {
-					change.property.newVal = JSON.stringify(change.property.newVal);
-					change.property.oldVal = JSON.stringify(change.property.oldVal);
-				}
 			}
 				
 			change.property.languageName = survey.languages[change.property.language].name;			// For logging the event
@@ -319,9 +311,21 @@ define([
 		if(change.action !== "add") {
 			applyChange = removeDuplicateChange(changes, ci);
 		}
+		
+		/*
+		 * If this is a property update and the property is cascade_filters then convert to a string
+		 * Filter values should be saved as a json string
+		 */
+		if(change.property) {
+			if(change.property.type === "option" && change.property.prop === "cascade_filters") {
+				change.property.newVal = JSON.stringify(change.property.newVal);
+				change.property.oldVal = JSON.stringify(change.property.oldVal);
+			}
+		}
+		
 		if(applyChange) {
 			if(change.property && (change.property.newVal !== change.property.oldVal)) {		// Add if the value has changed
-					changes.push(ci);
+				changes.push(ci);
 			} else if(change.action === "add" || change.action === "delete" || change.action === "move") {
 				changes.push(ci);
 			}
@@ -347,24 +351,7 @@ define([
 				}
 			}
 		} 
-		
-		//else if(type === "name") {
-		//	var form = survey.forms[change.property.formIndex];
-		//	change.property.path = getFormPath(form) + "/" + change.property.newVal;				
-		//}
 	}
-	
-	/*
-	 * Annotate an option change item with changes that are dependent on the type of the property
-	 *
-	function setOptionTypeSpecificChanges(type, change, survey) {
-		var i;
-		if(type === "value") {
-			var form = survey.forms[change.property.formIndex];
-			change.property.path = getFormPath(form) + "/" + change.property.qname + "/" + change.property.newVal;			
-		}
-	}
-	*/
 	
 	/*
 	 * Remove duplicate updates.  This simplifies the analysis of changes to a survey
@@ -552,7 +539,7 @@ define([
 		var refresh = false,		// Set to true if the page needs to be refreshed with this change
 			survey = globals.model.survey,
 			question,
-			option,
+			theOption,
 			property,
 			length,
 			i, j;
@@ -672,8 +659,8 @@ define([
 				}
 			} else if(property.type === "option") {	// Change to an option
 				
-				option = survey.optionLists[property.optionList].options[property.itemIndex];
-				option[property.prop] = property.newVal;	
+				theOption = survey.optionLists[property.optionList].options[property.itemIndex];
+				theOption[property.prop] = property.newVal;	
 				
 				if(property.propType === "text") {
 					if(property.prop === "label" 
@@ -818,15 +805,15 @@ define([
 				var sourceOptionList = survey.optionLists[change.option.sourceOptionList];
 				var targetOptionList = survey.optionLists[change.option.optionList];
 				
-				var option = sourceOptionList.options[change.option.sourceItemIndex];
-				var newOption = jQuery.extend(true, {}, option);
+				var theOption = sourceOptionList.options[change.option.sourceItemIndex];
+				var newOption = jQuery.extend(true, {}, theOption);
 				var oldLocation = change.option.sourceSeq;
 				var newLocation = change.option.seq;
 				
 				// 1. Add the option in the new location
 				length = targetOptionList.options.push(newOption);
 				change.option.itemIndex = length -1;
-				change.option.value = option.value;
+				change.option.value = theOption.value;
 				targetOptionList.oSeq.splice(change.option.seq, 0, length - 1);	
 			
 				// 2. Remove the option from the old location	
@@ -835,7 +822,7 @@ define([
 					oldLocation++;
 				}
 				sourceOptionList.oSeq.splice(oldLocation, 1);	
-				option.deleted = true;
+				theOption.deleted = true;
 				
 				// 3. Update any items in the change list to the new location
 				if(globals.changes) {
@@ -844,8 +831,8 @@ define([
 						if(existingChange.changeType === "option") {
 							for(j = 0; j < existingChange.items.length; j++) {
 								existingItem = existingChange.items[j];
-								if(existingItem.option.optionList === option.optionList && 
-										existingItem.option.itemIndex === option.itemIndex) {
+								if(existingItem.option.optionList === theOption.optionList && 
+										existingItem.option.itemIndex === theOption.itemIndex) {
 									// We moved an option thats in the change queue
 									existingItem.option.optionList = change.option.optionList;
 									existingItem.option.itemIndex = change.option.itemIndex;
@@ -1058,15 +1045,6 @@ define([
 					$('#choiceView tbody').append(newMarkup);
 					$changedRow = $('#choiceView tbody tr:last');
 				}
-						
-		
-				/*
-				 * If this option was added by an "add after" button then that button should add future questions
-				 *  after this newly added option.  Hence update the button index.
-				 */
-				//if(change.option.locn == "after") {
-				//	$button.data("index", change.option.itemIndex + 1);
-				//}
 			
 			} else if(change.action === "delete") {
 				change.option.$deletedElement.prev().remove();	// Remove the add before button
