@@ -211,6 +211,13 @@ public class XLSCustomReportsManager {
 		}
 		
 		sheet = wb.getSheet("definition");
+		if(sheet == null) {
+			if(wb.getNumberOfSheets() == 1) {
+				sheet = wb.getSheetAt(0);
+			} else {
+				throw new Exception("A worksheet called 'definition' not found");
+			}
+		}
 		if(sheet.getPhysicalNumberOfRows() > 0) {
 			
 			lastRowNum = sheet.getLastRowNum();

@@ -20,7 +20,6 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.DELETE;
-import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -60,12 +59,10 @@ import java.io.File;
 import java.io.IOException;
 import java.sql.*;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.ResourceBundle;
-import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -107,7 +104,6 @@ public class UploadFiles extends Application {
 		//String settings = "false";
 	
 		log.info("upload files - media -----------------------");
-		log.info("    Server:" + serverName);
 		
 		fileItemFactory.setSizeThreshold(5*1024*1024); //1 MB TODO handle this with exception and redirect to an error page
 		ServletFileUpload uploadHandler = new ServletFileUpload(fileItemFactory);
@@ -129,18 +125,15 @@ public class UploadFiles extends Application {
 				// Get form parameters
 				
 				if(item.isFormField()) {
-					log.info("Form field:" + item.getFieldName() + " - " + item.getString());
 				
 					if(item.getFieldName().equals("original_url")) {
 						original_url = item.getString();
-						log.info("original url:" + original_url);
 					} else if(item.getFieldName().equals("survey_id")) {
 						try {
 							sId = Integer.parseInt(item.getString());
 						} catch (Exception e) {
 							
 						}
-						log.info("surveyId:" + sId);
 					}
 					
 				} else if(!item.isFormField()) {
@@ -184,7 +177,6 @@ public class UploadFiles extends Application {
 					if(folderPath != null) {						
 						String filePath = folderPath + "/" + fileName;
 					    File savedFile = new File(filePath);
-					    log.info("Saving file to: " + filePath);
 					    item.write(savedFile);
 					    
 					    // Create thumbnails
@@ -213,9 +205,6 @@ public class UploadFiles extends Application {
 				}
 			}
 			
-		} catch(FileUploadException ex) {
-			log.log(Level.SEVERE,ex.getMessage(), ex);
-			response = Response.serverError().entity(ex.getMessage()).build();
 		} catch(Exception ex) {
 			log.log(Level.SEVERE,ex.getMessage(), ex);
 			response = Response.serverError().entity(ex.getMessage()).build();
@@ -260,11 +249,10 @@ public class UploadFiles extends Application {
 		    mResponse.files = mediaInfo.get();			
 			Gson gson = new GsonBuilder().disableHtmlEscaping().create();
 			String resp = gson.toJson(mResponse);
-			log.info("Responding with " + mResponse.files.size() + " files");
 			response = Response.ok(resp).build();	
 			
 		} catch(Exception e) {
-			e.printStackTrace();
+			log.log(Level.SEVERE,e.getMessage(), e);
 			response = Response.serverError().build();
 		} finally {
 			SDDataSource.closeConnection("surveyKPI-UploadFiles", connectionSD);
@@ -305,11 +293,10 @@ public class UploadFiles extends Application {
 		    mResponse.files = mediaInfo.get();			
 			Gson gson = new GsonBuilder().disableHtmlEscaping().create();
 			String resp = gson.toJson(mResponse);
-			log.info("Responding with " + mResponse.files.size() + " files");
 			response = Response.ok(resp).build();	
 			
 		} catch(Exception e) {
-			e.printStackTrace();
+			log.log(Level.SEVERE,e.getMessage(), e);
 			response = Response.serverError().build();
 		} finally {
 			SDDataSource.closeConnection("surveyKPI-UploadFiles", connectionSD);
@@ -433,7 +420,6 @@ public class UploadFiles extends Application {
 				FileItem item = (FileItem) itr.next();
 				// Get form parameters	
 				if(item.isFormField()) {
-					log.info("Form field:" + item.getFieldName() + " - " + item.getString());
 					fieldName = item.getFieldName();
 					if(fieldName.equals("name")) {
 						reportName = item.getString();
@@ -526,7 +512,7 @@ public class UploadFiles extends Application {
 			if(msg!= null && msg.contains("duplicate")) {
 				msg = "A report with this name already exists";
 			}
-			log.info(ex.getMessage());
+			log.log(Level.SEVERE,ex.getMessage(), ex);
 			response = Response.serverError().entity(msg).build();
 		} finally {
 	
@@ -578,7 +564,6 @@ public class UploadFiles extends Application {
 				FileItem item = (FileItem) itr.next();
 				// Get form parameters	
 				if(item.isFormField()) {
-					log.info("Form field:" + item.getFieldName() + " - " + item.getString());
 					fieldName = item.getFieldName();
 					if(fieldName.equals("name")) {
 						reportName = item.getString();
@@ -700,13 +685,11 @@ public class UploadFiles extends Application {
 			
 		} else {		// Organisational level
 			
-			log.info("Organisational Level");
 			// Get all the surveys that reference this CSV file and are in the same organisation
 			SurveyManager sm = new SurveyManager();
 			ArrayList<Survey> surveys = sm.getByOrganisationAndExternalCSV(connectionSD, user,	csvFileName);
 			for(Survey s : surveys) {
 				
-				log.info("Survey: " + s.id);
 				// Check that there is not already a survey level file with the same name				
 				String surveyUrl = mediaInfo.getUrlForSurveyId(sId, connectionSD);
 				if(surveyUrl != null) {
@@ -731,7 +714,6 @@ public class UploadFiles extends Application {
 			String csvFileName,
 			File csvFile) throws Exception {
 		
-		log.info("About to update: " + sId);
 		QuestionManager qm = new QuestionManager();
 		SurveyManager sm = new SurveyManager();
 		ArrayList<org.smap.sdal.model.Question> questions = qm.getByCSV(connectionSD, sId, csvFileName);
@@ -739,8 +721,6 @@ public class UploadFiles extends Application {
 		
 		// Create one change set per question
 		for(org.smap.sdal.model.Question q : questions) {
-			
-			log.info("Updating question: " + q.name + " : " + q.type);
 			
 			/*
 			 * Create a changeset
