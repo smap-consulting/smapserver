@@ -39,7 +39,7 @@
 	<script type="text/javascript"> if (!window.console) console = {log: function() {}}; </script>
 	<script src="/js/libs/modernizr.js"></script>
 	<script src="/js/libs/OpenLayers/OpenLayers.js"></script>
-	<script src="/js/libs/d3.v3.min.js"></script>
+	<script src="/js/libs/d3.v4.min.js"></script>
 	<script src="/js/app/custom.js"></script>  <!-- Override this in custom code to apply changes at run time -->
 	<script data-main="js/dashboard_main" src="/js/libs/require.js"></script>
 	
@@ -134,6 +134,7 @@
 					<option value="stata">Stata / CSV</option>
 					<option value="spss">SPSS / CSV</option>
 					<option value="lqas">LQAS</option>
+					<option value="thingsat">Thingsat</option>
 				</select>
 			</fieldset><br/>
 			<fieldset class="ui-widget-content">
@@ -177,6 +178,10 @@
 				<input type="checkbox" id="exportReadOnly"/>
 			</div>
 			-->
+			<div class="showext" style="display:none;">
+				<label for="extendedSelect" class="lang" data-lang="a_ext">linked surveys</label>
+				<input type="checkbox" id="exportExtended"/>
+			</div>
 			<div class="showosm" style="display:none;">
 				<fieldset class="ui-widget-content">
 					<legend class="ui-widget-header ui-corner-all lang" data-lang="a_sel_ways">Select ways (if any):</legend>
@@ -194,6 +199,9 @@
 					<legend class="ui-widget-header ui-corner-all lang" data-lang="msg_sel_form">Select form:</legend>
 					<div class="shapeforms"></div>
 				</fieldset>
+			</div>
+			<div class="showextselect" style="display:none;">
+				
 			</div>
 			<div class="showmedia" style="display:none;">
 				<fieldset class="ui-widget-content">
@@ -227,7 +235,6 @@
 			<button id="btn_edit_thingsat" class="lang" data-lang="a_sel_model">Edit Survey Model</button>	
 			<div id="ta_model_show"></div>
 		</div>
-		
 	</div>
 	
 	<!-- Popup to edit thingsat model -->

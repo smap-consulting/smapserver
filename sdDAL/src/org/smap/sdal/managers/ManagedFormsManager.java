@@ -88,6 +88,8 @@ public class ManagedFormsManager {
 					true,	// Include "bad"
 					true,	// Include instanceId
 					true,	// Include other meta data
+					true,		// include preloads
+					true,		// include instancename
 					superUser,
 					false		// HXL only include with XLS exports
 					);		

@@ -24,8 +24,9 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 
 // HTML fragments for constructing panels
 
-define(['jquery', 'jquery_ui', 'localise', 'common', 'globals','app/script', 'rmm', 'app/neo_model', 'moment'], 
-		function($, ui, lang, common, globals, script, rmm, neo_model, moment) {
+define(['jquery', 'jquery_ui', 'localise', 'common', 
+        'globals','app/script', 'rmm', 'app/neo_model', 'moment', 'app/extended_model'], 
+		function($, ui, lang, common, globals, script, rmm, neo_model, moment, extended_model) {
 	
 var hstart = '<li class="ui-state-default pSmall" id="p';
 var hstart2 = '">';

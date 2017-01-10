@@ -502,6 +502,7 @@ public class Survey extends Application {
 					jp.put("form", formName);
 					jp.put("rows", rowCount);
 					jp.put("geom", has_geom);
+					jp.put("s_id", currentSurveyId);
 					jp.put("f_id", fId);
 					jp.put("p_id", p_id);
 					if(p_id == null || p_id.equals("0")) {

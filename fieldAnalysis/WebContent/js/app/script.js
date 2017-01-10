@@ -198,6 +198,11 @@ $(document).ready(function() {
 		exportSurveyChanged();
  	});
 	
+	// Change event on including linked surveys
+	$('#exportExtended').change(function() {
+		exportExtendedChanged();
+ 	});
+	
 	/*
 	 * Change event on export format select
 	 */
@@ -335,10 +340,9 @@ function exportSurveyChanged() {
 			addMediaPickList();
 		}
 		
-		// Add the form list for osm export an identifying forms to include in spreadsheet export
 		sMeta = globals.gSelector.getSurvey(sId);
 		if(!sMeta) {
-			getSurveyMetaSE(sId, {}, false,true, true);
+			getSurveyMetaSE(sId, {}, false,true, true, false, false);
 		} else {
 			addFormPickList(sMeta);
 			addDatePickList(sMeta);
@@ -348,9 +352,31 @@ function exportSurveyChanged() {
 		if($('#exportformat').val() === "thingsat") {
 			showModel();
 		}
+		
+		exportExtendedChanged();
 	} else {
 		$('#export_date_question').html("");
 	}
+}
+
+function exportExtendedChanged() {
+	require(['app/extended_model'], function(extended_model) {
+		
+		var expExtended = $('#exportExtended').prop("checked"),
+			sId = $('#export_survey option:selected').val(),
+			sMeta;
+		
+		if(expExtended) {
+			
+			sMeta = globals.gSelector.getSurveyExtended(sId);
+			if(!sMeta) {
+				sMeta = getExtendedSurveyMetaSE(sId, extended_model.convertMetaToGraph);
+			} else {
+				extended_model.convertMetaToGraph(sMeta);
+			}
+		}
+	});
+
 }
 
 function setExportControls() {
@@ -360,31 +386,31 @@ function setExportControls() {
 	$('#export').next().find("button:contains('Export')").removeClass("ui-state-disabled");
 	
 	if(format === "osm") {
-		$('.showshape,.showspreadsheet,.showxls,.showthingsat,.showtrail, .showmedia, .showlqas').hide();
+		$('.showshape,.showspreadsheet,.showxls,.showthingsat,.showtrail, .showmedia, .showlqas, .showext').hide();
 		$('.showosm,.showro,.showlang').show();
 	} else if(format === "shape" || format === "kml" || format === "vrt" || format === "csv") {
 		$('.showspreadsheet,.showxls,.showosm,.showthingsat, .showmedia, .showlqas').hide();
-		$('.showshape,.showro,.showlang').show();
+		$('.showshape,.showro,.showlang, .showext').show();
 	} else if(format === "stata" || format === "spss") {
-		$('.showxls,.showosm,.showthingsat, .showmedia, .showlqas').hide();
+		$('.showxls,.showosm,.showthingsat, .showmedia, .showlqas, .showext').hide();
 		$('.showshape,.showspreadsheet,.showro,.showlang').show();
 	} else if(format === "thingsat") {
-		$('.showxls,.showosm, .showmedia, .showlqas').hide();
+		$('.showxls,.showosm, .showmedia, .showlqas, .showext').hide();
 		$('.showshape,.showspreadsheet,.showro,.showlang').show();
 		showModel();			// Show the thingsat model
 	} else if(format === "trail") {
-		$('.showxls,.showosm,.showro,.showlang,.showthingsat, .showmedia, .showlqas').hide();
+		$('.showxls,.showosm,.showro,.showlang,.showthingsat, .showmedia, .showlqas, .showext').hide();
 		$('.showshape,.showspreadsheet').show();
 	} else if(format === "media") {
-		$('.showshape, .showxls,.showosm,.showro,.showlang,.showthingsat,.showmedia, .showlqas').hide();
+		$('.showshape, .showxls,.showosm,.showro,.showlang,.showthingsat,.showmedia, .showlqas, .showext').hide();
 		$('.showspreadsheet,.showmedia, .showlang').show();
 	} else if(format === "lqas") {
-		$('.showshape, .showxls,.showosm,.showro,.showlang,.showthingsat,.showmedia, .showlqas').hide();
+		$('.showshape, .showxls,.showosm,.showro,.showlang,.showthingsat,.showmedia, .showlqas, .showext').hide();
 		$('.showlqas').show();
 		getReports(showReportList, undefined, "lqas");
 		
 	} else {
-		$('.showshape,.showspreadsheet,.showxls,.showosm,.showthingsat, .showmedia, .showlqas').hide();
+		$('.showshape,.showspreadsheet,.showxls,.showosm,.showthingsat, .showmedia, .showlqas, .showext').hide();
 		$('.showxls,.showspreadsheet,.showro,.showlang').show();
 	}
 }

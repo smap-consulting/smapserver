@@ -102,6 +102,7 @@ define(function() {
 		this.dataItems = new Object();
 		//this.panelDataItems = new Object();
 		this.surveys = new Object();
+		this.surveysExtended = new Object();
 		this.surveyLanguages = new Object();
 		this.surveyQuestions = new Object();
 		this.questions = new Object();
@@ -143,6 +144,10 @@ define(function() {
 		
 		this.getSurvey = function (key) {
 			return this.surveys[key];
+		};
+		
+		this.getSurveyExtended = function (key) {
+			return this.surveysExtended[key];
 		};
 		
 		this.getSurveyQuestions = function (sId, language) {
@@ -266,6 +271,10 @@ define(function() {
 		
 		this.addSurvey = function (key, value) {
 			this.surveys[key] = value;
+		};
+		
+		this.addSurveyExtended = function (key, value) {
+			this.surveysExtended[key] = value;
 		};
 		
 		this.setSelectedSurvey = function (survey) {
