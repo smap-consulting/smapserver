@@ -56,7 +56,7 @@ public class LogManager {
 			 Logger.getLogger(LogManager.class.getName());
 	
 	/*
-	 * Get the current task groups
+	 * Write a log entry that includes the survey id
 	 */
 	public void writeLog(Connection sd, 
 			int sId,
@@ -83,6 +83,44 @@ public class LogManager {
 			pstmt.setString(3, uIdent);
 			pstmt.setString(4,  event);
 			pstmt.setString(5,  note);
+			
+			pstmt.executeUpdate();
+
+
+		} catch(Exception e) {
+			log.log(Level.SEVERE, "SQL Error", e);
+		} finally {
+			try {if (pstmt != null) {pstmt.close();} } catch (SQLException e) {	}
+		}
+
+	}
+	
+	/*
+	 * Write a log entry that at the organisation level
+	 */
+	public void writeLogOrganisation(Connection sd, 
+			int oId,
+			String uIdent,
+			String event,
+			String note)  {
+		
+		String sql = "insert into log ("
+				+ "log_time,"
+				+ "s_id,"
+				+ "o_id,"
+				+ "user_ident,"
+				+ "event,"
+				+ "note) values (now(), 0, ?, ?, ?, ?);";
+
+		PreparedStatement pstmt = null;
+		
+		try {
+			
+			pstmt = sd.prepareStatement(sql);	
+			pstmt.setInt(1, oId);
+			pstmt.setString(2, uIdent);
+			pstmt.setString(3,  event);
+			pstmt.setString(4,  note);
 			
 			pstmt.executeUpdate();
 
