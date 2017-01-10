@@ -87,7 +87,8 @@ define([
 			survey = globals.model.survey,
 			question,
 			filter,
-			filterType = "none";
+			filterType = "none",
+			i;
 		
 		if(globals.gListName) {
 			$cv.empty().append(addOptionContainer(undefined, undefined, undefined, globals.gListName));
@@ -98,11 +99,11 @@ define([
 		}
 		addFilterSelectList(survey.filters);
 		
-		if(survey.filters.length > 0) {
+		if(globals.gFilterArray.length > 0) {
 			filterType = "custom";
 		}
-		for(filter in survey.filters) {
-			if (filter === "_smap_cascade") {
+		for(i = 0; i < globals.gFilterArray.length; i++) {
+			if (survey.filters[globals.gFilterArray[i]] === "_smap_cascade") {
 				filterType = "cascade";
 				break;
 			}
@@ -421,19 +422,21 @@ define([
 		
 		globals.gFilterArray = [];
 		for(filter in filters) {
-			globals.gFilterArray.push(filter);	// Save filters as ordered array
-			h[++idx] = '<div class="checkbox">';
-		    h[++idx] = '<label>';
-		      h[++idx] = '<input type="checkbox" ';
-		      if(survey.filters[filter]) {
-		    	  h[++idx] = 'checked=true';
-		      }
-		      h[++idx] = 'value="';
-		      h[++idx] = filter;
-		      h[++idx] = '"> ';
-		      h[++idx] = filter
-		    h[++idx] = '</label>';
-		    h[++idx] = '</div>';
+			if (filters.hasOwnProperty(filter)) {
+				globals.gFilterArray.push(filter);	// Save filters as ordered array
+				h[++idx] = '<div class="checkbox">';
+			    h[++idx] = '<label>';
+			      h[++idx] = '<input type="checkbox" ';
+			      if(survey.filters[filter]) {
+			    	  h[++idx] = 'checked=true';
+			      }
+			      h[++idx] = 'value="';
+			      h[++idx] = filter;
+			      h[++idx] = '"> ';
+			      h[++idx] = filter
+			    h[++idx] = '</label>';
+			    h[++idx] = '</div>';
+			}
 		}
 		
 		$('#custom_filters').html(h.join(""));

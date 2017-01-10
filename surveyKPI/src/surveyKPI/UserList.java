@@ -36,6 +36,7 @@ import javax.ws.rs.core.Response.Status;
 import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.SDDataSource;
+import org.smap.sdal.managers.LogManager;
 import org.smap.sdal.managers.UserManager;
 import org.smap.sdal.model.Project;
 import org.smap.sdal.model.Role;
@@ -65,6 +66,8 @@ public class UserList extends Application {
 
 	private static Logger log =
 			 Logger.getLogger(UserList.class.getName());
+	
+	LogManager lm = new LogManager();		// Application log
 	
 	public UserList() {
 		
@@ -427,7 +430,9 @@ public class UserList extends Application {
 								request.getServerName(),
 								adminName,
 								localisation);
-
+	
+						lm.writeLogOrganisation(connectionSD, 
+								o_id, request.getRemoteUser(), "create", "User " + u.ident);
 								
 					} else {
 						// Existing user
@@ -437,6 +442,9 @@ public class UserList extends Application {
 								request.getRemoteUser(),
 								request.getServerName(),
 								adminName);
+						
+						lm.writeLogOrganisation(connectionSD, 
+								o_id, request.getRemoteUser(), "Update", "User " + u.ident);
 					}
 				}
 		
