@@ -1375,7 +1375,8 @@ define([
 			valid = true;
 		
 		for(i = 0; i < item.labels.length; i++) {
-			if(typeof item.labels[i].text === "undefined" || item.labels[i].text.trim().length === 0) {
+			if(typeof item.labels[i].text === "undefined" || 
+					(typeof item.labels[i].text === "undefined" && item.labels[i].text.trim().length === 0)) {
 				if(itemType === "question" && (item.type === "begin repeat" || item.type === "begin group")) {
 					continue;		// Don't report warnings on blank labels for these question types
 				}

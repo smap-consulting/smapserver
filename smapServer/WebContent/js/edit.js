@@ -716,6 +716,11 @@ function refreshForm() {
  */
 function respondToEventsChoices($context) {
 	
+	$('[type="checkbox"]', $context).iCheck({
+	    checkboxClass: 'icheckbox_square-green',
+	    radioClass: 'iradio_square-green'
+	});
+	
 	$('.exitOptions', $context).off().click(function() {
 		$('.editorContent').toggle();;
 	});
@@ -750,7 +755,7 @@ function respondToEventsChoices($context) {
 	});
 	
 	
-	$('#filterType', $context).off().change(function(){
+	$('#filterType', $context).off().change(function() {
 		var $this = $(this),
 			survey = globals.model.survey,
 			question = survey.forms[globals.gFormIndex].questions[globals.gItemIndex],

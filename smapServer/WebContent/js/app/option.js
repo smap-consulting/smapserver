@@ -856,18 +856,22 @@ define([
 			oSeq,
 			option;
 		
-		addOptionSequence(optionList);		// Add an array holding the option sequence if it does not already exist
-		oSeq = optionList.oSeq
-		for(i = 0; i < oSeq.length; i++) {
-			option = optionList.options[oSeq[i]];
-			if(filters["_smap_cascade"] == option.value) {
-				inOptionList = true;
-				break;
+		if(listname) {
+			addOptionSequence(optionList);		// Add an array holding the option sequence if it does not already exist
+			oSeq = optionList.oSeq
+			for(i = 0; i < oSeq.length; i++) {
+				option = optionList.options[oSeq[i]];
+				if(filters["_smap_cascade"] == option.value) {
+					inOptionList = true;
+					break;
+				}
 			}
-		}
-					
-		if(!filters["_smap_cascade"] || filters["_smap_cascade"] == prevChoice || !inOptionList) {
-			show = true;
+						
+			if(!filters["_smap_cascade"] || filters["_smap_cascade"] == prevChoice || !inOptionList) {
+				show = true;
+			}
+		} else {
+			show = true;		// No previous list set
 		}
 		
 		return show;
