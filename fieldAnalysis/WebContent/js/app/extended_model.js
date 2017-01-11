@@ -18,12 +18,9 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 define(['jquery', 'jquery_ui', 'rmm', 'localise', 'globals'],
 		function($, jquery_ui, rmm, localise, globals) {
 	
-	var graph = {
-			  "nodes":[],
-			  "links":[]
-			    };
-	
+	var graph;
 	var selected = [];
+	var selectedPath;
 	
 	var svg,
 		svgNodes,
@@ -39,7 +36,8 @@ define(['jquery', 'jquery_ui', 'rmm', 'localise', 'globals'],
 	return {
 		
 		showModel: showModel,
-		convertMetaToGraph: convertMetaToGraph
+		convertMetaToGraph: convertMetaToGraph,
+		getPath: getPath
 	}
 	
 	/*
@@ -58,6 +56,11 @@ define(['jquery', 'jquery_ui', 'rmm', 'localise', 'globals'],
 			node,
 			link,
 			surveys = {};
+		
+		graph = {
+				  "nodes":[],
+				  "links":[]
+				    };
 		
 		for(i = 0; i < meta.forms.length; i++) {
 			node = {
@@ -89,15 +92,17 @@ define(['jquery', 'jquery_ui', 'rmm', 'localise', 'globals'],
 			graph.links.push(link);	
 		}
 		
-		
-		
 		showModel('#extsvg', 200, 200)
 	}
 	
 	/*
 	 * Show model of selectable forms including those from linked surveys
 	 */
-	function showModel(element, width, height) {
+	function showModel(element) {
+		
+		var $elem = $(element);	
+		var width = $elem.width();
+		var height = $elem.height();
 		
 		if(graph.nodes.length === 0) {
 			$(element).empty().append("<h1 class='center'>" + localise.set["msg_nf"] + "</h1>");
@@ -119,6 +124,37 @@ define(['jquery', 'jquery_ui', 'rmm', 'localise', 'globals'],
 		
 		update();
 
+	}
+	
+	/*
+	 * Get the path and return undefined if it has not been set
+	 */
+	function getPath() {
+		
+		var formList = undefined,
+			form,
+			i;
+		
+		if(graph.nodes.length === 1) {
+			
+			formList = [];
+			form = {
+				sId: graph.nodes[0].survey,
+				fId: graph.nodes[0].id
+			}
+			formList.push(form);
+			
+		} else if(selectedPath) {
+			formList = [];
+			for(i = 0; i < selectedPath.length; i++) {
+				form = {
+					sId: getSurveyForForm(selectedPath[i]),
+					fId: selectedPath[i]
+				}
+				formList.push(form);
+			}
+		}
+		return formList;
 	}
 		
 	/*
@@ -163,7 +199,8 @@ define(['jquery', 'jquery_ui', 'rmm', 'localise', 'globals'],
 	    				.on("end", dragended));
 		
 		var text = nodeGroup.append("text")
-        	.attr("text-anchor", "left")
+        	 .attr("dx", 12)
+        	 .attr("dy", ".35em")
         	.text(function(d) { return d.name });
 		
 		node.append("title")
@@ -226,7 +263,7 @@ define(['jquery', 'jquery_ui', 'rmm', 'localise', 'globals'],
 		console.log("Selected: " + selected.join());
 		
 		if(selected.length === 2) {
-			getPath();
+			setPath();
 		}
 	}
 	
@@ -246,14 +283,24 @@ define(['jquery', 'jquery_ui', 'rmm', 'localise', 'globals'],
 		}
 	}
 	
-	function getPath() {
+	/*
+	 * Other functions
+	 */
+	function getSurveyForForm(form) {
+		for(i = 0; i < graph.nodes.length; i++) {
+			if(graph.nodes[i].id == form) {
+				return graph.nodes[i].survey;
+			}
+		}
+	}
+	
+	function setPath() {
 		var current = selected[0],
 			end = selected[1],
 			paths = {},
 			links = [],
 			count = 0,
-			i,
-			foundPath;
+			i;
 		
 		paths[current] = [];
 		paths[current].push(current);
@@ -264,20 +311,21 @@ define(['jquery', 'jquery_ui', 'rmm', 'localise', 'globals'],
 			}
 		}
 		if(paths[end]) {
-			foundPath = paths[end];
-			console.log("path: " + foundPath.join());
-			for(j = 0; j < foundPath.length - 1; j++) {
+			selectedPath = paths[end];
+			console.log("path: " + selectedPath.join());
+			for(j = 0; j < selectedPath.length - 1; j++) {
 				for(i = 0; i < graph.links.length; i++) {
 					var sourceId = +graph.links[i].source.id;
 					var targetId = +graph.links[i].target.id;
 					
-					if((sourceId === foundPath[j] && targetId === foundPath[j + 1]) ||
-							(targetId === foundPath[j] && sourceId === foundPath[j + 1])) {
+					if((sourceId === selectedPath[j] && targetId === selectedPath[j + 1]) ||
+							(targetId === selectedPath[j] && sourceId === selectedPath[j + 1])) {
 						graph.links[i].value = 10;
 					}
 				}
 			}
 		} else {
+			selectedPath = undefined;
 			alert("Error: could not find a path between the forms");
 		}
 		

@@ -83,10 +83,17 @@ $(document).ready(function() {
 			        		sources = $('#sources').prop("checked"),
 			        		exportReport = $('#export_report_defn').val(),
 			        		forms = [],
+			        		form,
 			        		name_questions = [],
 			        		exp_from_date = $('#exp_from_date').datepicker({ dateFormat: 'yy-mm-dd' }).val(),
 			        		exp_to_date = $('#exp_to_date').datepicker({ dateFormat: 'yy-mm-dd' }).val(),
-			        		dateQuestionId = $('#export_date_question option:selected').val();
+			        		dateQuestionId = $('#export_date_question option:selected').val(),
+			        		exportExtended = $('#exportExtended').prop("checked"),
+			        		formList;
+		        		
+		        		if(exportExtended) {
+		        			formList = extended_model.getPath();
+		        		}
 		        			
 		        		if(sId == "-1") {
 		        			alert(localise.set["msg_pss"]);
@@ -112,16 +119,22 @@ $(document).ready(function() {
 		        				|| format === "csv" 
 		        				|| format === "spss"
 		        				|| format === "stata") {
-		        			forms = $(':radio:checked', '.shapeforms').map(function() {
-		        			      return this.value;
-		        			    }).get();
-		        			if(forms.length === 0) {
-		        				alert(localise.set["msg_one_f2"]);
-			        			return(false);
-		        			}		
-		        			url = exportSurveyShapeURL(sId, displayName, forms[0], 
+		        			
+		        			if(exportExtended) {
+		        				form = 0;
+		        			} else {
+			        			forms = $(':radio:checked', '.shapeforms').map(function() {
+			        			      return this.value;
+			        			    }).get();
+			        			if(forms.length === 0) {
+			        				alert(localise.set["msg_one_f2"]);
+				        			return(false);
+			        			}	
+			        			form = forms[0];
+		        			}
+		        			url = exportSurveyShapeURL(sId, displayName, form, 
 		        					format, exportReadOnly, language,
-		        					exp_from_date, exp_to_date, dateQuestionId);
+		        					exp_from_date, exp_to_date, dateQuestionId, formList);
 		        		
 		        		} else if(format === "thingsat") {
 		        			forms = $(':radio:checked', '.shapeforms').map(function() {
@@ -132,7 +145,7 @@ $(document).ready(function() {
 			        			return(false);
 		        			}		
 		        			url = exportSurveyThingsatURL(sId, displayName, forms[0], language,
-		        					exp_from_date, exp_to_date, dateQuestionId);
+		        					exp_from_date, exp_to_date, dateQuestionId, formList);
 		        		} else if(format === "trail") {
 		        			forms = $(':radio:checked', '.shapeforms').map(function() {
 		        			      return this.value;
@@ -1141,7 +1154,8 @@ function exportSurveyOSMURL (sId, filename, forms, exp_ro,
 function exportSurveyShapeURL (sId, filename, form, format, exp_ro, language,
 		exp_from_date,
 		exp_to_date,
-		dateQuestionId) {
+		dateQuestionId,
+		formList) {
 
 	var url = "/surveyKPI/exportSurveyMisc/";
 	
@@ -1168,6 +1182,10 @@ function exportSurveyShapeURL (sId, filename, form, format, exp_ro, language,
 		if(exp_to_date) {
 			url += "&to=" + exp_to_date;
 		}
+	}
+	
+	if(formList != null) {
+		url += "&forms=" + JSON.stringify(formList);
 	}
 	
 	return encodeURI(url);

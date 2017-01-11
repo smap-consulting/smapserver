@@ -117,8 +117,10 @@ var gExpandedPanelSeq;	// Set to the sequence number of a newly created panel
 $(document).ready(function() {
 	
 	var aDate;
-	console.log("panels");
+	
 	window.moment = moment;	// Required as common.js not part of module
+	window.extended_model = extended_model;
+	
 	localise.setlang();		// Localise HTML
 	
     // Add a new panel button click
