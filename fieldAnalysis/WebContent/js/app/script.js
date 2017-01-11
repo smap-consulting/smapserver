@@ -368,12 +368,19 @@ function exportExtendedChanged() {
 		
 		if(expExtended) {
 			
+			$('.showextselect').show();
+			$('.showshape').hide();
 			sMeta = globals.gSelector.getSurveyExtended(sId);
 			if(!sMeta) {
 				sMeta = getExtendedSurveyMetaSE(sId, extended_model.convertMetaToGraph);
 			} else {
 				extended_model.convertMetaToGraph(sMeta);
 			}
+		} else {
+			
+			$('.showshape').show();
+			$('.showextselect').hide();
+			
 		}
 	});
 
