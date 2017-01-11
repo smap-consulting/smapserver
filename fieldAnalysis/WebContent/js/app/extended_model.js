@@ -23,6 +23,8 @@ define(['jquery', 'jquery_ui', 'rmm', 'localise', 'globals'],
 			  "links":[]
 			    };
 	
+	var selected = [];
+	
 	var svg,
 		svgNodes,
 		svgLinks,
@@ -61,7 +63,7 @@ define(['jquery', 'jquery_ui', 'rmm', 'localise', 'globals'],
 			node = {
 					id: meta.forms[i].f_id,
 					survey: meta.forms[i].s_id,
-					name: meta.forms[i].name,
+					name: meta.forms[i].form,
 					selected: false
 			}
 			graph.nodes.push(node);		
@@ -142,6 +144,7 @@ define(['jquery', 'jquery_ui', 'rmm', 'localise', 'globals'],
 	    	.selectAll("line")
 	    	.data(graph.links)
 	    	.enter().append("line")
+	    		.attr("stroke", function(d) { return d.value > 5 ? "red" : "blue"})
 	    		.attr("stroke-width", function(d) { return Math.sqrt(d.value); });
 
 		var nodeGroup = svgNodes
@@ -192,6 +195,11 @@ define(['jquery', 'jquery_ui', 'rmm', 'localise', 'globals'],
   
 	function click(d) {
 		
+		if(!d.selected) {
+			addSelected(d.id);
+		} else {
+			removeSelected(d.id);
+		}
 		d.selected = !d.selected;
 		update();
 	}
@@ -202,14 +210,114 @@ define(['jquery', 'jquery_ui', 'rmm', 'localise', 'globals'],
 		  d.fy = d.y;
 		}
 
-		function dragged(d) {
-		  d.fx = d3.event.x;
-		  d.fy = d3.event.y;
-		}
+	function dragged(d) {
+	  d.fx = d3.event.x;
+	  d.fy = d3.event.y;
+	}
 
-		function dragended(d) {
-		  if (!d3.event.active) simulation.alphaTarget(0);
-		  d.fx = null;
-		  d.fy = null;
+	function dragended(d) {
+	  if (!d3.event.active) simulation.alphaTarget(0);
+	  d.fx = null;
+	  d.fy = null;
+	}
+	
+	function addSelected(nodeId) {
+		selected.push(nodeId);
+		console.log("Selected: " + selected.join());
+		
+		if(selected.length === 2) {
+			getPath();
 		}
+	}
+	
+	function removeSelected(nodeId) {
+		var i;
+		for(i = 0; i < selected.length; i++) {
+			if(selected[i] === nodeId) {
+				selected.splice(i,1);
+			}
+		}
+		console.log("Selected: " + selected.join());
+		
+		if(selected.length === 1) {
+			for(i = 0; i < graph.links.length; i++) {
+				graph.links[i].value = 2;
+			}
+		}
+	}
+	
+	function getPath() {
+		var current = selected[0],
+			end = selected[1],
+			paths = {},
+			links = [],
+			count = 0,
+			i,
+			foundPath;
+		
+		paths[current] = [];
+		paths[current].push(current);
+		
+		while(count++ < 20) {
+			if(addPaths(paths, end)) {
+				break;
+			}
+		}
+		if(paths[end]) {
+			foundPath = paths[end];
+			console.log("path: " + foundPath.join());
+			for(j = 0; j < foundPath.length - 1; j++) {
+				for(i = 0; i < graph.links.length; i++) {
+					var sourceId = +graph.links[i].source.id;
+					var targetId = +graph.links[i].target.id;
+					
+					if((sourceId === foundPath[j] && targetId === foundPath[j + 1]) ||
+							(targetId === foundPath[j] && sourceId === foundPath[j + 1])) {
+						graph.links[i].value = 10;
+					}
+				}
+			}
+		} else {
+			alert("Error: could not find a path between the forms");
+		}
+		
+	}
+	
+	function addPaths(paths, end) {
+		
+		var path,
+			pathId;
+		
+		for(pathId in paths) {
+			if (paths.hasOwnProperty(pathId)) {
+				
+				console.log("    pathId: " + pathId);
+				path = paths[pathId];
+				lastForm = +path[path.length - 1];
+				
+				for(i = 0; i < graph.links.length; i++) {
+					var sourceId = +graph.links[i].source.id;
+					var targetId = +graph.links[i].target.id;
+					if(sourceId === lastForm) {
+						
+						var newPath = path.slice();
+						newPath.push(targetId);
+						paths[targetId] = newPath;
+						if(targetId === end) {
+							return true;
+						}
+					} else if(targetId === lastForm) {
+						var newPath = path.slice();
+						newPath.push(sourceId);
+						paths[sourceId] = newPath;
+						if(sourceId === end) {
+							return true;
+						}
+					}
+				}
+			}
+		}
+		return false;
+		
+	}
 });
