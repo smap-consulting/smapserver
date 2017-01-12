@@ -50,9 +50,9 @@ public class ManagedFormsManager {
 			 Logger.getLogger(ManagedFormsManager.class.getName());
 	
 	/*
-	 * Get the current columns
+	 * Get the Managed Form Configuration
 	 */
-	public ManagedFormConfig getColumns(
+	public ManagedFormConfig getManagedFormConfig(
 			Connection sd, 
 			Connection cResults,
 			int sId,
@@ -88,6 +88,8 @@ public class ManagedFormsManager {
 					true,	// Include "bad"
 					true,	// Include instanceId
 					true,	// Include other meta data
+					true,		// include preloads
+					true,		// include instancename
 					superUser,
 					false		// HXL only include with XLS exports
 					);		

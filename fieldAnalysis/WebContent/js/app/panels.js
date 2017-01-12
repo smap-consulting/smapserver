@@ -24,8 +24,9 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 
 // HTML fragments for constructing panels
 
-define(['jquery', 'jquery_ui', 'localise', 'common', 'globals','app/script', 'rmm', 'app/neo_model', 'moment'], 
-		function($, ui, lang, common, globals, script, rmm, neo_model, moment) {
+define(['jquery', 'jquery_ui', 'localise', 'common', 
+        'globals','app/script', 'rmm', 'app/neo_model', 'moment', 'app/extended_model'], 
+		function($, ui, lang, common, globals, script, rmm, neo_model, moment, extended_model) {
 	
 var hstart = '<li class="ui-state-default pSmall" id="p';
 var hstart2 = '">';
@@ -116,8 +117,10 @@ var gExpandedPanelSeq;	// Set to the sequence number of a newly created panel
 $(document).ready(function() {
 	
 	var aDate;
-	console.log("panels");
+	
 	window.moment = moment;	// Required as common.js not part of module
+	window.extended_model = extended_model;
+	
 	localise.setlang();		// Localise HTML
 	
     // Add a new panel button click
@@ -281,9 +284,13 @@ $(document).ready(function() {
 	$('#project_name').change(function() {
 		globals.gCurrentProject = $('#project_name option:selected').val();
 		globals.gCurrentSurvey = -1;
+		globals.gCurrentTaskGroup = undefined;
 
 		getPanels(globals.gCurrentProject);				
-		saveCurrentProject(globals.gCurrentProject, globals.gCurrentSurvey);	// Save the current project id, survey id
+		saveCurrentProject(globals.gCurrentProject, 
+				globals.gCurrentSurvey, 
+				globals.gCurrentTaskGroup);	// Save the current project id, survey id
+		
 		getViewSurveys({sId:"-1"});				// Update the survey list to match the new project
  	 });
 	

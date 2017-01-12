@@ -48,14 +48,23 @@ $(document).ready(function() {
 	$('#project_name').change(function() {
 		globals.gCurrentProject = $('#project_name option:selected').val();
 		globals.gCurrentSurvey = -1;
-		saveCurrentProject(globals.gCurrentProject, globals.gCurrentSurvey);	// Save the current project id
+		globals.gCurrentTaskGroup = undefined;
+		
+		saveCurrentProject(globals.gCurrentProject, 
+				globals.gCurrentSurvey, 
+				globals.gCurrentTaskGroup);
+		
 		getSurveyList();
  	 });
 	
 	// Set change function on surveys
 	$('#survey_name').change(function() {
 		globals.gCurrentSurvey = $('#survey_name option:selected').val();
-		saveCurrentProject(globals.gCurrentProject, globals.gCurrentSurvey);	// Save the current survey id
+		
+		saveCurrentProject(globals.gCurrentProject, 
+				globals.gCurrentSurvey, 
+				globals.gCurrentTaskGroup);	// Save the current survey id
+		
 		getReviewLanguageList();
  	 });
 	

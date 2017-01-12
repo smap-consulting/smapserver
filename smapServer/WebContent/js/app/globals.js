@@ -66,7 +66,6 @@ define(function() {
 		gHasItems: false,			// Set true if there are questions or choice lists in the survey
 		gNewQuestionButtonIndex: 0,	// Manage creation of unique identifier for buttons that add new questions
 		gNewOptionButtonIndex: 0,
-		gCurrentFormId: 0,
 		gSId: 0,
 		gLanguage: 0,
 		gLanguage1: 0,
@@ -103,6 +102,7 @@ define(function() {
 		this.dataItems = new Object();
 		//this.panelDataItems = new Object();
 		this.surveys = new Object();
+		this.surveysExtended = new Object();
 		this.surveyLanguages = new Object();
 		this.surveyQuestions = new Object();
 		this.questions = new Object();
@@ -144,6 +144,10 @@ define(function() {
 		
 		this.getSurvey = function (key) {
 			return this.surveys[key];
+		};
+		
+		this.getSurveyExtended = function (key) {
+			return this.surveysExtended[key];
 		};
 		
 		this.getSurveyQuestions = function (sId, language) {
@@ -267,6 +271,10 @@ define(function() {
 		
 		this.addSurvey = function (key, value) {
 			this.surveys[key] = value;
+		};
+		
+		this.addSurveyExtended = function (key, value) {
+			this.surveysExtended[key] = value;
 		};
 		
 		this.setSelectedSurvey = function (survey) {

@@ -83,7 +83,12 @@ $(document).ready(function() {
 	$('#project_name').change(function() {
 		globals.gCurrentProject = $('#project_name option:selected').val();
 		globals.gCurrentSurvey = -1;
-		saveCurrentProject(globals.gCurrentProject, globals.gCurrentSurvey);	// Save the current project id
+		globals.gCurrentTaskGroup = undefined;
+		
+		saveCurrentProject(globals.gCurrentProject, 
+				globals.gCurrentSurvey, 
+				globals.gCurrentTaskGroup);
+		
 		getSurveyList();
  	 });
 	

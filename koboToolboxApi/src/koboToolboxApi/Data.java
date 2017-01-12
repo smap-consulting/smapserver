@@ -234,6 +234,8 @@ public class Data extends Application {
 					false,		// Don't include "bad" columns
 					true,		// include instance id
 					true,		// include other meta data
+					true,		// include preloads
+					true,		// include instancename
 					superUser,
 					false		// TODO include HXL
 					);
@@ -405,6 +407,8 @@ public class Data extends Application {
 					false,		// Don't include "bad" columns
 					true,		// include instance id
 					true,		// Include other meta data
+					true,		// Include preloads
+					true,		// Include instance name
 					superUser,
 					false		// Only include HXL with CSV and Excel output
 					);

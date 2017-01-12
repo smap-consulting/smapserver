@@ -157,7 +157,13 @@ $(document).ready(function() {
 	// Add responses to events
 	$('#project_list').change(function() {
 		globals.gCurrentProject = $('#project_list option:selected').val();
-		saveCurrentProject(globals.gCurrentProject, globals.gCurrentSurvey);	// Save the current project id
+		globals.gCurrentSurvey = -1;
+		globals.gCurrentTaskGroup = undefined;
+		
+		saveCurrentProject(globals.gCurrentProject, 
+				globals.gCurrentSurvey, 
+				globals.gCurrentTaskGroup);
+		
 		getUserList();
  	 });
 	

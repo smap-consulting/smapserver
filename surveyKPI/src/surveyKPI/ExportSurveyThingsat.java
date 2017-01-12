@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Type;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.sql.Connection;
@@ -13,6 +14,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
@@ -34,6 +36,7 @@ import model.Neo4J;
 import model.Property;
 import model.Thingsat;
 import model.ThingsatDO;
+import utilities.FormListManager;
 
 import org.apache.commons.io.FileUtils;
 import org.smap.sdal.Utilities.Authorise;
@@ -42,9 +45,12 @@ import org.smap.sdal.Utilities.QueryGenerator;
 import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.managers.LogManager;
+import org.smap.sdal.model.ExportForm;
 import org.smap.sdal.model.SqlDesc;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
 
 /*
  * Various types of export related to a survey
@@ -74,7 +80,9 @@ public class ExportSurveyThingsat extends Application {
 			@QueryParam("language") String language,
 			@QueryParam("from") Date startDate,
 			@QueryParam("to") Date endDate,
-			@QueryParam("dateId") int dateId) throws IOException {
+			@QueryParam("dateId") int dateId,
+			@QueryParam("forms") String forms
+			) throws IOException {
 
 		ResponseBuilder builder = Response.ok();
 		Response response = null;
@@ -94,15 +102,38 @@ public class ExportSurveyThingsat extends Application {
 		    }
 		}
 		
+		/*
+		 * Get the list of forms and surveys to be exported
+		 * Needs to be done prior to authorisation as it includes the list of surveys
+		 */
+		ArrayList<ExportForm> formList = null;
+		
+		if(forms != null) {
+			Type type = new TypeToken<ArrayList<ExportForm>>(){}.getType();
+			Gson gson=  new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
+			formList = gson.fromJson(forms, type);
+		}
+		
 		// Authorisation - Access
 		Connection connectionSD = SDDataSource.getConnection("surveyKPI-ExportSurvey");
 		boolean superUser = false;
 		try {
 			superUser = GeneralUtilityMethods.isSuperUser(connectionSD, request.getRemoteUser());
-		} catch (Exception e) {
-		}
+		} catch (Exception e) {}
+		
 		a.isAuthorised(connectionSD, request.getRemoteUser());
-		a.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false, superUser);
+		if(formList != null) {
+			HashMap<Integer, String> checkedSurveys = new HashMap<Integer, String> ();
+			for(int i = 0; i < formList.size(); i++) {
+				int survey = formList.get(i).sId;
+				if(checkedSurveys.get(new Integer(survey)) == null) {
+					a.isValidSurvey(connectionSD, request.getRemoteUser(), formList.get(i).sId, false, superUser);
+					checkedSurveys.put(new Integer(survey), "checked");
+				}
+			}
+		} else {
+			a.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false, superUser);
+		}
 		// End Authorisation
 
 		lm.writeLog(connectionSD, sId, request.getRemoteUser(), "view", "Export as Neo4J");
@@ -148,6 +179,17 @@ public class ExportSurveyThingsat extends Application {
 			addChoices(connectionSD, things);		// Add the options to any properties that are from select questions
 			//things.debug();
 			things.createDataFiles(filepath, "import");
+			
+			/*
+			 * Update the form list with additional info
+			 */
+			FormListManager flm = new FormListManager();
+			if(formList == null) {
+				formList = flm.getFormList(connectionSD, sId, fId);
+			} else {
+				flm.setFormList(connectionSD, formList);
+			}
+			
 			/*
 			 * Get the sql
 			 */
@@ -171,7 +213,9 @@ public class ExportSurveyThingsat extends Application {
 					startDate,
 					endDate,
 					dateId,
-					superUser);
+					superUser,
+					formList,
+					formList.size() - 1);
 			
 			pstmt = connectionResults.prepareStatement(sqlDesc.sql + ";");
 			ResultSet rs = pstmt.executeQuery();

@@ -3,6 +3,8 @@ package surveyKPI;
 import java.io.File;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
+import java.io.Writer;
+import java.lang.reflect.Type;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.sql.Connection;
@@ -39,8 +41,16 @@ import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.managers.LogManager;
 import org.smap.sdal.model.ColDesc;
+import org.smap.sdal.model.ExportForm;
 import org.smap.sdal.model.OptionDesc;
 import org.smap.sdal.model.SqlDesc;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
+
 import utilities.QuestionInfo;
 
 /*
@@ -72,6 +82,7 @@ public class ExportSurveyMedia extends Application {
 			@QueryParam("from") Date startDate,
 			@QueryParam("to") Date endDate,
 			@QueryParam("dateId") int dateId,
+			@QueryParam("forms") String forms,
 			@Context HttpServletResponse response
 			) {
 
@@ -96,6 +107,18 @@ public class ExportSurveyMedia extends Application {
 		    }
 		}
 		
+		/*
+		 * Get the list of forms and surveys to be exported
+		 * Needs to be done prior to authorisation as it includes the list of surveys
+		 */
+		ArrayList<ExportForm> formList = null;
+		
+		if(forms != null) {
+			Type type = new TypeToken<ArrayList<ExportForm>>(){}.getType();
+			Gson gson=  new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
+			formList = gson.fromJson(forms, type);
+		}
+		
 		// Authorisation - Access
 		Connection connectionSD = SDDataSource.getConnection("surveyKPI-ExportSurvey");
 		boolean superUser = false;
@@ -104,7 +127,18 @@ public class ExportSurveyMedia extends Application {
 		} catch (Exception e) {
 		}
 		a.isAuthorised(connectionSD, request.getRemoteUser());
-		a.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false, superUser);
+		if(formList != null) {
+			HashMap<Integer, String> checkedSurveys = new HashMap<Integer, String> ();
+			for(int i = 0; i < formList.size(); i++) {
+				int survey = formList.get(i).sId;
+				if(checkedSurveys.get(new Integer(survey)) == null) {
+					a.isValidSurvey(connectionSD, request.getRemoteUser(), formList.get(i).sId, false, superUser);
+					checkedSurveys.put(new Integer(survey), "checked");
+				}
+			}
+		} else {
+			a.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false, superUser);
+		}
 		// End Authorisation
 
 		lm.writeLog(connectionSD, sId, request.getRemoteUser(), "view", "Export Media from a survey");
@@ -187,7 +221,9 @@ public class ExportSurveyMedia extends Application {
 						startDate,
 						endDate,
 						dateId,
-						superUser);
+						superUser,
+						formList,
+						formList.size() - 1);
 				
 				/*
 				 * 1. Create the target folder

@@ -199,7 +199,7 @@ public class ActionService extends Application{
 	    output.append("<script>");
 	    	
 	    ManagedFormsManager mfm = new ManagedFormsManager();
-		ManagedFormConfig mfc = mfm.getColumns(sd, cResults, a.sId, a.managedId, uIdent, 
+		ManagedFormConfig mfc = mfm.getManagedFormConfig(sd, cResults, a.sId, a.managedId, uIdent, 
 				GeneralUtilityMethods.getOrganisationIdForSurvey(sd, a.sId),
 				superUser);
 		String urlprefix = GeneralUtilityMethods.getUrlPrefix(request);

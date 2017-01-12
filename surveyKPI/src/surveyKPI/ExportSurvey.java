@@ -30,7 +30,6 @@ import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.managers.LogManager;
 import org.smap.sdal.managers.RoleManager;
-import org.smap.sdal.managers.SurveyManager;
 import org.smap.sdal.model.SqlFrag;
 import org.smap.sdal.model.TableColumn;
 
@@ -159,7 +158,7 @@ public class ExportSurvey extends Application {
 			@QueryParam("from") Date startDate,
 			@QueryParam("to") Date endDate,
 			@QueryParam("dateId") int dateId,
-			
+
 			@Context HttpServletResponse response) {
 
 		String urlprefix = request.getScheme() + "://" + request.getServerName() + "/";		
@@ -402,6 +401,8 @@ public class ExportSurvey extends Application {
 							false,		// Don't include "bad" columns
 							false,		// Don't include instance id
 							true,		// Include other meta data
+							true,		// Incude preloads
+							true,		// instancename
 							superUser,
 							false		// TODO add HXL export processing
 							);

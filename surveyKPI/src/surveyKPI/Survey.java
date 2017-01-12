@@ -44,6 +44,7 @@ import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.managers.LogManager;
 import org.smap.sdal.managers.ServerManager;
 import org.smap.sdal.managers.SurveyManager;
+import org.smap.sdal.model.SurveyLinkDetails;
 import org.smap.server.utilities.GetXForm;
 
 import java.io.BufferedWriter;
@@ -54,6 +55,8 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.HashMap;
+import java.util.Stack;
 import java.util.TimeZone;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -289,7 +292,8 @@ public class Survey extends Application {
 	@GET
 	@Produces("application/json")
 	public Response getSurveyMeta(@Context HttpServletRequest request,
-			@PathParam("sId") int sId) { 
+			@PathParam("sId") int sId,
+			@QueryParam("extended") boolean extended) { 
 		
 		Response response = null;
 		String topTableName = null;
@@ -316,21 +320,24 @@ public class Survey extends Application {
 		PreparedStatement pstmtTables = null;
 		PreparedStatement pstmtGeom = null;
 		
-
 		try {
-			String sqlTables = "SELECT DISTINCT f.table_name, f.name, f_id, f.parentform FROM form f " +
-					"where f.s_id = ? " + 
-					"order by f.table_name;";		
+			String sqlTables = "select "
+					+ "f.table_name, f.name, f_id, f.parentform "
+					+ "from form f "
+					+ "where f.s_id = ? " 
+					+ "order by f.table_name";		
 			pstmtTables = connectionSD.prepareStatement(sqlTables);	
 			
-			String sqlGeom = "SELECT q.q_id " +
-					"FROM form f, question q " + 
-					" where f.f_id = q.f_id " +
-					" AND (q.qtype='geopoint' " +
-					" OR q.qtype='geopolygon' OR q.qtype='geolinestring'" +
-					" OR q.qtype='geoshape' OR q.qtype='geotrace') " +
-					" AND f.f_id = ?" + 
-					" AND f.s_id = ?; ";
+			String sqlGeom = "select q.q_id "
+					+ "from form f, question q "
+					+ "where f.f_id = q.f_id "
+					+ "and (q.qtype='geopoint' "
+						+ "or q.qtype='geopolygon' "
+						+ "or q.qtype='geolinestring' "
+						+ "or q.qtype='geoshape' "
+						+ "or q.qtype='geotrace') "
+					+ "and f.f_id = ? "
+					+ "and f.s_id = ?";
 			pstmtGeom = connectionSD.prepareStatement(sqlTables);	
 			
 			// Add the sId to the response so that it is available in the survey meta object
@@ -343,117 +350,194 @@ public class Survey extends Application {
 			ResultSet resultSetTable = null;
 			ResultSet resultSetBounds = null;
 			ArrayList<DateInfo> dateInfoList = new ArrayList<DateInfo> ();
-			JSONArray ja = null;
+			HashMap<String, SurveyLinkDetails> completeLinks = new HashMap<String, SurveyLinkDetails> ();
 			
-			/*
-			 * Get Forms and row counts in this survey
-			 */
-			pstmtTables.setInt(1, sId);
-			resultSet = pstmtTables.executeQuery();
-
-			ja = new JSONArray();
+			JSONArray ja = new JSONArray();
+			JSONArray jLinks = new JSONArray();
+			JSONArray jSurveys = new JSONArray();
+			
 			float [] bbox = new float[4]; 
 			bbox[0] = 180;
 			bbox[1] = 90;
 			bbox[2] = -180;
 			bbox[3] = -90;
-			while (resultSet.next()) {								
-					
-				String tableName = resultSet.getString(1);
-				String formName = resultSet.getString(2);
-				int fId = resultSet.getInt(3);
-				String p_id = resultSet.getString(4);
-				int rowCount = 0;
-				boolean has_geom = false;
-				String geom_id = null;
-				String bounds = null;
+			
+			/*
+			 * Start with the passed in survey
+			 * If extended mode is set then we will need to retrieve forms for other surveys
+			 */
+			HashMap<Integer, Integer> completedSurveys = new HashMap <Integer, Integer> ();
+			Stack<Integer> surveys = new Stack<Integer>();
+			surveys.push(new Integer(sId));
+			completedSurveys.put(new Integer(sId), new Integer(sId));
+			System.out.println("Added survey: " + sId);
+			
+			/*
+			 * Get Forms and row counts the next survey
+			 */
+			while (!surveys.empty()) {
 				
-				try {
-					sql = "SELECT COUNT(*) FROM " + tableName + ";";
-					log.info(sql);
-					try {if (pstmt2 != null) {pstmt2.close();}} catch (SQLException e) {}
-					pstmt2 = connectionRel.prepareStatement(sql);
-					resultSetTable = pstmt2.executeQuery();
+				int currentSurveyId = surveys.pop().intValue();
+				
+				// If extended get the surveys that link to this survey
+				if(extended) {
+					
+					// Get the surveys that link to this one
+					ArrayList<SurveyLinkDetails> sList = GeneralUtilityMethods.getLinkingSurveys(connectionSD, currentSurveyId);
+					if(sList.size() > 0) {
+						for(SurveyLinkDetails link : sList) {
+							completeLinks.put(link.getId(), link);
+							int s = link.fromSurveyId;
+							if(completedSurveys.get(s) != null) {
+								log.info("Have already got meta data for survey " + s);
+							} else {
+								completedSurveys.put(new Integer(s), new Integer(s));
+								surveys.push(s);
+							}
+						}	
+					}
+					
+					// Get the surveys that this survey links to
+					sList = GeneralUtilityMethods.getLinkedSurveys(connectionSD, currentSurveyId);
+					if(sList.size() > 0) {
+						for(SurveyLinkDetails link : sList) {
+							completeLinks.put(link.getId(), link);
+							int s = link.toSurveyId;
+							if(completedSurveys.get(s) != null) {
+								log.info("Have already got meta data for survey " + s);
+							} else {
+								completedSurveys.put(new Integer(s), new Integer(s));
+								surveys.push(s);
+							}
+						}	
+					}	
+				}
+				
+				System.out.println("Processing for survey: " + currentSurveyId);
+				
+				pstmtTables.setInt(1, currentSurveyId);
+				resultSet = pstmtTables.executeQuery();
+	
+				while (resultSet.next()) {							
+						
+					String tableName = resultSet.getString(1);
+					String formName = resultSet.getString(2);
+					int fId = resultSet.getInt(3);
+					String p_id = resultSet.getString(4);
+					int rowCount = 0;
+					boolean has_geom = false;
+					String geom_id = null;
+					String bounds = null;
+					
+					try {
+						sql = "select count(*) from " + tableName;
+						try {if (pstmt2 != null) {pstmt2.close();}} catch (SQLException e) {}
+						pstmt2 = connectionRel.prepareStatement(sql);
+						resultSetTable = pstmt2.executeQuery();
+						if(resultSetTable.next()) {
+							rowCount = resultSetTable.getInt(1);
+						}
+						
+					} catch (Exception e) {
+						// If the table has not been created yet set row count to the default=0
+					}
+					
+					// Get any geometry questions for this table
+					pstmtGeom = connectionSD.prepareStatement(sqlGeom);
+					pstmtGeom.setInt(1, fId);
+					pstmtGeom.setInt(2, sId);
+					resultSetTable = pstmtGeom.executeQuery();
 					if(resultSetTable.next()) {
-						rowCount = resultSetTable.getInt(1);
+						geom_id = resultSetTable.getString(1);
+						has_geom = true;
 					}
 					
-				} catch (Exception e) {
-					// If the table has not been created yet set row count to the default=0
-				}
-				
-				// Get any geometry questions for this table
-				pstmtGeom = connectionSD.prepareStatement(sqlGeom);
-				pstmtGeom.setInt(1, fId);
-				pstmtGeom.setInt(2, sId);
-				resultSetTable = pstmtGeom.executeQuery();
-				if(resultSetTable.next()) {
-					geom_id = resultSetTable.getString(1);
-					has_geom = true;
-				}
-				
-				// Get the table bounding box
-				try {
-					if(has_geom) {
-						sql = "SELECT ST_Extent(the_geom) as table_extent FROM " +
-								 tableName + ";";
-						log.info(sql);
-						try {if (pstmt3 != null) {pstmt3.close();}} catch (SQLException e) {}
-						pstmt3 = connectionRel.prepareStatement(sql);
-						resultSetBounds = pstmt3.executeQuery();
-						if(resultSetBounds.next()) {
-							bounds = resultSetBounds.getString(1);
-							if(bounds != null) {
-								addToSurveyBounds(bbox, bounds);
+					// Get the table bounding box
+					try {
+						if(has_geom) {
+							sql = "select ST_Extent(the_geom) as table_extent "
+									+ "from " + tableName;
+							try {if (pstmt3 != null) {pstmt3.close();}} catch (SQLException e) {}
+							pstmt3 = connectionRel.prepareStatement(sql);
+							resultSetBounds = pstmt3.executeQuery();
+							if(resultSetBounds.next()) {
+								bounds = resultSetBounds.getString(1);
+								if(bounds != null) {
+									addToSurveyBounds(bbox, bounds);
+								}
+							}
+						}
+					} catch (Exception e) {
+						// If the table has not been created don't set the table bounds
+					}
+					
+					/*
+					 * Get first last record of any date fields
+					 */
+					for(int i = 0; i < dateInfoList.size(); i++) {
+						DateInfo di = dateInfoList.get(i);
+						if(fId == di.fId) {
+							try {
+								String name = di.columnName;
+								sql = "select min(" + name + "), max(" + name + ") FROM " + tableName + ";";
+								
+								try {if (pstmt2 != null) {pstmt2.close();}} catch (SQLException e) {}
+								pstmt2 = connectionRel.prepareStatement(sql);
+								resultSetTable = pstmt2.executeQuery();
+								if(resultSetTable.next()) {
+									di.first = resultSetTable.getDate(1);
+									di.last = resultSetTable.getDate(2);
+								}
+								
+							} catch (Exception e) {
+								// Ignore errors, for example table not created
 							}
 						}
 					}
-				} catch (Exception e) {
-					// If the table has not been created don't set the table bounds
-				}
-				
-				/*
-				 * Get first last record of any date fields
-				 */
-				for(int i = 0; i < dateInfoList.size(); i++) {
-					DateInfo di = dateInfoList.get(i);
-					if(fId == di.fId) {
-						try {
-							String name = di.columnName;
-							sql = "select min(" + name + "), max(" + name + ") FROM " + tableName + ";";
-							
-							try {if (pstmt2 != null) {pstmt2.close();}} catch (SQLException e) {}
-							pstmt2 = connectionRel.prepareStatement(sql);
-							log.info("Get max, min dates: " + pstmt2.toString());
-							resultSetTable = pstmt2.executeQuery();
-							if(resultSetTable.next()) {
-								di.first = resultSetTable.getDate(1);
-								di.last = resultSetTable.getDate(2);
-							}
-							
-						} catch (Exception e) {
-							// Ignore errors, for example table not created
-						}
+					
+					
+					JSONObject jp = new JSONObject();
+					jp.put("name", tableName);
+					jp.put("form", formName);
+					jp.put("rows", rowCount);
+					jp.put("geom", has_geom);
+					jp.put("s_id", currentSurveyId);
+					jp.put("f_id", fId);
+					jp.put("p_id", p_id);
+					if(p_id == null || p_id.equals("0")) {
+						topTableName = tableName;
+						jo.put("top_table", tableName);
 					}
-				}
-				
-				
-				JSONObject jp = new JSONObject();
-				jp.put("name", tableName);
-				jp.put("form", formName);
-				jp.put("rows", rowCount);
-				jp.put("geom", has_geom);
-				jp.put("f_id", fId);
-				jp.put("p_id", p_id);
-				if(p_id == null || p_id.equals("0")) {
-					topTableName = tableName;
-					jo.put("top_table", tableName);
-				}
-				jp.put("geom_id", geom_id);
-				ja.put(jp);
-
-			} 
+					jp.put("geom_id", geom_id);
+					ja.put(jp);
+	
+				} 	
+			}
 			jo.put("forms", ja);
+			
+			if(extended) {
+				for(String linkId : completeLinks.keySet()) {
+					SurveyLinkDetails link = completeLinks.get(linkId);
+					JSONObject jl = new JSONObject();
+					jl.put("fromSurveyId", link.fromSurveyId);
+					jl.put("fromFormId", link.fromFormId);
+					jl.put("fromQuestionId", link.fromQuestionId);
+					
+					jl.put("toSurveyId", link.toSurveyId);
+					
+					jLinks.put(jl);
+				}
+				jo.put("links", jLinks);
+				
+				for(Integer surveyId : completedSurveys.keySet()) {
+					JSONObject js = new JSONObject();
+					String sName = GeneralUtilityMethods.getSurveyName(connectionSD, surveyId);
+					js.put("sId", surveyId);
+					js.put("name", sName);
+					jSurveys.put(js);
+				}
+				jo.put("surveys", jSurveys);
+			}
 			
 			/*
 			 * Add the date information
@@ -463,17 +547,16 @@ public class Survey extends Application {
 			 * The maximum and minimum value for these dates will be added when 
 			 * the results data for each table is checked
 			 */
-			sql = "SELECT q.q_id, q.qname, f.f_id, q.column_name " +
-					"FROM form f, question q " + 
-					"where f.f_id = q.f_id " +
-					"AND (q.qtype='date' " +
-					"OR q.qtype='dateTime') " +
-					"AND f.s_id = ?; "; 	
+			sql = "select q.q_id, q.qname, f.f_id, q.column_name "
+					+ "from form f, question q "
+					+ "where f.f_id = q.f_id "
+					+ "and (q.qtype='date' "
+						+ "or q.qtype='dateTime') "
+					+ "and f.s_id = ?"; 	
 			
 
 			pstmt = connectionSD.prepareStatement(sql);
 			pstmt.setInt(1, sId);
-			log.info("Get dates: " + pstmt.toString());
 			resultSet = pstmt.executeQuery();
 			
 			while (resultSet.next()) {	
@@ -527,16 +610,14 @@ public class Survey extends Application {
 				jo.put("bbox", bb);
 			} 
 			
-
-			
 			/*
 			 * Get other survey details
 			 */
-			sql = "SELECT s.display_name, s.deleted, s.p_id, s.ident, s.model " +
-					"FROM survey s " + 
-					"where s.s_id = ?;";
+			sql = "select "
+					+ "s.display_name, s.deleted, s.p_id, s.ident, s.model "
+					+ "from survey s "
+					+ "where s.s_id = ?";
 			
-			log.info(sql);
 			if(pstmt != null) try {pstmt.close();}catch(Exception e) {}
 			pstmt = connectionSD.prepareStatement(sql);
 			pstmt.setInt(1, sId);

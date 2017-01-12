@@ -265,6 +265,8 @@ public class ExportSurveyOSM extends Application {
 							false,		// Don't include "bad" columns
 							false,		// Don't include instance id
 							true,		// Include other meta data
+							true,		// Include preloads
+							true,		// Include instancename
 							superUser,
 							false		// HXL only include with XLS exports
 							);

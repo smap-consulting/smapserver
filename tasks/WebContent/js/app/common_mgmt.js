@@ -101,7 +101,24 @@ window.gTasks = {
 	var gReportLoaded = false,
 		gDataLoaded = false,
 		gConfigLoaded = false;
+	 
+	 /*
+	  * Function called when the current project is changed
+	  */
+	 function projectChanged() {
 
+	 	globals.gCurrentProject = $('#project_name option:selected').val();
+	 	globals.gCurrentSurvey = -1;
+		globals.gCurrentTaskGroup = undefined;
+		
+		saveCurrentProject(globals.gCurrentProject, 
+				globals.gCurrentSurvey, 
+				globals.gCurrentTaskGroup);
+		
+	 	refreshData();
+	 	
+	 }
+	 
 	 /*
 	  * Function called when the current survey is changed
 	  */
@@ -112,7 +129,7 @@ window.gTasks = {
 		gConfigLoaded = false;
 		
 		if(globals.gCurrentSurvey > 0) {
-			// getManagedData(globals.gCurrentSurvey);
+			
 			 saveCurrentProject(-1, globals.gCurrentSurvey);
 			 if(isManagedForms) {
 				 getSurveyConfig(globals.gCurrentSurvey, gTasks.cache.surveyList[globals.gCurrentProject][gTasks.gSelectedSurveyIndex].managed_id);
@@ -120,23 +137,15 @@ window.gTasks = {
 				 getSurveyConfig(globals.gCurrentSurvey, 0);
 			 }
 			 getReport(gReport);
+			 
+			 $('.main_survey').html($('#survey_name option:selected').text());
+			 
 		 } else {
 			 // No managed surveys in this project
 			 $('#trackingTable').empty();
 		 }
 	 }
 	 
-	 /*
-	  * Function called when the current project is changed
-	  */
-	 function projectChanged() {
-
-	 	globals.gCurrentProject = $('#project_name option:selected').val();
-	 	globals.gCurrentSurvey = -1;
-	 	saveCurrentProject(globals.gCurrentProject, globals.gCurrentSurvey);	// Save the current project id
-	 	refreshData();
-	 	
-	 }
 	 
 	 /*
 	  * Get the markup to edit the record
@@ -267,8 +276,6 @@ window.gTasks = {
 		 	hColSort = [],
 		 	hDups = [],
 		 	hColSortIdx = -1;
-		 
-		 $('#survey_title').html($('#survey_name option:selected').text());
 		 
 		 
 		 if(globals.gMainTable) {
@@ -1069,7 +1076,7 @@ window.gTasks = {
 		 
 			 addHourglass();
 			 $.ajax({
-				 url: "/surveyKPI/managed/getconfig/" + globals.gCurrentSurvey + "/db",
+				 url: "/surveyKPI/managed/getreportconfig/" + globals.gCurrentSurvey + "/db",
 				 cache: false,
 				 dataType: 'json',
 				 success: function(data) {

@@ -93,7 +93,7 @@ public class TableReports extends Application {
 			) throws Exception { 
 		
 		// Authorisation - Access
-		Connection sd = SDDataSource.getConnection("surveyKPI-GetConfig");
+		Connection sd = SDDataSource.getConnection("surveyKPI-tables");
 		boolean superUser = false;
 		try {
 			superUser = GeneralUtilityMethods.isSuperUser(sd, request.getRemoteUser());
@@ -112,7 +112,7 @@ public class TableReports extends Application {
 		if(project == null) {
 			project = "Project";
 		}
-		Connection cResults = ResultsDataSource.getConnection("surveyKPI-GetConfig");
+		Connection cResults = ResultsDataSource.getConnection("surveyKPI-tables");
 		
 		String tz = "GMT";
 		try {
@@ -126,7 +126,7 @@ public class TableReports extends Application {
 			
 			// Get columns
 			ManagedFormsManager qm = new ManagedFormsManager();
-			ManagedFormConfig mfc = qm.getColumns(sd, cResults, sId, managedId, request.getRemoteUser(), oId, superUser);
+			ManagedFormConfig mfc = qm.getManagedFormConfig(sd, cResults, sId, managedId, request.getRemoteUser(), oId, superUser);
 			
 			// Convert data to an array
 			ArrayList<ArrayList<KeyValue>> dArray = null;
@@ -223,8 +223,8 @@ public class TableReports extends Application {
 			log.log(Level.SEVERE, "Error", e);
 			throw new Exception("Exception: " + e.getMessage());
 		} finally {
-			SDDataSource.closeConnection("surveyKPI-GetConfig", sd);
-			ResultsDataSource.closeConnection("surveyKPI-GetConfig", cResults);
+			SDDataSource.closeConnection("surveyKPI-tables", sd);
+			ResultsDataSource.closeConnection("surveyKPI-tables", cResults);
 		}
 
 

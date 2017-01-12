@@ -340,6 +340,8 @@ public class XLSResultsManager {
 							false,		// Don't include "bad" columns
 							false,		// Don't include instance id
 							true,		// Include other meta data
+							true,		// Incude preloads
+							true,		// instancename
 							superUser,
 							hxl);
 						

@@ -3,6 +3,7 @@ package surveyKPI;
 import java.io.File;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Type;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.sql.Connection;
@@ -50,10 +51,17 @@ import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.managers.LogManager;
 import org.smap.sdal.managers.SpssManager;
 import org.smap.sdal.model.ColDesc;
+import org.smap.sdal.model.ExportForm;
 import org.smap.sdal.model.OptionDesc;
 import org.smap.sdal.model.SqlDesc;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
+
+import utilities.FormListManager;
 
 /*
  * Various types of export related to a survey
@@ -69,7 +77,6 @@ public class ExportSurveyMisc extends Application {
 	
 	LogManager lm = new LogManager();		// Application log
 	
-	
 	/*
 	 * Export as:
 	 *    a) shape file
@@ -82,7 +89,10 @@ public class ExportSurveyMisc extends Application {
 	 *  writes the result to a file that is zipped and then downloaded.
 	 * For all of these formats the SQL is created from the passed in form and includes
 	 *  all columns from the parent forms.
-	 * A parameter excludeparents=true to only return the single form
+	 * 
+	 * A list of forms and surveys can be specified in forms
+	 * Alternatively a single form can be specified in form and its parents will also be included unless excludeparents=true 
+	 * 
 	 */
 	@GET
 	@Path("/shape")
@@ -97,6 +107,7 @@ public class ExportSurveyMisc extends Application {
 			@QueryParam("from") Date startDate,
 			@QueryParam("to") Date endDate,
 			@QueryParam("dateId") int dateId,
+			@QueryParam("forms") String forms,
 			@Context HttpServletResponse response) {
 
 		ResponseBuilder builder = Response.ok();
@@ -120,6 +131,18 @@ public class ExportSurveyMisc extends Application {
 		    }
 		}
 		
+		/*
+		 * Get the list of forms and surveys to be exported
+		 * Needs to be done prior to authorisation as it includes the list of surveys
+		 */
+		ArrayList<ExportForm> formList = null;
+		
+		if(forms != null) {
+			Type type = new TypeToken<ArrayList<ExportForm>>(){}.getType();
+			Gson gson=  new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
+			formList = gson.fromJson(forms, type);
+		}
+		
 		// Authorisation - Access
 		Connection connectionSD = SDDataSource.getConnection("surveyKPI-ExportSurveyMisc");
 		boolean superUser = false;
@@ -127,8 +150,20 @@ public class ExportSurveyMisc extends Application {
 			superUser = GeneralUtilityMethods.isSuperUser(connectionSD, request.getRemoteUser());
 		} catch (Exception e) {
 		}
+		
 		a.isAuthorised(connectionSD, request.getRemoteUser());
-		a.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false, superUser);
+		if(formList != null) {
+			HashMap<Integer, String> checkedSurveys = new HashMap<Integer, String> ();
+			for(int i = 0; i < formList.size(); i++) {
+				int survey = formList.get(i).sId;
+				if(checkedSurveys.get(new Integer(survey)) == null) {
+					a.isValidSurvey(connectionSD, request.getRemoteUser(), formList.get(i).sId, false, superUser);
+					checkedSurveys.put(new Integer(survey), "checked");
+				}
+			}
+		} else {
+			a.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false, superUser);
+		}
 		// End Authorisation
 
 		lm.writeLog(connectionSD, sId, request.getRemoteUser(), "view", "Export as: " + format);
@@ -156,8 +191,7 @@ public class ExportSurveyMisc extends Application {
 				// Get the users locale
 				Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(connectionSD, request.getRemoteUser()));
 				localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
-				
-				
+						
 				/*
 				 * Get the name of the database
 				 */
@@ -193,6 +227,16 @@ public class ExportSurveyMisc extends Application {
 					}
 				}
 
+				/*
+				 * Update the form list with additional info
+				 */
+				FormListManager flm = new FormListManager();
+				if(formList == null) {
+					formList = flm.getFormList(connectionSD, sId, fId);
+				} else {
+					flm.setFormList(connectionSD, formList);
+				}
+				
 				// Get the SQL for this query
 				SqlDesc sqlDesc = QueryGenerator.gen(connectionSD, 
 						connectionResults,
@@ -214,7 +258,9 @@ public class ExportSurveyMisc extends Application {
 						startDate,
 						endDate,
 						dateId,
-						superUser);
+						superUser,
+						formList,
+						formList.size() - 1);
 
 				String basePath = GeneralUtilityMethods.getBasePath(request);					
 				String filepath = basePath + "/temp/" + String.valueOf(UUID.randomUUID());	// Use a random sequence to keep survey name unique
@@ -414,7 +460,7 @@ public class ExportSurveyMisc extends Application {
 			} finally {	
 
 				try {if (pstmtDefLang != null) {pstmtDefLang.close();}} catch (SQLException e) {}
-				try {if (pstmtDefLang2 != null) {pstmtDefLang2.close();}} catch (SQLException e) {}				
+				try {if (pstmtDefLang2 != null) {pstmtDefLang2.close();}} catch (SQLException e) {}	
 				
 				SDDataSource.closeConnection("surveyKPI-ExportSurvey", connectionSD);
 				ResultsDataSource.closeConnection("surveyKPI-ExportSurvey", connectionResults);

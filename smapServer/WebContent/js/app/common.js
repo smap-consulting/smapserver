@@ -111,12 +111,16 @@ function updateProjectList(addAll, projectId, callback) {
 	if(updateCurrentProject && globals.gProjectList[0]) {	
 		globals.gCurrentProject = globals.gProjectList[0].id;		// Update the current project id
 		globals.gCurrentSurvey = -1;
-		saveCurrentProject(globals.gCurrentProject, globals.gCurrentSurvey);	// Save the current project id
+		globals.gCurrentTaskGroup = undefined;
 	} else if(updateCurrentProject) {	
 		globals.gCurrentProject = -1;		// Update the current project id
 		globals.gCurrentSurvey = -1;
-		saveCurrentProject(globals.gCurrentProject, globals.gCurrentSurvey);	// Save the current project id
+		globals.gCurrentTaskGroup = undefined;
 	}
+	
+	saveCurrentProject(globals.gCurrentProject, 
+			globals.gCurrentSurvey, 
+			globals.gCurrentTaskGroup);
 	
 	if(!addAll) {
 		$projectSelect.val(globals.gCurrentProject);			// Set the initial project value
@@ -186,6 +190,7 @@ function saveCurrentProject(projectId, surveyId, taskGroupId) {
 				current_survey_id: surveyId,
 				current_task_group_id: taskGroupId
 				};
+		
 		var userString = JSON.stringify(user);
 		
 		addHourglass();
@@ -1376,7 +1381,8 @@ function createNewSurvey(name, existing, existing_survey, existing_form, shared_
 			globals.model.survey = data;
 			globals.model.setSettings();
 			globals.gCurrentSurvey = data.id;
-			saveCurrentProject(-1, globals.gCurrentSurvey);	// Save the current survey id
+			
+			saveCurrentProject(-1, globals.gCurrentSurvey, undefined);	// Save the current survey id
 			
 			setLanguages(data.languages, callback);
 			

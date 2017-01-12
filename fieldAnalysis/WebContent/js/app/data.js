@@ -70,6 +70,41 @@ function getSurveyMetaSE(sId, view, getS, updateExport, updateDatePicker, curren
 	}
 }
 
+/*
+ * Get extended survey meta data
+ */
+function getExtendedSurveyMetaSE(sId, callback) {
+
+	if(sId != -1) {
+		var url = surveyMeta(sId) + "?extended=true";
+	
+		addHourglass();
+	 	$.ajax({
+			url: url,
+			cache: false,
+			dataType: 'json',
+			success: function(data) {
+				removeHourglass();
+				globals.gSelector.addSurveyExtended(sId, data);
+			
+				if(typeof callback === "function") {
+					callback(data);
+				}
+
+			},
+			error: function(xhr, textStatus, err) {
+				removeHourglass();
+  				if(xhr.readyState == 0 || xhr.status == 0) {
+		              return;  // Not an error
+				} else {
+					$('#status_msg_msg').empty().text("Error failed to get extended meta data for survey:" + sId);
+					$("#status_msg").dialog("open");
+				}
+				refreshData(view, "survey");
+			}
+		});
+	} 
+}
 
  /*
   * Get a question's Meta Data

@@ -251,13 +251,17 @@ public class UserSvc extends Application {
 				 */
 				String sql = null;
 				if(u.current_project_id > 0) {
-					sql = "update users set current_project_id = ?, current_survey_id = ?, current_task_group_id = ? where ident = ?;";
+					sql = "update users set current_project_id = ?, "
+							+ "current_survey_id = ?, "
+							+ "current_task_group_id = ? "
+							+ "where ident = ?";
 				} else if(u.current_survey_id > 0) {
 					// Only update the survey id
-					sql = "update users set current_survey_id = ? where ident = ?;";
+					sql = "update users set current_survey_id = ?, "
+							+ "where ident = ?";
 				} else if(u.current_task_group_id > 0) {
 					// Only update the task group id
-					sql = "update users set current_task_group_id = ? where ident = ?;";
+					sql = "update users set current_task_group_id = ? where ident = ?";
 				}
 							
 				pstmt = connectionSD.prepareStatement(sql);
@@ -284,7 +288,7 @@ public class UserSvc extends Application {
 			} else {
 			
 				/*
-				 * Update what can be updated by the user, excluding the current project id
+				 * Update what can be updated by the user, excluding the current project id, survey id, form id and task group
 				 */
 				String pwdString = null;
 				String sql = null;
