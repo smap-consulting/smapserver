@@ -502,6 +502,7 @@ define([
 					} else if(newItem.action === "delete") {
 						/*
 						 * Remove any modifications to this deleted element
+						 * If the item is a group question then also remove its group end
 						 */
 						changes.splice(j,1);	// Remove this item
 						return false;
@@ -934,6 +935,11 @@ define([
 					form.questions[form.qSeq[i]].name = new_name + "_groupEnd";
 				}
 				break;
+			}
+		}
+		for(i = 0; i < globals.changes.length; i++) {
+			if(globals.changes[i].items[0].question.name === end_name) {
+				globals.changes.splice(i, 1);
 			}
 		}
 		
