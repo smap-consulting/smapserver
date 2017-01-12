@@ -19,6 +19,7 @@ define(['jquery', 'jquery_ui', 'rmm', 'localise', 'globals'],
 		function($, jquery_ui, rmm, localise, globals) {
 	
 	var graph;
+	var surveyList;
 	var selected = [];
 	var selectedPath;
 	
@@ -67,6 +68,7 @@ define(['jquery', 'jquery_ui', 'rmm', 'localise', 'globals'],
 					id: meta.forms[i].f_id,
 					survey: meta.forms[i].s_id,
 					name: meta.forms[i].form,
+					main: meta.forms[i].p_id == 0 ? true : false,
 					selected: false
 			}
 			graph.nodes.push(node);		
@@ -91,6 +93,8 @@ define(['jquery', 'jquery_ui', 'rmm', 'localise', 'globals'],
 			}
 			graph.links.push(link);	
 		}
+		
+		surveyList = meta.surveys;
 		
 		showModel('#extsvg', 200, 200)
 	}
@@ -190,8 +194,10 @@ define(['jquery', 'jquery_ui', 'rmm', 'localise', 'globals'],
 		
 		var node = nodeGroup
 	    	.append("circle")
-	    		.attr("r", function(d) {return d.selected ? 10 : 5;})
+	    		.attr("r", function(d) {return d.main ? 10 : 5;})
 	    		.attr("fill", function(d) { return color(d.survey); })
+	    		.attr("stroke",  "blue")
+	    		.attr("stroke-width", function(d) { return d.selected ? 2 : 0; })
 	    		.on("click", click)
 	    		.call(d3.drag()
 	    				.on("start", dragstarted)
@@ -199,9 +205,9 @@ define(['jquery', 'jquery_ui', 'rmm', 'localise', 'globals'],
 	    				.on("end", dragended));
 		
 		var text = nodeGroup.append("text")
-        	 .attr("dx", 12)
+        	 .attr("dx", 4)
         	 .attr("dy", ".35em")
-        	.text(function(d) { return d.name });
+        	.text(function(d) { return d.main ? "" : d.name });
 		
 		node.append("title")
 	      .text(function(d) { return d.id; });
@@ -210,8 +216,32 @@ define(['jquery', 'jquery_ui', 'rmm', 'localise', 'globals'],
 	      .nodes(graph.nodes)
 	      .on("tick", ticked);
 	   
-		simulation.force("link")
-	    	.links(graph.links);
+		simulation
+			.force("link")
+	    	.links(graph.links)
+	    	.distance(120);	
+		
+		/*
+		 * Legend
+		 */
+		var legend = svg.selectAll(".legend")
+	      .data(surveyList)
+	      .enter().append("g")
+		      .attr("class", "legend")
+		      .attr("transform", function(d, i) { return "translate(0," + i * 20 + ")"; });
+		
+		legend.append("rect")
+	      .attr("x", width - 18)
+	      .attr("width", 18)
+	      .attr("height", 18)
+	      .style("fill", function(d) { return color(d.sId); });
+		
+		legend.append("text")
+	      .attr("x", width - 24)
+	      .attr("y", 9)
+	      .attr("dy", ".35em")
+	      .style("text-anchor", "end")
+	      .text(function(d) { return d.name; });
 		
 	  function ticked() {
 	    link

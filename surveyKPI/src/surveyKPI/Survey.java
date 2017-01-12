@@ -354,6 +354,7 @@ public class Survey extends Application {
 			
 			JSONArray ja = new JSONArray();
 			JSONArray jLinks = new JSONArray();
+			JSONArray jSurveys = new JSONArray();
 			
 			float [] bbox = new float[4]; 
 			bbox[0] = 180;
@@ -392,7 +393,6 @@ public class Survey extends Application {
 							} else {
 								completedSurveys.put(new Integer(s), new Integer(s));
 								surveys.push(s);
-								System.out.println("Added survey: " + s);
 							}
 						}	
 					}
@@ -408,7 +408,6 @@ public class Survey extends Application {
 							} else {
 								completedSurveys.put(new Integer(s), new Integer(s));
 								surveys.push(s);
-								System.out.println("Added survey: " + s);
 							}
 						}	
 					}	
@@ -515,6 +514,7 @@ public class Survey extends Application {
 				} 	
 			}
 			jo.put("forms", ja);
+			
 			if(extended) {
 				for(String linkId : completeLinks.keySet()) {
 					SurveyLinkDetails link = completeLinks.get(linkId);
@@ -528,6 +528,15 @@ public class Survey extends Application {
 					jLinks.put(jl);
 				}
 				jo.put("links", jLinks);
+				
+				for(Integer surveyId : completedSurveys.keySet()) {
+					JSONObject js = new JSONObject();
+					String sName = GeneralUtilityMethods.getSurveyName(connectionSD, surveyId);
+					js.put("sId", surveyId);
+					js.put("name", sName);
+					jSurveys.put(js);
+				}
+				jo.put("surveys", jSurveys);
 			}
 			
 			/*
