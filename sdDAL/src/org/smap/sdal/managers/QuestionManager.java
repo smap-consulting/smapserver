@@ -203,6 +203,10 @@ public class QuestionManager {
 					q.source = null;
 				}
 				
+				boolean isRepeatType = false;
+				if(q.type.equals("begin repeat") || q.type.equals("geopolygon") || q.type.equals("geolinestring")) {
+					isRepeatType = true;
+				}
 				
 				// First reorder questions in the target form so the sequence starts from 0 and increments by 1 each time 
 				// as the editor expects
@@ -261,7 +265,11 @@ public class QuestionManager {
 				pstmtInsertQuestion.setString(7, q.fId + "_question_" + columnName + ":label" );
 				pstmtInsertQuestion.setString(8, infotextId );
 				pstmtInsertQuestion.setString(9, source );
-				pstmtInsertQuestion.setString(10,  q.calculation);
+				if(isRepeatType) {
+					pstmtInsertQuestion.setString(10,  null);	// Calculation goes in form
+				} else {
+					pstmtInsertQuestion.setString(10,  q.calculation);
+				}
 				pstmtInsertQuestion.setString(11, q.defaultanswer );
 				pstmtInsertQuestion.setString(12, q.appearance);
 				pstmtInsertQuestion.setBoolean(13, q.visible);
@@ -286,7 +294,7 @@ public class QuestionManager {
 				sm.updateSurveyManifest(sd, sId, q.appearance, q.calculation);
 				
 				// If this is a begin repeat then create a new form
-				if(q.type.equals("begin repeat") || q.type.equals("geopolygon") || q.type.equals("geolinestring")) {
+				if(isRepeatType) {
 					
 					rs = pstmtInsertQuestion.getGeneratedKeys();
 					rs.next();
