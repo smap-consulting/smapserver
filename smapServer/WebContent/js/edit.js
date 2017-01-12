@@ -292,13 +292,6 @@ $(document).ready(function() {
 		$('.dropdown-toggle').parent().removeClass("open");
 		$('.navbar-collapse').removeClass("in");
 		
-		// Set the default destination 
-		//if($('#orgLevelTab').hasClass("active")) {
-		//	gUrl = gBaseUrl;
-		//	$('#survey_id').val("");				// clear the survey id in the forms hidden field
-		//	gIsSurveyLevel = false;
-		//} else {
-		
 		// Only form level media is managed here, organisation level media is managed in the shared resources page
 		$('#orgPanel').hide();
 		$('#surveyPanel').show();
@@ -306,7 +299,6 @@ $(document).ready(function() {
     	$('#survey_id').val(gSId);			// Set the survey id in the forms hidden field
     	gIsSurveyLevel = true;
     	
-		//}
 		$('.upload_file_msg').removeClass('alert-danger').addClass('alert-success').html("");
 		$('#mediaModal').modal('show');
 
@@ -424,17 +416,6 @@ $(document).ready(function() {
 	
 	enableUserProfileBS();
 	
-	// From: http://stackoverflow.com/questions/20247945/bootstrap-3-navbar-dynamic-collapse
-	/*
-	function autocollapse() {
-	    var $navbar = $('.navbar');
-	    $navbar.removeClass('collapsed'); 
-	    if($navbar.innerHeight() > 60) // check if we've got 2 lines
-	        $navbar.addClass('collapsed'); // force collapse mode
-	}
-	$(document).on('ready', autocollapse);
-	$(window).on('resize', autocollapse);
-	*/
 	/*
 	 * Add check prior to the user leaving the screen
 	 */

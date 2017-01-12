@@ -105,6 +105,9 @@ define([
 					$context = markup.refresh();
 				} else {
 					$context = option.createChoiceView();
+					var survey = globals.model.survey;
+					var question = survey.forms[globals.gFormIndex].questions[globals.gItemIndex];
+					$('#optionTable').html(option.getOptionTable(question, globals.gFormIndex, globals.gListName));
 					option.setupChoiceView($('#filterType').val());
 				}
 			} else {
