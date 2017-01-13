@@ -257,7 +257,7 @@ public class UserSvc extends Application {
 							+ "where ident = ?";
 				} else if(u.current_survey_id > 0) {
 					// Only update the survey id
-					sql = "update users set current_survey_id = ?, "
+					sql = "update users set current_survey_id = ? "
 							+ "where ident = ?";
 				} else if(u.current_task_group_id > 0) {
 					// Only update the task group id

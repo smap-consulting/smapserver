@@ -937,9 +937,16 @@ define([
 				break;
 			}
 		}
+		
 		for(i = 0; i < globals.changes.length; i++) {
-			if(globals.changes[i].items[0].question.name === end_name) {
-				globals.changes.splice(i, 1);
+			if(globals.changes[i].items[0].question) {
+				if(globals.changes[i].items[0].question.name === end_name) {
+					if(action === "delete") {
+						globals.changes.splice(i, 1);
+					} else if(action === "rename") {
+						globals.changes[i].items[0].question.name = new_name + "_groupEnd";
+					}
+				}
 			}
 		}
 		
