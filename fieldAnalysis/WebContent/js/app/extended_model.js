@@ -262,6 +262,13 @@ define(['jquery', 'jquery_ui', 'rmm', 'localise', 'globals'],
   
 	function click(d) {
 		
+		// Make sure the node is marked as selected if it is in the list
+		for(i = 0; i < selected.length; i++) {
+			if(selected[i] == d.id) {
+				d.selected = true;
+			}
+		}
+		
 		if(!d.selected) {
 			addSelected(d.id);
 		} else {
@@ -292,7 +299,7 @@ define(['jquery', 'jquery_ui', 'rmm', 'localise', 'globals'],
 		selected.push(nodeId);
 		console.log("Selected: " + selected.join());
 		
-		if(selected.length === 2) {
+		if(selected.length == 2) {
 			setPath();
 		}
 	}
@@ -300,13 +307,13 @@ define(['jquery', 'jquery_ui', 'rmm', 'localise', 'globals'],
 	function removeSelected(nodeId) {
 		var i;
 		for(i = 0; i < selected.length; i++) {
-			if(selected[i] === nodeId) {
+			if(selected[i] == nodeId) {
 				selected.splice(i,1);
 			}
 		}
 		console.log("Selected: " + selected.join());
 		
-		if(selected.length === 1) {
+		if(selected.length !== 2) {
 			for(i = 0; i < graph.links.length; i++) {
 				graph.links[i].value = 2;
 			}

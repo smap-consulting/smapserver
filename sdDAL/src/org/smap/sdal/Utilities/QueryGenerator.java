@@ -150,9 +150,7 @@ public class QueryGenerator {
 					formList,
 					formListIdx
 					);
-		} catch (Exception e) {
-			throw new Exception(e.getMessage()); 
-		} finally {
+		}  finally {
 			try {if (pstmtCols != null) {pstmtCols.close();}} catch (SQLException e) {}
 			try {if (pstmtGeom != null) {pstmtGeom.close();}} catch (SQLException e) {}
 			try {if (pstmtQType != null) {pstmtQType.close();}} catch (SQLException e) {}
