@@ -1585,14 +1585,14 @@ public class SurveyManager {
 					
 					String sqlUpdateRepeat = "update form set repeats = ? "
 							+ "where s_id = ? "
-							+ "and parentquestion = ? "
-							+ "and (trim(both from repeats) = ? or repeats is null);";
+							+ "and parentquestion = ?";
+							//+ "and (trim(both from repeats) = ? or repeats is null);";
 					pstmtUpdateRepeat = sd.prepareStatement(sqlUpdateRepeat);
 					
 					pstmtUpdateRepeat.setString(1, ci.property.newVal);
 					pstmtUpdateRepeat.setInt(2, sId);
 					pstmtUpdateRepeat.setInt(3, ci.property.qId);
-					pstmtUpdateRepeat.setString(4, ci.property.oldVal);
+					//pstmtUpdateRepeat.setString(4, ci.property.oldVal);
 					
 					log.info("Updating repeat count: " + pstmtUpdateRepeat.toString());
 					int count = pstmtUpdateRepeat.executeUpdate();
