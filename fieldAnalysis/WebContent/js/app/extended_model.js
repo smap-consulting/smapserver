@@ -70,7 +70,7 @@ define(['jquery', 'jquery_ui', 'rmm', 'localise', 'globals'],
 					name: meta.forms[i].form,
 					main: meta.forms[i].p_id == 0 ? true : false,
 					p_id: meta.forms[i].p_id,
-					selected: false
+					selected: isFormSelected(meta.forms[i].f_id)
 			}
 			graph.nodes.push(node);		
 			
@@ -102,6 +102,11 @@ define(['jquery', 'jquery_ui', 'rmm', 'localise', 'globals'],
 		surveyList = meta.surveys;
 		
 		showModel('#extsvg', 200, 200)
+		
+		if(selected.length == 2) {
+			setPath();
+			update();
+		}
 	}
 	
 	/*
@@ -377,6 +382,17 @@ define(['jquery', 'jquery_ui', 'rmm', 'localise', 'globals'],
 			}
 		}
 		return 0;
+	}
+	function isFormSelected(fId) {
+		var i;
+		if(selected) {
+			for(i = 0; i < selected.length; i++) {
+				if(selected[i] == fId) {
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 	
 	/*
