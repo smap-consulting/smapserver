@@ -65,7 +65,8 @@ define([
 		setPreviousChoices: setPreviousChoices,
 		getOptionTable: getOptionTable,
 		addFilter: addFilter,
-		addFilterSelectList: addFilterSelectList
+		addFilterSelectList: addFilterSelectList,
+		addOptionSequence: addOptionSequence
 	};
 	
 	globals.gFilterArray = [];			// Filters in repeatable order
@@ -322,6 +323,7 @@ define([
 										h[++idx] = '<textarea id="choiceFilter" class="input-block" form-control has_tt" type="text">';
 										h[++idx] = question.choice_filter;
 										h[++idx] = '</textarea>';
+										h[++idx] = addOptionErrorMsg(question.errorMsg);
 									h[++idx] = '</div>';
 								h[++idx] = '</div>';
 							}

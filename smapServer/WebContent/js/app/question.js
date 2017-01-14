@@ -336,6 +336,7 @@ define([
 			change;
 
 		// Get the new sequence of the option
+		option.addOptionSequence(survey.optionLists[targetListName]);
 		seq = getSequenceOption(targetItemIndex, survey.optionLists[targetListName]);
 		if(locn === "after") {
 			seq++;
@@ -403,6 +404,7 @@ define([
 			survey = globals.model.survey,
 			seq;
 		
+		option.addOptionSequence(survey.optionLists[list_name]);
 		seq = getSequenceOption(index, survey.optionLists[list_name]);
 		$deletedElement = $('#choiceView').find('li.option.l_' + list_name).
 				filter(function() {
@@ -434,6 +436,7 @@ define([
 			survey = globals.model.survey,
 			value;
 
+		option.addOptionSequence(survey.optionLists[list_name]);
 		seq = getSequenceOption(oId, survey.optionLists[list_name]); 
 		
 		value = getDefaultOptionValue(list_name, seq);

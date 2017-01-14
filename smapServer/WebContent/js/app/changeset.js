@@ -88,6 +88,7 @@ define([
 		
 		} 
 		if(typeof itemIndex !== "undefined") {		// Note some changes do not have an itemIndex and don't need to be validated
+			
 			validateItem(container, itemIndex, itemType, true);
 		}
 		
@@ -1265,7 +1266,6 @@ define([
 		 */
 		if(removeExisting) {
 			removeValidationError(container, itemIndex,	"item", itemType);
-			//removeValidationError(container, itemIndex,	"name", itemType);	// validation errors for name removed in validateName
 		}
 		
 		if(!item.deleted && !item.published &&
@@ -1321,6 +1321,11 @@ define([
 				if(isValid) {	// Check parenthesis on calculation
 					isValid = checkParentheisis(container, itemIndex, itemType, item.calculation);
 				}
+				
+				if(isValid) {	// Check parenthesis on choiceFilter
+					isValid = checkParentheisis(container, itemIndex, itemType, item.nodeset);
+				}
+
 				
 			} else if(itemType === "option") {
 				// Check references to other questions
@@ -1512,7 +1517,8 @@ define([
 			getReferenceNames(item.relevant, refQuestions);
 			getReferenceNames(item.constraint, refQuestions);
 			getReferenceNames(item.calculation, refQuestions);
-		}
+			getReferenceNames(item.nodeset, refQuestions);
+		} 
 		for(i = 0; i < item.labels.length; i++) {
 			var text = item.labels[i].text;
 			if(typeof text === "string") {
@@ -1647,7 +1653,7 @@ define([
 		} else if(itemType === "optionlist") {
 			item = survey.optionLists[container];
 			$changedRow = $('#ol_' + container);
-		}
+		} 
 
 		for(i = errors.length - 1; i >= 0; i--) {
 			if(errors[i].itemType === itemType && errors[i].container === container && 

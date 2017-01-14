@@ -708,7 +708,8 @@ function respondToEventsChoices($context) {
 	});
 	
 	$('.exitOptions', $context).off().click(function() {
-		$('.editorContent').toggle();;
+		
+		$('.editorContent, .question_only').toggle();;
 	});
 	
 	$('#addFilter', $context).off().click(function() {
@@ -1153,7 +1154,7 @@ function respondToEvents($context) {
 		
 		respondToEventsChoices($context);
 		
-		$('.editorContent').toggle();
+		$('.editorContent, .question_only').toggle();
 	});
 	
 	

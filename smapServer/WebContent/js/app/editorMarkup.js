@@ -107,8 +107,7 @@ define([
 				h[++idx] = '<div class="col-xs-2 q_icons_col">';
 					h[++idx] = '<div class="btn-group">';
 						if(question.type === "begin repeat" 
-								|| question.type === "begin group" 
-								|| question.type.indexOf("select") === 0) {
+								|| question.type === "begin group") {
 							
 							h[++idx] = '<a button tabindex="-1" class="btn btn-default" data-toggle="collapse"  href="#collapse';
 							h[++idx] = globals.gElementIndex;
