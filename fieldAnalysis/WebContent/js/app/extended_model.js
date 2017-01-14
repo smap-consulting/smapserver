@@ -69,14 +69,17 @@ define(['jquery', 'jquery_ui', 'rmm', 'localise', 'globals'],
 					survey: meta.forms[i].s_id,
 					name: meta.forms[i].form,
 					main: meta.forms[i].p_id == 0 ? true : false,
+					p_id: meta.forms[i].p_id,
 					selected: false
 			}
 			graph.nodes.push(node);		
 			
+			// Add link between parent / child forms
 			if(+meta.forms[i].p_id != 0) {
 				link = {
 						source: meta.forms[i].f_id,
 						target: meta.forms[i].p_id,
+						sourceQuestionId: 0,
 						value: 2
 				}
 				graph.links.push(link);	
@@ -85,10 +88,12 @@ define(['jquery', 'jquery_ui', 'rmm', 'localise', 'globals'],
 			}
 		}
 		
+		// Add links between surveys
 		for(i = 0; i < meta.links.length; i++) {
 			link = {
 					source: meta.links[i].fromFormId,
 					target: surveys[meta.links[i].toSurveyId],
+					sourceQuestionId: meta.links[i].fromQuestionId,
 					value: 1
 			}
 			graph.links.push(link);	
@@ -152,18 +157,44 @@ define(['jquery', 'jquery_ui', 'rmm', 'localise', 'globals'],
 			formList = [];
 			for(i = 0; i < selectedPath.length; i++) {
 				form = {
-					sId: getSurveyForForm(selectedPath[i]),
+					sId: getFormDetails(selectedPath[i]).survey,
 					fId: selectedPath[i]
+				}
+				/*
+				 * Add the questionFrom identifier
+				 * At this point we don't know if the list is going parent child or from child to parent
+				 *  hence look for the target form before and after the current form
+				 */
+				// 
+				if(i < selectedPath.length - 1) {
+					form.fromQuestionId = getFromQuestionId(selectedPath[i], selectedPath[i + 1]);
+				}
+				if(!form.fromQuestionId && i > 0) {
+					form.fromQuestionId = getFromQuestionId(selectedPath[i], selectedPath[i - 1]);
 				}
 				formList.push(form);
 			}
 		} else if(selected.length === 1) {
 			formList = [];
 			form = {
-					sId: getSurveyForForm(selected[0]),
+					sId: getFormDetails(selected[0]).survey,
 					fId: selected[0]
 				}
 			formList.push(form);
+		}
+		
+		// Put the form list in order of parent - child
+		if(formList.length > 1) {
+			// Check the first form, it is a parent if:
+			//  it is the "main" form and there is no fromQuestionId
+			//  or it is a child and the next forms parent id is equal to its form if
+			var formDetails = getFormDetails(formList[0].fId),
+				nextFormDetails = getFormDetails(formList[1].fId);
+			if((formDetails.main && !formList[0].fromQuestionId) || nextFormDetails.p_id ==  formList[0].fId) {
+				// Already in parent child order
+			} else {
+				formList.reverse();
+			}		
 		}
 		return formList;
 	}
@@ -330,13 +361,27 @@ define(['jquery', 'jquery_ui', 'rmm', 'localise', 'globals'],
 	/*
 	 * Other functions
 	 */
-	function getSurveyForForm(form) {
+	function getFormDetails(fId) {
+		var i;
 		for(i = 0; i < graph.nodes.length; i++) {
-			if(graph.nodes[i].id == form) {
-				return graph.nodes[i].survey;
+			if(graph.nodes[i].id == fId) {
+				return graph.nodes[i];
 			}
 		}
 	}
+	function getFromQuestionId(fSource, fTarget) {
+		var i;
+		for(i = 0; i < graph.links.length; i++) {
+			if(graph.links[i].source.id == fSource && graph.links[i].target.id == fTarget) {
+				return graph.links[i].sourceQuestionId;
+			}
+		}
+		return 0;
+	}
+	
+	/*
+	 * Get the from question 
+	 */
 	
 	function setPath() {
 		var current = selected[0],
