@@ -157,6 +157,13 @@ define(['jquery', 'jquery_ui', 'rmm', 'localise', 'globals'],
 				}
 				formList.push(form);
 			}
+		} else if(selected.length === 1) {
+			formList = [];
+			form = {
+					sId: getSurveyForForm(selected[0]),
+					fId: selected[0]
+				}
+			formList.push(form);
 		}
 		return formList;
 	}

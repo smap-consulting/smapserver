@@ -93,6 +93,11 @@ $(document).ready(function() {
 		        		
 		        		if(exportExtended) {
 		        			formList = extended_model.getPath();
+		        			
+		        			if(!formList) {
+		        				alert(localise.set["a_sel_forms"]);
+		        				return(false);
+		        			}
 		        		}
 		        			
 		        		if(sId == "-1") {
