@@ -114,7 +114,7 @@ ALTER SEQUENCE sc_seq OWNER TO ws;
 
 CREATE TABLE survey_change (
 	c_id integer DEFAULT NEXTVAL('sc_seq') CONSTRAINT pk_survey_changes PRIMARY KEY,
-	s_id integer REFERENCES survey,				
+	s_id integer REFERENCES survey ON DELETE CASCADE,				
 		
 	version integer,							
 	changes text,								
@@ -641,9 +641,9 @@ alter table dashboard_settings add constraint ds_user_ident FOREIGN KEY (ds_user
 -- Upgrade to 16.12
 -- The following may be required on some servers
 -- alter table survey_change drop constraint survey_change_s_id_fkey;
---alter table survey_change add constraint survey_change_survey FOREIGN KEY (s_id)
---	REFERENCES survey (s_id) MATCH SIMPLE
---	ON UPDATE NO ACTION ON DELETE CASCADE;
+-- alter table survey_change add constraint survey_change_survey FOREIGN KEY (s_id)
+-- REFERENCES survey (s_id) MATCH SIMPLE
+-- ON UPDATE NO ACTION ON DELETE CASCADE;
 
 -- Add configuration options for fieldTask
 alter table organisation add column ft_odk_style_menus boolean default true;
