@@ -832,8 +832,10 @@ define([
 		
 		var match = false;
 		
-		if(filters["_smap_cascade"] && filters["_smap_cascade"] == prevChoice) {
-			match = true;
+		if(filters) {
+			if(filters["_smap_cascade"] && filters["_smap_cascade"] == prevChoice) {
+				match = true;
+			}
 		}
 		
 		if(match) {

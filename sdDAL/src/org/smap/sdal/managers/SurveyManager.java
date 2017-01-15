@@ -882,6 +882,8 @@ public class SurveyManager {
 					} catch (Exception e) {
 						log.log(Level.SEVERE, e.getMessage(), e);		// Ignore errors as this service does not support the old non json cascade format
 					}
+				} else {
+					o.cascade_filters = new HashMap<String, String> ();	// An empty object
 				}
 				o.columnName = rsGetOptions.getString(6);
 				o.published = rsGetOptions.getBoolean(7);

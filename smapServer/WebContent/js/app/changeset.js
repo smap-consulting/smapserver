@@ -668,9 +668,7 @@ define([
 				theOption[property.prop] = property.newVal;	
 				
 				if(property.propType === "text") {
-					if(property.prop === "label" 
-						|| !survey.optionLists[property.optionList].options[property.itemIndex].labels[property.language][property.propType]
-						|| survey.optionLists[property.optionList].options[property.itemIndex].labels[property.language][property.propType] === "") {
+					if(property.prop === "label") {
 							survey.optionLists[property.optionList].options[property.itemIndex].labels[property.language][property.propType] = property.newVal;
 					}
 				} else {
@@ -998,15 +996,21 @@ define([
 						return $this.data("fid") == change.property.formIndex && $this.data("id") == change.property.itemIndex;
 					});
 					*/
-				} else {
+				} 
+					/*
+					 *  No changes to options affect markup 
+					 *
+					 */
 					// changed row for choices
+					/*
+					
 					$changedRow = $('#formList').find('li.option.l_' + 
 							jq(change.property.optionList)).filter(function(index){
 						var $this = $(this);
 						return $this.data("id") == change.property.itemIndex;
 					});
-					
 				}
+				*/
 				if($changedRow) {
 					$changedRow.find('.' + change.property.propType + 'Element').replaceWith(newMarkup);
 				}
@@ -1075,7 +1079,8 @@ define([
 			
 			// 1. Update the question / option
 			if(change.property.type === "option") {
-				
+				/*
+				 * No option property changes result in markup changes
 				// Get the changed option row(s) Multiple rows if several questions share a list name
 				$changedRow = $('#formList').find('li.option').filter(function(index){
 					var $this = $(this);
@@ -1089,7 +1094,7 @@ define([
 						survey.optionLists[change.property.optionList].oSeq[change.property.itemIndex], 
 						change.property.optionList,
 						change.property.qname);
-				
+				*/
 			} else if(change.property.type === "question") {
 				
 				// Get the changed question row

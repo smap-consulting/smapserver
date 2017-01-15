@@ -2057,7 +2057,11 @@ function updateFilterValues($this, isCascade, isChecked) {
 	}
 	
 	newVal = currentFilters;
-	newVal[filterName] = fVal;
+	if(typeof fVal === "undefined" || fVal.trim().length === 0) {
+		delete(newVal[filterName]);
+	} else {
+		newVal[filterName] = fVal;
+	}
 	$elem.data("filters", newVal);
 	
 	updateLabel("option", formIndex, itemIndex, listName, "text", newVal, qname, "cascade_filters") ;
