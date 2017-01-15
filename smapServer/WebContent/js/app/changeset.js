@@ -1323,7 +1323,7 @@ define([
 				}
 				
 				if(isValid) {	// Check parenthesis on choiceFilter
-					isValid = checkParentheisis(container, itemIndex, itemType, item.nodeset);
+					isValid = checkParentheisis(container, itemIndex, itemType, item.choice_filter);
 				}
 
 				
@@ -1517,7 +1517,7 @@ define([
 			getReferenceNames(item.relevant, refQuestions);
 			getReferenceNames(item.constraint, refQuestions);
 			getReferenceNames(item.calculation, refQuestions);
-			getReferenceNames(item.nodeset, refQuestions);
+			getReferenceNames(item.choice_filter, refQuestions);
 		} 
 		for(i = 0; i < item.labels.length; i++) {
 			var text = item.labels[i].text;

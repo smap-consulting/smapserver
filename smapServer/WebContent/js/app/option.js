@@ -430,7 +430,7 @@ define([
 			    h[++idx] = '<label>';
 			      h[++idx] = '<input type="checkbox" ';
 			      if(survey.filters[filter]) {
-			    	  h[++idx] = 'checked=true';
+			    	  h[++idx] = 'checked=true ';
 			      }
 			      h[++idx] = 'value="';
 			      h[++idx] = filter;

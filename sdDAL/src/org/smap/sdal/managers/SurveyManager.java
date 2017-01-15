@@ -1649,7 +1649,7 @@ public class SurveyManager {
 							ci.property.newVal = "0";
 						}
 						
-					} else if(ci.property.prop.equals("nodeset")) {
+					} else if(ci.property.prop.equals("choice_filter")) {
 						// Convert the passed in filter to a nodeset
 						String listname = GeneralUtilityMethods.getListNameForQuestion(sd, ci.property.qId);
 						ci.property.newVal = GeneralUtilityMethods.getNodesetFromChoiceFilter(ci.property.newVal, listname);
@@ -1678,6 +1678,11 @@ public class SurveyManager {
 						if(ci.property.oldVal != null && ci.property.oldVal.contains("null")) {
 							ci.property.oldVal = "_force_update";
 						}
+					}
+					
+					// If the property is choice_filter this is saved into the nodeset column in the question table
+					if(property.equals("choice_filter")) {
+						property = "nodeset";
 					}
 					
 					if((propertyType = GeneralUtilityMethods.columnType(sd, "question", property)) != null) {

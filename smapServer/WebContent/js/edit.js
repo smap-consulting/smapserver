@@ -774,11 +774,19 @@ function respondToEventsChoices($context) {
 	});
 	
 	// Respond to columns of filters being hidden or made visible
-	$('input', '#custom_filters').off().change(function(){
+	$('input', '#custom_filters').on('ifChecked', function(event) {
 		var $this = $(this),
 		survey = globals.model.survey;
 		
-		survey.filters[$this.val()] = $this.prop("checked");
+		survey.filters[$this.val()] = true;
+		option.resetFilterColumns();
+		
+	});
+	$('input', '#custom_filters').on('ifUnchecked', function(event) {
+		var $this = $(this),
+		survey = globals.model.survey;
+		
+		survey.filters[$this.val()] = false;
 		option.resetFilterColumns();
 		
 	});
@@ -800,7 +808,7 @@ function respondToEventsChoices($context) {
 			formIndex = $elem.data("fid"),
 			itemIndex = $elem.data("id");
 	
-		updateLabel("question", formIndex, itemIndex, undefined, "text", $this.val(), undefined, "nodeset");
+		updateLabel("question", formIndex, itemIndex, undefined, "text", $this.val(), undefined, "choice_filter");
 	});
 	
 	// Previous question for cascading select changes
@@ -910,7 +918,7 @@ function respondToEventsChoices($context) {
 	// Update the cascade filter values when a cascade filter value is un-checked
 	$('.cascadeFilter').on('ifUnchecked', function(event) {
 			updateFilterValues($(this), true, false);
-		});
+	});
 	
 	// Update the option list name
 	$context.find('.olname').change(function(){
@@ -2062,7 +2070,7 @@ function setCascadeFilter() {
 	var filter = "selected(${" + $('#previousSelect').val() + "}, _smap_cascade)";
 	$('#choiceFilter').val(filter);
 	updateLabel("question", globals.gFormIndex, 
-			globals.gItemIndex, undefined, "text", filter, undefined, "nodeset");
+			globals.gItemIndex, undefined, "text", filter, undefined, "choice_filter");
 }
 
 /*

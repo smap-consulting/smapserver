@@ -2043,7 +2043,6 @@ public class GeneralUtilityMethods {
 				"and column_name = ?;";
 		PreparedStatement pstmt = null;
 		
-		
 		try {
 			pstmt = connection.prepareStatement(sql);
 			pstmt.setString(1,  tableName);
