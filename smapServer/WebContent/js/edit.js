@@ -1355,7 +1355,7 @@ function respondToEvents($context) {
 	$context.find('.olname').keyup(function(){
 
 		var $this = $(this),
-			$elem = $this.closest('.question_head'),
+			$elem = $this.closest('.question'),
 			itemIndex = $elem.prop("id"),
 			listName = $elem.data("list_name"),
 			newVal = $this.val();
@@ -1369,7 +1369,7 @@ function respondToEvents($context) {
 	$context.find('.olname').change(function(){
 
 		var $this = $(this),
-			$li = $this.closest('.question_head'),
+			$li = $this.closest('.question'),
 			oldVal = $li.data("list_name"),
 			newVal = $this.val();
 		

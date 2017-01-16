@@ -863,7 +863,7 @@ define([
 		if(globals.gIsQuestionView) {
 			content = refreshQuestions();
 		} else {
-			content = refreshOptions();
+			content = refreshChoiceListView();
 		}
 		
 		// Get the current list of collapsed panels
@@ -890,9 +890,9 @@ define([
 	}
 	
 	/*
-	 * Show the choices on the screen
+	 * Show the choice List view
 	 */
-	function refreshOptions() {
+	function refreshChoiceListView() {
 		var h = [],
 			survey = globals.model.survey,
 			optionLists = survey.optionLists,

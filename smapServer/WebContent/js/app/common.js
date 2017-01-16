@@ -1577,11 +1577,11 @@ function getChangeDescription(change) {
 		if(change.property.prop === "name") {
 			
 			// Deprecate the following when the structure of these log objects is made consistent
-			if(typeof change.type === "undefined" || change.type === "unknown") {
+			if(typeof change.property.type === "optionList" || change.property.type === "unknown") {
 				change.type = "choice list ";
 			}
 			
-			h[++idx] = change.type;
+			h[++idx] = change.property.type;
 			h[++idx] = ' ';
 			h[++idx] = localise.set["msg_ren"],
 			h[++idx] = ': <span style="color:blue;">';
