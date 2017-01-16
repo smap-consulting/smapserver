@@ -577,7 +577,6 @@ public class ManagedForms extends Application {
 		String sqlCanUpdate = "select p_id from survey "
 				+ "where s_id = ? "
 				+ "and managed_id = ? "
-				+ "and blocked = 'false' "
 				+ "and deleted = 'false';";
 		PreparedStatement pstmtCanUpdate = null;
 		
