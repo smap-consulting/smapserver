@@ -76,6 +76,7 @@ define(function() {
 		gSelProperty: 'label',
 		gSelLabel: 'Question Text',
 		gIsQuestionView: true,
+		gShowingChoices: false,
 		gMaxOptionList: 0,
 		gLatestOptionList: undefined,	// Hack to record the last option list name added
 		

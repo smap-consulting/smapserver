@@ -170,7 +170,7 @@ $(document).ready(function() {
 	getFilesFromServer(gBaseUrl, undefined, refreshMediaView);		// Get the organisational level media files
 
 	/*
-	 * Switch between choices view and question view
+	 * Switch between choices list view and question view
 	 */
 	updateViewControls();
 	$('#viewType').change(function() {
@@ -709,6 +709,7 @@ function respondToEventsChoices($context) {
 	
 	$('.exitOptions', $context).off().click(function() {
 		
+		globals.gShowingChoices = false;
 		$('.editorContent, .question_only').toggle();;
 	});
 	
@@ -876,19 +877,6 @@ function respondToEventsChoices($context) {
 
 	});
 	
-	// validate the optionlist name
-	$context.find('.olname').keyup(function(){
-
-		var $this = $(this),
-			$elem = $this.closest('.question_head'),
-			itemIndex = $elem.prop("id"),
-			listName = $elem.data("list_name"),
-			newVal = $this.val();
-		
-		changeset.validateName(listName, itemIndex, newVal, "optionlist", true);
-		changeset.updateModelWithErrorStatus(listName, itemIndex, "optionlist");		// Update model and DOM
-
-	});
 	
 	// Update the option name
 	$context.find('.oname').change(function(){
@@ -918,24 +906,6 @@ function respondToEventsChoices($context) {
 	// Update the cascade filter values when a cascade filter value is un-checked
 	$('.cascadeFilter').on('ifUnchecked', function(event) {
 			updateFilterValues($(this), true, false);
-	});
-	
-	// Update the option list name
-	$context.find('.olname').change(function(){
-
-		var $this = $(this),
-			$li = $this.closest('.question_head'),
-			oldVal = $li.data("list_name"),
-			newVal = $this.val();
-		
-		// Only apply the update if there is no error on this option list
-		if(!$li.hasClass("error")) {
-			$li.data("list_name", newVal);	// First update the HTML
-			//$('button.add_option',$li).data("list_name", newVal).removeClass('l_' + oldVal)
-			//	.addClass('l_' + newVal);
-			updateLabel("optionlist", undefined, undefined, undefined, "text", newVal, oldVal, "name") ;
-		}
-
 	});
 	
 	// Add new option after
@@ -1145,6 +1115,7 @@ function respondToEvents($context) {
 		globals.gListName = $li.data("list_name");
 		globals.gFormIndex = $li.data("fid");
 		globals.gItemIndex = $li.data("id");
+		globals.gShowingChoices = true;
 		
 		$context = option.createChoiceView();
 
@@ -1378,6 +1349,38 @@ function respondToEvents($context) {
 			}
 		}); 
 		
+	});
+	
+	// validate the optionlist name
+	$context.find('.olname').keyup(function(){
+
+		var $this = $(this),
+			$elem = $this.closest('.question_head'),
+			itemIndex = $elem.prop("id"),
+			listName = $elem.data("list_name"),
+			newVal = $this.val();
+		
+		changeset.validateName(listName, itemIndex, newVal, "optionlist", true);
+		changeset.updateModelWithErrorStatus(listName, itemIndex, "optionlist");		// Update model and DOM
+
+	});
+	
+	// Update the option list name
+	$context.find('.olname').change(function(){
+
+		var $this = $(this),
+			$li = $this.closest('.question_head'),
+			oldVal = $li.data("list_name"),
+			newVal = $this.val();
+		
+		// Only apply the update if there is no error on this option list
+		if(!$li.hasClass("error")) {
+			$li.data("list_name", newVal);	// First update the HTML
+			//$('button.add_option',$li).data("list_name", newVal).removeClass('l_' + oldVal)
+			//	.addClass('l_' + newVal);
+			updateLabel("optionlist", undefined, undefined, undefined, "text", newVal, oldVal, "name") ;
+		}
+
 	});
 	
 	// Delete option list

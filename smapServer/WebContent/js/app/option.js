@@ -323,7 +323,7 @@ define([
 										h[++idx] = '<textarea id="choiceFilter" class="input-block" form-control has_tt" type="text">';
 										h[++idx] = question.choice_filter;
 										h[++idx] = '</textarea>';
-										h[++idx] = addOptionErrorMsg(question.errorMsg);
+										h[++idx] = addChoiceFilterError(question.errorMsg);
 									h[++idx] = '</div>';
 								h[++idx] = '</div>';
 							}
@@ -751,6 +751,16 @@ define([
 			idx = -1;
 		
 		h[++idx] = '<div class="error-msg pull-right">';
+		h[++idx] = msg;
+		h[++idx] = '</div>';
+		return h.join("");
+	}
+	
+	function addChoiceFilterError(msg) {
+		var h = [],
+			idx = -1;
+		
+		h[++idx] = '<div class="error-msg choice_filter_error pull-right">';
 		h[++idx] = msg;
 		h[++idx] = '</div>';
 		return h.join("");

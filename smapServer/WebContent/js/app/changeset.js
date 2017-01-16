@@ -164,7 +164,7 @@ define([
 					h[++idx] = '<div class="alert alert-success" role="alert">';
 					h[++idx] = '<p>';
 					h[++idx] = data.success;
-					h[++idx] = " changes successfully applied";
+					h[++idx] = localise.set["msg_upd"];
 					h[++idx] = '</p>'
 					h[++idx] = '<ol>';
 					for(i = 0; i < data.changeSet.length; i++) {
@@ -1561,7 +1561,7 @@ define([
 							container,
 							itemIndex,
 							"item",
-							"The question referenced in ${" + name + "} cannot be found",
+							localise.set["c_question"] + " ${" + name + "} " + localise.set["msg_not_f"],
 							itemType,
 							"error");
 			    	return false;
@@ -1690,6 +1690,9 @@ define([
 		
 		// Update DOM
 		$changedRow.find('.error-msg').html(msg);	// Add message
+		if(globals.gShowingChoices) {
+			$(".choice_filter_error").html(msg);
+		}
 		
 		$changedRow.removeClass("error warning");
 		if(hasError) {

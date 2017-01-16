@@ -353,6 +353,8 @@ define({
 	"msg_es": "Email has been sent to",
 	"msg_refresh": "You have made some changes and not saved them, are you sure you want to refresh?",
 	"msg_leave": "You have made some changes and not saved them, are you sure you want to leave?",
+	"msg_not_f": "was not found",
+	"msg_ren": "renamed to",
 	
 	// Editor
 	"e_b_e": "Base on existing form",

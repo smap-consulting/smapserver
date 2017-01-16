@@ -82,7 +82,7 @@ tr.deleted td a {
 	color: red !important;
 }
 
-#formList .error > .panel-heading, #choiceView .error.option {
+#formList .error > .panel-heading, #choiceView .error.option, #choiceView .choice_filter_error {
 	color:#a94442;
 	background-color:#f2dede;
 	border-color:#ebccd1;

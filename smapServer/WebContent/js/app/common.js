@@ -1582,7 +1582,9 @@ function getChangeDescription(change) {
 			}
 			
 			h[++idx] = change.type;
-			h[++idx] = ' renamed to: <span style="color:blue;">';
+			h[++idx] = ' ';
+			h[++idx] = localise.set["msg_ren"],
+			h[++idx] = ': <span style="color:blue;">';
 			h[++idx] = newVal;
 			h[++idx] = '</span>';
 			h[++idx] = ' from: <span style="color:red;">';
@@ -1727,6 +1729,16 @@ function getChangeDescription(change) {
 	}
 
 	return h.join('');
+}
+
+// Translate types for use in change description
+function translateType(input) {
+	if(input === "string") {
+		output = "text";
+	} else {
+		output = input;
+	}
+	return output;
 }
 
 /*

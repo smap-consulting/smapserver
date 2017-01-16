@@ -210,13 +210,4 @@ function setChangesHtml($element, survey, survey) {
 	
 }
 
-function translateType(input) {
-	if(input === "string") {
-		output = "text";
-	} else {
-		output = input;
-	}
-	return output;
-}
-
 });
