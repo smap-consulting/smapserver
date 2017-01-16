@@ -710,7 +710,7 @@ function respondToEventsChoices($context) {
 	$('.exitOptions', $context).off().click(function() {
 		
 		globals.gShowingChoices = false;
-		$('.editorContent, .question_only').toggle();;
+		$('.editorContent, .question_only').toggle();
 	});
 	
 	$('#addFilter', $context).off().click(function() {
@@ -1126,8 +1126,12 @@ function respondToEvents($context) {
 		}
 		
 		// Show the table of options
-		survey = globals.model.survey,
-		question = survey.forms[globals.gFormIndex].questions[globals.gItemIndex];
+		if(typeof globals.gFormIndex !== "undefined" && typeof globals.gItemIndex !== undefined) {
+			// opened from question
+			survey = globals.model.survey,
+			question = survey.forms[globals.gFormIndex].questions[globals.gItemIndex];
+		}
+		
 		$('#optionTable').html(option.getOptionTable(question, globals.gFormIndex, globals.gListName));
 		option.setupChoiceView($('#filterType').val());
 		
