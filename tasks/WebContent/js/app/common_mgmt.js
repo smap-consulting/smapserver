@@ -431,6 +431,9 @@ window.gTasks = {
 	            if(isManagedForms) {
 	            	gTasks.gSelectedRecord = rowData[0];
 	            	$('#editRecord').modal("show");
+	            } else if(isBrowseResults) {
+	            	// TODO check if the user has maintain privilege
+	            	alert(JSON.stringify( rowData ));
 	            }
 	            //alert(JSON.stringify( rowData ));
 	        } );
