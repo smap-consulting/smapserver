@@ -2475,7 +2475,7 @@ public class GeneralUtilityMethods {
 		nodeset.append(listName);
 		nodeset.append("')");
 		nodeset.append("/root/item");
-		if(choice_filter != null) {
+		if(choice_filter != null && choice_filter.trim().length() > 0) {
 			nodeset.append("[");
 			nodeset.append(choice_filter);
 			nodeset.append("]");

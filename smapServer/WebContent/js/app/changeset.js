@@ -2008,8 +2008,6 @@ define([
 			$item,
 			$parent;
 		
-
-		
 		if(error.itemType === "question") {
 			
 			itemId = "question" + error.container + "_" + error.itemIndex;
