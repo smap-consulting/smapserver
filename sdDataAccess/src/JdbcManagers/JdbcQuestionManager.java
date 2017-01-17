@@ -161,6 +161,7 @@ public class JdbcQuestionManager {
 			nodeset = q.getNodeset(false, null);
 			if(nodeset == null || nodeset.trim().length() == 0) {
 				// the remaining item list values
+				nodeset = GeneralUtilityMethods.getNodesetFromChoiceFilter(null, q.getListName());
 				nodeset_value = "name";
 				nodeset_label = "jr:itext(itextId)";
 				cascade_instance = q.getListName();
