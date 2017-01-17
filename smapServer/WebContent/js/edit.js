@@ -751,26 +751,29 @@ function respondToEventsChoices($context) {
 			choiceFilter,
 			proceed = true;
 
-		if(filterType === "cascade") {
-			choiceFilter = $('#choiceFilter').val();
+		choiceFilter = $('#choiceFilter').val();
+		
+		if(filterType != "custom") {
 			if(choiceFilter && choiceFilter.indexOf("_smap_cascade") < 0) {
 				proceed = confirm(localise.set["msg_rep_f"] + ": " + choiceFilter + "?");
 			}
-			
-			if(proceed) {
+		}
+		
+		if(proceed) {
+			if(filterType === "cascade") {
 				setCascadeFilter();
 				option.addFilter("_smap_cascade");  // Make sure _smap_cascade is in the list of filters
-			} else {
-				$this.val("custom");
+			} if(filterType === "none") {
+				setNoFilter();
 			}
-		}
+		} 
 		
 		if(filterType !== "none") {
 			$('#optionTable').html(option.getOptionTable(question, globals.gFormIndex, globals.gListName));
 			respondToEventsChoices($('#optionTable'));
 		}
 		option.setupChoiceView($this.val());
-		
+	
 		
 	});
 	
@@ -2078,10 +2081,19 @@ function updateFilterValues($this, isCascade, isChecked) {
  * Set the choice filter to a value appropriate for cascade selects
  */
 function setCascadeFilter() {
-	var filter = "selected(${" + $('#previousSelect').val() + "}, _smap_cascade)";
+	var filter = "selected(${" + $('#previousSelect option:selected').html() + "}, _smap_cascade)";
 	$('#choiceFilter').val(filter);
 	updateLabel("question", globals.gFormIndex, 
 			globals.gItemIndex, undefined, "text", filter, undefined, "choice_filter");
+}
+
+/*
+ * clear the choice filter
+ */
+function setNoFilter() {
+	$('#choiceFilter').val("");
+	updateLabel("question", globals.gFormIndex, 
+			globals.gItemIndex, undefined, "text", "", undefined, "choice_filter");
 }
 
 /*
