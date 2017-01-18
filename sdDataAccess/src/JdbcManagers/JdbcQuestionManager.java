@@ -158,13 +158,14 @@ public class JdbcQuestionManager {
 		String nodeset_label = null;
 		String cascade_instance = null;
 		if(q.getType().startsWith("select")) {
+			
 			nodeset = q.getNodeset(false, null);
 			if(nodeset == null || nodeset.trim().length() == 0) {
 				// the remaining item list values
-				nodeset = GeneralUtilityMethods.getNodesetFromChoiceFilter(null, q.getListName());
-				nodeset_value = "name";
-				nodeset_label = "jr:itext(itextId)";
-				cascade_instance = q.getListName();
+				//nodeset = GeneralUtilityMethods.getNodesetFromChoiceFilter(null, q.getListName());
+				//nodeset_value = "name";
+				//nodeset_label = "jr:itext(itextId)";
+				//cascade_instance = q.getListName();
 			} else {
 				nodeset_value = q.getNodesetValue();
 				nodeset_label = q.getNodesetLabel();
