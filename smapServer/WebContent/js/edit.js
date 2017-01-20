@@ -355,6 +355,7 @@ $(document).ready(function() {
 		$.ajax({
 			  type: "POST",
 			  url: "/surveyKPI/surveys/save_languages/" + gSId,
+			  dataType: 'json',
 			  cache: false,
 			  data: { languages: languagesString },
 				success: function(data) {
@@ -710,7 +711,8 @@ function respondToEventsChoices($context) {
 	$('.exitOptions', $context).off().click(function() {
 		
 		globals.gShowingChoices = false;
-		$('.editorContent, .question_only').toggle();
+		$('.editorContent, .q_only').toggle();
+		$('.notoptionslist').show();
 	});
 	
 	$('#addFilter', $context).off().click(function() {
@@ -1140,7 +1142,8 @@ function respondToEvents($context) {
 		
 		respondToEventsChoices($context);
 		
-		$('.editorContent, .question_only').toggle();
+		$('.editorContent, .q_only').toggle();
+		$('.notoptionslist').hide();
 	});
 	
 	
