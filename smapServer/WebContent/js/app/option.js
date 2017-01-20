@@ -141,11 +141,11 @@ define([
 			$('#choiceView table').addClass("notcascade").addClass("notcustom");	
 		}
 		
-		$('[type="checkbox"]', '#choiceView').iCheck({
+		$('[type="checkbox"]', '#optionTable').iCheck({
 		    checkboxClass: 'icheckbox_square-green',
 		    radioClass: 'iradio_square-green'
 		});
-		
+
 	}
 
 	/*

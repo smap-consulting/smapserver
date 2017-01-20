@@ -791,22 +791,16 @@ function respondToEventsChoices($context) {
 	});
 	
 	// Respond to columns of filters being hidden or made visible
-	$('input', '#custom_filters').on('ifChecked', function(event) {
+	$('input', '#custom_filters').off().on('ifToggled', function(event) {
 		var $this = $(this),
-		survey = globals.model.survey;
+			survey = globals.model.survey,
+			setting = $this.is(':checked');
 		
-		survey.filters[$this.val()] = true;
+		survey.filters[$this.val()] = setting;
 		option.resetFilterColumns();
 		
 	});
-	$('input', '#custom_filters').on('ifUnchecked', function(event) {
-		var $this = $(this),
-		survey = globals.model.survey;
-		
-		survey.filters[$this.val()] = false;
-		option.resetFilterColumns();
-		
-	});
+
 	
 	// Option list change
 	$context.find('.option-lists').off().change(function(){
