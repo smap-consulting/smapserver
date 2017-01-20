@@ -96,9 +96,9 @@ var gUrl,			// url to submit to
 
 // Media Modal Parameters
 var gNewVal,
-	gSelFormId,
-	gSelId,
-	gOptionList,
+	//gSelFormId,
+	//gSelId,
+	//gOptionList,
 	gQname,
 	gElement,
 	gNewVal,
@@ -513,23 +513,23 @@ $(document).ready(function() {
      */
 	$('#mediaSelectSave').click(function() {
 		if(gNewVal) {
-			if(gOptionList) {
+			if(globals.gOptionList) {
 				type = "option";
 			} else {
 				type = "question";
 			}
-			updateLabel(type, gSelFormId, gSelId, gOptionList, gElement, gNewVal, gQname, "media");
+			updateLabel(type, globals.gFormIndex, globals.gSelOptionId, globals.gOptionList, gElement, gNewVal, gQname, "media");
 		}
 	});
 	
 	$('#removeMedia').click(function() {
 
-		if(gOptionList) {
+		if(globals.gOptionList) {
 			type = "option";
 		} else {
 			type = "question";
 		}
-		updateLabel(type, gSelFormId, gSelId, gOptionList, gElement, undefined, gQname, "media");
+		updateLabel(type, globals.gFormIndex, globals.gSelOptionId, globals.gOptionList, gElement, undefined, gQname, "media");
 		
 	});
 	
@@ -692,9 +692,20 @@ function surveyDetailsDone() {
  */
 function refreshForm() {
 	
-	var $context;
-	$context = markup.refresh();
-	respondToEvents($context);
+	var $context,
+		survey,
+		question;
+	
+	if(globals.gShowingChoices) {
+		survey = globals.model.survey;
+		question = survey.forms[globals.gFormIndex].questions[globals.gItemIndex];
+		$('#optionTable').html(option.getOptionTable(question, globals.gFormIndex, globals.gListName));
+		option.setupChoiceView($('#filterType').val());
+		respondToEventsChoices($('#optionTable'));
+	} else {
+		$context = markup.refresh();
+		respondToEvents($context);
+	}
 
 }
 
@@ -711,7 +722,7 @@ function respondToEventsChoices($context) {
 	$('.exitOptions', $context).off().click(function() {
 		
 		globals.gShowingChoices = false;
-		$('.editorContent, .q_only').toggle();
+		$('.editorContent, .q_only, .o_only').toggle();
 		$('.notoptionslist').show();
 	});
 	
@@ -1142,7 +1153,7 @@ function respondToEvents($context) {
 		
 		respondToEventsChoices($context);
 		
-		$('.editorContent, .q_only').toggle();
+		$('.editorContent, .q_only, .o_only').toggle();
 		$('.notoptionslist').hide();
 	});
 	
@@ -1622,16 +1633,19 @@ function respondToEvents($context) {
 
 function mediaPropSelected($this) {
 	
-	var $li = $this.closest('li'),
+	var $elem = $this.closest('li'),
 		$immedParent = $this.closest('div');
 	
+	if(!$elem.hasClass("question")) {
+		$elem = $this.closest('tr');
+	}
 	// Set up media view
 	gElement = $this.data("element");
-	gSelFormId = $li.data("fid");
-	gSelId = $li.data("id");
-	gOptionList = $li.data("list_name"); 
-	gQname = $li.data("qname"); 
-	$gCurrentRow = $li;
+	globals.gFormIndex = $elem.data("fid");
+	globals.gSelOptionId = $elem.data("id");
+	globals.gOptionList = $elem.data("list_name"); 		// Option list only used with choices which are in a table
+	gQname = $elem.data("qname"); 
+	$gCurrentRow = $elem;
 	
 	if($('#orgLevelTab').hasClass("active")) {
 		$('#orgPanel').show();
