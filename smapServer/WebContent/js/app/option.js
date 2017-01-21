@@ -226,7 +226,7 @@ define([
 			
 				h[++idx] = addFilterColumnBody(option.cascade_filters);
 				h[++idx] = addOptionLabel(option);
-		
+				
 			
 			h[++idx] = '</tr>';
 		}

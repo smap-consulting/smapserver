@@ -406,8 +406,7 @@ define([
 		
 		option.addOptionSequence(survey.optionLists[list_name]);
 		seq = getSequenceOption(index, survey.optionLists[list_name]);
-		$deletedElement = $('#choiceView').find('li.option.l_' + list_name).
-				filter(function() {
+		$deletedElement = $('#choiceView').find('tr').filter(function() {
 			var $this = $(this);
 			return $this.data("id") == index;
 		});
