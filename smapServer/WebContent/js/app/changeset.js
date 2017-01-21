@@ -102,7 +102,7 @@ define([
 			change.question.$deletedElement.remove();
 		} else {
 			if(refresh) {
-				if(change.question) {
+				if(change.question || (change.property && change.property.type === "question")) {
 					$context = markup.refresh();
 				} else {
 					$context = option.createChoiceView();
