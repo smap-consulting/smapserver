@@ -38,7 +38,8 @@ define([
 		addQuestions: addQuestions,
 		addMedia: addMedia,
 		refresh: refresh,
-		includeQuestion: includeQuestion
+		includeQuestion: includeQuestion,
+		addQuestionSequence: addQuestionSequence
 	};
 	
 	/*

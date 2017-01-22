@@ -363,7 +363,7 @@ $(document).ready(function() {
 					$('#editLanguageModal').modal("hide");
 					globals.model.survey = data;
 					setLanguages(data.languages, refreshForm);
-					refreshForm();
+					//refreshForm();
 				},
 				error: function(xhr, textStatus, err) {
 					removeHourglass();
@@ -678,14 +678,47 @@ function surveyDetailsDone() {
 				"survey on the form management page.");
 	}
 	
-	refreshForm();
+	/*
+	 * Refresh the form
+	 */
+	if(globals.gShowingChoices) {
+		// skip the refresh of the choices as when the data was reloaded the item index may have changed hence we can't be guaranteed which question will be refreshed
+	} else {
+		refreshForm();
+	}
 	
 	// Set up link to test file
 	$('.m_test_survey').attr("href", "/webForm/s" + globals.gCurrentProject + "_" + globals.gCurrentSurvey);
 	
 }
 
+/*
+ * Refresh the options
+ */
+function refreshOptions() {
+	
+	var $context = option.createChoiceView(),
+		survey,
+		question;
 
+	// Set the previous choices list box
+	var prevListName = $('#previousSelect').val();
+	if(prevListName) {
+		option.setPreviousChoices(prevListName);
+	}
+	
+	// Show the table of options
+	if(typeof globals.gFormIndex !== "undefined" && typeof globals.gItemIndex !== undefined) {
+		// opened from question
+		survey = globals.model.survey,
+		question = survey.forms[globals.gFormIndex].questions[globals.gItemIndex];
+	}
+	
+	$('#optionTable').html(option.getOptionTable(question, globals.gFormIndex, globals.gListName));
+	option.setupChoiceView($('#filterType').val());
+	
+	respondToEventsChoices($context);
+}
 
 /*
  * Show the form on the screen

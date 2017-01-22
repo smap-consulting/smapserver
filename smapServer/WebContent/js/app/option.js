@@ -780,6 +780,7 @@ define([
 			
 		for(i = 0; i < survey.forms.length; i++) {
 			form = survey.forms[i];
+			markup.addQuestionSequence(form);		// Add the sequence for the questions if it has not already been added
 			for(j = 0; j < form.qSeq.length; j++) {
 				question = form.questions[form.qSeq[j]];
 				if(!question.soft_deleted && question.type === "select1") {
