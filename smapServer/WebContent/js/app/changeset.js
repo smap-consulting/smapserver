@@ -102,7 +102,7 @@ define([
 			change.question.$deletedElement.remove();
 		} else {
 			if(refresh) {
-				if(change.question) {
+				if(change.question || (change.property && change.property.type === "question")) {
 					$context = markup.refresh();
 				} else {
 					$context = option.createChoiceView();
@@ -2009,30 +2009,35 @@ define([
 			$parent;
 		
 		if(error.itemType === "question") {
+			
 			itemId = "question" + error.container + "_" + error.itemIndex;
 			$item = $('#' + itemId);
+			
+			// Expand all parent panes
+			$parents = $item.parents('div.collapse');
+			$parents.show();
 		} else {
-			$item = $('#formList').find('li.option.l_' + jq(error.container)).filter(function(index){
-				var $this = $(this);
-				return $this.data("id") == error.itemIndex;
-			});
+			
+			globals.gIsQuestionView = false;
+			updateViewControls();
+			refreshForm();
+			
+			$item = $('.olname[value="' + error.container + '"]');
+			
+			if(!globals.gShowingChoices) {
+				$item.find('.edit_choice').trigger("click");
+			}
 		}
-		
-		// Expand all parent panes
-		$parents = $item.parents('div.collapse');
-		$parents.show();
 		
 		if(error.itemType === "question") {
 			$textarea = $item.find('.question').find('textarea');
-		} else {
-			$textarea = $item.find('textarea');
-		}
-		
-		if($textarea.length > 0) {
-			$textarea.focus();
-		} else {
-			$item.find('button').focus();
-		}
+			if($textarea.length > 0) {
+				$textarea.focus();
+			} else {
+				$item.find('button').focus();
+			}
+		} 
+			
 	}
 	
 	function numberIssues(severity) {

@@ -120,13 +120,26 @@ var isBrowseResults = true,
 	        	<div class="col-sm-2">
 	            	<h2 class="lang" data-lang="m_br">browse</h2>   
 	            </div>
-	            <div class="col-sm-8">
-	            	<h3 id="main_survey"><span class="lang" data-lang="c_for">for</span> - <span class="main_survey"></span></h3>       	
-	            	<h5 id="sec_surveys"><span class="lang" data-lang="c_with"></span> - <span class="sec_list"></span></h5>
-	            </div>
-	            <div class="col-sm-2">
-	            	<button id="changeSurveys" class="btn btn-primary lang" data-lang="m_modify">modify</button>
-	            </div>
+	            <div class="col-sm-5">
+	            	<div class="row">
+						<form role="form" class="form-horizontal heading-element" id="service_filter_form">
+							<label class="lang col-sm-4 control-label" data-lang="c_project" for="project_name">project</label>
+							<div class="col-sm-8">
+								<select class="project_list form-control" id="project_name"></select>
+							</div>
+						</form>	
+					</div>
+	        	</div>
+	        	<div class="col-sm-5">
+	            	<div class="row">
+						<form role="form" class="form-horizontal heading-element" id="service_filter_form">
+							<label class="lang col-sm-4 control-label" data-lang="c_survey" for="survey_name">survey</label>
+							<div class="col-sm-8">
+								<select class="survey_select form-control" id="survey_name"></select>
+							</div>
+						</form>	
+					</div>
+	        	</div>
 	        </div>
 	        <div class="row">
 	        	<div class="col-sm-6">
@@ -220,49 +233,6 @@ var isBrowseResults = true,
 
 
 <img class="hour_glass" src="/images/ajax-loader.gif" style="display:none;" alt="hourglass" height="60" width="60">
-
-<!--  Modal to change the selected survey(s) -->
-<div id="surveySelect" class="modal fade" aria-hidden="true">
-	<div class="modal-dialog custom-modal-width">
-		<div class="modal-content">
-			<div class="modal-header">
-     			<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-   			</div>
-			<div class="modal-body">
-					
-				<div class="row">
-					<div class="col-sm-6 b-r">
-					</div>
-					<div class="col-sm-6 b-r">
-						<form role="form" class="form-horizontal heading-element">
-							<div class="form-group">
-								<label class="lang col-sm-4 control-label" data-lang="c_project" for="project_name">project</label>
-								<div class="col-sm-8">
-									<select class="project_list form-control" id="project_name"></select>
-								</div>
-							</div>
-							<div class="form-group">
-								<label class="lang col-sm-4 control-label" data-lang="c_survey" for="survey_name">survey</label>
-								<div class="col-sm-8">
-									<select class="survey_select form-control" id="survey_name"></select>
-								</div>
-							</div>
-							<div class="form-group">
-								<label class="lang col-sm-4 control-label" data-lang="c_form" for="form_name">form</label>
-								<div class="col-sm-8">
-									<select class="form_select form-control" id="form_name"></select>
-								</div>
-							</div>
-							<button type="button" class="btn btn-success">Add</button>
-							<button type="button" class="btn btn-info">Clear All</button>
-						</form>	
-					</div>
-				</div>
-			</div>
-				
-		</div>
-	</div>
-</div>
 
 <!-- Modal to edit a record -->
 <div id="editRecord" class="modal fade" aria-hidden="true">

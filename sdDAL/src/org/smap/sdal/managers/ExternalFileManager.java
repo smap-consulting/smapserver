@@ -76,8 +76,6 @@ public class ExternalFileManager {
 				+ "and calculate is not null;";
 		PreparedStatement pstmtCalculate = null;
 		
-		String sqlVersion = "update survey set version = version + 1 where s_id = ?";
-		PreparedStatement pstmtVersion = null;
 		try {
 			
 			ArrayList<String> uniqueColumns = new ArrayList<String> ();
@@ -145,10 +143,7 @@ public class ExternalFileManager {
 	            log.info("Process exitValue: " + code);
 	            
 				// Update the version of the linker file
-				pstmtVersion = sd.prepareStatement(sqlVersion);
-				pstmtVersion.setInt(1, sId);
-				pstmtVersion.executeUpdate();
-				
+	            GeneralUtilityMethods.updateVersion(sd, sId);			
             }
             
 			
@@ -159,8 +154,6 @@ public class ExternalFileManager {
 		} finally {
 			if(pstmtAppearance != null) try{pstmtAppearance.close();}catch(Exception e) {}
 			if(pstmtCalculate != null) try{pstmtCalculate.close();}catch(Exception e) {}
-			if(pstmtVersion != null) try{pstmtVersion.close();}catch(Exception e) {}
-
 		}
 	}
 	

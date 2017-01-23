@@ -532,17 +532,18 @@ public class SurveyManager {
 		csvRoot = csvRoot.replace("\'", "\'\'");
 		
 		ResultSet resultSet = null;
-		String sql = "select distinct s.s_id, s.name, s.display_name, s.deleted, s.blocked, s.ident" +
-				" from survey s, users u, project p, question q, form f " +
-				" where s.s_id = f.s_id " +
-				" and f.f_id = q.f_id " +
-				" and q.appearance like '%search(''" + csvRoot + "''%' " +
-				" and s.p_id = p.id" +
-				" and s.deleted = 'false'" +
-				" and s.blocked = 'false'" +
-				" and p.o_id = u.o_id" +
-				" and u.ident = ? " +
-				"order BY s.display_name;";
+		String sql = "select distinct s.s_id, s.name, s.display_name, s.deleted, s.blocked, s.ident "
+				+ "from survey s, users u, project p, question q, form f "
+				+ "where s.s_id = f.s_id "
+				+ "and f.f_id = q.f_id "
+				+ "and (q.appearance like '%search(''" + csvRoot + "''%' or "
+						+ "q.calculate like '%pulldata(''" + csvRoot + "''%' ) "
+				+ "and s.p_id = p.id "
+				+ "and s.deleted = 'false' "
+				+ "and s.blocked = 'false' "
+				+ "and p.o_id = u.o_id "
+				+ "and u.ident = ? "
+				+ "order BY s.display_name;";
 		
 	
 		PreparedStatement pstmt = null;
@@ -550,7 +551,7 @@ public class SurveyManager {
 			pstmt = sd.prepareStatement(sql);
 			pstmt.setString(1, user);
 			
-			log.info("Get a survey by organisation id: " + pstmt.toString());
+			log.info("Get surveys that use the uploaded CSV: " + pstmt.toString());
 			resultSet = pstmt.executeQuery();
 	
 			while (resultSet.next()) {								

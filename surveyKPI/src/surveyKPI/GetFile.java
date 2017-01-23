@@ -24,6 +24,7 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -40,8 +41,10 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
+import org.smap.sdal.Utilities.AuthorisationException;
 import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
+import org.smap.sdal.Utilities.JsonAuthorisationException;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.Utilities.UtilityMethodsEmail;
 
@@ -76,47 +79,41 @@ public class GetFile extends Application {
 			@PathParam("filename") String filename,
 			@QueryParam("settings") boolean settings,
 			@QueryParam("org") int requestedOrgId) throws Exception {
-
+		
+		return getOrganisationFile(request, response, request.getRemoteUser(), requestedOrgId, filename, settings);
+	}
+	
+	/*
+	 * Get file authenticated with a key
+	 */
+	@GET
+	@Produces("application/x-download")
+	@Path("/organisation/key/{key}")
+	public Response getOrganisationFilekey(
+			@Context HttpServletRequest request, 
+			@Context HttpServletResponse response,
+			@PathParam("filename") String filename,
+			@PathParam("key") String key,
+			@QueryParam("settings") boolean settings,
+			@QueryParam("org") int requestedOrgId) throws SQLException {
+		
+		String user = null;		
+		Connection connectionSD = SDDataSource.getConnection("surveyKPI-Get File Key");
+		
+		System.out.println("Getting file authenticated with a key");
 		try {
-		    Class.forName("org.postgresql.Driver");	 
-		} catch (ClassNotFoundException e) {
-			log.log(Level.SEVERE, "Can't find PostgreSQL JDBC Driver", e);
-		    throw new Exception("Can't find PostgreSQL JDBC Driver");
+			user = GeneralUtilityMethods.getDynamicUser(connectionSD, key);
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} finally {
+			SDDataSource.closeConnection("surveyKPI-Get File Key", connectionSD);
 		}
 		
-		int oId = 0;
-		Response r = null;
-		
-		// Authorisation - Access
-		Connection connectionSD = SDDataSource.getConnection("Get Organisation File");	
-		a.isAuthorised(connectionSD, request.getRemoteUser());		
-		try {		
-			oId = GeneralUtilityMethods.getOrganisationId(connectionSD, request.getRemoteUser(), 0);
-		} catch(Exception e) {
-			// ignore error
+		if (user == null) {
+			log.info("User not found for key");
+			throw new AuthorisationException();
 		}
-		if(requestedOrgId > 0 && requestedOrgId != oId) {
-			aOrg.isAuthorised(connectionSD, request.getRemoteUser());	// Must be org admin to work on another organisations data
-			oId = requestedOrgId;
-		}
-		// End Authorisation 
-		
-		log.info("Get File: " + filename + " for organisation: " + oId);
-		try {
-			String basepath = GeneralUtilityMethods.getBasePath(request);
-			String filepath = basepath + "/media/organisation/" + oId + (settings ? "/settings/" : "/") + filename;
-			getFile(response, filepath, filename);
-			
-			r = Response.ok("").build();
-			
-		}  catch (Exception e) {
-			log.info("Error getting file:" + e.getMessage());
-			r = Response.serverError().build();
-		} finally {	
-			SDDataSource.closeConnection("Get Organisation File", connectionSD);	
-		}
-		
-		return r;
+		return getOrganisationFile(request, response, user, requestedOrgId, filename, settings);
 	}
 	
 	@GET
@@ -226,6 +223,47 @@ public class GetFile extends Application {
 		return r;
 	}
 	
+	/*
+	 * Get the file at the organisation level
+	 */
+	private Response getOrganisationFile(HttpServletRequest request, 
+			HttpServletResponse response, 
+			String user, int requestedOrgId, String filename, boolean settings) {
+		
+		int oId = 0;
+		Response r = null;
+		
+		// Authorisation - Access
+		Connection connectionSD = SDDataSource.getConnection("Get Organisation File");	
+		a.isAuthorised(connectionSD, user);		
+		try {		
+			oId = GeneralUtilityMethods.getOrganisationId(connectionSD, user, 0);
+		} catch(Exception e) {
+			// ignore error
+		}
+		if(requestedOrgId > 0 && requestedOrgId != oId) {
+			aOrg.isAuthorised(connectionSD, user);	// Must be org admin to work on another organisations data
+			oId = requestedOrgId;
+		}
+		// End Authorisation 
+		
+		log.info("Get File: " + filename + " for organisation: " + oId);
+		try {
+			String basepath = GeneralUtilityMethods.getBasePath(request);
+			String filepath = basepath + "/media/organisation/" + oId + (settings ? "/settings/" : "/") + filename;
+			getFile(response, filepath, filename);
+			
+			r = Response.ok("").build();
+			
+		}  catch (Exception e) {
+			log.info("Error getting file:" + e.getMessage());
+			r = Response.serverError().build();
+		} finally {	
+			SDDataSource.closeConnection("Get Organisation File", connectionSD);	
+		}
+		
+		return r;
+	}
 	
 	/*
 	 * Add the file to the response stream

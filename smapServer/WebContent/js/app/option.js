@@ -141,11 +141,11 @@ define([
 			$('#choiceView table').addClass("notcascade").addClass("notcustom");	
 		}
 		
-		$('[type="checkbox"]', '#choiceView').iCheck({
+		$('[type="checkbox"]', '#optionTable').iCheck({
 		    checkboxClass: 'icheckbox_square-green',
 		    radioClass: 'iradio_square-green'
 		});
-		
+
 	}
 
 	/*
@@ -226,7 +226,7 @@ define([
 			
 				h[++idx] = addFilterColumnBody(option.cascade_filters);
 				h[++idx] = addOptionLabel(option);
-		
+				
 			
 			h[++idx] = '</tr>';
 		}
@@ -780,6 +780,7 @@ define([
 			
 		for(i = 0; i < survey.forms.length; i++) {
 			form = survey.forms[i];
+			markup.addQuestionSequence(form);		// Add the sequence for the questions if it has not already been added
 			for(j = 0; j < form.qSeq.length; j++) {
 				question = form.questions[form.qSeq[j]];
 				if(!question.soft_deleted && question.type === "select1") {

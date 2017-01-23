@@ -96,9 +96,9 @@ var gUrl,			// url to submit to
 
 // Media Modal Parameters
 var gNewVal,
-	gSelFormId,
-	gSelId,
-	gOptionList,
+	//gSelFormId,
+	//gSelId,
+	//gOptionList,
 	gQname,
 	gElement,
 	gNewVal,
@@ -355,6 +355,7 @@ $(document).ready(function() {
 		$.ajax({
 			  type: "POST",
 			  url: "/surveyKPI/surveys/save_languages/" + gSId,
+			  dataType: 'json',
 			  cache: false,
 			  data: { languages: languagesString },
 				success: function(data) {
@@ -362,7 +363,7 @@ $(document).ready(function() {
 					$('#editLanguageModal').modal("hide");
 					globals.model.survey = data;
 					setLanguages(data.languages, refreshForm);
-					refreshForm();
+					//refreshForm();
 				},
 				error: function(xhr, textStatus, err) {
 					removeHourglass();
@@ -512,23 +513,23 @@ $(document).ready(function() {
      */
 	$('#mediaSelectSave').click(function() {
 		if(gNewVal) {
-			if(gOptionList) {
+			if(globals.gOptionList) {
 				type = "option";
 			} else {
 				type = "question";
 			}
-			updateLabel(type, gSelFormId, gSelId, gOptionList, gElement, gNewVal, gQname, "media");
+			updateLabel(type, globals.gFormIndex, globals.gSelOptionId, globals.gOptionList, gElement, gNewVal, gQname, "media");
 		}
 	});
 	
 	$('#removeMedia').click(function() {
 
-		if(gOptionList) {
+		if(globals.gOptionList) {
 			type = "option";
 		} else {
 			type = "question";
 		}
-		updateLabel(type, gSelFormId, gSelId, gOptionList, gElement, undefined, gQname, "media");
+		updateLabel(type, globals.gFormIndex, globals.gSelOptionId, globals.gOptionList, gElement, undefined, gQname, "media");
 		
 	});
 	
@@ -677,23 +678,67 @@ function surveyDetailsDone() {
 				"survey on the form management page.");
 	}
 	
-	refreshForm();
+	/*
+	 * Refresh the form
+	 */
+	if(globals.gShowingChoices) {
+		// skip the refresh of the choices as when the data was reloaded the item index may have changed hence we can't be guaranteed which question will be refreshed
+	} else {
+		refreshForm();
+	}
 	
 	// Set up link to test file
 	$('.m_test_survey').attr("href", "/webForm/s" + globals.gCurrentProject + "_" + globals.gCurrentSurvey);
 	
 }
 
+/*
+ * Refresh the options
+ */
+function refreshOptions() {
+	
+	var $context = option.createChoiceView(),
+		survey,
+		question;
 
+	// Set the previous choices list box
+	var prevListName = $('#previousSelect').val();
+	if(prevListName) {
+		option.setPreviousChoices(prevListName);
+	}
+	
+	// Show the table of options
+	if(typeof globals.gFormIndex !== "undefined" && typeof globals.gItemIndex !== undefined) {
+		// opened from question
+		survey = globals.model.survey,
+		question = survey.forms[globals.gFormIndex].questions[globals.gItemIndex];
+	}
+	
+	$('#optionTable').html(option.getOptionTable(question, globals.gFormIndex, globals.gListName));
+	option.setupChoiceView($('#filterType').val());
+	
+	respondToEventsChoices($context);
+}
 
 /*
  * Show the form on the screen
  */
 function refreshForm() {
 	
-	var $context;
-	$context = markup.refresh();
-	respondToEvents($context);
+	var $context,
+		survey,
+		question;
+	
+	if(globals.gShowingChoices) {
+		survey = globals.model.survey;
+		question = survey.forms[globals.gFormIndex].questions[globals.gItemIndex];
+		$('#optionTable').html(option.getOptionTable(question, globals.gFormIndex, globals.gListName));
+		option.setupChoiceView($('#filterType').val());
+		respondToEventsChoices($('#optionTable'));
+	} else {
+		$context = markup.refresh();
+		respondToEvents($context);
+	}
 
 }
 
@@ -710,7 +755,8 @@ function respondToEventsChoices($context) {
 	$('.exitOptions', $context).off().click(function() {
 		
 		globals.gShowingChoices = false;
-		$('.editorContent, .question_only').toggle();;
+		$('.editorContent, .q_only, .o_only').toggle();
+		$('.notoptionslist').show();
 	});
 	
 	$('#addFilter', $context).off().click(function() {
@@ -751,46 +797,43 @@ function respondToEventsChoices($context) {
 			choiceFilter,
 			proceed = true;
 
-		if(filterType === "cascade") {
-			choiceFilter = $('#choiceFilter').val();
+		choiceFilter = $('#choiceFilter').val();
+		
+		if(filterType != "custom") {
 			if(choiceFilter && choiceFilter.indexOf("_smap_cascade") < 0) {
 				proceed = confirm(localise.set["msg_rep_f"] + ": " + choiceFilter + "?");
 			}
-			
-			if(proceed) {
+		}
+		
+		if(proceed) {
+			if(filterType === "cascade") {
 				setCascadeFilter();
 				option.addFilter("_smap_cascade");  // Make sure _smap_cascade is in the list of filters
-			} else {
-				$this.val("custom");
+			} if(filterType === "none") {
+				setNoFilter();
 			}
-		}
+		} 
 		
 		if(filterType !== "none") {
 			$('#optionTable').html(option.getOptionTable(question, globals.gFormIndex, globals.gListName));
 			respondToEventsChoices($('#optionTable'));
 		}
 		option.setupChoiceView($this.val());
-		
+	
 		
 	});
 	
 	// Respond to columns of filters being hidden or made visible
-	$('input', '#custom_filters').on('ifChecked', function(event) {
+	$('input', '#custom_filters').off().on('ifToggled', function(event) {
 		var $this = $(this),
-		survey = globals.model.survey;
+			survey = globals.model.survey,
+			setting = $this.is(':checked');
 		
-		survey.filters[$this.val()] = true;
+		survey.filters[$this.val()] = setting;
 		option.resetFilterColumns();
 		
 	});
-	$('input', '#custom_filters').on('ifUnchecked', function(event) {
-		var $this = $(this),
-		survey = globals.model.survey;
-		
-		survey.filters[$this.val()] = false;
-		option.resetFilterColumns();
-		
-	});
+
 	
 	// Option list change
 	$context.find('.option-lists').off().change(function(){
@@ -1126,14 +1169,19 @@ function respondToEvents($context) {
 		}
 		
 		// Show the table of options
-		survey = globals.model.survey,
-		question = survey.forms[globals.gFormIndex].questions[globals.gItemIndex];
+		if(typeof globals.gFormIndex !== "undefined" && typeof globals.gItemIndex !== undefined) {
+			// opened from question
+			survey = globals.model.survey,
+			question = survey.forms[globals.gFormIndex].questions[globals.gItemIndex];
+		}
+		
 		$('#optionTable').html(option.getOptionTable(question, globals.gFormIndex, globals.gListName));
 		option.setupChoiceView($('#filterType').val());
 		
 		respondToEventsChoices($context);
 		
-		$('.editorContent, .question_only').toggle();
+		$('.editorContent, .q_only, .o_only').toggle();
+		$('.notoptionslist').hide();
 	});
 	
 	
@@ -1612,16 +1660,19 @@ function respondToEvents($context) {
 
 function mediaPropSelected($this) {
 	
-	var $li = $this.closest('li'),
+	var $elem = $this.closest('li'),
 		$immedParent = $this.closest('div');
 	
+	if(!$elem.hasClass("question")) {
+		$elem = $this.closest('tr');
+	}
 	// Set up media view
 	gElement = $this.data("element");
-	gSelFormId = $li.data("fid");
-	gSelId = $li.data("id");
-	gOptionList = $li.data("list_name"); 
-	gQname = $li.data("qname"); 
-	$gCurrentRow = $li;
+	globals.gFormIndex = $elem.data("fid");
+	globals.gSelOptionId = $elem.data("id");
+	globals.gOptionList = $elem.data("list_name"); 		// Option list only used with choices which are in a table
+	gQname = $elem.data("qname"); 
+	$gCurrentRow = $elem;
 	
 	if($('#orgLevelTab').hasClass("active")) {
 		$('#orgPanel').show();
@@ -2074,10 +2125,19 @@ function updateFilterValues($this, isCascade, isChecked) {
  * Set the choice filter to a value appropriate for cascade selects
  */
 function setCascadeFilter() {
-	var filter = "selected(${" + $('#previousSelect').val() + "}, _smap_cascade)";
+	var filter = "selected(${" + $('#previousSelect option:selected').html() + "}, _smap_cascade)";
 	$('#choiceFilter').val(filter);
 	updateLabel("question", globals.gFormIndex, 
 			globals.gItemIndex, undefined, "text", filter, undefined, "choice_filter");
+}
+
+/*
+ * clear the choice filter
+ */
+function setNoFilter() {
+	$('#choiceFilter').val("");
+	updateLabel("question", globals.gFormIndex, 
+			globals.gItemIndex, undefined, "text", "", undefined, "choice_filter");
 }
 
 /*

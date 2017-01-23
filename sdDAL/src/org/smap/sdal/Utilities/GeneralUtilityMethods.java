@@ -2475,7 +2475,7 @@ public class GeneralUtilityMethods {
 		nodeset.append(listName);
 		nodeset.append("')");
 		nodeset.append("/root/item");
-		if(choice_filter != null) {
+		if(choice_filter != null && choice_filter.trim().length() > 0) {
 			nodeset.append("[");
 			nodeset.append(choice_filter);
 			nodeset.append("]");
@@ -3775,6 +3775,28 @@ public class GeneralUtilityMethods {
 		Timestamp endOfDay= new Timestamp(cal.getTime().getTime());
 		
 		return endOfDay;
+	}
+	
+	/*
+	 * Update the survey version
+	 */
+	public static void updateVersion(Connection sd, int sId) throws SQLException {
+		
+		String sql = "update survey set version = version + 1 where s_id = ?";
+		PreparedStatement pstmt = null;
+		
+		try {
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setInt(1, sId);
+			pstmt.executeUpdate();
+			
+		} catch(SQLException e) {
+			log.log(Level.SEVERE,"Error", e);
+			throw e;
+		} finally {
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+		}	
+		
 	}
 
 }

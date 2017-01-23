@@ -511,7 +511,7 @@ public class Surveys extends Application {
 					
 					if(item.getFieldName().equals("settings")) {
 						try {
-							settings = item.getString();
+							settings = item.getString("UTF-8");  // Set encoding type to UTF-8 as per http://stackoverflow.com/questions/22025999/sending-files-and-text-with-ajax-multipart-form-data-utf-8-encoding
 						} catch (Exception e) {
 							
 						}

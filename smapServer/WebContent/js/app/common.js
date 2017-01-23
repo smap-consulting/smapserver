@@ -2031,10 +2031,11 @@ function getTableData(table, columns) {
 	for(i = 0; i < rows.length; i++) {
 		cols = [];
 		for(j = 0; j < columns.length; j++) {
-			var k = columns[j].humanName;
+			var k = columns[j].humanName,
+				lookup = columns[j].name;
 			cols.push({
 				k: k,
-				v: rows[i][k]
+				v: rows[i][lookup]
 			})
 		}
 		data.push(cols);

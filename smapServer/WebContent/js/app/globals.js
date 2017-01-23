@@ -80,9 +80,11 @@ define(function() {
 		gMaxOptionList: 0,
 		gLatestOptionList: undefined,	// Hack to record the last option list name added
 		
-		gListName: undefined,					// Choice Modal parameters
-		gFormIndex: undefined,
-		gItemIndex: undefined,
+		gListName: undefined,					// Choice Modal parameters, Set if started from choice list view
+		gOptionList: undefined,					// The option list name applying to this set of choices
+		gSelOptionId: undefined,				// Selected option index
+		gFormIndex: undefined,					// Selected form index
+		gItemIndex: undefined,					// Selected question index
 		gSelectedFilters: undefined,
 		gFilterArray: undefined,
 		

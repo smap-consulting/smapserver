@@ -89,7 +89,7 @@
 	          <ul id="language" class="dropdown-menu language_menu_list" role="menu">
 	          </ul>
 	        </li> 
-	        <li class="dropdown question_only">
+	        <li class="dropdown">
 	          <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false"><span id="propSelected"></span> <span class="caret"></span></a>
 	          <ul id="selProperty" class="dropdown-menu" role="menu">
 	          	<li class="q_only default"><a data-prop="label" href="#" class="lang" data-lang="ed_qt">question text</a></li>
@@ -109,7 +109,7 @@
 	          	<!--  <li><a data-value="group" href="#">Set the end of a group</a></li> -->
 	          </ul>
 	        </li> 
-	        <li class="question_only"><input id="viewType" type="checkbox" checked 
+	        <li class="notoptionslist"><input id="viewType" type="checkbox" checked 
 	        		data-onstyle="primary" data-offstyle="info"></li>
 	        <li><a type="button" tabindex="-1"  class="btn btn-success lang disabled m_save_survey" disabled="disabled">
 	        		<span class="lang" data-lang="c_save">Save</span> 
@@ -254,7 +254,8 @@
 					</div>
 					
 				</form>	
-				<form enctype="multipart/form-data" name="pdftemplate" role="form" class="form-horizontal">
+				<form enctype="multipart/form-data" name="pdftemplate" role="form" class="form-horizontal" 
+						method="POST" accept-charset="utf-8">
 					<fieldset>
 						<legend>Pdf Template:</legend>
 						<input id="pdfSettings" type="hidden" name="settings" >
