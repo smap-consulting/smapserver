@@ -537,7 +537,7 @@ public class SurveyManager {
 				+ "where s.s_id = f.s_id "
 				+ "and f.f_id = q.f_id "
 				+ "and (q.appearance like '%search(''" + csvRoot + "''%' or "
-						+ "(q.qtype = 'calculate' and q.calculate like '%pulldata(''" + csvRoot + "''%')) "
+						+ "q.calculate like '%pulldata(''" + csvRoot + "''%' ) "
 				+ "and s.p_id = p.id "
 				+ "and s.deleted = 'false' "
 				+ "and s.blocked = 'false' "

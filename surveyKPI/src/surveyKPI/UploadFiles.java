@@ -184,7 +184,7 @@ public class UploadFiles extends Application {
 					    
 					    // Apply changes from CSV files to survey definition
 					    String contentType = UtilityMethodsEmail.getContentType(fileName);
-					    if(contentType.equals("text/csv")) {
+					    if(contentType.equals("text/csv") || fileName.endsWith(".csv")) {
 					    	applyCSVChanges(connectionSD, cResults, user, sId, fileName, savedFile, basePath, mediaInfo);
 					    }
 					    
@@ -733,7 +733,12 @@ public class UploadFiles extends Application {
 		}
 		 
 		// Apply the changes 
-		sm.applyChangeSetArray(connectionSD, cResults, sId, user, changes);
+		if(changes.size() > 0) {
+			sm.applyChangeSetArray(connectionSD, cResults, sId, user, changes);
+		} else {
+			// No changes to the survey definition but we will update the survey version so that it gets downloaded with the new CSV data (pulldata only surveys will follow this path)
+			GeneralUtilityMethods.updateVersion(connectionSD, sId);
+		}
 		      
 	}
 	
