@@ -683,9 +683,12 @@ function surveyDetailsDone() {
 	 */
 	if(globals.gShowingChoices) {
 		// skip the refresh of the choices as when the data was reloaded the item index may have changed hence we can't be guaranteed which question will be refreshed
-	} else {
-		refreshForm();
-	}
+		// Safer to return to the question view
+		globals.gShowingChoices = false;
+		$('.editorContent, .q_only, .o_only').toggle();
+		$('.notoptionslist').show();
+	} 
+	refreshForm();
 	
 	// Set up link to test file
 	$('.m_test_survey').attr("href", "/webForm/s" + globals.gCurrentProject + "_" + globals.gCurrentSurvey);
