@@ -1311,8 +1311,12 @@ public class AllAssignments extends Application {
 			
 			try {results.setAutoCommit(true);} catch (SQLException e) {}
 			
-			SDDataSource.closeConnection("surveyKPI-AllAssignments-LoadTasks From File", sd);
-			ResultsDataSource.closeConnection("surveyKPI-AllAssignments-LoadTasks From File", results);
+			try {
+				SDDataSource.closeConnection("surveyKPI-AllAssignments-LoadTasks From File", sd);
+			} catch(Exception e) {};
+			try {
+				ResultsDataSource.closeConnection("surveyKPI-AllAssignments-LoadTasks From File", results);
+			} catch(Exception e) {};
 		}
 		
 		return response;

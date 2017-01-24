@@ -1,6 +1,6 @@
 ({
     appDir: '../WebContent',
-//    optimize: 'none',
+    optimize: 'none',
     wrapShim: false,
     waitSeconds: 0,
     baseUrl: 'js/libs',
@@ -18,6 +18,7 @@
     	common: '../../../../smapServer/WebContent/js/app/common',
         moment: '../../../../smapServer/WebContent/js/libs/moment-with-locales.min',
     	version: '../../../../smapServer/WebContent/js/app/version',
+    	pacesettings: '../../../../smapServer/WebContent/js/libs/paceSettings',
 	pace: '../../../../smapServer/WebContent/js/libs/wb/plugins/pace/pace.min',
     	globals: '../../../../smapServer/WebContent/js/app/globals',
     	tablesorter: '../../../../smapServer/WebContent/js/libs/tablesorter',

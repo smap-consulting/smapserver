@@ -373,11 +373,14 @@ public class MyAssignments extends Application {
 					
 					log.info("Linked file:" + m.fileName);
 					
-					// Create file 
+					/*
+					 * The file is unique per survey and by user name due to the use of roles to
+					 *  restrict columns and rows per user
+					 */
 					ExternalFileManager efm = new ExternalFileManager();
 					String basepath = GeneralUtilityMethods.getBasePath(request);
 					String sIdent = GeneralUtilityMethods.getSurveyIdent(connectionSD, sId);
-					filepath = basepath + "/media/" + sIdent+ "/" + m.fileName;
+					filepath = basepath + "/media/" + sIdent+ "/" + userName + "/" + m.fileName;
 					
 					efm.createLinkedFile(connectionSD, cRel, sId, m.fileName , filepath + ".csv");
 					

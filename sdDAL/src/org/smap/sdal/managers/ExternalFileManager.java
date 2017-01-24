@@ -142,7 +142,7 @@ public class ExternalFileManager {
 				
 	            log.info("Process exitValue: " + code);
 	            
-				// Update the version of the linker file
+				// Update the version of the survey that links to this file
 	            GeneralUtilityMethods.updateVersion(sd, sId);			
             }
             

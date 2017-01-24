@@ -73,7 +73,7 @@ public class GetFile extends Application {
 	@GET
 	@Path("/organisation")
 	@Produces("application/x-download")
-	public Response getOrganisationFile (
+	public Response getOrganisationFileUser (
 			@Context HttpServletRequest request, 
 			@Context HttpServletResponse response,
 			@PathParam("filename") String filename,

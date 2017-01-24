@@ -3126,7 +3126,7 @@ public class GeneralUtilityMethods {
 		mi.manifest = inputManifest;
 		mi.changed = false;
 		
-		// Check to see if this appearance references a manifest file
+		// Check to see if this calculate references a manifest file
 		if(calculate != null && calculate.toLowerCase().trim().contains("pulldata(")) {
 			
 			// Yes it references a manifest

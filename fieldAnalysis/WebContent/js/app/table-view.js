@@ -204,14 +204,14 @@ function importData() {
 			  refreshAnalysisData();
 		  },
 		  error: function(xhr, textStatus, err) {
-			 
+			  removeHourglass(); 			 
 			  var msg = xhr.responseText;
 			  if(msg && msg === "only csv") {
 				  msg = localise.set["t_efnl"] + " " + localise.set["msg_csv"];
 			  } else {
 				  msg = localise.set["t_efnl"] + " " + xhr.responseText;
 			  }
-			  removeHourglass(); 
+
 			  $('#load_tasks_alert').show().removeClass('alert-success').addClass('alert-danger').html(msg);
 			 
 		  }

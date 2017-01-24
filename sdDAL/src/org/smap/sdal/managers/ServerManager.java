@@ -209,6 +209,18 @@ public class ServerManager {
 				} catch (IOException e) {
 					log.info("Error deleting uploaded instances: " + fileFolder + " : " + e.getMessage());
 				}
+			    
+				/*
+				 * Delete any media files
+				 */
+				fileFolder = basePath + "/media/" + surveyIdent;
+			    folder = new File(fileFolder);
+			    try {
+			    	log.info("Deleting media files for survey: " + surveyDisplayName + " in folder: " + fileFolder);
+					FileUtils.deleteDirectory(folder);
+				} catch (IOException e) {
+					log.info("Error deleting media files: " + fileFolder + " : " + e.getMessage());
+				}
 	    
 
 			    // Delete the templates
@@ -217,27 +229,24 @@ public class ServerManager {
 				} catch (Exception e) {
 					log.info("Error deleting templates: " + surveyDisplayName + " : " + e.getMessage());
 				}
-		    }
-		
-			// Delete survey definition
-			if(delData || !nonEmptyDataTables) {
+
+				// Delete survey definition
 				sql = "delete from survey where s_id = ?;";	
 				if(pstmt != null) try {pstmt.close();}catch(Exception e) {}
 				pstmt = sd.prepareStatement(sql);
 				pstmt.setInt(1, sId);
 				log.info("Delete survey definition: " + pstmt.toString());
 				pstmt.execute();
-			}
-		
-			// Delete changeset data, this is an audit trail of modifications to the data
-			if(delData || !nonEmptyDataTables) {
+			
+				// Delete changeset data, this is an audit trail of modifications to the data
 				sql = "delete from changeset where s_id = ?;";	
 				if(pstmt != null) try {pstmt.close();}catch(Exception e) {}
 				pstmt = rel.prepareStatement(sql);
 				pstmt.setInt(1, sId);
 				log.info("Delete changeset data: " + pstmt.toString());
 				pstmt.execute();
-			}
+		    }
+			
 			
 		} finally {
 			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
