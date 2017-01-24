@@ -60,6 +60,7 @@ import taskModel.PointEntry;
 import taskModel.TaskCompletionInfo;
 import taskModel.TaskResponse;
 
+import java.io.File;
 import java.lang.reflect.Type;
 import java.sql.*;
 import java.util.ArrayList;
@@ -380,7 +381,12 @@ public class MyAssignments extends Application {
 					ExternalFileManager efm = new ExternalFileManager();
 					String basepath = GeneralUtilityMethods.getBasePath(request);
 					String sIdent = GeneralUtilityMethods.getSurveyIdent(connectionSD, sId);
-					filepath = basepath + "/media/" + sIdent+ "/" + userName + "/" + m.fileName;
+					String dirPath = basepath + "/media/" + sIdent+ "/" + userName + "/";
+					filepath =  dirPath + m.fileName;
+					
+					// Make sure the destination exists
+					File dir = new File(dirPath);
+					dir.mkdirs();
 					
 					efm.createLinkedFile(connectionSD, cRel, sId, m.fileName , filepath + ".csv");
 					
