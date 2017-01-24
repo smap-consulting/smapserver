@@ -1,5 +1,6 @@
 package org.smap.sdal.managers;
 
+import java.io.File;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -86,7 +87,11 @@ public class ExternalFileManager {
 			int linked_sId = GeneralUtilityMethods.getSurveyId(sd, sIdent);
 			
 			// 2. Determine whether or not the file needs to be regenerated
-            boolean regenerate = regenerateFile(sd, cRel, linked_sId, sId);
+			boolean regenerate = true;
+			File f = new File(filepath);
+			if(f.exists()) {
+				regenerate = regenerateFile(sd, cRel, linked_sId, sId);
+			}
 			
 			// 3.Get columns from appearance
             if(regenerate) {

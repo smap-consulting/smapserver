@@ -398,11 +398,12 @@ public class TableManager {
 						+ "_complete boolean default true, "
 						+ "_modified boolean default false"
 						+ ", _upload_time timestamp with time zone, _s_id integer ";
+				
+				if(hasHrk) {
+					sql += ", _hrk text ";
+				}
 			}
 			
-			if(hasHrk) {
-				sql += ", _hrk text ";
-			}
 							
 			for(Question q : columns) {
 				

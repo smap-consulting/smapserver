@@ -388,7 +388,7 @@ public class MyAssignments extends Application {
 					File dir = new File(dirPath);
 					dir.mkdirs();
 					
-					efm.createLinkedFile(connectionSD, cRel, sId, m.fileName , filepath + ".csv");
+					efm.createLinkedFile(connectionSD, cRel, sId, m.fileName , filepath);
 					
 					filepath += ".csv";
 					m.fileName += ".csv";
