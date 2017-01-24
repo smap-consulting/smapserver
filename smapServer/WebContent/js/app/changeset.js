@@ -713,12 +713,6 @@ define([
 				var name = question.name;
 				var endName;
 				var form;
-				
-				change.question.itemIndex = moveQuestion(survey, question, 
-						targetForm,
-						newLocation,
-						sourceForm,
-						oldLocation);	
 			
 				if(question.type === "begin group") {	// Move all the group members
 					name = question.name;
@@ -744,13 +738,20 @@ define([
 						
 						moveQuestion(survey, form.questions[groupMembers[i]],
 								targetForm,
-								++newLocation,
+								newLocation++,
 								sourceForm,
-								++oldLocation);
+								oldLocation++);
 						
-						console.log("Moved group member: " + form.questions[form.qSeq[i]].name.toLowerCase());
+						console.log("moved");
 					}
 					
+				} else {
+					// Move the single question
+					change.question.itemIndex = moveQuestion(survey, question, 
+							targetForm,
+							newLocation,
+							sourceForm,
+							oldLocation);	
 				}
 				refresh = true;		// Do a complete refresh after moving questions
 				

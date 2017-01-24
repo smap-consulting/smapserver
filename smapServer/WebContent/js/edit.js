@@ -569,6 +569,15 @@ $(document).ready(function() {
 	    $("#filter_name").focus();
 	});
 	
+	$('#content').on('shown.bs.collapse', function (e) {
+		$('a[href="#' + e.target.id + '"]', '#content').find('.edit_icon').removeClass('glyphicon-chevron-down').addClass('glyphicon-chevron-up');
+	});
+	
+	$('#content').on('hidden.bs.collapse', function (e) {
+		$('a[href="#' + e.target.id + '"]', '#content').find('.edit_icon').removeClass('glyphicon-chevron-up').addClass('glyphicon-chevron-down');
+	});
+	
+	
 });
 
 /*
@@ -1187,7 +1196,6 @@ function respondToEvents($context) {
 		$('.notoptionslist').hide();
 	});
 	
-	
 	// Repeat count change
 	$context.find('.repeat-counts').change(function(){
 		var $this = $(this),
@@ -1574,7 +1582,7 @@ function respondToEvents($context) {
 		evt.originalEvent.stopPropagation();
 	})
 	
-	// Drop the question, option or type
+	// Drop the question or type
 	.off('drop')
 	.on('drop', function(evt){
 		var ev = evt.originalEvent,
@@ -1629,7 +1637,10 @@ function respondToEvents($context) {
 					$context = question.moveQuestion(formIndex, sourceId, targetId, locn);
 					respondToEvents($context);						// Add events on to the altered html
 				}
-			} else {
+			} 
+			
+			/*
+			else {
 				type = "option";
 				
 				targetListName = $targetListItem.data("list_name");
@@ -1647,6 +1658,7 @@ function respondToEvents($context) {
 					respondToEvents($context);						// Add events on to the altered html
 				}
 			}
+			*/
 
 			
 		}
