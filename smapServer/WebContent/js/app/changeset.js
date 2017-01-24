@@ -925,11 +925,12 @@ define([
 		var i,
 			end_name = name + "_groupEnd";
 		
+		// Remove the group from the model
 		for(i = start_seq; i < form.qSeq.length; i++) {
 			if(form.questions[form.qSeq[i]].name === end_name) {
 				if(action === "delete") {
-					form.qSeq.splice(i, 1);
 					form.questions[form.qSeq[i]].deleted = true;
+					form.qSeq.splice(i, 1);
 				} else if(action === "rename") {
 					form.questions[form.qSeq[i]].name = new_name + "_groupEnd";
 				}
@@ -937,6 +938,7 @@ define([
 			}
 		}
 		
+		// Remove any group items from the pending changes list
 		for(i = 0; i < globals.changes.length; i++) {
 			if(globals.changes[i].items[0].question) {
 				if(globals.changes[i].items[0].question.name === end_name) {
