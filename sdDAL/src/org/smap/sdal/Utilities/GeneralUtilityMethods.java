@@ -2599,6 +2599,7 @@ public class GeneralUtilityMethods {
 					output.append(" || ");
 				}
 				output.append('\'');
+				item = item.replaceAll("'", "''");	// escape quotes
 				output.append(item);
 				output.append('\'');
 			}
@@ -2622,6 +2623,7 @@ public class GeneralUtilityMethods {
 					output.append(" || ");
 				}
 				output.append('\'');
+				item = item.replaceAll("'", "''");	// escape quotes
 				output.append(item);
 				output.append('\'');
 			}

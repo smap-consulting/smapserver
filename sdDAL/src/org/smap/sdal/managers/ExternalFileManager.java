@@ -1,6 +1,11 @@
 package org.smap.sdal.managers;
 
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -57,6 +62,14 @@ public class ExternalFileManager {
 			 Logger.getLogger(ExternalFileManager.class.getName());
 	
 	/*
+	 * Class to return SQL
+	 */
+	class SqlDef {
+		String sql;
+		ArrayList<String> colNames;
+	}
+	
+	/*
 	 * Create a linked file
 	 */
 	public void createLinkedFile(Connection sd, 
@@ -70,6 +83,8 @@ public class ExternalFileManager {
 		String sIdent = null;
 		int linked_sId = 0;
 		String data_key = null;
+		boolean non_unique_key = false;
+		File f = new File(filepath);
 		
 		String sqlAppearance = "select q_id, appearance from question "
 				+ "where f_id in (select f_id from form where s_id = ?) "
@@ -81,6 +96,7 @@ public class ExternalFileManager {
 				+ "and calculate is not null;";
 		PreparedStatement pstmtCalculate = null;
 		
+		PreparedStatement pstmtData = null;
 		try {
 			
 			ArrayList<String> uniqueColumns = new ArrayList<String> ();
@@ -94,6 +110,7 @@ public class ExternalFileManager {
 				// TODO get values from database
 				sIdent = "s1_1639";		// TEST
 				data_key = "${cfs}-${group}";
+				non_unique_key = true;
 			} else {
 				int idx = filename.indexOf('_');
 				sIdent = filename.substring(idx + 1);
@@ -102,7 +119,6 @@ public class ExternalFileManager {
 			
 			// 2. Determine whether or not the file needs to be regenerated
 			boolean regenerate = true;
-			File f = new File(filepath);
 			regenerate = regenerateFile(sd, cRel, linked_sId, sId, f.exists());
 			
 			// 3.Get columns from appearance
@@ -142,24 +158,53 @@ public class ExternalFileManager {
 	
 				
 				// 5. Get the sql
-				String sql = getSql(sd, sIdent, uniqueColumns, linked_pd, data_key);		
+				SqlDef sqlDef = getSql(sd, sIdent, uniqueColumns, linked_pd, data_key);		
 				
 				// 6. Create the file
-				int code = 0;
-				
-				String [] cmd = {"/bin/sh", "-c", "/smap_bin/getshape.sh "
-						+ "results linked "
-						+ "\"" + sql + "\" "
-						+ filepath
-						+ " csvnozip"
-						+ " >> /var/log/tomcat7/survey.log 2>&1"};
-				log.info("Getting linked data: " + cmd[2]);
-				Process proc = Runtime.getRuntime().exec(cmd);
-				code = proc.waitFor();
-				
-	            log.info("Process exitValue: " + code);
+				if(linked_pd && non_unique_key) {
+					pstmtData = cRel.prepareStatement(sqlDef.sql);
+					rs = pstmtData.executeQuery();
+					
+					BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(
+							new FileOutputStream(f.getAbsoluteFile()), "UTF8"));
+					
+					while(rs.next()) {
+						System.out.println("Data: " + rs.getString("_data_key") + " : " + rs.getString("child_full_name"));
+						
+						bw.write(rs.getString("_data_key"));
+						for(int i = 0; i < sqlDef.colNames.size(); i++) {
+							String col = sqlDef.colNames.get(i);
+							System.out.println("Writing col: " + col);
+							bw.write(",");
+							String value = rs.getString(col);
+							if(value == null) {
+								value = "";
+							}
+							bw.write(value);
+						}
+
+						bw.newLine();
+					}
+					bw.flush();
+					bw.close();
+				} else {
+					// Use PSQL to generate the file as it is faster
+					int code = 0;
+					
+					String [] cmd = {"/bin/sh", "-c", "/smap_bin/getshape.sh "
+							+ "results linked "
+							+ "\"" + sqlDef.sql + "\" "
+							+ filepath
+							+ " csvnozip"
+							+ " >> /var/log/tomcat7/survey.log 2>&1"};
+					log.info("Getting linked data: " + cmd[2]);
+					Process proc = Runtime.getRuntime().exec(cmd);
+					code = proc.waitFor();
+					
+		            log.info("Process exitValue: " + code);
+				}
 	            
-				// Update the version of the survey that links to this file
+				// 7. Update the version of the survey that links to this file
 	            GeneralUtilityMethods.updateVersion(sd, sId);			
             }
             
@@ -171,6 +216,7 @@ public class ExternalFileManager {
 		} finally {
 			if(pstmtAppearance != null) try{pstmtAppearance.close();}catch(Exception e) {}
 			if(pstmtCalculate != null) try{pstmtCalculate.close();}catch(Exception e) {}
+			if(pstmtData != null) try{pstmtData.close();}catch(Exception e) {}
 		}
 	}
 	
@@ -299,7 +345,7 @@ public class ExternalFileManager {
 	/*
 	 * Get the SQL to retrieve dynamic CSV data
 	 */
-	private String getSql(
+	private SqlDef getSql(
 			Connection sd, 
 			String sIdent, 
 			ArrayList<String> qnames,
@@ -311,6 +357,8 @@ public class ExternalFileManager {
 		StringBuffer tabs = new StringBuffer("");
 		int sId = 0;
 		String linked_pd_sel = null;
+		SqlDef sqlDef = new SqlDef();
+		ArrayList<String> colNames = new ArrayList<String> ();
 		
 		ResultSet rs = null;
 		String sqlGetCol = "select column_name from question "
@@ -349,6 +397,8 @@ public class ExternalFileManager {
 				} else {
 					colName = name;		// For columns that are not questions such as _hrk, _device
 				}
+				colNames.add(colName);
+				
 				if(i > 0 || linked_pd) {
 					sql.append(",");
 				}
@@ -378,7 +428,10 @@ public class ExternalFileManager {
 			if(pstmtGetCol != null) try {pstmtGetCol.close();} catch(Exception e) {}
 			if(pstmtGetTable != null) try {pstmtGetTable.close();} catch(Exception e) {}
 		}
-		return sql.toString();
+		
+		sqlDef.sql = sql.toString();
+		sqlDef.colNames = colNames; 
+		return sqlDef;
 	}
 	
 	/*

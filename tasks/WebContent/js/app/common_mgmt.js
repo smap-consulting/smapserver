@@ -136,7 +136,9 @@ window.gTasks = {
 			 } else {
 				 getSurveyConfig(globals.gCurrentSurvey, 0);
 			 }
-			 getReport(gReport);
+			 if(!isDuplicates) {
+				 getReport(gReport);
+			 }
 			 
 			 $('.main_survey').html($('#survey_name option:selected').text());
 			 

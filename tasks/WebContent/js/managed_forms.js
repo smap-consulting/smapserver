@@ -474,34 +474,36 @@ require([
 	 /*
 	  * Add date filtering to datatable
 	  */
-	 $.fn.dataTableExt.afnFiltering.push(
-				function( oSettings, aData, iDataIndex ) {
-					var fromDate = document.getElementById('filter_from').value;
-					var dateCol = 2,
-						dateParts = [],
-						dataDate;
-
-					fromDate=fromDate.replace(/\-/g, "");
-
-					dataDate=aData[dateCol].replace(/\-/g, "");
-					dateParts = dataDate.split(" ");
-					if(dateParts.length > 0) {
-						dataDate = dateParts[0];
-					}
-
-					if ( fromDate === "" )
-					{
-						return true;
-					}
-					else if ( fromDate <= dataDate )
-					{
-						return true;
-					}
+	 if(!isDuplicates) {
+		 $.fn.dataTableExt.afnFiltering.push(
+					function( oSettings, aData, iDataIndex ) {
+						var fromDate = document.getElementById('filter_from').value;
+						var dateCol = 2,
+							dateParts = [],
+							dataDate;
+	
+						fromDate=fromDate.replace(/\-/g, "");
+	
+						dataDate=aData[dateCol].replace(/\-/g, "");
+						dateParts = dataDate.split(" ");
+						if(dateParts.length > 0) {
+							dataDate = dateParts[0];
+						}
+	
+						if ( fromDate === "" )
+						{
+							return true;
+						}
+						else if ( fromDate <= dataDate )
+						{
+							return true;
+						}
+						
+						return false;
 					
-					return false;
-				
-				}
-			);
+					}
+				);
+	 }
 	 
 });
 
