@@ -3,36 +3,17 @@ package org.smap.sdal.managers;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
+import java.io.IOException;
 import java.io.OutputStreamWriter;
-import java.io.Writer;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
-import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.TimeZone;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
-import org.smap.sdal.model.AssignFromSurvey;
-import org.smap.sdal.model.Assignment;
-import org.smap.sdal.model.Location;
-import org.smap.sdal.model.Task;
-import org.smap.sdal.model.TaskAssignment;
-import org.smap.sdal.model.TaskBulkAction;
-import org.smap.sdal.model.TaskFeature;
-import org.smap.sdal.model.TaskGroup;
-import org.smap.sdal.model.TaskListGeoJson;
-import org.smap.sdal.model.TaskProperties;
-
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonParser;
 
 /*****************************************************************************
 
@@ -84,7 +65,7 @@ public class ExternalFileManager {
 		int linked_sId = 0;
 		String data_key = null;
 		boolean non_unique_key = false;
-		File f = new File(filepath);
+		File f = new File(filepath + ".csv");
 		
 		String sqlAppearance = "select q_id, appearance from question "
 				+ "where f_id in (select f_id from form where s_id = ?) "
@@ -163,28 +144,66 @@ public class ExternalFileManager {
 				// 6. Create the file
 				if(linked_pd && non_unique_key) {
 					pstmtData = cRel.prepareStatement(sqlDef.sql);
+					log.info("Get CSV data" + pstmtData.toString());
 					rs = pstmtData.executeQuery();
 					
 					BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(
 							new FileOutputStream(f.getAbsoluteFile()), "UTF8"));
 					
+					// Write header
+					bw.write("_data_key");
+					if(non_unique_key) {
+						bw.write(",count");
+					}
+					for(int i = 0; i < sqlDef.colNames.size(); i++) {
+						String col = sqlDef.colNames.get(i);
+						bw.write(",");
+						bw.write(col);
+					}
+					bw.newLine();
+					
+					/*
+					 * Class to store a set of records for a single key when when non unique key has been specified
+					 *  This allows us to count the number of duplicate keys before writing the data to the csv file
+					 */
+					ArrayList<StringBuilder> nonUniqueRecords = new ArrayList<StringBuilder> ();
+					
+					// Write data
+					String currentDkv = null;		// Current value of the data key
+					String dkv = null;
 					while(rs.next()) {
 						System.out.println("Data: " + rs.getString("_data_key") + " : " + rs.getString("child_full_name"));
 						
-						bw.write(rs.getString("_data_key"));
+						dkv = rs.getString("_data_key");
+						System.out.println("Data key: " + dkv);
+						if(dkv != null && !dkv.equals(currentDkv)) {
+							// A new data key
+							writeRecords(non_unique_key, nonUniqueRecords, bw, currentDkv);
+							nonUniqueRecords = new ArrayList<StringBuilder> ();
+							currentDkv = dkv;
+						}
+						
+						// Store the record
+						StringBuilder s = new StringBuilder("");
+						// Don't write the key yet
+						if(non_unique_key) {
+							s.append(",");
+						}
 						for(int i = 0; i < sqlDef.colNames.size(); i++) {
 							String col = sqlDef.colNames.get(i);
-							System.out.println("Writing col: " + col);
-							bw.write(",");
+							s.append(",");
 							String value = rs.getString(col);
 							if(value == null) {
 								value = "";
 							}
-							bw.write(value);
+							s.append(value);
 						}
-
-						bw.newLine();
+						nonUniqueRecords.add(s);
 					}
+					
+					// Write the records for the final key
+					writeRecords(non_unique_key, nonUniqueRecords, bw, currentDkv);
+					
 					bw.flush();
 					bw.close();
 				} else {
@@ -217,6 +236,31 @@ public class ExternalFileManager {
 			if(pstmtAppearance != null) try{pstmtAppearance.close();}catch(Exception e) {}
 			if(pstmtCalculate != null) try{pstmtCalculate.close();}catch(Exception e) {}
 			if(pstmtData != null) try{pstmtData.close();}catch(Exception e) {}
+		}
+	}
+	
+	/*
+	 * Write a set of records for a single data key
+	 */
+	private void writeRecords(boolean non_unique_key, ArrayList<StringBuilder> nonUniqueRecords, BufferedWriter bw, String dkv) throws IOException {
+		
+		if(non_unique_key && nonUniqueRecords.size() > 0) {
+			// Write the number of records
+			bw.write(dkv);
+			bw.write(",");
+			bw.write(String.valueOf(nonUniqueRecords.size()));
+			bw.newLine();
+		}
+		
+		// Write each record
+		for(int i = 0; i < nonUniqueRecords.size(); i++) {
+			bw.write(dkv);
+			if(non_unique_key) {
+				bw.write("_");
+				bw.write(String.valueOf(i));
+			}
+			bw.write(nonUniqueRecords.get(i).toString());
+			bw.newLine();
 		}
 	}
 	
