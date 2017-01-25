@@ -1525,7 +1525,7 @@ function respondToEvents($context) {
 				ev.dataTransfer.setData("text/plain", ev.target.id);
 			}
 		}
-		$('.dropon.add_question').addClass("add_drop_button").removeClass("add__button");
+		$('.dropon.add_question').addClass("add_drop_button").removeClass("add_button");
 		
 		return true;
 	})

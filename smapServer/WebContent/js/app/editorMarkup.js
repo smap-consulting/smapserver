@@ -878,7 +878,10 @@ define([
 		
 		// Restore collapsed panels
 		for(i = 0; i < gCollapsedPanels.length; i++) {
-			$('#' + gCollapsedPanels[i]).find('.collapse').first().addClass("in");
+			var $collapsedPanel = $('#' + gCollapsedPanels[i]);
+			$collapsedPanel.find('.collapse').first().addClass("in");
+			$collapsedPanel.find('.edit_icon').removeClass('glyphicon-chevron-down').addClass('glyphicon-chevron-up');
+			
 		}
 		
 		
