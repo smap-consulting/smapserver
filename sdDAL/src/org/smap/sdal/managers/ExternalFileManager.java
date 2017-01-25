@@ -66,6 +66,10 @@ public class ExternalFileManager {
 			String filepath) throws Exception {
 		
 		ResultSet rs = null;
+		boolean linked_pd = false;
+		String sIdent = null;
+		int linked_sId = 0;
+		String data_key = null;
 		
 		String sqlAppearance = "select q_id, appearance from question "
 				+ "where f_id in (select f_id from form where s_id = ?) "
@@ -80,18 +84,26 @@ public class ExternalFileManager {
 		try {
 			
 			ArrayList<String> uniqueColumns = new ArrayList<String> ();
-			
-			// 1. Get the survey ident that is going to provide the CSV data (That is the ident of the file being linked to)
-			int idx = filename.indexOf('_');
-			String sIdent = filename.substring(idx + 1);
-			int linked_sId = GeneralUtilityMethods.getSurveyId(sd, sIdent);
+			/*
+			 * 1. Get parameters
+			 *  If this is a linked_ type then get the survey ident that is going to provide the CSV data (That is the ident of the file being linked to)
+			 *  If this is a pulldata specific linked type then get all the pull data parameters from the database
+			 */
+			if(filename.startsWith("linked_s_pd")) {
+				linked_pd = true;			
+				// TODO get values from database
+				sIdent = "s1_1639";		// TEST
+				data_key = "${cfs}-${group}";
+			} else {
+				int idx = filename.indexOf('_');
+				sIdent = filename.substring(idx + 1);
+			}
+			linked_sId = GeneralUtilityMethods.getSurveyId(sd, sIdent);
 			
 			// 2. Determine whether or not the file needs to be regenerated
 			boolean regenerate = true;
 			File f = new File(filepath);
-			if(f.exists()) {
-				regenerate = regenerateFile(sd, cRel, linked_sId, sId);
-			}
+			regenerate = regenerateFile(sd, cRel, linked_sId, sId, f.exists());
 			
 			// 3.Get columns from appearance
             if(regenerate) {
@@ -130,7 +142,7 @@ public class ExternalFileManager {
 	
 				
 				// 5. Get the sql
-				String sql = getSql(sd, sIdent, uniqueColumns);		
+				String sql = getSql(sd, sIdent, uniqueColumns, linked_pd, data_key);		
 				
 				// 6. Create the file
 				int code = 0;
@@ -170,9 +182,11 @@ public class ExternalFileManager {
 	private boolean regenerateFile(Connection sd, 
 			Connection cRel,
 			int linked_sId, 
-			int linker_sId) throws SQLException {
+			int linker_sId,
+			boolean fileExists) throws SQLException {
         
 		boolean regenerate = false;
+		boolean tableExists = true;
 		
 		String sql = "select id, linked_table, number_records from linked_forms "
 				+ "where linked_s_id = ? "
@@ -215,6 +229,7 @@ public class ExternalFileManager {
 					}
 				} catch(Exception e) {
 					// Table may not exist yet
+					tableExists = false;
 				}
 				
 				if(count != previousCount) {
@@ -243,6 +258,7 @@ public class ExternalFileManager {
 					}
 				} catch(Exception e) {
 					// Table may not exist yet
+					tableExists = false;
 				}
 				
 				if(count > 0) {
@@ -270,6 +286,9 @@ public class ExternalFileManager {
 		
 		log.info("Result of regenerate question is: " + regenerate);
         
+		if(tableExists && !fileExists) {
+			regenerate = true;		// Override regenerate if the file has been deleted
+		}
         return regenerate;
 	}
 	
@@ -280,12 +299,18 @@ public class ExternalFileManager {
 	/*
 	 * Get the SQL to retrieve dynamic CSV data
 	 */
-	private String getSql(Connection sd, String sIdent, ArrayList<String> qnames) throws SQLException  {
+	private String getSql(
+			Connection sd, 
+			String sIdent, 
+			ArrayList<String> qnames,
+			boolean linked_pd,
+			String data_key) throws SQLException  {
 		
 		StringBuffer sql = new StringBuffer("select distinct ");
 		StringBuffer where = new StringBuffer("");
 		StringBuffer tabs = new StringBuffer("");
 		int sId = 0;
+		String linked_pd_sel = null;
 		
 		ResultSet rs = null;
 		String sqlGetCol = "select column_name from question "
@@ -306,8 +331,16 @@ public class ExternalFileManager {
 			pstmtGetCol = sd.prepareStatement(sqlGetCol);
 			pstmtGetCol.setInt(2,  sId);
 			
+			if(linked_pd) {
+				linked_pd_sel = GeneralUtilityMethods.convertAllxlsNamesToQuery(data_key, sId, sd);
+				sql.append(linked_pd_sel);
+				sql.append(" as _data_key");
+			}
 			for(int i = 0; i < qnames.size(); i++) {
 				String name = qnames.get(i);
+				if(name.equals("_data_key")) {
+					continue;						// Generated not extracted
+				}
 				String colName = null;
 				pstmtGetCol.setString(1, name);
 				rs = pstmtGetCol.executeQuery();
@@ -316,7 +349,7 @@ public class ExternalFileManager {
 				} else {
 					colName = name;		// For columns that are not questions such as _hrk, _device
 				}
-				if(i > 0) {
+				if(i > 0 || linked_pd) {
 					sql.append(",");
 				}
 				sql.append(colName);
@@ -334,6 +367,11 @@ public class ExternalFileManager {
 			if(where.length() > 0) {
 				sql.append(" where ");
 				sql.append(where);
+			}
+			
+			// If this is a pulldata linked file then order the data by _data_key
+			if(linked_pd) {
+				sql.append( " order by _data_key");
 			}
 			
 		} finally {

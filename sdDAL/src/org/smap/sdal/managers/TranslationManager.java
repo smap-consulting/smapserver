@@ -156,8 +156,8 @@ public class TranslationManager {
 		
 		ArrayList<ManifestValue> manifests = new ArrayList<ManifestValue>();	// Results of request
 		
-		String sqlSurveyLevel = "select manifest from survey where s_id = ? and manifest is not null; ";
-		PreparedStatement pstmtSurveyLevel = null;
+		String sql = "select manifest from survey where s_id = ? and manifest is not null; ";
+		PreparedStatement pstmt = null;
 		
 		try {
 			
@@ -166,11 +166,11 @@ public class TranslationManager {
 			/*
 			 * Get Survey Level manifests from survey table
 			 */
-			pstmtSurveyLevel = sd.prepareStatement(sqlSurveyLevel);	 			
-			pstmtSurveyLevel.setInt(1, surveyId);
-			log.info("SQL survey level manifests:" + pstmtSurveyLevel.toString());
+			pstmt = sd.prepareStatement(sql);	 			
+			pstmt.setInt(1, surveyId);
+			log.info("SQL survey level manifests:" + pstmt.toString());
 			
-			rs = pstmtSurveyLevel.executeQuery();
+			rs = pstmt.executeQuery();
 			if(rs.next()) {
 				String manifestString = rs.getString(1);
 				Type type = new TypeToken<ArrayList<String>>(){}.getType();
@@ -194,7 +194,7 @@ public class TranslationManager {
 			log.log(Level.SEVERE,"Error", e);
 			throw e;
 		} finally {
-			if (pstmtSurveyLevel != null) { try {pstmtSurveyLevel.close();} catch (SQLException e) {}}
+			if (pstmt != null) { try {pstmt.close();} catch (SQLException e) {}}
 		}
 		
 		log.info("Linked Manifest length: " + manifests.size());
