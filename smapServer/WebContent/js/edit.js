@@ -320,7 +320,6 @@ $(document).ready(function() {
 		globals.model.save_settings();
 	});
 	
-	
 	$('#m_info').off().click(function() {	// Show the info dialog
 		
 		var tableNames ="",

@@ -479,6 +479,7 @@ define({
 	"wf_sig": "Signature",
 	
 	// Editor
+	"ed_in": "Instance Name",
 	"e_b_e": "Base on existing form",
 	"e_s_r": "Store results in shared table",
 	"ed_qt": "Question Text",
@@ -505,6 +506,7 @@ define({
 	"ed_i_c": "Created",
 	"ed_st": "Shared Table",
 	"ed_ld": "Allow Loading data from file",
+	"ed_pd": "Pull data from another survey",
 	"ed_i_bo": "Based On",
 	"ed_i_tn": "Table Names",
 	"ed_tlf": "Top Level Form",
