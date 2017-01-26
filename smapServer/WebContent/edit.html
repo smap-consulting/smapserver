@@ -18,7 +18,6 @@
 	<link rel="stylesheet" href="css/normalize.css" />
 	<link rel="stylesheet" href="/css/bootstrap.min.css" /> 
 	<link rel="stylesheet" href="/css/bootstrap-toggle.min.css" /> 
-	<!-- <link rel="stylesheet" href="/css/app.css" /> -->
 	<link rel="stylesheet" href="/css/smap-bs.css" type="text/css">
     
  	<script type="text/javascript"> if (!window.console) console = {log: function() {}}; </script>
@@ -66,6 +65,7 @@
 	            <li role="presentation" class="divider"></li>
 	            <li><a id="m_validate" class="lang m_validate" data-lang="c_validate" href="#">validate</a></li>
 	            <li><a id="m_languages" class="lang m_languages" data-lang="c_langs" href="#">languages</a></li>
+	           	<li><a id="m_pulldata" class="lang" data-lang="c_pulldata" href="#">pulldata</a></li>
 	            <li><a id="m_media" href="#" class="lang" data-lang="c_media">media</a></li>
 	            <li><a id="m_settings" href="#" class="lang" data-lang="c_settings">settings</a></li>
 	            <li role="presentation" class="divider"></li>
@@ -581,6 +581,38 @@
 			<div class="modal-footer">
         		<button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_close">Close</button>
         		<button id="editLanguageSave" type="button" class="btn btn-primary lang" data-lang="c_save">Save</button>
+      		</div>
+		</div>
+	</div>
+		
+</div>
+
+<!-- Model to edit pull data settings -->
+<div id="pulldataModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="pulldataLabel" aria-hidden="true">
+	<div class="modal-dialog">
+   		<div class="modal-content">
+   			<div class="modal-header">
+     			<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+     			<h4 class="modal-title lang" data-lang="c_pulldata" id="pulldataLabel">pulldata</h4>
+   			</div>
+   			
+   			<div class="modal-body">
+				<div class="container-fluid">
+					<div class = "well">					
+						<div class="table-responsive">
+							<div id="pulldata_edit_list"></div>
+						</div>
+						<a id="addPulldata" type="button" class="btn btn-default lang" data-lang="c_add" aria-label="Add Pulldata">add</a>
+					</div>
+					<div class="col-md-12 text-center">
+						<img class="hour_glass" src="/images/ajax-loader.gif" style="display:none;" alt="hourglass" height="60" width="60">
+					</div>
+				</div>
+			</div>
+			
+			<div class="modal-footer">
+        		<button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_close">Close</button>
+        		<button id="pulldataSave" type="button" class="btn btn-primary lang" data-lang="c_save">Save</button>
       		</div>
 		</div>
 	</div>

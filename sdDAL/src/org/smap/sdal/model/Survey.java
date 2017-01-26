@@ -40,6 +40,7 @@ public class Survey {
 	public int managed_id;
 	public int version;
 	public boolean loadedFromXLS;
+	public ArrayList<Pulldata> pulldata;
 	public String hrk;
 	public ArrayList<LinkedSurvey> linkedSurveys = new ArrayList<LinkedSurvey> ();
 	public String basedOn;

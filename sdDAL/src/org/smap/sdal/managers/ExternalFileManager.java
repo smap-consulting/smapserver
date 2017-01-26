@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.lang.reflect.Type;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -14,6 +15,13 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
+import org.smap.sdal.model.Action;
+import org.smap.sdal.model.Pulldata;
+import org.smap.sdal.model.SqlFrag;
+import org.smap.sdal.model.TableColumn;
+
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
 /*****************************************************************************
 
@@ -42,12 +50,18 @@ public class ExternalFileManager {
 	private static Logger log =
 			 Logger.getLogger(ExternalFileManager.class.getName());
 	
+	LogManager lm = new LogManager();		// Application log
+	
+	private static String PD_IDENT = "linked_s_pd_";
+	
 	/*
 	 * Class to return SQL
 	 */
 	class SqlDef {
 		String sql;
 		ArrayList<String> colNames;
+		boolean hasRbacFilter = false;
+		ArrayList<SqlFrag> rfArray = null;
 	}
 	
 	/*
@@ -57,7 +71,8 @@ public class ExternalFileManager {
 			Connection cRel, 
 			int sId, 			// The survey that contains the manifest item
 			String filename, 
-			String filepath) throws Exception {
+			String filepath,
+			String userName) throws Exception {
 		
 		ResultSet rs = null;
 		boolean linked_pd = false;
@@ -66,6 +81,10 @@ public class ExternalFileManager {
 		String data_key = null;
 		boolean non_unique_key = false;
 		File f = new File(filepath + ".csv");
+		ArrayList<Pulldata> pdArray = null;
+		
+		String sqlPulldata = "select pulldata from survey where s_id = ?";
+		PreparedStatement pstmtPulldata = null;
 		
 		String sqlAppearance = "select q_id, appearance from question "
 				+ "where f_id in (select f_id from form where s_id = ?) "
@@ -86,12 +105,37 @@ public class ExternalFileManager {
 			 *  If this is a linked_ type then get the survey ident that is going to provide the CSV data (That is the ident of the file being linked to)
 			 *  If this is a pulldata specific linked type then get all the pull data parameters from the database
 			 */
-			if(filename.startsWith("linked_s_pd")) {
-				linked_pd = true;			
+			if(filename.startsWith(PD_IDENT)) {
+				linked_pd = true;	
+				
+				int idx = filename.indexOf('_');
+				sIdent = filename.substring(PD_IDENT.length());
+				
+				pstmtPulldata = sd.prepareStatement(sqlPulldata);
+				pstmtPulldata.setInt(1, sId);
+				rs = pstmtPulldata.executeQuery();
+				if(rs.next()) {
+					Type type = new TypeToken<ArrayList<Pulldata>>(){}.getType();
+					pdArray = new Gson().fromJson(rs.getString(1), type); 
+					for(int i = 0; i < pdArray.size(); i++) {
+						if(pdArray.get(i).survey.equals(sIdent)) {
+							data_key = pdArray.get(i).data_key;
+							non_unique_key = pdArray.get(i).repeats;
+							break;
+						}
+					}
+				} else {
+					throw new Exception("Puldata definition not found");
+				}
+				
+				if(data_key == null) {
+					throw new Exception("Pulldata definition not found");
+				}
 				// TODO get values from database
-				sIdent = "s1_1639";		// TEST
-				data_key = "${cfs}-${group}";
-				non_unique_key = true;
+				//sIdent = "s1_1639";		// TEST
+				//data_key = "${cfs}-${group}";
+				//non_unique_key = true;
+				
 			} else {
 				int idx = filename.indexOf('_');
 				sIdent = filename.substring(idx + 1);
@@ -139,11 +183,16 @@ public class ExternalFileManager {
 	
 				
 				// 5. Get the sql
-				SqlDef sqlDef = getSql(sd, sIdent, uniqueColumns, linked_pd, data_key);		
+				RoleManager rm = new RoleManager();
+				SqlDef sqlDef = getSql(sd, sIdent, uniqueColumns, linked_pd, data_key, userName, rm);		
 				
 				// 6. Create the file
 				if(linked_pd && non_unique_key) {
 					pstmtData = cRel.prepareStatement(sqlDef.sql);
+					int paramCount = 1;
+					if(sqlDef.hasRbacFilter) {
+						paramCount = rm.setRbacParameters(pstmtData, sqlDef.rfArray, paramCount);
+					}
 					log.info("Get CSV data" + pstmtData.toString());
 					rs = pstmtData.executeQuery();
 					
@@ -153,7 +202,7 @@ public class ExternalFileManager {
 					// Write header
 					bw.write("_data_key");
 					if(non_unique_key) {
-						bw.write(",count");
+						bw.write(",_count");
 					}
 					for(int i = 0; i < sqlDef.colNames.size(); i++) {
 						String col = sqlDef.colNames.get(i);
@@ -231,11 +280,13 @@ public class ExternalFileManager {
 				
 		} catch(Exception e) {
 			log.log(Level.SEVERE, "Exception", e);
+			lm.writeLog(sd, sId, userName, "error", "Creating CSV file: " + e.getMessage());
 			throw new Exception(e.getMessage());
 		} finally {
 			if(pstmtAppearance != null) try{pstmtAppearance.close();}catch(Exception e) {}
 			if(pstmtCalculate != null) try{pstmtCalculate.close();}catch(Exception e) {}
 			if(pstmtData != null) try{pstmtData.close();}catch(Exception e) {}
+			if(pstmtPulldata != null) try{pstmtPulldata.close();}catch(Exception e) {}
 		}
 	}
 	
@@ -388,13 +439,16 @@ public class ExternalFileManager {
 	 */
 	/*
 	 * Get the SQL to retrieve dynamic CSV data
+	 * TODO replace this with the query generator from SDAL
 	 */
 	private SqlDef getSql(
 			Connection sd, 
 			String sIdent, 
 			ArrayList<String> qnames,
 			boolean linked_pd,
-			String data_key) throws SQLException  {
+			String data_key,
+			String user,
+			RoleManager rm) throws SQLException  {
 		
 		StringBuffer sql = new StringBuffer("select distinct ");
 		StringBuffer where = new StringBuffer("");
@@ -430,7 +484,7 @@ public class ExternalFileManager {
 			}
 			for(int i = 0; i < qnames.size(); i++) {
 				String name = qnames.get(i);
-				if(name.equals("_data_key")) {
+				if(name.equals("_data_key") || name.equals("_count")) {
 					continue;						// Generated not extracted
 				}
 				String colName = null;
@@ -458,9 +512,26 @@ public class ExternalFileManager {
 			getTables(pstmtGetTable, 0, null, tabs, where);
 			sql.append(" from ");
 			sql.append(tabs);
+			
+			// 4. Add the where clause
 			if(where.length() > 0) {
 				sql.append(" where ");
 				sql.append(where);
+			}
+			
+			// 5. Add the RBAC/Row filter
+			// Add RBAC/Role Row Filter
+			sqlDef.rfArray = null;
+			sqlDef.hasRbacFilter = false;
+			// Apply roles for super user as well
+			sqlDef.rfArray = rm.getSurveyRowFilter(sd, sId, user);
+			if(sqlDef.rfArray.size() > 0) {
+				String rFilter = rm.convertSqlFragsToSql(sqlDef.rfArray);
+				if(rFilter.length() > 0) {
+					sql.append(" and ");
+					sql.append(rFilter);
+					sqlDef.hasRbacFilter = true;
+				}
 			}
 			
 			// If this is a pulldata linked file then order the data by _data_key

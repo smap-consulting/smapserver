@@ -87,6 +87,7 @@ var	gMode = "survey",
 	$gCurrentRow,			// Currently selected row
 	gCollapsedPanels = [],
 	gTempLanguages = [],
+	gTempPulldata = [],
 	gDragCounter,
 	gDragSourceId;
 
@@ -248,6 +249,16 @@ $(document).ready(function() {
 		}
 	});
 	
+	$('#m_pulldata').off().click(function() {
+		if(globals.model.survey.pulldata) {
+			gTempPulldata = globals.model.survey.pulldata.slice();
+		} else {
+			gTempPulldata = [];
+		}
+		updatePulldataView();
+		$('#pulldataModal').modal("show");
+	});
+	
 	$('#m_required').off().click(function() {
 		if($(this).closest('li').hasClass('disabled')) {
 			bootbox.alert("Cannot set questions required while there are unsaved changes");
@@ -271,6 +282,16 @@ $(document).ready(function() {
 			deleted: false
 		});
 		updateLanguageView();
+	});
+	
+	$('#addPulldata').off().click(function() {
+		gTempPulldata.push({
+			survey: "",
+			data_key: "",
+			repeats: false,
+			deleted: false
+		});
+		updatePulldataView();
 	});
 	
 	// Set up view type toggle
@@ -370,6 +391,33 @@ $(document).ready(function() {
 			              return;  // Not an error
 					} else {
 						alert("Error: Failed to save languages: " + xhr.responseText);
+					}
+				}
+		});
+	});
+	
+	/*
+	 * Save changes to the pulldata settings
+	 */
+	$('#pulldataSave').off().click(function() {	// Save pulldata to the database
+
+		var pulldataString = JSON.stringify(gTempPulldata);
+		addHourglass();
+		$.ajax({
+			  type: "POST",
+			  url: "/surveyKPI/surveys/save_pulldata/" + gSId,
+			  cache: false,
+			  data: { pulldata: pulldataString },
+				success: function(data) {
+					removeHourglass();
+					$('#pulldataModal').modal("hide");
+				},
+				error: function(xhr, textStatus, err) {
+					removeHourglass();
+					if(xhr.readyState == 0 || xhr.status == 0) {
+			              return;  // Not an error
+					} else {
+						alert("Error: Failed to save pulldata settings: " + xhr.responseText);
 					}
 				}
 		});
@@ -1907,6 +1955,120 @@ function updateLanguageView() {
 		gTempLanguages[idx].name = $(this).val();
 		updateLanguageView();
 
+	});
+	
+	
+}
+
+/*
+ * Update the pulldata modal view
+ */
+function updatePulldataView() {
+	var i,
+		$selector = $('#pulldata_edit_list'),
+		pulldata = gTempPulldata,
+		h = [],
+		idx = -1;
+	
+
+	h[++idx] = '<table class="table">';
+	h[++idx] = '<thead>';
+	h[++idx] = '<tr>';
+	h[++idx] = '<th>' + localise.set["c_survey"], + '</th>';
+	h[++idx] = '<th>' + localise.set["ed_dk"] + '</th>';
+	h[++idx] = '<th>' + localise.set["c_repeats"] + '</th>';
+	h[++idx] = '<th>' + localise.set["c_ident"] + '</th>';
+	h[++idx] = '</tr>';
+	h[++idx] = '</thead>';
+	h[++idx] = '<tbody class="table-striped">';
+
+	for(i = 0; i < pulldata.length; i++) {
+		
+		if(!pulldata[i].deleted) {
+			h[++idx] = '<tr>';
+			
+			// Survey
+			h[++idx] = '<td>';
+			h[++idx] = '<input type="text" data-idx="';
+			h[++idx] = i;
+			h[++idx] = '" required class="form-control pd_survey" value="';
+			h[++idx] = pulldata[i].survey;
+			h[++idx] = '"';
+			h[++idx] = '</td>';
+			
+			// Data Key
+			h[++idx] = '<td>';
+			h[++idx] = '<input type="text" data-idx="';
+			h[++idx] = i;
+			h[++idx] = '" required class="form-control pd_data_key" value="';
+			h[++idx] = pulldata[i].data_key;
+			h[++idx] = '"';
+			h[++idx] = '</td>';
+			
+			// Repeats
+			h[++idx] = '<td>';
+		      h[++idx] = '<input type="checkbox" class="pd_repeats" data-idx="';
+		      h[++idx] = i;
+		      h[++idx] = '" ';
+		      if(pulldata[i].repeats) {
+		    	  h[++idx] = 'checked=true ';
+		      }
+		      h[++idx] = 'value="';
+		      h[++idx] = '';
+		      h[++idx] = '"> ';
+			h[++idx] = '</td>';
+			
+			// Identifier
+			h[++idx] = '<td>';
+			h[++idx] = '<input type="text" data-idx="';
+			h[++idx] = i;
+			h[++idx] = '" readonly class="form-control" value="';
+			h[++idx] = "linked_s_pd_" + pulldata[i].survey;
+			h[++idx] = '"';
+			h[++idx] = '</td>';
+		
+			// actions
+			h[++idx] = '<td>';
+		
+			h[++idx] = '<button type="button" data-idx="';
+			h[++idx] = i;
+			h[++idx] = '" class="btn btn-default btn-sm rm_language danger">';
+			h[++idx] = '<span class="glyphicon glyphicon-trash" aria-hidden="true"></span></button>';
+		
+			h[++idx] = '</td>';
+			// end actions
+		
+			h[++idx] = '</tr>';
+		}
+	}
+	
+	h[++idx] = '</tbody>';
+	h[++idx] = '</table>';
+
+	$selector.empty().append(h.join(''));
+
+	$(".rm_pulldata", $selector).click(function(){
+		var idx = $(this).data("idx");
+		gTempPulldata[idx].deleted = true;
+		updatePulldataView();
+	});
+
+	$(".pd_survey", $selector).change(function(){
+		var idx = $(this).data("idx");
+		gTempPulldata[idx].survey = $(this).val();
+		updatePulldataView();
+	});
+	
+	$(".pd_data_key", $selector).change(function(){
+		var idx = $(this).data("idx");
+		gTempPulldata[idx].data_key = $(this).val();
+		updatePulldataView();
+	});
+	
+	$(".pd_repeats", $selector).change(function(){
+		var idx = $(this).data("idx");
+		gTempPulldata[idx].repeats = $(this).prop('checked');
+		updatePulldataView();
 	});
 	
 	

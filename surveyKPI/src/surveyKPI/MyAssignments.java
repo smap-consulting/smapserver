@@ -187,14 +187,6 @@ public class MyAssignments extends Application {
 		tr.message = "OK Task retrieved";	// Overwritten if there is an error
 		tr.status = "200";
 		tr.version = 1;
-					
-		try {
-		    Class.forName("org.postgresql.Driver");	 
-		} catch (ClassNotFoundException e) {
-			log.log(Level.SEVERE,"Error: Can't find PostgreSQL JDBC Driver", e);
-			response = Response.serverError().build();
-		    return response;
-		}
 		
 		// Authorisation - Access
 		Connection connectionSD = SDDataSource.getConnection("surveyKPI-MyAssignments");
@@ -388,7 +380,7 @@ public class MyAssignments extends Application {
 					File dir = new File(dirPath);
 					dir.mkdirs();
 					
-					efm.createLinkedFile(connectionSD, cRel, sId, m.fileName , filepath);
+					efm.createLinkedFile(connectionSD, cRel, sId, m.fileName , filepath, userName);
 					
 					filepath += ".csv";
 					m.fileName += ".csv";

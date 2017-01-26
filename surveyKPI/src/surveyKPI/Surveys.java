@@ -45,6 +45,7 @@ import org.smap.sdal.model.ChangeItem;
 import org.smap.sdal.model.ChangeResponse;
 import org.smap.sdal.model.ChangeSet;
 import org.smap.sdal.model.Language;
+import org.smap.sdal.model.Pulldata;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -319,14 +320,6 @@ public class Surveys extends Application {
 		
 		Response response = null;
 		
-		try {
-		    Class.forName("org.postgresql.Driver");	 
-		} catch (ClassNotFoundException e) {
-			log.log(Level.SEVERE,"Survey: Error: Can't find PostgreSQL JDBC Driver", e);
-		    response = Response.serverError().entity("Survey: Error: Can't find PostgreSQL JDBC Driver").build();
-		    return response;
-		}
-		
 		// Authorisation - Access
 		Connection sd = SDDataSource.getConnection("surveyKPI-Surveys");
 		boolean superUser = false;
@@ -367,6 +360,63 @@ public class Surveys extends Application {
 		    response = Response.serverError().entity(e.getMessage()).build();
 		} finally {
 			
+			SDDataSource.closeConnection("surveyKPI-Surveys", sd);
+			
+		}
+
+		return response;
+	}
+	
+	/*
+	 * Update the survey languages
+	 */
+	@Path("/save_pulldata/{sId}")
+	@POST
+	public Response savePulldata(@Context HttpServletRequest request,
+			@PathParam("sId") int sId,
+			@FormParam("pulldata") String pulldata) { 
+		
+		Response response = null;
+		
+		// Authorisation - Access
+		Connection sd = SDDataSource.getConnection("surveyKPI-Surveys");
+		boolean superUser = false;
+		try {
+			superUser = GeneralUtilityMethods.isSuperUser(sd, request.getRemoteUser());
+		} catch (Exception e) {
+		}
+		aUpdate.isAuthorised(sd, request.getRemoteUser());
+		aUpdate.isValidSurvey(sd, request.getRemoteUser(), sId, false, superUser);	// Validate that the user can access this survey
+		// End Authorisation
+		
+		String sql = "update survey set pulldata = ? where s_id = ?;"; 
+		PreparedStatement pstmt = null;
+		
+		try {
+			/*
+			 * Parse the request
+			 */
+			Type type = new TypeToken<ArrayList<Pulldata>>(){}.getType();
+			Gson gson=  new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
+			ArrayList<Pulldata> pulldataList = gson.fromJson(pulldata, type);
+			
+			String parsedPd = gson.toJson(pulldataList);
+			
+			// Update the pulldata settings
+
+		
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setString(1, parsedPd);
+			pstmt.setInt(2, sId);
+			pstmt.executeUpdate();	
+
+			response = Response.ok().build();
+			
+		} catch (Exception e) {
+			log.log(Level.SEVERE,"Exception updating pulldata settings", e);
+		    response = Response.serverError().entity(e.getMessage()).build();
+		} finally {
+			try {if (pstmt != null) { pstmt.close();}} catch (SQLException e) {}
 			SDDataSource.closeConnection("surveyKPI-Surveys", sd);
 			
 		}

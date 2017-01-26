@@ -650,4 +650,4 @@ alter table organisation add column ft_odk_style_menus boolean default true;
 alter table organisation add column ft_review_final boolean default true;
 
 -- Upgrade to 17.01
-
+alter table survey add column pulldata text;

@@ -236,7 +236,7 @@ public class QueryGenerator {
 			}
 		}
 		
-		// Add Rbac Row Filer
+		// Add RBAC/Role Row Filter
 		boolean hasRbacFilter = false;
 		ArrayList<SqlFrag> rfArray = null;
 		RoleManager rm = new RoleManager();
