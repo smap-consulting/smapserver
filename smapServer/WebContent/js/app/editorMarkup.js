@@ -880,7 +880,7 @@ define([
 		for(i = 0; i < gCollapsedPanels.length; i++) {
 			var $collapsedPanel = $('#' + gCollapsedPanels[i]);
 			$collapsedPanel.find('.collapse').first().addClass("in");
-			$collapsedPanel.find('.edit_icon').removeClass('glyphicon-chevron-down').addClass('glyphicon-chevron-up');
+			$collapsedPanel.find('.edit_icon.glyphicon-chevron-down').removeClass('glyphicon-chevron-down').addClass('glyphicon-chevron-up');
 			
 		}
 		

@@ -177,6 +177,7 @@ $(document).ready(function() {
 	$('#viewType').change(function() {
 		globals.gIsQuestionView = $(this).prop('checked');
 		updateViewControls();
+		
 		refreshForm();
 	});
 	
@@ -741,6 +742,16 @@ function surveyDetailsDone() {
 		// skip the refresh of the choices as when the data was reloaded the item index may have changed hence we can't be guaranteed which question will be refreshed
 		// Safer to return to the question view
 		globals.gShowingChoices = false;
+		updateViewControls();
+		
+		/*
+		globals.gSelChoiceProperty = globals.gSelProperty;	// Restore selProperty and selLabel for questions
+		globals.gSelProperty = globals.gSelQuestionProperty;
+		globals.gSelChoiceLabel = globals.gSelLabel;	
+		globals.gSelLabel = globals.gSelQuestionLabel;
+		$('#propSelected').html(globals.gSelLabel);
+		*/
+		
 		$('.editorContent, .q_only, .o_only').toggle();
 		$('.notoptionslist').show();
 	} 
@@ -814,6 +825,16 @@ function respondToEventsChoices($context) {
 	$('.exitOptions', $context).off().click(function() {
 		
 		globals.gShowingChoices = false;
+		updateViewControls();
+		
+		/*
+		globals.gSelChoiceProperty = globals.gSelProperty;	// Restore selProperty and selLabel for questions
+		globals.gSelProperty = globals.gSelQuestionProperty;
+		globals.gSelChoiceLabel = globals.gSelLabel;	
+		globals.gSelLabel = globals.gSelQuestionLabel;
+		$('#propSelected').html(globals.gSelLabel);
+		*/
+		
 		$('.editorContent, .q_only, .o_only').toggle();
 		$('.notoptionslist').show();
 	});
@@ -1238,6 +1259,15 @@ function respondToEvents($context) {
 		option.setupChoiceView($('#filterType').val());
 		
 		respondToEventsChoices($context);
+		updateViewControls();
+		
+		/*
+		globals.gSelQuestionProperty = globals.gSelProperty;	// Restore selProperty and selLabel for options
+		globals.gSelProperty = globals.gSelChoiceProperty;
+		globals.gSelQuestionLabel = globals.gSelLabel;	
+		globals.gSelLabel = globals.gSelChoiceLabel;
+		$('#propSelected').html(globals.gSelLabel);
+		*/
 		
 		$('.editorContent, .q_only, .o_only').toggle();
 		$('.notoptionslist').hide();
@@ -2324,7 +2354,7 @@ function updateViewControls() {
 	if(globals.gSelProperty !== "media") {		// media is the only common attribute between question and option view
 		globals.gSelProperty = "label";
 	}
-	if(globals.gIsQuestionView) {
+	if(globals.gIsQuestionView && !globals.gShowingChoices) {
 		$('.q_only').show();
 		$('.o_only').hide();
 		globals.gSelLabel = $('#selProperty > li.q_only.default').text();

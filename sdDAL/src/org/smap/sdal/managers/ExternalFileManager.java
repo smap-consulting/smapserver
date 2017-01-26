@@ -144,12 +144,14 @@ public class ExternalFileManager {
 			
 			// 2. Determine whether or not the file needs to be regenerated
 			boolean regenerate = true;
+			log.info("Test for regenerate of file: " + f.getAbsolutePath() + " : " + f.exists());
 			regenerate = regenerateFile(sd, cRel, linked_sId, sId, f.exists());
 			
 			// 3.Get columns from appearance
             if(regenerate) {
 				pstmtAppearance = sd.prepareStatement(sqlAppearance);
 				pstmtAppearance.setInt(1, sId);
+				log.info("Appearance cols: " + pstmtAppearance.toString());
 				rs = pstmtAppearance.executeQuery();
 				while(rs.next()) {
 					int qId = rs.getInt(1);
@@ -167,6 +169,7 @@ public class ExternalFileManager {
 				// 4. Get columns from calculate
 				pstmtCalculate = sd.prepareStatement(sqlCalculate);
 				pstmtCalculate.setInt(1, sId);
+				log.info("Calculate cols: " + pstmtAppearance.toString());
 				rs = pstmtCalculate.executeQuery();
 				while(rs.next()) {
 					int qId = rs.getInt(1);
@@ -180,20 +183,20 @@ public class ExternalFileManager {
 						}
 					}
 				}
-	
 				
 				// 5. Get the sql
 				RoleManager rm = new RoleManager();
 				SqlDef sqlDef = getSql(sd, sIdent, uniqueColumns, linked_pd, data_key, userName, rm);		
+				pstmtData = cRel.prepareStatement(sqlDef.sql);
+				int paramCount = 1;
+				if(sqlDef.hasRbacFilter) {
+					paramCount = rm.setRbacParameters(pstmtData, sqlDef.rfArray, paramCount);
+				}
+				log.info("Get CSV data" + pstmtData.toString());
 				
 				// 6. Create the file
 				if(linked_pd && non_unique_key) {
-					pstmtData = cRel.prepareStatement(sqlDef.sql);
-					int paramCount = 1;
-					if(sqlDef.hasRbacFilter) {
-						paramCount = rm.setRbacParameters(pstmtData, sqlDef.rfArray, paramCount);
-					}
-					log.info("Get CSV data" + pstmtData.toString());
+					
 					rs = pstmtData.executeQuery();
 					
 					BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(
@@ -261,7 +264,7 @@ public class ExternalFileManager {
 					
 					String [] cmd = {"/bin/sh", "-c", "/smap_bin/getshape.sh "
 							+ "results linked "
-							+ "\"" + sqlDef.sql + "\" "
+							+ "\"" + pstmtData.toString() + "\" "
 							+ filepath
 							+ " csvnozip"
 							+ " >> /var/log/tomcat7/survey.log 2>&1"};
@@ -352,7 +355,7 @@ public class ExternalFileManager {
 			pstmt = sd.prepareStatement(sql);
 			pstmt.setInt(1, linked_sId);
 			pstmt.setInt(2, linker_sId);
-			log.info("Get link info: " + pstmt.toString());
+			log.info("Get existing count info: " + pstmt.toString());
 			
 			ResultSet rs = pstmt.executeQuery();
 			if(rs.next()) {
@@ -364,12 +367,14 @@ public class ExternalFileManager {
 				int count = 0;
 				try {
 					pstmtCount = cRel.prepareStatement(sqlCount);
+					log.info("Get current count info: " + pstmtCount.toString());
 					ResultSet rsCount = pstmtCount.executeQuery();
 					if(rsCount.next()) {
 						count = rsCount.getInt(1);
 					}
 				} catch(Exception e) {
 					// Table may not exist yet
+					log.info("Exception getting current count: " + e.getMessage());
 					tableExists = false;
 				}
 				
@@ -399,6 +404,7 @@ public class ExternalFileManager {
 					}
 				} catch(Exception e) {
 					// Table may not exist yet
+					log.info("Exception creating new count entry: " + e.getMessage());
 					tableExists = false;
 				}
 				
@@ -424,12 +430,13 @@ public class ExternalFileManager {
 			if(pstmtUpdate != null) {try {pstmtUpdate.close();} catch(Exception e) {}}
 		}
 		
-		
-		log.info("Result of regenerate question is: " + regenerate);
-        
+
 		if(tableExists && !fileExists) {
 			regenerate = true;		// Override regenerate if the file has been deleted
 		}
+		
+		log.info("Result of regenerate question is: " + regenerate);
+		
         return regenerate;
 	}
 	
