@@ -752,7 +752,7 @@ function surveyDetailsDone() {
 		$('#propSelected').html(globals.gSelLabel);
 		*/
 		
-		$('.editorContent, .q_only, .o_only').toggle();
+		$('.editorContent').toggle();
 		$('.notoptionslist').show();
 	} 
 	refreshForm();
@@ -801,7 +801,9 @@ function refreshForm() {
 	
 	if(globals.gShowingChoices) {
 		survey = globals.model.survey;
-		question = survey.forms[globals.gFormIndex].questions[globals.gItemIndex];
+		if(typeof globals.gFormIndex !== "undefined") {
+			question = survey.forms[globals.gFormIndex].questions[globals.gItemIndex];
+		}
 		$('#optionTable').html(option.getOptionTable(question, globals.gFormIndex, globals.gListName));
 		option.setupChoiceView($('#filterType').val());
 		respondToEventsChoices($('#optionTable'));
@@ -835,7 +837,7 @@ function respondToEventsChoices($context) {
 		$('#propSelected').html(globals.gSelLabel);
 		*/
 		
-		$('.editorContent, .q_only, .o_only').toggle();
+		$('.editorContent').toggle();
 		$('.notoptionslist').show();
 	});
 	
@@ -1269,7 +1271,7 @@ function respondToEvents($context) {
 		$('#propSelected').html(globals.gSelLabel);
 		*/
 		
-		$('.editorContent, .q_only, .o_only').toggle();
+		$('.editorContent').toggle();
 		$('.notoptionslist').hide();
 	});
 	
@@ -2351,9 +2353,9 @@ function setNoFilter() {
  */
 function updateViewControls() {
 	
-	if(globals.gSelProperty !== "media") {		// media is the only common attribute between question and option view
-		globals.gSelProperty = "label";
-	}
+	//if(globals.gSelProperty !== "media") {		// media is the only common attribute between question and option view
+	//	globals.gSelProperty = "label";
+	//}
 	if(globals.gIsQuestionView && !globals.gShowingChoices) {
 		$('.q_only').show();
 		$('.o_only').hide();
