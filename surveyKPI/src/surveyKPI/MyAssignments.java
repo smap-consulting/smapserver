@@ -380,11 +380,12 @@ public class MyAssignments extends Application {
 					File dir = new File(dirPath);
 					dir.mkdirs();
 					
+					log.info("CSV File is:  " + dirPath + " : directory path created");
+					
 					efm.createLinkedFile(connectionSD, cRel, sId, m.fileName , filepath, userName);
 					
 				}
-				
-				
+
 				
 				FormLocator fl = new FormLocator();
 				fl.ident = resultSet.getString("ident");

@@ -595,7 +595,6 @@ $(document).ready(function() {
 	$('.question_type_sel', '#toolbar_types').off().click(function(){
 		var type = $(this).val(),
 			$finalButton = $('.add_final_button', '#formList');
-		
 		addQuestion($finalButton, type);
 	});
 	

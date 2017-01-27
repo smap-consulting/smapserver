@@ -999,21 +999,14 @@ define([
 						return $this.data("fid") == change.property.formIndex && $this.data("id") == change.property.itemIndex;
 					});
 					*/
-				} 
-					/*
-					 *  No changes to options affect markup 
-					 *
-					 */
-					// changed row for choices
-					/*
+				} else {
 					
-					$changedRow = $('#formList').find('li.option.l_' + 
-							jq(change.property.optionList)).filter(function(index){
+					$changedRow = $('#choiceView').find('tr').filter(function(index){
 						var $this = $(this);
 						return $this.data("id") == change.property.itemIndex;
 					});
 				}
-				*/
+				
 				if($changedRow) {
 					$changedRow.find('.' + change.property.propType + 'Element').replaceWith(newMarkup);
 				}

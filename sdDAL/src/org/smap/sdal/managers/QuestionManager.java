@@ -305,7 +305,7 @@ public class QuestionManager {
 				pstmtInsertQuestion.executeUpdate();
 				
 				// Set the labels
-				if(q.name != null && q.name.trim().length() > 0) {
+				if(q.name != null && q.name.trim().length() > 0 && !q.type.equals("end group")) {
 					UtilityMethodsEmail.setLabels(sd, sId, q.fId + "_question_" + columnName, q.labels, "");
 				}
 				

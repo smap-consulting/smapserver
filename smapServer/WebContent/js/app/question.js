@@ -127,9 +127,12 @@ define([
 		}
 		
 		// Add default labels
-		for(i = 0; i < survey.languages.length; i++) {
-			change.question.labels.push({text: name + ") "});
+		if(type !== "end group") {
+			for(i = 0; i < survey.languages.length; i++) {
+				change.question.labels.push({text: name + ") "});
+			}
 		}
+		
 		$context = changeset.add(change);
 		return $context;				// Add events on to the altered html
 		

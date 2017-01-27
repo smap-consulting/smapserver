@@ -80,7 +80,8 @@ public class ExternalFileManager {
 		int linked_sId = 0;
 		String data_key = null;
 		boolean non_unique_key = false;
-		File f = new File(filepath + ".csv");
+		filepath = filepath + ".csv";
+		File f = new File(filepath);
 		ArrayList<Pulldata> pdArray = null;
 		
 		String sqlPulldata = "select pulldata from survey where s_id = ?";
