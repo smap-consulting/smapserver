@@ -286,7 +286,10 @@ public class GetFile extends Application {
 		while ((bytes = fis.read()) != -1) {
 			responseOutputStream.write(bytes);
 		}
+		responseOutputStream.flush();
+		responseOutputStream.close();
 		fis.close();
+
 	}
 	
 

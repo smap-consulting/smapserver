@@ -382,8 +382,6 @@ public class MyAssignments extends Application {
 					
 					efm.createLinkedFile(connectionSD, cRel, sId, m.fileName , filepath, userName);
 					
-					filepath += ".csv";
-					m.fileName += ".csv";
 				}
 				
 				
