@@ -82,7 +82,9 @@ window.gTasks = {
 									width: 12
 								}
 						    ]
-			      },
+			      }
+			      /*
+			      ,
 			      {
 					datatable: true,
 					name: "chartrow",
@@ -96,6 +98,7 @@ window.gTasks = {
 					},
 					charts: []
 			      }
+			      */
 			    ]
 	};
 	var gReportLoaded = false,
@@ -1009,6 +1012,8 @@ window.gTasks = {
 	 
 	 /*
 	  * Update the saved configuration
+	  *  This includes information on specific charts that are added to the survey whereas the report save below
+	  *  is for the base report.  
 	  */
 	 function saveConfig() {
 		 var config = {
@@ -1049,7 +1054,8 @@ window.gTasks = {
 	 }
 	 
 	 /*
-	  * Update the saved configuration
+	  * Save the report definition as opposed to saveConfig which saves the data table filter settings
+	  * TODO These should be merged?????
 	  */
 	 function saveReport(report) {
 		 

@@ -48,7 +48,7 @@ define([
 	                 groupedBar: groupedBar
 	                 };
 	
-	var report = undefined;
+	var gCurrentReport = undefined;
 	var gEdConfig,			// Temporary objects used when editing a chart
 		gEdChart,
 		gEdFilteredChart,
@@ -94,7 +94,7 @@ define([
 				gEdFilteredChart.width = gEdChart.width;
 				saveConfig();
 			} else {
-				saveReport(report);
+				saveReport(gCurrentReport);
 			}
 
 	    	gEdConfig.svg.remove();
@@ -110,7 +110,7 @@ define([
 	}
 	
 	function setReport(r) {
-		report = r;
+		gCurrentReport = r;
 	}
 	
 	
@@ -129,16 +129,16 @@ define([
 		var i,
 			data,
 			chart,
-			date_col = getCol(report.date_q, gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].columns),
+			date_col = getCol(gCurrentReport.date_q, gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].columns),
 			filtered = gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].filtered,
 			index = 0;
 		
-		for(i = 0; i < report.row.length; i++) {
+		for(i = 0; i < gCurrentReport.row.length; i++) {
 			
 			/*
 			 * Generate automatic charts from the data in the form
 			 */
-			if(report.row[i].datatable && filtered) {	
+			if(gCurrentReport.row[i].datatable && filtered) {	
 				for(j = 0; j < filtered.length; j++) {
 					
 					chart = filtered[j];
@@ -149,9 +149,9 @@ define([
 				/*
 				 * Generate custom charts
 				 */
-				for(j = 0; j < report.row[i].charts.length; j++) {
+				for(j = 0; j < gCurrentReport.row[i].charts.length; j++) {
 					
-					chart = report.row[i].charts[j];
+					chart = gCurrentReport.row[i].charts[j];
 					chart.groupLabels = chart.groups.map(function(e) { return e.label; });
 					data = processData(results, chart);
 					
@@ -445,14 +445,15 @@ define([
 	/*
 	 * Set the list of charts to show based on:
 	 *     the report
-	 *     the available data
+	 *     the available data  - TODO Remove its all report based now
 	 */
 	function setChartList() {
 		
 		/*
 		 * Get the list of visible columns
 		 */
-		var columns = gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].columns,
+		var columns = gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].columns;
+		/*
 			filtered = [],
 			filtered_prelim = columns.filter(function(d) {
 			   return d.include && 
@@ -468,16 +469,18 @@ define([
 			   		d.type !== "image" && d.type !== "video" && d.type !== "audio"; 
 			}),
 			i,
-			def = report.row[1].def,
-			h = [],
+			def = gCurrentReport.row[1].def,
+			*/
+		var h = [],
 			idx = -1,
 			hGrp = [],
 			idxGrp = -1;
-			
+		
 		
 		/*
 		 * Merge select multiple columns into a single chart
-		 */
+		 * 
+		 *
 		var select_questions = {};
 		for(i = 0; i < filtered_prelim.length; i++) {
 			if(filtered_prelim[i].type === "select") {
@@ -523,6 +526,7 @@ define([
 				}
 			}
 		}
+		*/
 		
 		/*
 		 * Generate the HTML
@@ -532,7 +536,7 @@ define([
 		globals.gCharts = [];
 		var chartContent = d3.select("#chartcontent")
 			.selectAll(".row")
-			.data(report.row);
+			.data(gCurrentReport.row);
 		
 		var row = chartContent.enter()
 			.append("div")
@@ -549,13 +553,13 @@ define([
 			content,
 			data;
 		
-		for(i = 0; i < report.row.length; i++) {
-			if(report.row[i].datatable) {
+		for(i = 0; i < gCurrentReport.row.length; i++) {
+			if(gCurrentReport.row[i].datatable) {
 				data = filtered;
 			} else {
-				data = report.row[i].charts;
+				data = gCurrentReport.row[i].charts;
 			}
-			chartRow = d3.select("#" + report.row[i].name)
+			chartRow = d3.select("#" + gCurrentReport.row[i].name)
 		    	.selectAll(".aChart")
 		    	.data(data);
 		
@@ -661,7 +665,7 @@ define([
 	    		gEdFilteredChart = filtered[gEdConfig.index];
 	    	} else {
 	    		// Custom report
-	    		gEdChart = report.row[gEdConfig.rowIndex].charts[gEdConfig.index];
+	    		gEdChart = gCurrentReport.row[gEdConfig.rowIndex].charts[gEdConfig.index];
 	    	}
 	    	
 	    	/*

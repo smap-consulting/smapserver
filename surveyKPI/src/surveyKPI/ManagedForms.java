@@ -725,7 +725,7 @@ public class ManagedForms extends Application {
 	public Response updateManageConfig(
 			@Context HttpServletRequest request, 
 			@PathParam("sId") int sId,
-			@PathParam("key") String key,
+			@PathParam("key") String key,		// Type of report to be saved
 			@FormParam("settings") String settings
 			) { 
 		
