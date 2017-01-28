@@ -34,6 +34,8 @@ import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.GET;
@@ -473,7 +475,17 @@ public class WebForm extends Application{
     					localisation));
     		}
     		
-			response = Response.status(Status.OK).entity(outputString.toString()).build();
+    		/*
+			 * Fix issue with itemsets not having images replaces
+			 * TODO The best approach is probably to replace XSL with POJ rather than attempting complex text replacement
+			 */
+    		//String respString = outputString.toString();
+			//Pattern p = Pattern.compile("(<span.*or-form-image.*>)(/surveyKPI.*)(</span>)");
+			//Matcher m = p.matcher(respString);
+			//respString = m.replaceAll("xxxxxxxxxx $2 xxxxxxxxxx");
+			//respString = m.replaceAll("<img class='active' src='$2' alt='image'>");
+			String respString = outputString.toString();
+			response = Response.status(Status.OK).entity(respString).build();
     		
 			log.info("userevent: " + user + " : webForm : " + formIdent);	
 			
