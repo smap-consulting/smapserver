@@ -564,14 +564,16 @@ define([
 			wrapper,
 			title,
 			content,
-			data;
+			data,
+			i, j;
 		
 		for(i = 0; i < gCurrentReport.row.length; i++) {
-			if(gCurrentReport.row[i].datatable) {
-				data = filtered;
-			} else {
-				data = gCurrentReport.row[i].charts;
-			}
+			//if(gCurrentReport.row[i].datatable) {
+			//	data = filtered;
+			//} else {
+			data = gCurrentReport.row[i].charts;
+			//}
+			
 			chartRow = d3.select("#" + gCurrentReport.row[i].name)
 		    	.selectAll(".aChart")
 		    	.data(data);
@@ -705,6 +707,10 @@ define([
 		var tools = title.append("div").attr("class", "ibox-tools"),
 			i;
 		
+		tools.append("a").attr("class", "widget-delete fa-widget-edit")
+			.attr("href", "#")
+			.append("i").attr("class", "fa fa-trash-o");
+		
 		tools.append("a").attr("class", "widget-edit")
 			.attr("href", "#")
 			.append("i").attr("class", "fa fa-edit fa-widget-edit");
@@ -727,11 +733,24 @@ define([
 	        content.remove();
 	    });
   
+	    $('.widget-delete').off().click(function() {
+	    	var $this = $(this);
+	    	
+	    	gChartId = "#" + $this.closest('.aChart').find(".svg-container").attr("id");
+	    	gEdConfig = globals.gCharts[gChartId];
+	    	
+	    	gCurrentReport.row[gEdConfig.rowIndex].charts.splice(gEdConfig.index, 1);
+			saveReport(gCurrentReport);
+    		setChartList();
+    		refreshCharts();
+	    	console.log("delete");
+	    	
+	    });
 	    
-	    $('.widget-edit').off().click(function(){
-	    	var chart = d3.select($(this).closest('.aChart'))
+	    $('.widget-edit').off().click(function() {
 	    	
 	    	var $this = $(this),
+	    		chart = d3.select($this.closest('.aChart')),
 	    		filtered = gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].filtered,
 	    		chart_type = $this.data("ctype");
 	    	
