@@ -46,8 +46,12 @@ define([
 		var barWidth,
 			width,
 			height,
-			margin;
+			format;
 	    
+		if(chart.fn === "percent") {
+			format = "%";
+		}
+		
 		// Allow space for labels if needed
 		margin = {top: 40, right: 20, bottom: 60, left: 60};
 	    width = +widthContainer - margin.left - margin.right;
@@ -67,7 +71,7 @@ define([
 		config.y.domain([0, d3.max(data, function(d) { return +d.value; })]).nice();
 		
 		config.xAxis = d3.axisBottom(config.x);
-		config.yAxis = d3.axisLeft(config.y).ticks(10);
+		config.yAxis = d3.axisLeft(config.y).ticks(10, format);
 		
 		config.g = config.svg.append("g")
 	    	.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
@@ -99,7 +103,12 @@ define([
 			width,
 			height,
 			margin,
-			labelId;
+			labelId,
+			format = "";
+		
+		if(chart.fn === "percent") {
+			format = "%";
+		}
 		
 		// Allow space for labels if needed
 		var bottom_margin = chart.chart_type === "wordcloud" ? 0 : 60;
@@ -123,7 +132,7 @@ define([
 		
 		// Update axes
 		config.svg.select(".axis--y")
-			.call(config.yAxis.ticks(5));
+			.call(config.yAxis.ticks(5, format));
 		config.svg.select(".axis--x")
 			.call(config.xAxis)
 			.selectAll("text")

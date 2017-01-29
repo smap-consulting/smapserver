@@ -275,6 +275,7 @@ define({
 	"a_embed": "Embed Images in Excel File",
 	"a_hxl": "HXL",
 	"a_ext": "Show linked surveys",
+	"a_fn": "Function",
 	
 	
 	// Messages

@@ -51,6 +51,7 @@ define([
 	var gCurrentReport = undefined;
 	var gEdConfig,			// Temporary objects used when editing a chart
 		gEdChart,
+		gIsNewChart,
 		gEdFilteredChart,
 		gChartId;
 	
@@ -67,18 +68,18 @@ define([
 	function init() {
 		localise.setlang();
 		$('#editWidgetSave').off().click(function(){
-			
+
 			var width = $('#ew_width').val(),
 				reset = false,
-				filtered = gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].filtered,
-				colIdx;
+				filtered = gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].filtered;
 			
-			if(width != gEdChart.width) {
-				reset = true;
-			}
-			colIdx = $('#ew_question').val();
-			gEdChart.name = filtered[colIdx].name;
-			gEdChart.type = filtered[colIdx].type;
+			//if(width != gEdChart.width) {
+			//	reset = true;
+			//}
+			gEdChart.qIdx = $('#ew_question').val();
+			gEdChart.name = filtered[gEdChart.qIdx].name;
+			gEdChart.type = filtered[gEdChart.qIdx].type;
+			gEdChart.fn = $('#ew_fn').val();
 			gEdChart.humanName = $('#ew_title').val();
 			gEdChart.chart_type = $('#ew_chart_type').val();
 			gEdChart.width = $('#ew_width').val();
@@ -101,12 +102,13 @@ define([
 			//	gEdFilteredChart.width = gEdChart.width;
 			//	saveConfig();
 			//} else {
+			if(gIsNewChart) {
 				gCurrentReport.row[0].charts.push(gEdChart);
-				saveReport(gCurrentReport);
+			}
+			saveReport(gCurrentReport);
 			//}
 
 	    	//gEdConfig.svg.remove();
-	    	globals.gCharts[gChartId] = undefined;
 	    	
 	    	//if(reset) {
 	    		setChartList();
@@ -139,35 +141,24 @@ define([
 			chart,
 			date_col = getCol(gCurrentReport.date_q, gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].columns),
 			filtered = gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].filtered,
-			index = 0;
+			index = 0,
+			dataLength = results.count();
 		
 		for(i = 0; i < gCurrentReport.row.length; i++) {
 			
 			/*
-			 * Generate automatic charts from the data in the form
+			 * Generate custom charts
 			 */
-			if(gCurrentReport.row[i].datatable && filtered) {	
-				for(j = 0; j < filtered.length; j++) {
-					
-					chart = filtered[j];
-					data = processData(results, chart);
-					addChart("#c_" + chart.name, data, chart, i, index++, true);
+			for(j = 0; j < gCurrentReport.row[i].charts.length; j++) {
+				
+				chart = gCurrentReport.row[i].charts[j];
+				if(chart.groups) {
+					chart.groupLabels = chart.groups.map(function(e) { return e.label; });
 				}
-			} else {
-				/*
-				 * Generate custom charts
-				 */
-				for(j = 0; j < gCurrentReport.row[i].charts.length; j++) {
-					
-					chart = gCurrentReport.row[i].charts[j];
-					if(chart.groups) {
-						chart.groupLabels = chart.groups.map(function(e) { return e.label; });
-					}
-					data = processData(results, chart);
-					
-					addChart("#c_" + chart.name, data, chart, i, j, false);
-					
-				}
+				data = processData(results, chart, dataLength);
+				
+				addChart("#c_" + chart.name, data, chart, i, j, false);		
+
 			}
 		}
 	}
@@ -175,7 +166,7 @@ define([
 	/*
 	 * Process the data according to chart type
 	 */
-	function processData(results, chart) {
+	function processData(results, chart, dataLength) {
 		
 		var allData = [],
 			data,
@@ -191,9 +182,20 @@ define([
 			dateExtent,
 			parseTime,
 			formatTime,
-			dateRange;
+			dateRange,
+			d3Fn;
 		
-		if(chart.tSeries) {
+		if(chart.fn === "count" || chart.fn === "percent") {
+			d3Fn = "length";
+		} else {
+			d3Fn = chart.fn;
+		}
+		
+		if(chart.fn !== "percent") {
+			dataLength = 1;			// Don't divide by total number of records unless percent
+		}
+		
+ 		if(chart.tSeries) {
 			parseTime = chart.period === "day" ? parseTimeDay : 
 				chart.period === "month" ? parseTimeMonth :
 				parseTimeYear;
@@ -233,7 +235,7 @@ define([
 					 
 					  return adjKey; 
 				  })
-				  .rollup(function(v) {return v[chart.fn]; })
+				  .rollup(function(v) {return v[d3Fn]; })
 				  .entries(results));
 			}
 			
@@ -342,7 +344,7 @@ define([
 			for(i = 0; i < chart.choices.length; i++) {
 				dc = d3.nest()
 				  .key(function(d) { return d[chart.choices[i]]; })
-				  .rollup(function(v) { return v[chart.fn]; })
+				  .rollup(function(v) { return v[d3Fn]; })
 				  .entries(results);
 				
 				for(j = 0; j < dc.length; j++) {
@@ -395,7 +397,7 @@ define([
 		} else {
 			data = d3.nest()
 			  .key(function(d) { return d[chart.name]; })
-			  .rollup(function(v) { return v[chart.fn]; })
+			  .rollup(function(v) { return v[d3Fn] / dataLength; })
 			  .entries(results);
 			
 			
@@ -414,40 +416,42 @@ define([
 		var heightContainer = $(chartId).height();
 		var view = "0 0 " + widthContainer + " " + heightContainer;
 		
-		var config = globals.gCharts[chartId],
-			init = false;
-		
-		if(typeof config === "undefined") {
-			init = true;
-			globals.gCharts[chartId] = {};
-			config = globals.gCharts[chartId];
-			config.rowIndex = rowIndex;
-			config.index = index;
-			config.fromDT = fromDT;
-		} 
-		
-		
-		if(avCharts[chart.chart_type]) {
-			if(init || chart.chart_type === "pie" || chart.chart_type === "wordcloud") {	// Pie charts tricky to update, wordcloud not implemented update yet
-				if(chart.chart_type === "map") {
-					config.map = new L.Map("map", {center: [37.8, -96.9], zoom: 4})
-				    .addLayer(new L.TileLayer("http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"));
-				} else {
-					if(config.svg) {
-						config.svg.remove();
-					}
-					config.svg = d3.select(chartId).append("svg")
-					  .attr("preserveAspectRatio", "xMinYMin meet")
-					  .attr("viewBox", view)
-					  .classed("svg-content", true);
-				}
-				avCharts[chart.chart_type].add(chartId, chart, config, data, widthContainer, heightContainer);
+		if(widthContainer > 0 && heightContainer > 0) {
+			var config = globals.gCharts[chartId],
+				init = false;
+			
+			if(typeof config === "undefined") {
+				globals.gCharts[chartId] = {};
+				globals.gCharts[chartId].rowIndex = rowIndex;
+				globals.gCharts[chartId].index = index;
+				config = globals.gCharts[chartId];
+				init = true;
 			} 
-			if(chart.chart_type !== "pie" && chart.chart_type !== "wordcloud") {
-				avCharts[chart.chart_type].redraw(chartId, chart, config, data, widthContainer, heightContainer);
+			
+			if(avCharts[chart.chart_type]) {
+				if(init || chart.chart_type === "pie" || chart.chart_type === "wordcloud") {	// Pie charts tricky to update, wordcloud not implemented update yet
+					if(chart.chart_type === "map") {
+						config.map = new L.Map("map", {center: [37.8, -96.9], zoom: 4})
+					    .addLayer(new L.TileLayer("http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"));
+					} else {
+						if(config.svg) {
+							config.svg.remove();
+						}
+						config.svg = d3.select(chartId).append("svg")
+						  .attr("preserveAspectRatio", "xMinYMin meet")
+						  .attr("viewBox", view)
+						  .classed("svg-content", true);
+					}
+					avCharts[chart.chart_type].add(chartId, chart, config, data, widthContainer, heightContainer);
+				} 
+				if(chart.chart_type !== "pie" && chart.chart_type !== "wordcloud") {
+					avCharts[chart.chart_type].redraw(chartId, chart, config, data, widthContainer, heightContainer);
+				}
+			} else {
+				console.log("unknown chart type: " + chart.chart_type);
 			}
 		} else {
-			console.log("unknown chart type: " + chart.chart_type);
+			alert("Could not find html for " + chart.humanName);
 		}
 		
 	}
@@ -463,26 +467,8 @@ define([
 		 * Get the list of visible columns
 		 */
 		
-		var columns = gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].columns;
-		/*
-			filtered = [],
-			filtered_prelim = columns.filter(function(d) {
-			   return d.include && 
-			   		!d.hide && 
-			   		d.name !== "prikey" && 
-			   		d.name !== "_upload_time" && 
-			   		d.name !== "_start" && 
-			   		d.name !== "_end" &&
-			   		d.name !== "instancename" && 
-			   		d.type !== "dateTime" &&
-			   		d.type !== "time" &&
-			   		d.type !== "date" &&
-			   		d.type !== "image" && d.type !== "video" && d.type !== "audio"; 
-			}),
-			i,
-			def = gCurrentReport.row[1].def,
-			*/
-		var h = [],
+		var columns = gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].columns,
+			h = [],
 			idx = -1,
 			hGrp = [],
 			idxGrp = -1,
@@ -491,62 +477,10 @@ define([
 		
 		
 		/*
-		 * Merge select multiple columns into a single chart
-		 * 
-		 *
-		var select_questions = {};
-		for(i = 0; i < filtered_prelim.length; i++) {
-			if(filtered_prelim[i].type === "select") {
-				var n = filtered_prelim[i].humanName.split(" - ");
-				if(n.length > 1) {
-					
-					if(!select_questions[n[0]]) {		// New choice
-						
-						filtered_prelim[i].select_name = n[0];
-						filtered_prelim[i].choices = [];
-						filtered_prelim[i].choices.push(filtered_prelim[i].humanName);
-						
-						select_questions[n[0]] = filtered_prelim[i];
-						filtered.push(filtered_prelim[i]);
-					} else {
-						var f = select_questions[n[0]];
-						f.choices.push(filtered_prelim[i].humanName);
-					}
-				}
-				
-				
-			} else {
-				filtered.push(filtered_prelim[i]);
-			}
-		}
-		
-		gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].filtered = filtered;	// cache
-		
-		for (i = 0; i < filtered.length; i++) {
-			if(!filtered[i].fn) {
-				filtered[i].fn = def.fn;
-			}
-			if(!filtered[i].cDom) {
-				filtered[i].cDom = "c_" + filtered[i].name;
-			}
-			if(!filtered[i].chart_type) {
-				if(filtered[i].type === "string") {
-					filtered[i].chart_type = "wordcloud";
-				} else if(filtered[i].type === "geopoint") {
-					filtered[i].chart_type = "map";
-				} else {
-					filtered[i].chart_type = def.chart_type;
-				}
-			}
-		}
-		*/
-		
-		/*
 		 * Generate the HTML
 		 * Start by creating rows of related charts
 		 */
 		$("#chartcontent").empty();
-		globals.gCharts = [];
 		var chartContent = d3.select("#chartcontent")
 			.selectAll(".row")
 			.data(gCurrentReport.row);
@@ -557,6 +491,8 @@ define([
 			.attr("id", function(d) {return d.name});
 		
 
+		globals.gCharts = {};		// Force reinitialise of charts
+		
 		/*
 		 * Create the charts for each row
 		 */
@@ -568,11 +504,8 @@ define([
 			i, j;
 		
 		for(i = 0; i < gCurrentReport.row.length; i++) {
-			//if(gCurrentReport.row[i].datatable) {
-			//	data = filtered;
-			//} else {
+			
 			data = gCurrentReport.row[i].charts;
-			//}
 			
 			chartRow = d3.select("#" + gCurrentReport.row[i].name)
 		    	.selectAll(".aChart")
@@ -756,6 +689,7 @@ define([
 	    	
 	    	gChartId = "#" + $this.closest('.aChart').find(".svg-container").attr("id");
 	    	gEdConfig = globals.gCharts[gChartId];
+	    	gIsNewChart = false;
 	    	
 	    	if(gEdConfig.fromDT) {
 	    		var fullIndex = getFullIndex(filtered[gEdConfig.index].name);
@@ -773,34 +707,7 @@ define([
 	    		gEdChart.time_interval = true;	// 2016-12-06
 	    	}
 	    	
-	    	// Set modal values
-	    	$('#ew_width').val(gEdChart.width);
-	    	if(gEdChart.group && gEdChart.chart_type !== "wordcloud") {
-	    		$(".group_only").show();
-	    		$('#ew_group').val(gEdChart.group);
-	    	} else {
-	    		$(".group_only").hide();
-	    	}
-	    	if(gEdChart.time_interval) {
-	    		$(".date_range_only").show();
-	    		$("#ew_date1").val(gEdChart.groups[0].q);
-	    		$("#ew_date2").val(gEdChart.groups[1].q);
-	    	} else {
-	    		$(".date_range_only").hide();
-	    	}
-	    	if(gEdChart.tSeries) {
-	    		$(".period_only").show();		
-	    		$('#ew_period').val(gEdChart.period);
-
-	    	} else {
-	    		$(".period_only").hide();
-	    	}
-	    	
-
-	    	
-	    	addChartTypeSelect(gEdChart);
-			$('#ew_chart_type').val(gEdChart.chart_type);
-
+	    	initialiseWidgetDialog();
 	    	
 	    	$('#editWidget').modal("show");
 	    });
@@ -809,11 +716,11 @@ define([
 	    	var $this = $(this),
 	    		filtered = gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].filtered,
 	    		chart_type = $this.data("ctype"),
-	    	    chart = "#" + $this.closest('.aChart').find(".svg-container").attr("id"),
+	    	    chartId = "#" + $this.closest('.aChart').find(".svg-container").attr("id"),
 	    	    ibox = chart + "_ibox",
 	    	    name;
 	    	
-	    	var config = globals.gCharts[chart];
+	    	var config = globals.gCharts[chartId];
 	    	var fullIndex = getFullIndex(filtered[config.index].name);
 
 	    	// Set the new value in the full index then save it
@@ -824,10 +731,51 @@ define([
 	    	// Set the new value in the current list of charts
 	    	filtered[config.index].chart_type = chart_type;
 	    	config.svg.remove();
-	    	globals.gCharts[chart] = undefined;
 	    	
 	    	refreshCharts();
 	    })
+	}
+	
+	/*
+	 * Set the initial values for the widget dialog
+	 */
+	function initialiseWidgetDialog() {
+		
+		$("#chartForm")[0].reset();
+		
+    	addChartTypeSelect(gEdChart);
+		$('#ew_chart_type').val(gEdChart.chart_type);
+		$("#ew_title").val(gEdChart.humanName);
+    	$('#ew_width').val(gEdChart.width);
+    	$('#ew_fn').val(gEdChart.fn);
+    	$('#ew_question').val(gEdChart.qIdx);
+    	
+    	if(gEdChart.chart_type === "bar" || gEdChart.chart_type === "pie") {
+    		$(".numeric_only").show();
+    	} else {
+    		$(".numeric_only").hide();
+    	}
+    	if(gEdChart.group && gEdChart.chart_type !== "wordcloud") {
+    		$(".group_only").show();
+    		$('#ew_group').val(gEdChart.group);
+    	} else {
+    		$(".group_only").hide();
+    	}
+    	if(gEdChart.time_interval) {
+    		$(".date_range_only").show();
+    		$("#ew_date1").val(gEdChart.groups[0].q);
+    		$("#ew_date2").val(gEdChart.groups[1].q);
+    	} else {
+    		$(".date_range_only").hide();
+    	}
+    	if(gEdChart.tSeries) {
+    		$(".period_only").show();		
+    		$('#ew_period').val(gEdChart.period);
+
+    	} else {
+    		$(".period_only").hide();
+    	}
+    	
 	}
 	
 	/*
@@ -867,7 +815,8 @@ define([
 	 */
 	function addNewChart() {
 		gEdChart = $.extend(true, {}, gBlankChart);
-		chart.addChartTypeSelect();
+		gIsNewChart = true;
+		initialiseWidgetDialog();
 		$('#editWidget').modal("show");
 	}
 

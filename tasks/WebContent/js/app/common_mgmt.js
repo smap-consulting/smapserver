@@ -40,7 +40,7 @@ window.gTasks = {
 			name: "",
 			chart_type: "bar",
 			group: "none",
-			fn: "length",
+			fn: "count",
 			tSeries: false,
 			period: undefined,
 			width: 12
@@ -70,7 +70,7 @@ window.gTasks = {
 									name: "periodic_count",
 									chart_type: "groupedBar",
 									group: undefined,
-									fn: "length",
+									fn: "count",
 									tSeries: true,
 									period: "day",
 									width: 12
@@ -475,11 +475,7 @@ window.gTasks = {
 		                    last = group;
 		                }
 		            } );
-			 } else {
-				 // For browse results and managed forms, update any charts
-				 chart.refreshCharts(rows);
-			 }
-	            
+			 } 
 	            
 			 columns = gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].columns;
 	 
