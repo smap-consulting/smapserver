@@ -327,6 +327,16 @@ require([
 			}
 		});
 		
+		/*
+		 * Chart menus
+		 */
+		
+		// Add a new chart
+		$('#m_add_chart').click( function () {
+			chart.addNewChart();
+		});
+		
+		
      });	 
 	 
 	/*

@@ -47,7 +47,7 @@ define([
 	                 wordcloud: wordcloud,
 	                 groupedBar: groupedBar
 	                 };
-	
+		
 	var gCurrentReport = undefined;
 	var gEdConfig,			// Temporary objects used when editing a chart
 		gEdChart,
@@ -59,6 +59,8 @@ define([
 		setReport: setReport,
 		setChartList: setChartList,
 		refreshCharts: refreshCharts,
+		addChartTypeSelect: addChartTypeSelect,
+		addNewChart: addNewChart
 
 	};
 	
@@ -67,12 +69,17 @@ define([
 		$('#editWidgetSave').off().click(function(){
 			
 			var width = $('#ew_width').val(),
-				reset = false;
+				reset = false,
+				filtered = gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].filtered,
+				colIdx;
 			
 			if(width != gEdChart.width) {
 				reset = true;
 			}
-			
+			colIdx = $('#ew_question').val();
+			gEdChart.name = filtered[colIdx].name;
+			gEdChart.type = filtered[colIdx].type;
+			gEdChart.humanName = $('#ew_title').val();
 			gEdChart.chart_type = $('#ew_chart_type').val();
 			gEdChart.width = $('#ew_width').val();
 			gEdChart.group = $('#ew_group').val();
@@ -90,22 +97,23 @@ define([
 				}
 				gEdChart.period = $('#ew_period').val();
 			}
-			if(gEdConfig.fromDT) {
-				gEdFilteredChart.width = gEdChart.width;
-				saveConfig();
-			} else {
+			// if(gEdConfig.fromDT) {
+			//	gEdFilteredChart.width = gEdChart.width;
+			//	saveConfig();
+			//} else {
+				gCurrentReport.row[0].charts.push(gEdChart);
 				saveReport(gCurrentReport);
-			}
+			//}
 
-	    	gEdConfig.svg.remove();
+	    	//gEdConfig.svg.remove();
 	    	globals.gCharts[gChartId] = undefined;
 	    	
-	    	if(reset) {
+	    	//if(reset) {
 	    		setChartList();
 	    		refreshCharts();
-	    	} else {
-	    		refreshCharts();
-	    	}
+	    	//} else {
+	    	//	refreshCharts();
+	    	//}
 		});
 	}
 	
@@ -152,7 +160,9 @@ define([
 				for(j = 0; j < gCurrentReport.row[i].charts.length; j++) {
 					
 					chart = gCurrentReport.row[i].charts[j];
-					chart.groupLabels = chart.groups.map(function(e) { return e.label; });
+					if(chart.groups) {
+						chart.groupLabels = chart.groups.map(function(e) { return e.label; });
+					}
 					data = processData(results, chart);
 					
 					addChart("#c_" + chart.name, data, chart, i, j, false);
@@ -452,6 +462,7 @@ define([
 		/*
 		 * Get the list of visible columns
 		 */
+		
 		var columns = gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].columns;
 		/*
 			filtered = [],
@@ -474,7 +485,9 @@ define([
 		var h = [],
 			idx = -1,
 			hGrp = [],
-			idxGrp = -1;
+			idxGrp = -1,
+			hQ = [],
+			idxQ = -1;
 		
 		
 		/*
@@ -591,6 +604,72 @@ define([
 	    
 	    setupIbox("#chartcontent");		// Add event listeners
 	    
+	    /*
+	     * Filter the questions that the user is allowed to select
+	     */   
+	    var filtered = [],
+			filtered_prelim = columns.filter(function(d) {
+			   return d.include && 
+			   		!d.hide && 
+			   		d.name !== "prikey" && 
+			   		d.name !== "_upload_time" && 
+			   		d.name !== "_start" && 
+			   		d.name !== "_end" &&
+			   		d.name !== "instancename" && 
+			   		d.type !== "dateTime" &&
+			   		d.type !== "time" &&
+			   		d.type !== "date" &&
+			   		d.type !== "image" && d.type !== "video" && d.type !== "audio"; 
+			});
+	     
+	    // Merge choices from select multiple questions
+		var select_questions = {};
+		for(i = 0; i < filtered_prelim.length; i++) {
+			if(filtered_prelim[i].type === "select") {
+				var n = filtered_prelim[i].humanName.split(" - ");
+				if(n.length > 1) {
+					
+					if(!select_questions[n[0]]) {		// New choice
+						
+						filtered_prelim[i].select_name = n[0];
+						filtered_prelim[i].choices = [];
+						filtered_prelim[i].choices.push(filtered_prelim[i].humanName);
+						
+						select_questions[n[0]] = filtered_prelim[i];
+						filtered.push(filtered_prelim[i]);
+					} else {
+						var f = select_questions[n[0]];
+						f.choices.push(filtered_prelim[i].humanName);
+					}
+				}
+				
+				
+			} else {
+				filtered.push(filtered_prelim[i]);
+			}
+		}
+		
+		for (i = 0; i < filtered.length; i++) {
+			if(!filtered[i].fn) {
+				filtered[i].fn = "length";
+			}
+			if(!filtered[i].cDom) {
+				filtered[i].cDom = "c_" + filtered[i].name;
+			}
+		}
+		gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].filtered = filtered;	// cache
+		
+		/*
+		 * Add question select options
+		 */
+		for(i = 0; i < filtered.length; i++) {
+			hQ[++idxQ] = '<option value="';
+			hQ[++idxQ] = i;
+			hQ[++idxQ] = '">';
+			hQ[++idxQ] = filtered[i].humanName;
+			hQ[++idxQ] = '</option>';
+		}
+		$('.question').empty().append(hQ.join(''));
 		
 		/*
 		 * Add date question select options
@@ -700,32 +779,7 @@ define([
 	    	
 
 	    	
-			/*
-			 * Add the chart type select list
-			 */
-			h = [];
-			idx = -1;
-			for (key in avCharts) {
-				
-			    if (avCharts.hasOwnProperty(key)) {
-			    	if(gEdChart.tSeries) {
-			    		if(key !== "groupedBar") {
-			    			continue;
-			    		}
-			    	} else {
-			    		if(key === "groupedBar") {
-			    			continue;
-			    		}
-			    	}
-			    	keylangid = (key === "groupedBar") ? "bar" : key;
-			    	h[++idx] = '<option value="';
-			    	h[++idx] = key;
-			    	h[++idx] = '">';
-			    	h[++idx] = localise.set[keylangid];
-			    	h[++idx] = '</option>';
-			    }
-			}
-			$('.chart_type').empty().append(h.join(''));
+	    	addChartTypeSelect(gEdChart);
 			$('#ew_chart_type').val(gEdChart.chart_type);
 
 	    	
@@ -787,6 +841,47 @@ define([
 			}
 		}
 		return col;
+	}
+	
+	/*
+	 * Add a new chart
+	 */
+	function addNewChart() {
+		gEdChart = $.extend(true, {}, gBlankChart);
+		chart.addChartTypeSelect();
+		$('#editWidget').modal("show");
+	}
+
+	/*
+	 * Add the list of selectable chart types
+	 */
+	function addChartTypeSelect() {
+		/*
+		 * Add the chart type select list
+		 */
+		h = [];
+		idx = -1;
+		for (key in avCharts) {
+			
+		    if (avCharts.hasOwnProperty(key)) {
+		    	if(gEdChart.tSeries) {
+		    		if(key !== "groupedBar") {
+		    			continue;
+		    		}
+		    	} else {
+		    		if(key === "groupedBar") {
+		    			continue;
+		    		}
+		    	}
+		    	keylangid = (key === "groupedBar") ? "bar" : key;
+		    	h[++idx] = '<option value="';
+		    	h[++idx] = key;
+		    	h[++idx] = '">';
+		    	h[++idx] = localise.set[keylangid];
+		    	h[++idx] = '</option>';
+		    }
+		}
+		$('.chart_type').empty().append(h.join(''));
 	}
 
 });

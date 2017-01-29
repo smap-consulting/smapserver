@@ -33,6 +33,19 @@ window.gTasks = {
 		gDirn: undefined
 	}
 
+	var gBlankChart = {
+	    	groups: [],
+			time_interval: false,
+			humanName: "",
+			name: "",
+			chart_type: "bar",
+			group: "none",
+			fn: "length",
+			tSeries: false,
+			period: undefined,
+			width: 12
+		};
+
 	var gReport = {
 			date_q: "Upload Time",
 			row: [
@@ -41,6 +54,7 @@ window.gTasks = {
 						name: "history",
 						charts: 
 							[
+							 /*
 						         {
 						        	groups: [
 						        	         {
@@ -81,6 +95,7 @@ window.gTasks = {
 									period: undefined,
 									width: 12
 								}
+								*/
 						    ]
 			      }
 			      /*

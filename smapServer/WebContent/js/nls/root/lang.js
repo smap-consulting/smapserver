@@ -664,6 +664,7 @@ define({
 	"d_c_day": "Count by day",
 	"d_c_month": "Coount by month",
 	"d_c_year": "Count by year",
+	"d_add": "Add Chart",
 	
 	// Review
 	"rev_upd_diff": "Update a different question to the source question",
