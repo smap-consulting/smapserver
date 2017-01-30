@@ -51,6 +51,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 
+import utilities.FormListManager;
 import utilities.QuestionInfo;
 
 /*
@@ -200,6 +201,16 @@ public class ExportSurveyMedia extends Application {
 					}
 				}
 			
+				/*
+				 * Update the form list with additional info
+				 */
+				FormListManager flm = new FormListManager();
+				if(formList == null) {
+					formList = flm.getFormList(connectionSD, sId, mediaQInfo.getFId());
+				} else {
+					flm.setFormList(connectionSD, formList);
+				}
+				
 				// Get the SQL for this query
 				SqlDesc sqlDesc = QueryGenerator.gen(connectionSD, 
 						connectionResults,

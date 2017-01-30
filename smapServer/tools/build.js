@@ -44,7 +44,7 @@
         },
         {
             name: '../userTrail',
-	    exclude: [ 'ol3/js/ol']
+	    exclude: [ 'ol3/ol']
         }
 
     ]
