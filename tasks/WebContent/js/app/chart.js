@@ -32,8 +32,9 @@ define([
          'app/charts/line',
          'app/charts/wordcloud',
          'app/charts/groupedBar',
+         'app/charts/map',
          'svgsave'], 
-		function($, modernizr, lang, globals, d3, bar, pie, line, wordcloud, groupedBar, svgsave) {
+		function($, modernizr, lang, globals, d3, bar, pie, line, wordcloud, groupedBar, map, svgsave) {
 
 	
 	/*
@@ -45,7 +46,8 @@ define([
 	                 pie: pie,
 	                // line: line,
 	                 wordcloud: wordcloud,
-	                 groupedBar: groupedBar
+	                 groupedBar: groupedBar,
+	                 map: map
 	                 };
 		
 	var gCurrentReport = undefined;
@@ -841,7 +843,7 @@ define([
 		    			continue;
 		    		}
 		    	}
-		    	keylangid = (key === "groupedBar") ? "bar" : key;
+		    	keylangid = (key === "groupedBar") ? "bar" : (key === "map") ? "c_map" : key;
 		    	h[++idx] = '<option value="';
 		    	h[++idx] = key;
 		    	h[++idx] = '">';
