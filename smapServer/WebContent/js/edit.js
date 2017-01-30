@@ -2317,6 +2317,10 @@ function updateFilterValues($this, isCascade, isChecked) {
 		currentFilters = $elem.data("filters")
 	}
 	
+	if(typeof currentFilters !== "object") {
+		currentFilters = {};
+	}
+	
 	newVal = currentFilters;
 	if(typeof fVal === "undefined" || fVal.trim().length === 0) {
 		delete(newVal[filterName]);

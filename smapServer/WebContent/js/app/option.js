@@ -680,7 +680,7 @@ define([
 			h[++idx] = globals.gFilterArray[i];
 			h[++idx] = '">';
 			h[++idx] = '<input class="filter form-control has_tt" value="';
-			h[++idx] = filters[globals.gFilterArray[i]];
+			h[++idx] = filters ? filters[globals.gFilterArray[i]] : "";
 			h[++idx] = '" ';	
 			h[++idx] = ' type="text" title="';
 			h[++idx] = localise.set["ed_fv"];
