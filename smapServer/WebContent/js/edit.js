@@ -411,6 +411,7 @@ $(document).ready(function() {
 			  data: { pulldata: pulldataString },
 				success: function(data) {
 					removeHourglass();
+					globals.model.survey.pulldata = gTempPulldata;
 					$('#pulldataModal').modal("hide");
 				},
 				error: function(xhr, textStatus, err) {

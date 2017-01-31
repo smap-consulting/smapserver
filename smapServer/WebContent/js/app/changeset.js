@@ -255,6 +255,7 @@ define([
 					item_orig = optionListOrig.options[change.property.itemIndex];	
 				}
 				change.property.name = item.value;
+				change.property.o_id = item.id;
 				//if(change.changeType === "property") {
 				//	setOptionTypeSpecificChanges(change.property.prop, change, survey);
 				//}
@@ -278,6 +279,7 @@ define([
 						(change.property.prop === "hint" ? ":hint" : ":label");	
 					} else if(change.property.type === "option") {
 						change.property.key = getFormPath(form) + "/" + change.property.qname + "/" + item.value + ":label";
+						change.property.o_id = item.id;
 					}
 				}
 			} else {

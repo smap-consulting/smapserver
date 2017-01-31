@@ -1098,6 +1098,9 @@ public class QuestionManager {
 	
 	/*
 	 * Update properties for options
+	 * Use the value of the choice to identify it, however if the optionId is available then use that as well as
+	 *  otherwise there can be errors if one option has its value changed to be the same as another option while that
+	 *  second option also has its value modified
 	 */
 	public void updateOptions(Connection sd, int sId, ArrayList<PropertyChange> properties) throws Exception {
 		
@@ -1110,26 +1113,35 @@ public class QuestionManager {
 		
 		// If the option value changes then its label id needs to be updated as this is derived from the option value
 		PreparedStatement pstmtGetOldLabelId = null;
-		String sqlGetOldLabelId = "select label_id from option where l_id = ? and ovalue = ?; ";
+		String sqlGetOldLabelId = "select label_id from option where l_id = ? and ovalue = ?";
 		
 		PreparedStatement pstmtUpdateLabelId = null;
-		String sqlUpdateLabelId = "update translation t set text_id = ? where s_id = ? and text_id = ?; ";
+		String sqlUpdateLabelId = "update translation t set text_id = ? where s_id = ? and text_id = ?";
 		
+		boolean hasOptionId = false;
 		try {
 			
 			for(PropertyChange p : properties) {
 				
+				if(p.o_id > 0) {
+					hasOptionId = true;
+					sqlUpdateValue += " and o_id = ?";
+					sqlGetOldLabelId += " and o_id = ?";
+				}
 				String property = p.prop;	
 				int listId = GeneralUtilityMethods.getListId(sd, sId, p.optionList);		// Get the list id for this option
 				
 				if(property.equals("value")) {
-					String newLabelId = "option_" + listId + "_" + p.newVal + ":label";
+					String newLabelId = "option_" + listId + "_" + p.newVal + "_" + p.o_id + ":label";
 					String oldLabelId = null;
 					
 					// Get the old labelId
 					pstmtGetOldLabelId = sd.prepareStatement(sqlGetOldLabelId);
 					pstmtGetOldLabelId.setInt(1, listId);
 					pstmtGetOldLabelId.setString(2, p.oldVal);
+					if(hasOptionId) {
+						pstmtGetOldLabelId.setInt(3, p.o_id);
+					}
 					
 					log.info("Get old label id: " + pstmtGetOldLabelId.toString());
 					ResultSet rs = pstmtGetOldLabelId.executeQuery();
@@ -1142,6 +1154,9 @@ public class QuestionManager {
 					pstmtUpdateValue.setString(2, newLabelId);
 					pstmtUpdateValue.setInt(3, listId);
 					pstmtUpdateValue.setString(4, p.oldVal);
+					if(hasOptionId) {
+						pstmtUpdateValue.setInt(5, p.o_id);
+					}
 					
 					log.info("Update option value: " + pstmtUpdateValue.toString());
 					pstmtUpdateValue.executeUpdate();

@@ -9,6 +9,7 @@ public class PropertyChange {
 	public int qId;
 	public String qType;			// question type
 	public int l_id;				// Listname id
+	public int o_id;				// Option id
 	public String optionList;		// Option list name if an option is being updated (deprecated)
 	public String type;				// question or option (Used when updating labels)
 	public String name;				// Name of question
