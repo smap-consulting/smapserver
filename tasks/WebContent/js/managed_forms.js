@@ -44,6 +44,7 @@ requirejs.config({
     	toggle: 'bootstrap-toggle.min',
     	lang_location: '../../../../js',
     	file_input: '../../../../js/libs/bootstrap.file-input',
+    	mapbox: '../../../../js/libs/mapbox/js/mapbox',
     	mapbox_app: '../../../../js/app/mapbox_app',
     	datetimepicker: '../../../../js/libs/bootstrap-datetimepicker.min',
        	datatables: '../../../../js/libs/DataTables/datatables',
@@ -77,7 +78,12 @@ requirejs.config({
     	'app/common_mgmt': ['jquery'],
     	'app/chart': ['jquery'],
     	'qrcode': ['jquery'],
-       	'toggle': ['bootstrap.min']
+       	'toggle': ['bootstrap.min'],
+       	
+    	'mapbox_app' : ['jquery', 'mapbox'],
+       	'mapbox': {
+            exports: 'L'
+        },
 	
     	}
     });
@@ -86,6 +92,7 @@ require([
          'jquery',
          'bootstrap',
          'common', 
+         'mapbox',
          'mapbox_app',
          'localise', 
          'globals',
@@ -109,6 +116,7 @@ require([
          ], function($, 
         		 bootstrap, 
         		 common, 
+        		 mapbox,
         		 mapbox_app,
         		 localise, 
         		 globals,

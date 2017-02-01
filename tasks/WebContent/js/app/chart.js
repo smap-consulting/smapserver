@@ -79,8 +79,10 @@ define([
 			//	reset = true;
 			//}
 			gEdChart.qIdx = $('#ew_question').val();
-			gEdChart.name = filtered[gEdChart.qIdx].name;
-			gEdChart.type = filtered[gEdChart.qIdx].type;
+			if(gEdChart.qIdx) {		// Question specified
+				gEdChart.name = filtered[gEdChart.qIdx].name;
+				gEdChart.type = filtered[gEdChart.qIdx].type;
+			}
 			gEdChart.fn = $('#ew_fn').val();
 			gEdChart.humanName = $('#ew_title').val();
 			gEdChart.chart_type = $('#ew_chart_type').val();
@@ -430,8 +432,9 @@ define([
 			if(avCharts[chart.chart_type]) {
 				if(init || chart.chart_type === "pie" || chart.chart_type === "wordcloud") {	// Pie charts tricky to update, wordcloud not implemented update yet
 					if(chart.chart_type === "map") {
-						config.map = new L.Map("map", {center: [37.8, -96.9], zoom: 4})
-					    .addLayer(new L.TileLayer("http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"));
+						d3.select(chartId).append("div")
+						.attr("id", chartId + '_map')
+						.classed("dashboard_map", true);
 					} else {
 						if(config.svg) {
 							config.svg.remove();

@@ -35,14 +35,11 @@ define([
 		redraw: redraw
 	};
 	
-
-
 	/*
 	 * Add
 	 */
 	function add(chartId, chart, config, data, widthContainer, heightContainer) {
-
-
+		initialiseMap(chartId + '_map', 1, true, undefined, undefined);
 	}
 	
 	/*
