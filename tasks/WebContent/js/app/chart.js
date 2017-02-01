@@ -148,9 +148,6 @@ define([
 		
 		for(i = 0; i < gCurrentReport.row.length; i++) {
 			
-			/*
-			 * Generate custom charts
-			 */
 			for(j = 0; j < gCurrentReport.row[i].charts.length; j++) {
 				
 				chart = gCurrentReport.row[i].charts[j];
