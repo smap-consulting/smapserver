@@ -1049,7 +1049,7 @@ public class GetXForm {
 				// Create a blank form containing only the key values
 				hasData = true;
 				log.info("Outputting blank form");
-				populateBlankForm(outputXML, firstForm, cResults,  template, null, 
+				populateBlankForm(outputXML, firstForm, sd, template, null, 
 						sId, key, keyval, templateName, false);
 			} 
 			
@@ -1206,7 +1206,7 @@ public class GetXForm {
      *   b) as a java rosa template
      * @param outputDoc
      */
-    public void populateBlankForm(Document outputDoc, Form form, Connection sd, SurveyTemplate template,
+    public void populateBlankForm(Document outputDoc, Form form,  Connection sd, SurveyTemplate template,
        		Element parentElement,
     		int sId,
     		String key,
