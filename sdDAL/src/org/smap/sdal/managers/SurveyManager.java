@@ -1776,6 +1776,9 @@ public class SurveyManager {
 							if(propertyType.equals("boolean")) {
 								pstmtProperty2.setBoolean(1, Boolean.parseBoolean(ci.property.newVal));
 							} else if(propertyType.equals("integer")) {
+								if(ci.property.newVal == null) {
+									ci.property.newVal = "0";
+								}
 								pstmtProperty2.setInt(1, Integer.parseInt(ci.property.newVal));
 							} else {
 								pstmtProperty2.setString(1, ci.property.newVal);

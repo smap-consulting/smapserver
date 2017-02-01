@@ -310,8 +310,7 @@ public class MiscPDFManager {
 	
 	
 	/*
-	 * Call this function to create a PDF
-	 * Return a suggested name for the PDF file derived from the results
+	 * Call this function to create a PDF with the list of tasks in it
 	 */
 	public void createTasksPdf(
 			Connection sd,
@@ -346,16 +345,18 @@ public class MiscPDFManager {
 			/*
 			 * Get the tasks for this task group
 			 */
-			// Get assignments
 			TaskManager tm = new TaskManager();
 			TaskListGeoJson t = tm.getTasks(sd, tgId, false, 0);	
 			PdfWriter writer = null;			
 				
-			/*
-			 * Create document in two passes, the second pass adds the letter head
-			 */
-				
-			// Create the underlying document as a byte array
+
+			String filename = "tasks.pdf";
+			// If the PDF is to be returned in an http response then set the file name now
+			if(response != null) {
+				log.info("Setting filename to: " + filename);
+				setFilenameInResponse(filename, response);
+			}
+			
 			Document document = new Document(PageSize.A4);
 			document.setMargins(marginLeft, marginRight, marginTop_1, marginBottom_1);
 			writer = PdfWriter.getInstance(document, outputStream);
