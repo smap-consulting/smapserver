@@ -607,7 +607,7 @@ $(document).ready(function() {
 			question = survey.forms[globals.gFormIndex].questions[globals.gItemIndex];
 		
 		option.addFilter($('#filter_name').val());
-		$('#optionTable').html(option.getOptionTable(question, globals.gFormIndex, globals.gListName));
+		option.addOptionTable(question, globals.gFormIndex, globals.gListName);
 		option.setupChoiceView($('#filterType').val());
 		option.addFilterSelectList(survey.filters);
 		respondToEventsChoices($('#optionTable'));
@@ -784,7 +784,7 @@ function refreshOptions() {
 		question = survey.forms[globals.gFormIndex].questions[globals.gItemIndex];
 	}
 	
-	$('#optionTable').html(option.getOptionTable(question, globals.gFormIndex, globals.gListName));
+	option.addOptionTable(question, globals.gFormIndex, globals.gListName);
 	option.setupChoiceView($('#filterType').val());
 	
 	respondToEventsChoices($context);
@@ -804,7 +804,7 @@ function refreshForm() {
 		if(typeof globals.gFormIndex !== "undefined") {
 			question = survey.forms[globals.gFormIndex].questions[globals.gItemIndex];
 		}
-		$('#optionTable').html(option.getOptionTable(question, globals.gFormIndex, globals.gListName));
+		option.addOptionTable(question, globals.gFormIndex, globals.gListName);
 		option.setupChoiceView($('#filterType').val());
 		respondToEventsChoices($('#optionTable'));
 	} else {
@@ -896,13 +896,12 @@ function respondToEventsChoices($context) {
 			}
 		} 
 		
-		option.setupChoiceView($this.val());
-		
 		if(filterType !== "none") {
-			$('#optionTable').html(option.getOptionTable(question, globals.gFormIndex, globals.gListName));
+			option.addOptionTable(question, globals.gFormIndex, globals.gListName);
 			respondToEventsChoices($('#optionTable'));
 		}
-	
+		option.setupChoiceView($this.val());
+		
 		
 	});
 	
@@ -945,7 +944,7 @@ function respondToEventsChoices($context) {
 			question = survey.forms[globals.gFormIndex].questions[globals.gItemIndex];
 		
 		option.setPreviousChoices($this.val());	
-		$('#optionTable').html(option.getOptionTable(question, globals.gFormIndex, globals.gListName));
+		option.addOptionTable(question, globals.gFormIndex, globals.gListName);
 		respondToEventsChoices($('#optionTable'));
 	});
 	
@@ -955,7 +954,7 @@ function respondToEventsChoices($context) {
 			survey = globals.model.survey,
 			question = survey.forms[globals.gFormIndex].questions[globals.gItemIndex];
 		
-		$('#optionTable').html(option.getOptionTable(question, globals.gFormIndex, globals.gListName));
+		option.addOptionTable(question, globals.gFormIndex, globals.gListName);
 		respondToEventsChoices($('#optionTable'));
 	});
 	
@@ -1254,7 +1253,7 @@ function respondToEvents($context) {
 			question = survey.forms[globals.gFormIndex].questions[globals.gItemIndex];
 		}
 		
-		$('#optionTable').html(option.getOptionTable(question, globals.gFormIndex, globals.gListName));
+		option.addOptionTable(question, globals.gFormIndex, globals.gListName);
 		option.setupChoiceView($('#filterType').val());
 		
 		respondToEventsChoices($context);
