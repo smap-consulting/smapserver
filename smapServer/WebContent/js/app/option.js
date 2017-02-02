@@ -119,7 +119,7 @@ define([
 	function setupChoiceView(filterType) {
 		var survey = globals.model.survey;
 		/*
-		 * show filter columns that should be visible
+		 * show custom filter columns that should be visible
 		 */
 		for (i = 0; i < globals.gFilterArray.length; i++) {
 			if(survey.filters[globals.gFilterArray[i]] === true) {
@@ -141,6 +141,7 @@ define([
 			$('#choiceView table').addClass("notcascade").addClass("notcustom");	
 		}
 		
+		// Add styling to cascading select checkboxes
 		$('[type="checkbox"]', '#optionTable').iCheck({
 		    checkboxClass: 'icheckbox_square-green',
 		    radioClass: 'iradio_square-green'
@@ -187,6 +188,7 @@ define([
 					if(idx !== false) {
 						h[++idx] = addCascadeChecked(option.cascade_filters, prevChoice);
 					} 
+					h[++idx] = '>';
 				h[++idx] = '</td>';
 				
 				// Add option name and value cell

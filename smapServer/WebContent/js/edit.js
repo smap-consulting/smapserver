@@ -896,11 +896,12 @@ function respondToEventsChoices($context) {
 			}
 		} 
 		
+		option.setupChoiceView($this.val());
+		
 		if(filterType !== "none") {
 			$('#optionTable').html(option.getOptionTable(question, globals.gFormIndex, globals.gListName));
 			respondToEventsChoices($('#optionTable'));
 		}
-		option.setupChoiceView($this.val());
 	
 		
 	});
@@ -949,7 +950,7 @@ function respondToEventsChoices($context) {
 	});
 	
 	// Previous choice for cascading select changes
-	$context.find('#previousSelectChoice').off().change(function(){
+	$context.find('#previousSelectChoice').off().change(function() {
 		var $this = $(this),
 			survey = globals.model.survey,
 			question = survey.forms[globals.gFormIndex].questions[globals.gItemIndex];
@@ -963,7 +964,7 @@ function respondToEventsChoices($context) {
 	
 
 	// Respond to clicks on a label text area
-	$context.find('.labelProp').change(function(){
+	$context.find('.labelProp').change(function() {
 
 		var $this = $(this),
 			$elem = $this.closest('tr'),
@@ -1024,13 +1025,12 @@ function respondToEventsChoices($context) {
 	});
 	
 	// Update the cascade filter values when a cascade filter value is checked
-	$('.cascadeFilter').on('ifChecked', function(event) {
-			updateFilterValues($(this), true, true);
-		});
+	$('tr'). find('.cascadeFilter').off().on('ifToggled', function(event) {
+		var $this = $(this),
+		survey = globals.model.survey;
 	
-	// Update the cascade filter values when a cascade filter value is un-checked
-	$('.cascadeFilter').on('ifUnchecked', function(event) {
-			updateFilterValues($(this), true, false);
+		updateFilterValues($(this), true, $this.is(':checked'));
+	
 	});
 	
 	// Add new option after
@@ -1076,7 +1076,7 @@ function respondToEventsChoices($context) {
 		mediaPropSelected($this);
 
 	});
-	
+
 	/*
 	 * Enable drag and drop to move choices
 	 * 
@@ -1115,11 +1115,9 @@ function respondToEventsChoices($context) {
 		evt.originalEvent.preventDefault();
 	});
 	
-	
 	/*
 	 * Handle drop on or dragging over a drop zone
 	 */
-	
 	// Entering a drop zone
 	$('.dropon.option')
 	
@@ -1202,7 +1200,6 @@ function respondToEventsChoices($context) {
 			respondToEventsChoices($context);			// Add events on to the altered html
 		}
 	});
-
 }
 
 /*
