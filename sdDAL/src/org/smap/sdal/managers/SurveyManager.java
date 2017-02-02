@@ -1573,6 +1573,7 @@ public class SurveyManager {
 		PreparedStatement pstmtGetQuestionId = null;
 		PreparedStatement pstmtGetQuestionDetails = null;
 		PreparedStatement pstmtGetListId = null;
+		PreparedStatement pstmtGetListname = null;
 		PreparedStatement pstmtListname = null;
 		PreparedStatement pstmtUpdateRepeat = null;
 		PreparedStatement pstmtUpdateEndGroup = null;
@@ -1582,6 +1583,7 @@ public class SurveyManager {
 		PreparedStatement pstmtUpdateHintRef = null;
 		PreparedStatement pstmtUpdateTranslations = null;
 		PreparedStatement pstmtUpdateQuestion = null;
+		PreparedStatement pstmtUpdateNodeset = null;
 		
 		try {
 		
@@ -1604,7 +1606,6 @@ public class SurveyManager {
 					pstmtUpdateRepeat.setString(1, ci.property.newVal);
 					pstmtUpdateRepeat.setInt(2, sId);
 					pstmtUpdateRepeat.setInt(3, ci.property.qId);
-					//pstmtUpdateRepeat.setString(4, ci.property.oldVal);
 					
 					log.info("Updating repeat count: " + pstmtUpdateRepeat.toString());
 					int count = pstmtUpdateRepeat.executeUpdate();
@@ -1680,7 +1681,6 @@ public class SurveyManager {
 						
 					}
 					
-					
 					if(ci.property.prop.equals("relevant") || ci.property.prop.equals("constraint") 
 							|| ci.property.prop.equals("calculation") || ci.property.prop.equals("appearance")) {
 						if(ci.property.oldVal != null && ci.property.oldVal.contains("null")) {
@@ -1710,13 +1710,23 @@ public class SurveyManager {
 								"where q_id = ?";
 						pstmtProperty3 = sd.prepareStatement(sqlProperty3);
 						
+						// Update listname - Get existing listname
+						String sqlGetListname = "select name from listname where l_id = ? and s_id = ?";
+						pstmtGetListname = sd.prepareStatement(sqlGetListname);
+						
 						// Update listname
-						String sqlListname = "update listname set name = ? where l_id = ? and s_id = ?;";
+						String sqlListname = "update listname set name = ? where l_id = ? and s_id = ?";
 						pstmtListname = sd.prepareStatement(sqlListname);
+						
+						// Update nodeset
+						String sqlUpdateNodeset = "update question set nodeset = replace(nodeset, '(''' || ? || ''')', '(''' || ? || ''')') "
+								+ "where l_id = ? "
+								+ "and f_id in (select f_id from form where s_id = ?)";
+						pstmtUpdateNodeset = sd.prepareStatement(sqlUpdateNodeset);		
 						
 						// Update for dependent properties
 						String sqlDependent = "update question set visible = ?, source = ? " +
-								"where q_id = ?;";
+								"where q_id = ?";
 						pstmtDependent = sd.prepareStatement(sqlDependent);
 						
 						// Update for readonly status if this is a type change to note
@@ -1742,13 +1752,35 @@ public class SurveyManager {
 							
 						} else if (ci.property.type.equals("optionlist")) {
 							if( ci.property.l_id > 0) {
-								pstmtListname.setString(1, ci.property.newVal);
+								
+								String originalListname = null;
+								// Get the existing list name
+								pstmtGetListname.setInt(1, ci.property.l_id);
+								pstmtGetListname.setInt(2, sId);
+								ResultSet rs = pstmtGetListname.executeQuery();
+								if(rs.next()) {
+									originalListname = rs.getString(1);
+								}
+								
+								// Write the new list name
+								String cleanName = GeneralUtilityMethods.cleanName(ci.property.newVal, true, false, false);
+								pstmtListname.setString(1, cleanName);
 								pstmtListname.setInt(2, ci.property.l_id);
 								pstmtListname.setInt(3, sId);
 								
 								log.info("Update name of list : " + pstmtListname.toString());
 								count = pstmtListname.executeUpdate();
 								
+								 // Update the nodeset for any questions that references this list
+								if(originalListname != null && originalListname.trim().length() > 0) {
+									pstmtUpdateNodeset.setString(1, originalListname);
+									pstmtUpdateNodeset.setString(2, cleanName);
+									pstmtUpdateNodeset.setInt(3, ci.property.l_id);
+									pstmtUpdateNodeset.setInt(4, sId);
+									log.info("Update nodeset : " + pstmtUpdateNodeset.toString());
+									pstmtUpdateNodeset.executeUpdate();
+								}
+										
 								/*
 								 * Update any questions that have (remembered) this list name but the list id is null
 								 */
@@ -1971,6 +2003,8 @@ public class SurveyManager {
 			try {if (pstmtUpdateTranslations != null) {pstmtUpdateTranslations.close();}} catch (SQLException e) {}
 			try {if (pstmtUpdateQuestion != null) {pstmtUpdateQuestion.close();}} catch (SQLException e) {}
 			try {if (pstmtUpdateEndGroup != null) {pstmtUpdateEndGroup.close();}} catch (SQLException e) {}
+			try {if (pstmtGetListname != null) {pstmtGetListname.close();}} catch (SQLException e) {}
+			try {if (pstmtUpdateNodeset != null) {pstmtUpdateNodeset.close();}} catch (SQLException e) {}
 		
 		}
 	

@@ -822,16 +822,14 @@ public class GetXForm {
 			}
 		}
 		
-		boolean cascade = true;
-		String cascadeInstance = q.getCascadeInstance();
-		if(cascadeInstance == null) {
-			cascade = false;
-		}
+		boolean cascade = false;
+		String nodeset = q.getNodeset(true, template.getQuestionPaths());
 		
 		// Add the itemset
-		if(cascade) {
+		if(nodeset != null) {
+			cascade = true;
 			Element isElement = outputXML.createElement("itemset");
-			isElement.setAttribute("nodeset", q.getNodeset(true, template.getQuestionPaths()));			
+			isElement.setAttribute("nodeset", nodeset);			
 		
 			Element vElement = outputXML.createElement("value");
 			vElement.setAttribute("ref", q.getNodesetValue());

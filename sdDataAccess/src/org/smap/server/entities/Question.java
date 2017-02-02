@@ -304,10 +304,6 @@ public class Question {
 		return nodeset_label;
 	}
 	
-	public String getCascadeInstance() {
-		return cascade_instance;
-	}
-	
 	public String getAutoPlay() {
 		return autoplay;
 	}
@@ -326,6 +322,10 @@ public class Question {
 	
 	public void setSeq(int seq) {
 		this.seq = seq;
+	}
+	
+	public void setListName(String v) {
+		listname = v;
 	}
 	
 	public void setListId(int v) {
@@ -523,11 +523,6 @@ public class Question {
 	
 	public void setNodesetLabel(String v) {
 		nodeset_label = v;
-	}
-	
-	public void setCascadeInstance(String v) {
-		cascade_instance = v;
-		listname = v;
 	}
 	
 	public void setAutoPlay(String v) {
