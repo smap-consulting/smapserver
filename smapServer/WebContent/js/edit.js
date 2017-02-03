@@ -1485,6 +1485,17 @@ function respondToEvents($context) {
 		
 	});
 	
+	// Get linked questions
+	$context.find('.linkedQuestion').off().click(function() {
+		var $this = $(this),
+			$li = $this.closest('li'),
+			item = $this.data("id"),
+			surveyId = $this.val();
+		
+		markup.addLinkedQuestions(item, surveyId);
+		
+	});
+	
 	// validate the optionlist name
 	$context.find('.olname').keyup(function(){
 
