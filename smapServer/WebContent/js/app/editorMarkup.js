@@ -29,6 +29,7 @@ define([
 		function($, modernizr, lang, globals) {
 
 	var gGroupStacks = [];
+	var linkedQuestions = {};
 	
 	return {	
 		addOneQuestion: addOneQuestion,
@@ -38,7 +39,8 @@ define([
 		addMedia: addMedia,
 		refresh: refresh,
 		includeQuestion: includeQuestion,
-		addQuestionSequence: addQuestionSequence
+		addQuestionSequence: addQuestionSequence,
+		getLinkedQuestions: getLinkedQuestions
 	};
 	
 	/*
@@ -591,11 +593,9 @@ define([
 			    // Linked question
 				h[++idx] = '<div class="form-group">';
 				h[++idx] = '<select class="form-control labelSelect linkedQuestion"';
-				h[++idx] = ' data-prop="';
-					h[++idx] = selProperty;
-				h[++idx] = '">';
+				h[++idx] = ' data-prop="linked_question">';
 				if(question[selProperty]) {
-					addLinkedQuestions(questionId, linkedSurveyId);
+					getLinkedQuestions(questionId, linkedSurveyId);
 				}
 				h[++idx] = '</select>';
 				h[++idx] = '</div>';	// Form Group
@@ -989,8 +989,56 @@ define([
 	/*
 	 * Get the questions for a linked survey
 	 */
-	function addLinkedQuestions(questionId, surveyId) {
-		alert("Get linked questions for " + questionId + " : " + surveyId);
+	function getLinkedQuestions(questionId, surveyId) {
+		if(linkedQuestions[surveyId]) {
+			showLinkedQuestions(questionId, linkedQuestions[surveyId]);
+		} else {
+			addHourglass();
+		 	$.ajax({
+				url: "/surveyKPI/questionList/" + surveyId + "/none",	// Will use the default language
+				cache: false,
+				dataType: 'json',
+				success: function(data) {
+					linkedQuestions[surveyId] = data;
+					showLinkedQuestions(questionId, data);
+					removeHourglass();
+				},
+				error: function(xhr, textStatus, err) {
+					removeHourglass();
+	  				if(xhr.readyState == 0 || xhr.status == 0) {
+			              return;  // Not an error
+					} else {
+						bootbox.alert("Error failed to get questions for survey:" + surveyId);
+						$("#" + questionId).find(".linkedQuestion").html("");
+					}
+				}
+			});
+		}
+		
+	}
+	
+	/*
+	 * Show the linked questions in the drop down
+	 */
+	function showLinkedQuestions(questionId, data) {
+		
+		var idx = -1,
+			h = [],
+			i;
+		
+		if(data) {
+			for(i = 0; i < data.length; i++) {
+				if(data[i].q) {
+					h[++idx] = '<option value="';
+					h[++idx] = data[i].id;
+					h[++idx] = '">';
+					h[++idx] = data[i].q;
+					h[++idx] = '</option>';
+				}
+			}
+		}
+		
+		$("#" + questionId).find(".linkedQuestion").html(h.join(''));
 	}
 
 });

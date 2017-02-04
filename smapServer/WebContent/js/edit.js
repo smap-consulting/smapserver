@@ -1486,13 +1486,13 @@ function respondToEvents($context) {
 	});
 	
 	// Get linked questions
-	$context.find('.linkedQuestion').off().click(function() {
+	$context.find('.linkedSurvey').off().change(function() {
 		var $this = $(this),
 			$li = $this.closest('li'),
-			item = $this.data("id"),
+			item = $li.prop("id"),
 			surveyId = $this.val();
 		
-		markup.addLinkedQuestions(item, surveyId);
+		markup.getLinkedQuestions(item, surveyId);
 		
 	});
 	

@@ -688,10 +688,13 @@ public class SurveyManager {
 		// Get the surveys that can be linked to
 		ResultSet rsGetLinkable = null;
 		String sqlGetLinkable = "select s.s_id, s.display_name "
-				+ "from survey s, project p "
+				+ "from survey s, project p, user_project up, users u "
 				+ "where s.p_id = p.id "
+				+ "and not s.deleted "
 				+ "and p.o_id = ? "
-				+ "and s.hrk is not null "
+				+ "and u.id = up.u_id "
+				+ "and p.id = up.p_id "
+				+ "and u.ident = ? "
 				+ "order by s.display_name asc; ";
 		PreparedStatement pstmtGetLinkable = sd.prepareStatement(sqlGetLinkable);
 		
@@ -944,6 +947,7 @@ public class SurveyManager {
 		
 		// Add the linkable surveys
 		pstmtGetLinkable.setInt(1, oId);
+		pstmtGetLinkable.setString(2, user);
 		rsGetLinkable = pstmtGetLinkable.executeQuery();
 		while(rsGetLinkable.next()) {
 			int linkedId = rsGetLinkable.getInt(1);
