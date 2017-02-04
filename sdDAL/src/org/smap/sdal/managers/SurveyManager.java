@@ -628,7 +628,7 @@ public class SurveyManager {
 				+ "q.soft_deleted, "
 				+ "q.autoplay,"
 				+ "q.accuracy,"
-				+ "q.linked_survey "
+				+ "q.linked_target "
 				+ "from question q "
 				+ "left outer join listname l on q.l_id = l.l_id "
 				+ "where q.f_id = ? "
@@ -732,7 +732,7 @@ public class SurveyManager {
 			/*
 			 * Add HRK
 			 */
-			if(f.parentform == 0) {
+			if(getHrk && f.parentform == 0) {
 				if(s.hrk != null && s.hrk.trim().length() > 0
 						&& GeneralUtilityMethods.columnType(cResults, f.tableName, "_hrk") != null) {
 					Question q = new Question();
@@ -790,7 +790,7 @@ public class SurveyManager {
 				q.soft_deleted = rsGetQuestions.getBoolean(24);
 				q.autoplay = rsGetQuestions.getString(25);
 				q.accuracy = rsGetQuestions.getString(26);
-				q.linked_survey = rsGetQuestions.getInt(27);
+				q.linked_target = rsGetQuestions.getString(27);
 				if(q.autoplay == null) {
 					q.autoplay = "none";
 				}

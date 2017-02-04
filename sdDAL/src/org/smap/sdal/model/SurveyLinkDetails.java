@@ -10,6 +10,7 @@ public class SurveyLinkDetails {
 	public int fromQuestionId = 0;
 	
 	public int toSurveyId = 0;	
+	public int toQuestionId = 0;	
 	
 	public String getId() {
 		return fromSurveyId + "_" + fromFormId + "_" + fromQuestionId + "_" + toSurveyId;

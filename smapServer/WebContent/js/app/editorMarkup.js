@@ -533,7 +533,7 @@ define([
 					
 				h[++idx] = '</div>';
 				
-			} else if(selProperty === "linked_survey" && type === "question") {		// Add selects to get the linked survey, and question				
+			} else if(selProperty === "linked_target" && type === "question") {		// Add selects to get the linked survey, and question				
 				h[++idx] = '<div class="row">';
 				
 				h[++idx] = '<div class="col-xs-6">';	// Start checkbox column
@@ -560,7 +560,7 @@ define([
 			    /*
 			     * Add the select questions
 			     */
-			    var linkedSurveyId = -1;
+			    var  linkedTarget = getLinkedTarget(question[selProperty]);
 			    h[++idx] = '<div class="col-xs-6">';	// Start select column
 			    h[++idx] = '<div';
 			    if(!question[selProperty]) {
@@ -569,6 +569,7 @@ define([
 			    h[++idx] = '>';
 			    
 			    // Linked survey
+			   
 				h[++idx] = '<div class="form-group">';
 				h[++idx] = '<select class="form-control labelSelect linkedSurvey"';
 				h[++idx] = ' data-prop="';
@@ -578,10 +579,9 @@ define([
 					h[++idx] = '<option value="';
 					h[++idx] = linkedSurveys[i].id;
 					h[++idx] = '"';
-					if((question[selProperty] && question[selProperty] == linkedSurveys[i].id) || 
+					if((question[selProperty] && linkedTarget && linkedTarget.sId == linkedSurveys[i].id) || 
 							(!question[selProperty] && i == 0)) {
 						h[++idx] = ' selected';
-						linkedSurveyId = linkedSurveys[i].id;
 					} 
 					h[++idx] = '>';
 					h[++idx] = linkedSurveys[i].name;
@@ -593,9 +593,9 @@ define([
 			    // Linked question
 				h[++idx] = '<div class="form-group">';
 				h[++idx] = '<select class="form-control labelSelect linkedQuestion"';
-				h[++idx] = ' data-prop="linked_question">';
-				if(question[selProperty]) {
-					getLinkedQuestions(questionId, linkedSurveyId);
+				h[++idx] = ' data-prop="linked_target">';
+				if(question[selProperty] && linkedTarget) {
+					getLinkedQuestions(questionId, linkedTarget.sId, linkedTarget.qId);
 				}
 				h[++idx] = '</select>';
 				h[++idx] = '</div>';	// Form Group
@@ -989,9 +989,9 @@ define([
 	/*
 	 * Get the questions for a linked survey
 	 */
-	function getLinkedQuestions(questionId, surveyId) {
+	function getLinkedQuestions(questionId, surveyId, qId) {
 		if(linkedQuestions[surveyId]) {
-			showLinkedQuestions(questionId, linkedQuestions[surveyId]);
+			showLinkedQuestions(questionId, linkedQuestions[surveyId], qId);
 		} else {
 			addHourglass();
 		 	$.ajax({
@@ -1000,7 +1000,7 @@ define([
 				dataType: 'json',
 				success: function(data) {
 					linkedQuestions[surveyId] = data;
-					showLinkedQuestions(questionId, data);
+					showLinkedQuestions(questionId, data, qId);
 					removeHourglass();
 				},
 				error: function(xhr, textStatus, err) {
@@ -1020,18 +1020,28 @@ define([
 	/*
 	 * Show the linked questions in the drop down
 	 */
-	function showLinkedQuestions(questionId, data) {
+	function showLinkedQuestions(questionId, data, qId) {
 		
 		var idx = -1,
 			h = [],
 			i;
 		
+		qId = +qId;
+		h[++idx] = '<option value="0"';
+		if(!qId) {
+			h[++idx] = ' selected';
+		}
+		h[++idx] = '>Key</option>';
 		if(data) {
 			for(i = 0; i < data.length; i++) {
 				if(data[i].q) {
 					h[++idx] = '<option value="';
 					h[++idx] = data[i].id;
-					h[++idx] = '">';
+					h[++idx] = '" ';
+					if(data[i].id == qId) {
+						h[++idx] = ' selected';
+					} 
+					h[++idx] = '>';
 					h[++idx] = data[i].q;
 					h[++idx] = '</option>';
 				}
