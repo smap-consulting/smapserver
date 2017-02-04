@@ -43,6 +43,7 @@ import org.smap.sdal.model.ChangeLog;
 import org.smap.sdal.model.ChangeResponse;
 import org.smap.sdal.model.ChangeSet;
 import org.smap.sdal.model.Form;
+import org.smap.sdal.model.Label;
 import org.smap.sdal.model.Language;
 import org.smap.sdal.model.LinkedSurvey;
 import org.smap.sdal.model.ManifestInfo;
@@ -187,6 +188,7 @@ public class SurveyManager {
 			boolean generateDummyValues,		// Set to true when getting results to fill a form with dummy values if there are no results
 			boolean getPropertyTypeQuestions,	// Set to true to get property questions such as _device
 			boolean getSoftDeleted,				// Set to true to get soft deleted questions
+			boolean getHrk,						// Set to true to get HRK as a question
 			String getExternalOptions,			// external || internal || real (get external if they exist else get internal)
 			boolean superUser,
 			int utcOffset,
@@ -260,7 +262,7 @@ public class SurveyManager {
 			
 			if(full && s != null) {
 				
-				populateSurvey(sd, s, basePath, user, getPropertyTypeQuestions, getExternalOptions);			// Add forms, questions, options
+				populateSurvey(sd, cResults, s, basePath, user, getPropertyTypeQuestions, getHrk, getExternalOptions);			// Add forms, questions, options
 				
 				if(getResults) {								// Add results
 					
@@ -584,8 +586,9 @@ public class SurveyManager {
 	/*
 	 * Get a survey's details
 	 */
-	private void populateSurvey(Connection sd, Survey s, String basePath, String user, 
+	private void populateSurvey(Connection sd, Connection cResults, Survey s, String basePath, String user, 
 			boolean getPropertyTypeQuestions,
+			boolean getHrk,
 			String getExternalOptions) throws Exception {
 		
 		/*
@@ -725,7 +728,29 @@ public class SurveyManager {
 			f.parentform =rsGetForms.getInt(3); 
 			f.parentQuestion = rsGetForms.getInt(4);
 			f.tableName = rsGetForms.getString(5);
-				
+			
+			/*
+			 * Add HRK
+			 */
+			if(f.parentform == 0) {
+				if(s.hrk != null && s.hrk.trim().length() > 0
+						&& GeneralUtilityMethods.columnType(cResults, f.tableName, "_hrk") != null) {
+					Question q = new Question();
+					q.name = "Key";
+					q.published = true;
+					q.columnName = "_hrk";
+					q.source = "user";
+					q.type = "";
+					
+					q.labels = new ArrayList<Label> ();
+					for(int i = 0; i < s.languages.size(); i++ ) {
+						Label l = new Label();
+						l.text = "Key";
+						q.labels.add(l);
+					}
+					f.questions.add(q);
+				}
+			}
 			/*
 			 * Get the questions for this form
 			 */
@@ -803,8 +828,10 @@ public class SurveyManager {
 				q.inMeta = inMeta;
 				
 				// If the survey was loaded from xls it will not have a list name
-				if(q.list_name == null || q.list_name.trim().length() == 0) {
-					q.list_name = q.name;
+				if(q.type.startsWith("select")) {
+					if(q.list_name == null || q.list_name.trim().length() == 0) {
+						q.list_name = q.name;
+					}
 				}
 				
 				// Get the language labels
@@ -1666,8 +1693,6 @@ public class SurveyManager {
 						// Convert the passed in filter to a nodeset
 						String listname = GeneralUtilityMethods.getListNameForQuestion(sd, ci.property.qId);
 						ci.property.newVal = GeneralUtilityMethods.getNodesetFromChoiceFilter(ci.property.newVal, listname);
-						
-						System.out.println("write to nodeset based on listname and filter: " + ci.property.newVal);
 						
 					} else if(ci.property.type.equals("optionlist")) {
 						// Get the list id for this option list

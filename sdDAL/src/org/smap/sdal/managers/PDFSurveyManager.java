@@ -212,7 +212,7 @@ public class PDFSurveyManager {
 			 */
 			boolean superUser = GeneralUtilityMethods.isSuperUser(connectionSD, remoteUser);
 			survey = sm.getById(connectionSD, cResults, remoteUser, sId, true, basePath, 
-					instanceId, true, generateBlank, true, false, "real", superUser, utcOffset, "geojson");
+					instanceId, true, generateBlank, true, false, true, "real", superUser, utcOffset, "geojson");
 			log.info("User Ident who submitted the survey: " + survey.instance.user);
 			String userName = survey.instance.user;
 			if(userName == null) {
@@ -814,17 +814,16 @@ public class PDFSurveyManager {
 
 			PdfPCell cell = new PdfPCell();
 			cell.addElement(addDisplayItem(parser, di, basePath, generateBlank, gv));
-			cell.setBorderColor(BaseColor.LIGHT_GRAY);
-			
+			cell.setBorder(PdfPCell.NO_BORDER);
 			// Make sure the last cell extends to the end of the table
 			if(numberItems == 1) {
 				di.width = spanCount;
 			}
 			cell.setColspan(di.width);
-			int spaceBefore = row.spaceBefore();
-			if(spaceBefore > 0) {
-				table.setSpacingBefore(spaceBefore);
-			}
+			//int spaceBefore = row.spaceBefore();
+			//if(spaceBefore > 0) {
+			//	table.setSpacingBefore(spaceBefore);
+			//}
 			table.addCell(cell);
 			
 			numberItems--;
@@ -949,7 +948,7 @@ public class PDFSurveyManager {
 	}
 	
 	/*
-	 * Where a label incudes a reference value such as ${name} then these need to be converted to the actual value
+	 * Where a label includes a reference value such as ${name} then these need to be converted to the actual value
 	 */
 	private String lookupReferenceValue(String input, ArrayList<Result> record,ArrayList<ArrayList<Result>> parentRecords) {
 		
@@ -1372,7 +1371,6 @@ public class PDFSurveyManager {
 			if(getMap) {
 				url.append("500x300.png?access_token=");
 				url.append(gv.mapbox_key);
-				System.out.println(url.toString());
 				Image img = Image.getInstance(url.toString());
 				valueCell.addElement(img);
 			} else {
