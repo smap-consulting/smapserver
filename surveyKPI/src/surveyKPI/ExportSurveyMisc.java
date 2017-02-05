@@ -96,7 +96,7 @@ public class ExportSurveyMisc extends Application {
 	 */
 	@GET
 	@Path("/shape")
-	public Response exportShape (@Context HttpServletRequest request, 
+	public Response exportSurveyMisc (@Context HttpServletRequest request, 
 			@PathParam("sId") int sId,
 			@PathParam("filename") String filename,
 			@QueryParam("form") int fId,
@@ -120,23 +120,13 @@ public class ExportSurveyMisc extends Application {
 		
 		String urlprefix = request.getScheme() + "://" + request.getServerName() + "/";		
 		
-		try {
-		    Class.forName("org.postgresql.Driver");	 
-		} catch (ClassNotFoundException e) {
-			log.log(Level.SEVERE, "Can't find PostgreSQL JDBC Driver", e);
-		    try {
-		    	responseVal = Response.serverError().entity("Survey: Error: Can't find PostgreSQL JDBC Driver").build();
-		    } catch (Exception ex) {
-		    	log.log(Level.SEVERE, "Exception", ex);
-		    }
-		}
-		
 		/*
 		 * Get the list of forms and surveys to be exported
 		 * Needs to be done prior to authorisation as it includes the list of surveys
 		 */
 		ArrayList<ExportForm> formList = null;
 		
+		System.out.println("Forms: " + forms);
 		if(forms != null) {
 			Type type = new TypeToken<ArrayList<ExportForm>>(){}.getType();
 			Gson gson=  new GsonBuilder().setDateFormat("yyyy-MM-dd").create();

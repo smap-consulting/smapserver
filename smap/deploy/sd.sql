@@ -654,5 +654,5 @@ alter table survey add column pulldata text;
 
 -- upgrade to 17.02
 alter table question add column linked_target text;
-update question set linked_target = to_char(linked_survey, '99999') where linked_survey > 0 and linked_target is null ;
+update question set linked_target = cast(linked_survey as text) where linked_survey > 0 and linked_target is null ;
 

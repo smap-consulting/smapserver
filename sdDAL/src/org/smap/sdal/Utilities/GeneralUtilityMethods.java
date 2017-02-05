@@ -3264,7 +3264,7 @@ public class GeneralUtilityMethods {
 		
 		ArrayList<SurveyLinkDetails> sList = new ArrayList<SurveyLinkDetails> ();
 		
-		String sql = "select q.q_id, f.f_id, s.s_id "
+		String sql = "select q.q_id, f.f_id, s.s_id, linked_target "
 				+ "from question q, form f, survey s "
 				+ "where q.f_id = f.f_id "
 				+ "and f.s_id = s.s_id "
@@ -3279,12 +3279,15 @@ public class GeneralUtilityMethods {
 			ResultSet rs = pstmt.executeQuery();
 			while(rs.next()) {
 				SurveyLinkDetails sld = new SurveyLinkDetails();
-				sld.toSurveyId = sId;
 				
 				sld.fromQuestionId = rs.getInt(1);
 				sld.fromFormId = rs.getInt(2);
 				sld.fromSurveyId = rs.getInt(3);
 
+				LinkedTarget lt = GeneralUtilityMethods.getLinkTargetObject(rs.getString(4));
+				sld.toSurveyId = lt.sId;
+				sld.toQuestionId = lt.qId;
+				
 				if(sld.fromSurveyId != sld.toSurveyId) {
 					sList.add(sld);
 				}
@@ -3302,7 +3305,7 @@ public class GeneralUtilityMethods {
 	
 	/*
 	 * Get the question that links to the provided survey/question from the provided form
-	 */
+	 *
 	public static int getLinkingQuestion(Connection sd, int formFromId, String linkedTarget) {
 		
 		int questionId = 0;
@@ -3335,6 +3338,7 @@ public class GeneralUtilityMethods {
 		
 		return questionId;
 	}
+	*/
 	
 	/*
 	 * Get the surveys and questions that the provided form links to
