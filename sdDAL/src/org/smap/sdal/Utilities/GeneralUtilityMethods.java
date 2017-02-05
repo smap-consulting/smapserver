@@ -3273,7 +3273,7 @@ public class GeneralUtilityMethods {
 		
 		try {
 			pstmt = sd.prepareStatement(sql);
-			pstmt.setInt(1,sId);
+			pstmt.setString(1,String.valueOf(sId));
 			log.info("Getting linking surveys: " + pstmt.toString() );
 			
 			ResultSet rs = pstmt.executeQuery();
@@ -3348,7 +3348,7 @@ public class GeneralUtilityMethods {
 				+ "where q.f_id = f.f_id "
 				+ "and f.s_id = s.s_id "
 				+ "and s.s_id = ? "
-				+ "and q.linked_target not null";
+				+ "and q.linked_target is not null";
 		PreparedStatement pstmt = null;
 		
 		try {
@@ -3849,17 +3849,19 @@ public class GeneralUtilityMethods {
 		if(in != null) {
 			String[] values = in.split("::");
 			if(values.length > 0) {
+				String sId = values[0].trim();
 				try {
-					lt.sId = Integer.parseInt(values[0]);
+					lt.sId = Integer.parseInt(sId);
 				} catch(Exception e) {
-					
+					log.log(Level.SEVERE,"Error converting linked survey id; " + sId, e);
 				}
 			}
 			if(values.length > 1) {
+				String qId = values[1].trim();
 				try {
-					lt.qId = Integer.parseInt(values[1]);
+					lt.qId = Integer.parseInt(qId);
 				} catch(Exception e) {
-					
+					log.log(Level.SEVERE,"Error converting linked question id; " + qId, e);
 				}
 			}
 		}

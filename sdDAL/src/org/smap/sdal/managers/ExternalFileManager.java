@@ -80,8 +80,7 @@ public class ExternalFileManager {
 		int linked_sId = 0;
 		String data_key = null;
 		boolean non_unique_key = false;
-		filepath = filepath + ".csv";
-		File f = new File(filepath);
+		File f = new File(filepath + ".ext");	// file path does not include the extension because getshape.sh adds it
 		ArrayList<Pulldata> pdArray = null;
 		
 		String sqlPulldata = "select pulldata from survey where s_id = ?";
@@ -225,8 +224,7 @@ public class ExternalFileManager {
 					String currentDkv = null;		// Current value of the data key
 					String dkv = null;
 					while(rs.next()) {
-						System.out.println("Data: " + rs.getString("_data_key") + " : " + rs.getString("child_full_name"));
-						
+					
 						dkv = rs.getString("_data_key");
 						System.out.println("Data key: " + dkv);
 						if(dkv != null && !dkv.equals(currentDkv)) {
@@ -394,34 +392,38 @@ public class ExternalFileManager {
 			} else {
 				// Create a new entry
 				String table = GeneralUtilityMethods.getMainResultsTable(sd, cRel, linked_sId);
-				String sqlCount = "select count(*) from " + table;
 				int count = 0;
-				try {
-					pstmtCount = cRel.prepareStatement(sqlCount);
-					log.info("Regenerate: " + pstmtCount.toString());
-					ResultSet rsCount = pstmtCount.executeQuery();
-					if(rsCount.next()) {
-						count = rsCount.getInt(1);
+				if(table != null) {
+					String sqlCount = "select count(*) from " + table;
+					try {
+						pstmtCount = cRel.prepareStatement(sqlCount);
+						log.info("Regenerate: " + pstmtCount.toString());
+						ResultSet rsCount = pstmtCount.executeQuery();
+						if(rsCount.next()) {
+							count = rsCount.getInt(1);
+						}
+						
+						pstmtInsert = sd.prepareStatement(sqlInsert);
+						pstmtInsert.setInt(1, linked_sId);
+						pstmtInsert.setString(2, table);
+						pstmtInsert.setInt(3, count);
+						pstmtInsert.setInt(4, linker_sId);
+						
+						log.info("Regenerate: " + pstmtInsert.toString());
+						pstmtInsert.executeUpdate();
+						
+					} catch(Exception e) {
+						log.log(Level.SEVERE, "Table not found", e);
+						tableExists = false;
 					}
-				} catch(Exception e) {
-					// Table may not exist yet
-					log.info("Exception creating new count entry: " + e.getMessage());
+					
+					if(count > 0) {
+						regenerate = true;
+					}
+				} else {
+					log.info("Table " + table + " not found. Probably no data has been submitted");
 					tableExists = false;
-				}
-				
-				if(count > 0) {
-					regenerate = true;
-				}
-				
-				pstmtInsert = sd.prepareStatement(sqlInsert);
-				pstmtInsert.setInt(1, linked_sId);
-				pstmtInsert.setString(2, table);
-				pstmtInsert.setInt(3, count);
-				pstmtInsert.setInt(4, linker_sId);
-				
-				log.info("Regenerate: " + pstmtInsert.toString());
-				pstmtInsert.executeUpdate();
-				
+				}	
 
 			}
 		} finally {

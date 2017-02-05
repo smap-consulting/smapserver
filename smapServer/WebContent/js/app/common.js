@@ -2483,16 +2483,22 @@ function cleanFileName(filename) {
  * Convert a :: separated string containing link information into target survey id and question id
  */
 function getLinkedTarget(input) {
-	var lt = {},
+	var lt,
 		values = [];
 	
 	if(input) {
+		
+		lt = {
+				sId: 0,
+				qId: 0
+			}
+		
 		values = input.split("::");
 		if(values.length > 0) {
-			lt.sId = values[0];
+			lt.sId = +values[0].trim();
 		}
 		if(values.length > 1) {
-			lt.qId = values[1];
+			lt.qId = +values[1].trim();
 		}
 	}
 	

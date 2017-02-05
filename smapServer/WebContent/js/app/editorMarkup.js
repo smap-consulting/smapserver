@@ -571,7 +571,7 @@ define([
 			    // Linked survey
 			   
 				h[++idx] = '<div class="form-group">';
-				h[++idx] = '<select class="form-control labelSelect linkedSurvey"';
+				h[++idx] = '<select class="form-control linkedTarget linkedSurvey"';
 				h[++idx] = ' data-prop="';
 					h[++idx] = selProperty;
 				h[++idx] = '">';
@@ -592,7 +592,7 @@ define([
 				
 			    // Linked question
 				h[++idx] = '<div class="form-group">';
-				h[++idx] = '<select class="form-control labelSelect linkedQuestion"';
+				h[++idx] = '<select class="form-control linkedTarget linkedQuestion"';
 				h[++idx] = ' data-prop="linked_target">';
 				if(question[selProperty] && linkedTarget) {
 					getLinkedQuestions(questionId, linkedTarget.sId, linkedTarget.qId);
@@ -991,7 +991,9 @@ define([
 	 */
 	function getLinkedQuestions(questionId, surveyId, qId) {
 		if(linkedQuestions[surveyId]) {
-			showLinkedQuestions(questionId, linkedQuestions[surveyId], qId);
+			setTimeout(function() {
+				showLinkedQuestions(questionId, linkedQuestions[surveyId], qId);
+			}, 0);
 		} else {
 			addHourglass();
 		 	$.ajax({

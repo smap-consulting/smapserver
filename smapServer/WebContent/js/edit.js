@@ -1330,8 +1330,8 @@ function respondToEvents($context) {
 
 	});
 	
-	// Respond to changes on a label select
-	$context.find('.labelSelect').off().change(function() {
+	// Respond to changes on linkedTarget (Survey or Question changed)
+	$context.find('.linkedTarget').off().change(function() {
 
 		var $this = $(this),
 			prop = $this.data("prop"),
@@ -1342,20 +1342,18 @@ function respondToEvents($context) {
 			type,
 			optionList = $li.data("list_name"),
 			qname = $li.data("qname"),
-			labelType;
+			labelType,
+			linkedQuestionId;
+	
+		type = "question";
+		labelType = "text";
 		
-		if($li.hasClass("option")) {
-			type = "option";
-		} else {
-			type = "question";
+		linkedQuestionId = $this.closest('.row').find(".linkedQuestion").val();
+		if(!linkedQuestionId) {
+			linkedQuestionId = 0;		// HRK
 		}
-
-		labelType = prop === "hint" ? "hint" : "text";
-		if (prop === "linked_target") {
-			newVal = $this.val();
-			
-			updateLabel(type, formIndex, itemIndex, optionList, labelType, newVal, qname, prop); 
-		} 
+		newVal = $this.closest('.row').find(".linkedSurvey").val() + "::" + linkedQuestionId;	
+		updateLabel(type, formIndex, itemIndex, optionList, labelType, newVal, qname, prop); 
 		
 
 	});
@@ -1492,7 +1490,7 @@ function respondToEvents($context) {
 	});
 	
 	// Get linked questions
-	$context.find('.linkedSurvey').off().change(function() {
+	$context.find('.linkedSurvey').change(function() {
 		var $this = $(this),
 			$li = $this.closest('li'),
 			item = $li.prop("id"),

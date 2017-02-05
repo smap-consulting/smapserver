@@ -411,31 +411,31 @@ function setExportControls() {
 	$('#export').next().find("button:contains('Export')").removeClass("ui-state-disabled");
 	
 	if(format === "osm") {
-		$('.showshape,.showspreadsheet,.showxls,.showthingsat,.showtrail, .showmedia, .showlqas, .showext').hide();
+		$('.showshape,.showspreadsheet,.showxls,.showthingsat,.showtrail, .showmedia, .showlqas, .showext, .showextselect').hide();
 		$('.showosm,.showro,.showlang').show();
 	} else if(format === "shape" || format === "kml" || format === "vrt" || format === "csv") {
 		$('.showspreadsheet,.showxls,.showosm,.showthingsat, .showmedia, .showlqas').hide();
 		$('.showshape,.showro,.showlang, .showext').show();
 	} else if(format === "stata" || format === "spss") {
-		$('.showxls,.showosm,.showthingsat, .showmedia, .showlqas, .showext').hide();
+		$('.showxls,.showosm,.showthingsat, .showmedia, .showlqas, .showext, showextselect').hide();
 		$('.showshape,.showspreadsheet,.showro,.showlang').show();
 	} else if(format === "thingsat") {
-		$('.showxls,.showosm, .showmedia, .showlqas, .showext').hide();
+		$('.showxls,.showosm, .showmedia, .showlqas, .showext, showextselect').hide();
 		$('.showshape,.showspreadsheet,.showro,.showlang').show();
 		showModel();			// Show the thingsat model
 	} else if(format === "trail") {
-		$('.showxls,.showosm,.showro,.showlang,.showthingsat, .showmedia, .showlqas, .showext').hide();
+		$('.showxls,.showosm,.showro,.showlang,.showthingsat, .showmedia, .showlqas, .showext, .showextselect').hide();
 		$('.showshape,.showspreadsheet').show();
 	} else if(format === "media") {
-		$('.showshape, .showxls,.showosm,.showro,.showlang,.showthingsat,.showmedia, .showlqas, .showext').hide();
+		$('.showshape, .showxls,.showosm,.showro,.showlang,.showthingsat,.showmedia, .showlqas, .showext, .showextselect').hide();
 		$('.showspreadsheet,.showmedia, .showlang').show();
 	} else if(format === "lqas") {
-		$('.showshape, .showxls,.showosm,.showro,.showlang,.showthingsat,.showmedia, .showlqas, .showext').hide();
+		$('.showshape, .showxls,.showosm,.showro,.showlang,.showthingsat,.showmedia, .showlqas, .showext, .showextselect').hide();
 		$('.showlqas').show();
 		getReports(showReportList, undefined, "lqas");
 		
 	} else {
-		$('.showshape,.showspreadsheet,.showxls,.showosm,.showthingsat, .showmedia, .showlqas, .showext').hide();
+		$('.showshape,.showspreadsheet,.showxls,.showosm,.showthingsat, .showmedia, .showlqas, .showext, .showextselect').hide();
 		$('.showxls,.showspreadsheet,.showro,.showlang').show();
 	}
 }
