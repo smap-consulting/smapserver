@@ -225,7 +225,6 @@ public class ExternalFileManager {
 					String currentDkv = null;		// Current value of the data key
 					String dkv = null;
 					while(rs.next()) {
-						System.out.println("Data: " + rs.getString("_data_key") + " : " + rs.getString("child_full_name"));
 						
 						dkv = rs.getString("_data_key");
 						System.out.println("Data key: " + dkv);
