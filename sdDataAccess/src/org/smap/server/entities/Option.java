@@ -53,7 +53,7 @@ public class Option implements Serializable{
 	// Other attributes
 	private String questionRef = null;	// Reference of the parent question
 
-	private String cascadeInstanceId = null;  // Reference to a cascade instance
+	private String listName = null;  // Reference to a cascade instance
 
 	private HashMap<String, String> cascadeKeyValues = new HashMap<String, String>();
 	
@@ -71,7 +71,7 @@ public class Option implements Serializable{
 		this.seq = anOption.getSeq();
 		this.externalFile = anOption.getExternalFile();
 		this.questionRef = anOption.getQuestionRef();
-		this.cascadeInstanceId = anOption.getCascadeInstanceId();
+		this.listName = anOption.getListName();
 		this.cascadeKeyValues = new HashMap<String, String> (anOption.getCascadeKeyValues());
 	}
 
@@ -118,8 +118,8 @@ public class Option implements Serializable{
 		return questionRef;
 	}
 	
-	public String getCascadeInstanceId() {
-		return cascadeInstanceId;
+	public String getListName() {
+		return listName;
 	}
 	
 	public HashMap<String, String> getCascadeKeyValues() {
@@ -170,8 +170,8 @@ public class Option implements Serializable{
     	questionRef = qRef ;
     }
     
-    public void setCascadeInstanceId(String v) {
-    	cascadeInstanceId = v;
+    public void setListName(String v) {
+    	listName = v;
     }
     
     // Set the filter text string from the list of key value pairs

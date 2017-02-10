@@ -212,7 +212,13 @@ public class QueryGenerator {
 
 				shpSqlBuf.append(prevForm.table);
 				if(form.fromQuestionId > 0) {
-					shpSqlBuf.append("._hrk = ");
+					if(form.toQuestionId > 0) {
+						shpSqlBuf.append(".");
+						shpSqlBuf.append(GeneralUtilityMethods.getColumnNameFromId(connectionSD, prevForm.sId, form.toQuestionId));
+						shpSqlBuf.append(" = ");
+					} else {
+						shpSqlBuf.append("._hrk = ");
+					}
 				} else {
 					shpSqlBuf.append(".prikey = ");
 				}

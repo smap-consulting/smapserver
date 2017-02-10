@@ -68,7 +68,6 @@ public class JdbcQuestionManager {
 			+ "nodeset,"
 			+ "nodeset_value,"
 			+ "nodeset_label,"
-			+ "cascade_instance,"
 			+ "column_name,"
 			+ "published,"
 			+ "l_id,"
@@ -106,7 +105,6 @@ public class JdbcQuestionManager {
 			+ "nodeset,"
 			+ "nodeset_value,"
 			+ "nodeset_label,"
-			+ "cascade_instance,"
 			+ "column_name,"
 			+ "published,"
 			+ "l_id,"
@@ -118,6 +116,9 @@ public class JdbcQuestionManager {
 	String sqlGetByFormId = "f_id  = ?"
 			+ " order by seq";
 	
+	String sqlGetListName = "select name from listname where l_id = ?";
+	PreparedStatement pstmtGetListName;
+	
 	/*
 	 * Constructor
 	 */
@@ -125,6 +126,7 @@ public class JdbcQuestionManager {
 		pstmt = sd.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
 		pstmtGetBySurveyId = sd.prepareStatement(sqlGet + sqlGetBySurveyId);
 		pstmtGetByFormId = sd.prepareStatement(sqlGet + sqlGetByFormId);
+		pstmtGetListName = sd.prepareStatement(sqlGetListName);
 	}
 	
 	/*
@@ -156,7 +158,6 @@ public class JdbcQuestionManager {
 		String nodeset = null;
 		String nodeset_value = null;
 		String nodeset_label = null;
-		String cascade_instance = null;
 		if(q.getType().startsWith("select")) {
 			
 			nodeset = q.getNodeset(false, null);
@@ -169,20 +170,18 @@ public class JdbcQuestionManager {
 			} else {
 				nodeset_value = q.getNodesetValue();
 				nodeset_label = q.getNodesetLabel();
-				cascade_instance = q.getCascadeInstance();
 			}
 			
 		}	
 		pstmt.setString(22, nodeset);
 		pstmt.setString(23, nodeset_value);
 		pstmt.setString(24, nodeset_label);
-		pstmt.setString(25, cascade_instance);
 		
-		pstmt.setString(26, q.getColumnName());
-		pstmt.setBoolean(27, q.isPublished());
-		pstmt.setInt(28, q.getListId());
-		pstmt.setString(29, q.getAutoPlay());
-		pstmt.setString(30, q.getAccuracy());
+		pstmt.setString(25, q.getColumnName());
+		pstmt.setBoolean(26, q.isPublished());
+		pstmt.setInt(27, q.getListId());
+		pstmt.setString(28, q.getAutoPlay());
+		pstmt.setString(29, q.getAccuracy());
 		
 		//log.info("Write question: " + pstmt.toString());
 		pstmt.executeUpdate();
@@ -255,13 +254,22 @@ public class JdbcQuestionManager {
 			q.setNodeset(rs.getString(23));
 			q.setNodesetValue(rs.getString(24));
 			q.setNodesetLabel(rs.getString(25));
-			q.setCascadeInstance(rs.getString(26));
-			q.setColumnName(rs.getString(27));
-			q.setPublished(rs.getBoolean(28));
-			q.setListId(rs.getInt(29));
-			q.setAutoPlay(rs.getString(30));
-			q.setAccuracy(rs.getString(31));
+			q.setColumnName(rs.getString(26));
+			q.setPublished(rs.getBoolean(27));
+			q.setListId(rs.getInt(28));
+			q.setAutoPlay(rs.getString(29));
+			q.setAccuracy(rs.getString(30));
 		
+			/*
+			 * If the list id exists then set the list name
+			 */
+			if(q.getListId() > 0) {
+				pstmtGetListName.setInt(1, q.getListId());
+				ResultSet rsListName = pstmtGetListName.executeQuery();
+				if(rsListName.next()) {
+					q.setListName(rsListName.getString(1));
+				}
+			}
 			/*
 			 * Set the relative path
 			 */

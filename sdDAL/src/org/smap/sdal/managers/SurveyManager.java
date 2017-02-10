@@ -43,6 +43,7 @@ import org.smap.sdal.model.ChangeLog;
 import org.smap.sdal.model.ChangeResponse;
 import org.smap.sdal.model.ChangeSet;
 import org.smap.sdal.model.Form;
+import org.smap.sdal.model.Label;
 import org.smap.sdal.model.Language;
 import org.smap.sdal.model.LinkedSurvey;
 import org.smap.sdal.model.ManifestInfo;
@@ -187,6 +188,7 @@ public class SurveyManager {
 			boolean generateDummyValues,		// Set to true when getting results to fill a form with dummy values if there are no results
 			boolean getPropertyTypeQuestions,	// Set to true to get property questions such as _device
 			boolean getSoftDeleted,				// Set to true to get soft deleted questions
+			boolean getHrk,						// Set to true to get HRK as a question
 			String getExternalOptions,			// external || internal || real (get external if they exist else get internal)
 			boolean superUser,
 			int utcOffset,
@@ -260,7 +262,7 @@ public class SurveyManager {
 			
 			if(full && s != null) {
 				
-				populateSurvey(sd, s, basePath, user, getPropertyTypeQuestions, getExternalOptions);			// Add forms, questions, options
+				populateSurvey(sd, cResults, s, basePath, user, getPropertyTypeQuestions, getHrk, getExternalOptions);			// Add forms, questions, options
 				
 				if(getResults) {								// Add results
 					
@@ -584,8 +586,9 @@ public class SurveyManager {
 	/*
 	 * Get a survey's details
 	 */
-	private void populateSurvey(Connection sd, Survey s, String basePath, String user, 
+	private void populateSurvey(Connection sd, Connection cResults, Survey s, String basePath, String user, 
 			boolean getPropertyTypeQuestions,
+			boolean getHrk,
 			String getExternalOptions) throws Exception {
 		
 		/*
@@ -625,7 +628,7 @@ public class SurveyManager {
 				+ "q.soft_deleted, "
 				+ "q.autoplay,"
 				+ "q.accuracy,"
-				+ "q.linked_survey "
+				+ "q.linked_target "
 				+ "from question q "
 				+ "left outer join listname l on q.l_id = l.l_id "
 				+ "where q.f_id = ? "
@@ -688,10 +691,13 @@ public class SurveyManager {
 		// Get the surveys that can be linked to
 		ResultSet rsGetLinkable = null;
 		String sqlGetLinkable = "select s.s_id, s.display_name "
-				+ "from survey s, project p "
+				+ "from survey s, project p, user_project up, users u "
 				+ "where s.p_id = p.id "
+				+ "and not s.deleted "
 				+ "and p.o_id = ? "
-				+ "and s.hrk is not null "
+				+ "and u.id = up.u_id "
+				+ "and p.id = up.p_id "
+				+ "and u.ident = ? "
 				+ "order by s.display_name asc; ";
 		PreparedStatement pstmtGetLinkable = sd.prepareStatement(sqlGetLinkable);
 		
@@ -722,7 +728,29 @@ public class SurveyManager {
 			f.parentform =rsGetForms.getInt(3); 
 			f.parentQuestion = rsGetForms.getInt(4);
 			f.tableName = rsGetForms.getString(5);
-				
+			
+			/*
+			 * Add HRK
+			 */
+			if(getHrk && f.parentform == 0) {
+				if(s.hrk != null && s.hrk.trim().length() > 0
+						&& GeneralUtilityMethods.columnType(cResults, f.tableName, "_hrk") != null) {
+					Question q = new Question();
+					q.name = "Key";
+					q.published = true;
+					q.columnName = "_hrk";
+					q.source = "user";
+					q.type = "";
+					
+					q.labels = new ArrayList<Label> ();
+					for(int i = 0; i < s.languages.size(); i++ ) {
+						Label l = new Label();
+						l.text = "Key";
+						q.labels.add(l);
+					}
+					f.questions.add(q);
+				}
+			}
 			/*
 			 * Get the questions for this form
 			 */
@@ -762,7 +790,7 @@ public class SurveyManager {
 				q.soft_deleted = rsGetQuestions.getBoolean(24);
 				q.autoplay = rsGetQuestions.getString(25);
 				q.accuracy = rsGetQuestions.getString(26);
-				q.linked_survey = rsGetQuestions.getInt(27);
+				q.linked_target = rsGetQuestions.getString(27);
 				if(q.autoplay == null) {
 					q.autoplay = "none";
 				}
@@ -800,8 +828,10 @@ public class SurveyManager {
 				q.inMeta = inMeta;
 				
 				// If the survey was loaded from xls it will not have a list name
-				if(q.list_name == null || q.list_name.trim().length() == 0) {
-					q.list_name = q.name;
+				if(q.type.startsWith("select")) {
+					if(q.list_name == null || q.list_name.trim().length() == 0) {
+						q.list_name = q.name;
+					}
 				}
 				
 				// Get the language labels
@@ -944,6 +974,7 @@ public class SurveyManager {
 		
 		// Add the linkable surveys
 		pstmtGetLinkable.setInt(1, oId);
+		pstmtGetLinkable.setString(2, user);
 		rsGetLinkable = pstmtGetLinkable.executeQuery();
 		while(rsGetLinkable.next()) {
 			int linkedId = rsGetLinkable.getInt(1);
@@ -1573,6 +1604,7 @@ public class SurveyManager {
 		PreparedStatement pstmtGetQuestionId = null;
 		PreparedStatement pstmtGetQuestionDetails = null;
 		PreparedStatement pstmtGetListId = null;
+		PreparedStatement pstmtGetListname = null;
 		PreparedStatement pstmtListname = null;
 		PreparedStatement pstmtUpdateRepeat = null;
 		PreparedStatement pstmtUpdateEndGroup = null;
@@ -1582,6 +1614,7 @@ public class SurveyManager {
 		PreparedStatement pstmtUpdateHintRef = null;
 		PreparedStatement pstmtUpdateTranslations = null;
 		PreparedStatement pstmtUpdateQuestion = null;
+		PreparedStatement pstmtUpdateNodeset = null;
 		
 		try {
 		
@@ -1604,7 +1637,6 @@ public class SurveyManager {
 					pstmtUpdateRepeat.setString(1, ci.property.newVal);
 					pstmtUpdateRepeat.setInt(2, sId);
 					pstmtUpdateRepeat.setInt(3, ci.property.qId);
-					//pstmtUpdateRepeat.setString(4, ci.property.oldVal);
 					
 					log.info("Updating repeat count: " + pstmtUpdateRepeat.toString());
 					int count = pstmtUpdateRepeat.executeUpdate();
@@ -1662,8 +1694,6 @@ public class SurveyManager {
 						String listname = GeneralUtilityMethods.getListNameForQuestion(sd, ci.property.qId);
 						ci.property.newVal = GeneralUtilityMethods.getNodesetFromChoiceFilter(ci.property.newVal, listname);
 						
-						System.out.println("write to nodeset based on listname and filter: " + ci.property.newVal);
-						
 					} else if(ci.property.type.equals("optionlist")) {
 						// Get the list id for this option list
 						String sqlGetListId = "select l_id from listname where s_id = ? and name = ?;";
@@ -1679,7 +1709,6 @@ public class SurveyManager {
 						}
 						
 					}
-					
 					
 					if(ci.property.prop.equals("relevant") || ci.property.prop.equals("constraint") 
 							|| ci.property.prop.equals("calculation") || ci.property.prop.equals("appearance")) {
@@ -1710,13 +1739,23 @@ public class SurveyManager {
 								"where q_id = ?";
 						pstmtProperty3 = sd.prepareStatement(sqlProperty3);
 						
+						// Update listname - Get existing listname
+						String sqlGetListname = "select name from listname where l_id = ? and s_id = ?";
+						pstmtGetListname = sd.prepareStatement(sqlGetListname);
+						
 						// Update listname
-						String sqlListname = "update listname set name = ? where l_id = ? and s_id = ?;";
+						String sqlListname = "update listname set name = ? where l_id = ? and s_id = ?";
 						pstmtListname = sd.prepareStatement(sqlListname);
+						
+						// Update nodeset
+						String sqlUpdateNodeset = "update question set nodeset = replace(nodeset, '(''' || ? || ''')', '(''' || ? || ''')') "
+								+ "where l_id = ? "
+								+ "and f_id in (select f_id from form where s_id = ?)";
+						pstmtUpdateNodeset = sd.prepareStatement(sqlUpdateNodeset);		
 						
 						// Update for dependent properties
 						String sqlDependent = "update question set visible = ?, source = ? " +
-								"where q_id = ?;";
+								"where q_id = ?";
 						pstmtDependent = sd.prepareStatement(sqlDependent);
 						
 						// Update for readonly status if this is a type change to note
@@ -1742,13 +1781,35 @@ public class SurveyManager {
 							
 						} else if (ci.property.type.equals("optionlist")) {
 							if( ci.property.l_id > 0) {
-								pstmtListname.setString(1, ci.property.newVal);
+								
+								String originalListname = null;
+								// Get the existing list name
+								pstmtGetListname.setInt(1, ci.property.l_id);
+								pstmtGetListname.setInt(2, sId);
+								ResultSet rs = pstmtGetListname.executeQuery();
+								if(rs.next()) {
+									originalListname = rs.getString(1);
+								}
+								
+								// Write the new list name
+								String cleanName = GeneralUtilityMethods.cleanName(ci.property.newVal, true, false, false);
+								pstmtListname.setString(1, cleanName);
 								pstmtListname.setInt(2, ci.property.l_id);
 								pstmtListname.setInt(3, sId);
 								
 								log.info("Update name of list : " + pstmtListname.toString());
 								count = pstmtListname.executeUpdate();
 								
+								 // Update the nodeset for any questions that references this list
+								if(originalListname != null && originalListname.trim().length() > 0) {
+									pstmtUpdateNodeset.setString(1, originalListname);
+									pstmtUpdateNodeset.setString(2, cleanName);
+									pstmtUpdateNodeset.setInt(3, ci.property.l_id);
+									pstmtUpdateNodeset.setInt(4, sId);
+									log.info("Update nodeset : " + pstmtUpdateNodeset.toString());
+									pstmtUpdateNodeset.executeUpdate();
+								}
+										
 								/*
 								 * Update any questions that have (remembered) this list name but the list id is null
 								 */
@@ -1776,6 +1837,9 @@ public class SurveyManager {
 							if(propertyType.equals("boolean")) {
 								pstmtProperty2.setBoolean(1, Boolean.parseBoolean(ci.property.newVal));
 							} else if(propertyType.equals("integer")) {
+								if(ci.property.newVal == null) {
+									ci.property.newVal = "0";
+								}
 								pstmtProperty2.setInt(1, Integer.parseInt(ci.property.newVal));
 							} else {
 								pstmtProperty2.setString(1, ci.property.newVal);
@@ -1968,6 +2032,8 @@ public class SurveyManager {
 			try {if (pstmtUpdateTranslations != null) {pstmtUpdateTranslations.close();}} catch (SQLException e) {}
 			try {if (pstmtUpdateQuestion != null) {pstmtUpdateQuestion.close();}} catch (SQLException e) {}
 			try {if (pstmtUpdateEndGroup != null) {pstmtUpdateEndGroup.close();}} catch (SQLException e) {}
+			try {if (pstmtGetListname != null) {pstmtGetListname.close();}} catch (SQLException e) {}
+			try {if (pstmtUpdateNodeset != null) {pstmtUpdateNodeset.close();}} catch (SQLException e) {}
 		
 		}
 	

@@ -2480,6 +2480,32 @@ function cleanFileName(filename) {
 }
 
 /*
+ * Convert a :: separated string containing link information into target survey id and question id
+ */
+function getLinkedTarget(input) {
+	var lt,
+		values = [];
+	
+	if(input) {
+		
+		lt = {
+				sId: 0,
+				qId: 0
+			}
+		
+		values = input.split("::");
+		if(values.length > 0) {
+			lt.sId = +values[0].trim();
+		}
+		if(values.length > 1) {
+			lt.qId = +values[1].trim();
+		}
+	}
+	
+	return lt;
+}
+
+/*
  * Prevent the menu bar from extending over two lines
  */
 // From: http://stackoverflow.com/questions/20247945/bootstrap-3-navbar-dynamic-collapse

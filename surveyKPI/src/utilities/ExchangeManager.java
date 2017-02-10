@@ -683,7 +683,7 @@ public class ExchangeManager {
 							}
 							recordsWritten++;
 						}
-						
+												
 				    }
 					results.commit();
 					
@@ -694,6 +694,9 @@ public class ExchangeManager {
 				
 			}
 		} finally {
+			
+			xlsReader = null;
+			
 			try {if (reader != null) {reader.close();}} catch (Exception e) {}
 			
 			try {if (pstmtInsert != null) {pstmtInsert.close();}} catch (Exception e) {}

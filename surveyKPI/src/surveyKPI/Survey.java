@@ -522,6 +522,7 @@ public class Survey extends Application {
 					jl.put("fromSurveyId", link.fromSurveyId);
 					jl.put("fromFormId", link.fromFormId);
 					jl.put("fromQuestionId", link.fromQuestionId);
+					jl.put("toQuestionId", link.toQuestionId);
 					
 					jl.put("toSurveyId", link.toSurveyId);
 					

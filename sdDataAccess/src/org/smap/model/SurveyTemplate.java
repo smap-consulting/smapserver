@@ -133,7 +133,7 @@ public class SurveyTemplate {
 		itr = c.iterator();
 		while (itr.hasNext()) {
 			Option o = itr.next();
-			if(o.getCascadeInstanceId().equals(cascadeInstance)) {
+			if(o.getListName().equals(cascadeInstance)) {
 				opts.add(o);
 			}
 		}
@@ -386,7 +386,7 @@ public class SurveyTemplate {
 	 */
 	public void createCascadeOption(String optionRef, String cascadeInstanceId) {
 		Option o = new Option();
-		o.setCascadeInstanceId(cascadeInstanceId);
+		o.setListName(cascadeInstanceId);
 		cascade_options.put(optionRef, o);
 	}
 	
@@ -401,7 +401,7 @@ public class SurveyTemplate {
 		itr = c.iterator();
 		while (itr.hasNext()) {
 			Option o = itr.next();
-			if(o.getCascadeInstanceId().equals(cascadeInstanceId)) {
+			if(o.getListName().equals(cascadeInstanceId)) {
 				Option oNew = new Option(o);
 				oNew.setQuestionRef(questionRef);
 				String optionRef = questionRef + "/" + oNew.getSeq();
@@ -558,7 +558,7 @@ public class SurveyTemplate {
 		while (itr.hasNext()) {
 			Option o = (Option) itr.next();
 			System.out.println("Option: ");
-			System.out.println("	Instance: " + o.getCascadeInstanceId());
+			System.out.println("	Instance: " + o.getListName());
 			System.out.println("	Question: " + o.getQuestionRef());
 			System.out.println("	Value: " + o.getValue());
 			System.out.println("	Label: " + o.getLabel());
@@ -572,7 +572,7 @@ public class SurveyTemplate {
 		while (itr.hasNext()) {
 			Option o = (Option) itr.next();
 			System.out.println("Cascade Option: ");
-			System.out.println("	Instance: " + o.getCascadeInstanceId());
+			System.out.println("	Instance: " + o.getListName());
 			System.out.println("	Question: " + o.getQuestionRef());
 			System.out.println("	Value: " + o.getValue());
 			System.out.println("	Label: " + o.getLabel());
@@ -1298,10 +1298,10 @@ public class SurveyTemplate {
 					}
 					
 					boolean cascade = false;
-					String cascadeInstanceId = q.getCascadeInstance();
-					if(cascadeInstanceId != null) {
+					String listName = q.getListName();
+					if(listName != null) {
 						CascadeInstance ci = new CascadeInstance();
-						ci.name = cascadeInstanceId;
+						ci.name = listName;
 						ci.valueKey = q.getNodesetValue();
 						String label = q.getNodesetLabel();
 						if(label.startsWith("jr:itext")) {
@@ -1315,7 +1315,7 @@ public class SurveyTemplate {
 	
 						// Cascade options are shared, check that this instance has not been added already by another question
 						
-						if(!cascadeInstanceLoaded(cascadeInstanceId)) {
+						if(!cascadeInstanceLoaded(listName)) {
 							cascadeInstances.add(ci);
 						}
 						cascade = true;
@@ -1333,9 +1333,9 @@ public class SurveyTemplate {
 						String oRef = qRef + "/" + o.getId();
 						if(oRef != null) {
 							if(cascade) {
-								o.setCascadeInstanceId(cascadeInstanceId);
+								o.setListName(listName);
 								// Cascade options are shared, check that this option has not been added already by another question
-								if(!cascadeOptionLoaded(cascadeInstanceId, o.getLabelId())) {
+								if(!cascadeOptionLoaded(listName, o.getLabelId())) {
 									cascade_options.put(oRef, o);
 								}
 							} else {
@@ -1381,7 +1381,7 @@ public class SurveyTemplate {
 	/*
 	 * Method to check to see whether the cascade option has already been loaded
 	 */
-	public boolean cascadeOptionLoaded(String cascadeInstanceId, String value) {
+	public boolean cascadeOptionLoaded(String listName, String value) {
 		boolean loaded = false;
 		
 		Collection<Option> c = null;
@@ -1391,8 +1391,7 @@ public class SurveyTemplate {
 		itr = c.iterator();
 		while (itr.hasNext()) {
 			Option o = itr.next();
-			//if(o.getCascadeInstanceId().equals(cascadeInstanceId) && o.getValue().equals(value)) {
-			if(o.getCascadeInstanceId().equals(cascadeInstanceId) && o.getLabelId().equals(value)) {
+			if(o.getListName().equals(listName) && o.getLabelId().equals(value)) {
 				loaded = true;
 				break;
 			}

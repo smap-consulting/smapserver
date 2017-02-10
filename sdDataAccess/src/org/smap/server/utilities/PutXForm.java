@@ -693,7 +693,6 @@ public class PutXForm {
 				int idx2 = nodeset.indexOf('\'', idx1 + 1);
 				cascadeInstanceId = nodeset.substring(idx1, idx2);
 				template.createCascadeOptions(cascadeInstanceId, questionRef);
-				q.setCascadeInstance(cascadeInstanceId);
 				q.setNodeset(nodeset);
 			}
     		

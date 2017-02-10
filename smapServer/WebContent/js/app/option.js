@@ -22,27 +22,6 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
  *  Filter Model
  *    globals.gFilterArray:				Filters in display order
  *    survey.filters	Filters with state of shown or not shown
- *  
- *    Create choice view
- *    	initialise model
- *    	createChoiceView()
- *    	Set select controls
- *      getOptionTable()
- *      setupChoiceView()
- *      	Hide and show dom elements dependent on view
- *      Add response to events
- *      
- *    if filter type changes:
- *    	getOptionTable()
- *  	setupChoiceView()
- *      Add response to events
-		
- *    if model changes:  (filter added or removed)
- *    	update model
- *    	update filter select dom elements
- *    	getOptionTable()
- *  	setupChoiceView()
- *      Add response to events
  */
 
 "use strict";
@@ -63,7 +42,7 @@ define([
 		addOneOption: addOneOption,
 		resetFilterColumns: resetFilterColumns,
 		setPreviousChoices: setPreviousChoices,
-		getOptionTable: getOptionTable,
+		addOptionTable: addOptionTable,
 		addFilter: addFilter,
 		addFilterSelectList: addFilterSelectList,
 		addOptionSequence: addOptionSequence
@@ -100,13 +79,15 @@ define([
 		}
 		addFilterSelectList(survey.filters);
 		
+		/*
+		 * Set the filter type to custom if there are filters with a name other than _smap_cascade
+		 */
 		if(globals.gFilterArray.length > 0) {
 			filterType = "custom";
 		}
-		for(i = 0; i < globals.gFilterArray.length; i++) {
-			if (survey.filters[globals.gFilterArray[i]] === "_smap_cascade") {
+		if(globals.gFilterArray.length === 1) {
+			if (globals.gFilterArray[0] === "_smap_cascade") {
 				filterType = "cascade";
-				break;
 			}
 		}
 
@@ -119,7 +100,7 @@ define([
 	function setupChoiceView(filterType) {
 		var survey = globals.model.survey;
 		/*
-		 * show filter columns that should be visible
+		 * show custom filter columns that should be visible
 		 */
 		for (i = 0; i < globals.gFilterArray.length; i++) {
 			if(survey.filters[globals.gFilterArray[i]] === true) {
@@ -140,11 +121,6 @@ define([
 			$('.cascade_filter_only').hide();
 			$('#choiceView table').addClass("notcascade").addClass("notcustom");	
 		}
-		
-		$('[type="checkbox"]', '#optionTable').iCheck({
-		    checkboxClass: 'icheckbox_square-green',
-		    radioClass: 'iradio_square-green'
-		});
 
 	}
 
@@ -187,6 +163,7 @@ define([
 					if(idx !== false) {
 						h[++idx] = addCascadeChecked(option.cascade_filters, prevChoice);
 					} 
+					h[++idx] = '>';
 				h[++idx] = '</td>';
 				
 				// Add option name and value cell
@@ -375,9 +352,10 @@ define([
 	/*
 	 * Refresh the table of options
 	 */
-	function getOptionTable(question, formIndex, listName) {
+	function addOptionTable(question, formIndex, listName) {
 		var h = [],
-			idx = -1;
+			idx = -1,
+			$element = $('#optionTable');
 		
 		if(listName) {
 			h[++idx] = addOptions(undefined, undefined, listName);
@@ -388,7 +366,13 @@ define([
 			$('#choiceViewQuestion').html(localise.set["c_question"] + ": " + question.name);
 		}
 		
-		return h.join("");
+		$element.html(h.join());
+		
+		// Add styling to cascading select checkboxes
+		$('[type="checkbox"]', '#optionTable').iCheck({
+		    checkboxClass: 'icheckbox_square-green',
+		    radioClass: 'iradio_square-green'
+		});
 	}
 	
 	/*

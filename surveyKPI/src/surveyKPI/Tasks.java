@@ -766,18 +766,10 @@ public class Tasks extends Application {
 			@Context HttpServletResponse response,
 			@PathParam("tgId") int tgId,
 			@QueryParam("landscape") boolean landscape) throws Exception {
-
-		try {
-		    Class.forName("org.postgresql.Driver");	 
-		} catch (ClassNotFoundException e) {
-			log.log(Level.SEVERE, "Can't find PostgreSQL JDBC Driver", e);
-		    throw new Exception("Can't find PostgreSQL JDBC Driver");
-		}
 		
-		log.info("Create PDF for task group:" + tgId + " for record: " + tgId);
+		log.info("Create PDF for task group:" + tgId + " for task group: " + tgId);
 		
 		// Authorisation - Access
-		String user = request.getRemoteUser();
 		Connection sd = SDDataSource.getConnection("createPDF");	
 		a.isAuthorised(sd, request.getRemoteUser());		
 		a.isValidTaskGroup(sd, request.getRemoteUser(), tgId, false);

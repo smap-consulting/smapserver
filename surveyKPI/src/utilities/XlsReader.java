@@ -10,7 +10,9 @@ import org.apache.poi.ss.usermodel.DataFormatter;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.openxmlformats.schemas.spreadsheetml.x2006.main.CTSheet;
 
 public class XlsReader {
 
@@ -20,8 +22,20 @@ public class XlsReader {
 	int rowNum = -1;
 	int lastRowNum = -1;
 	
+	
 	public XlsReader(InputStream is, String formName) throws Exception {
-		wb = new XSSFWorkbook(is);
+		
+		final String sheetName = "d_" + formName;
+		
+		wb = new XSSFWorkbook(is) {
+			 /** Avoid DOM parse of sheets we are not interested in */
+            @Override
+            public void parseSheet(java.util.Map<String,XSSFSheet> shIdMap, CTSheet ctSheet) {
+                if (sheetName.equals(ctSheet.getName())) {
+                    super.parseSheet(shIdMap, ctSheet);
+                }
+            }
+		};
 		sheet = wb.getSheet("d_" + formName);
 		lastRowNum = sheet.getLastRowNum();
 	}

@@ -411,6 +411,7 @@ $(document).ready(function() {
 			  data: { pulldata: pulldataString },
 				success: function(data) {
 					removeHourglass();
+					globals.model.survey.pulldata = gTempPulldata;
 					$('#pulldataModal').modal("hide");
 				},
 				error: function(xhr, textStatus, err) {
@@ -606,7 +607,7 @@ $(document).ready(function() {
 			question = survey.forms[globals.gFormIndex].questions[globals.gItemIndex];
 		
 		option.addFilter($('#filter_name').val());
-		$('#optionTable').html(option.getOptionTable(question, globals.gFormIndex, globals.gListName));
+		option.addOptionTable(question, globals.gFormIndex, globals.gListName);
 		option.setupChoiceView($('#filterType').val());
 		option.addFilterSelectList(survey.filters);
 		respondToEventsChoices($('#optionTable'));
@@ -783,7 +784,7 @@ function refreshOptions() {
 		question = survey.forms[globals.gFormIndex].questions[globals.gItemIndex];
 	}
 	
-	$('#optionTable').html(option.getOptionTable(question, globals.gFormIndex, globals.gListName));
+	option.addOptionTable(question, globals.gFormIndex, globals.gListName);
 	option.setupChoiceView($('#filterType').val());
 	
 	respondToEventsChoices($context);
@@ -803,7 +804,7 @@ function refreshForm() {
 		if(typeof globals.gFormIndex !== "undefined") {
 			question = survey.forms[globals.gFormIndex].questions[globals.gItemIndex];
 		}
-		$('#optionTable').html(option.getOptionTable(question, globals.gFormIndex, globals.gListName));
+		option.addOptionTable(question, globals.gFormIndex, globals.gListName);
 		option.setupChoiceView($('#filterType').val());
 		respondToEventsChoices($('#optionTable'));
 	} else {
@@ -896,11 +897,11 @@ function respondToEventsChoices($context) {
 		} 
 		
 		if(filterType !== "none") {
-			$('#optionTable').html(option.getOptionTable(question, globals.gFormIndex, globals.gListName));
+			option.addOptionTable(question, globals.gFormIndex, globals.gListName);
 			respondToEventsChoices($('#optionTable'));
 		}
 		option.setupChoiceView($this.val());
-	
+		
 		
 	});
 	
@@ -943,17 +944,17 @@ function respondToEventsChoices($context) {
 			question = survey.forms[globals.gFormIndex].questions[globals.gItemIndex];
 		
 		option.setPreviousChoices($this.val());	
-		$('#optionTable').html(option.getOptionTable(question, globals.gFormIndex, globals.gListName));
+		option.addOptionTable(question, globals.gFormIndex, globals.gListName);
 		respondToEventsChoices($('#optionTable'));
 	});
 	
 	// Previous choice for cascading select changes
-	$context.find('#previousSelectChoice').off().change(function(){
+	$context.find('#previousSelectChoice').off().change(function() {
 		var $this = $(this),
 			survey = globals.model.survey,
 			question = survey.forms[globals.gFormIndex].questions[globals.gItemIndex];
 		
-		$('#optionTable').html(option.getOptionTable(question, globals.gFormIndex, globals.gListName));
+		option.addOptionTable(question, globals.gFormIndex, globals.gListName);
 		respondToEventsChoices($('#optionTable'));
 	});
 	
@@ -962,7 +963,7 @@ function respondToEventsChoices($context) {
 	
 
 	// Respond to clicks on a label text area
-	$context.find('.labelProp').change(function(){
+	$context.find('.labelProp').change(function() {
 
 		var $this = $(this),
 			$elem = $this.closest('tr'),
@@ -1023,13 +1024,12 @@ function respondToEventsChoices($context) {
 	});
 	
 	// Update the cascade filter values when a cascade filter value is checked
-	$('.cascadeFilter').on('ifChecked', function(event) {
-			updateFilterValues($(this), true, true);
-		});
+	$('tr'). find('.cascadeFilter').off().on('ifToggled', function(event) {
+		var $this = $(this),
+		survey = globals.model.survey;
 	
-	// Update the cascade filter values when a cascade filter value is un-checked
-	$('.cascadeFilter').on('ifUnchecked', function(event) {
-			updateFilterValues($(this), true, false);
+		updateFilterValues($(this), true, $this.is(':checked'));
+	
 	});
 	
 	// Add new option after
@@ -1075,7 +1075,7 @@ function respondToEventsChoices($context) {
 		mediaPropSelected($this);
 
 	});
-	
+
 	/*
 	 * Enable drag and drop to move choices
 	 * 
@@ -1114,11 +1114,9 @@ function respondToEventsChoices($context) {
 		evt.originalEvent.preventDefault();
 	});
 	
-	
 	/*
 	 * Handle drop on or dragging over a drop zone
 	 */
-	
 	// Entering a drop zone
 	$('.dropon.option')
 	
@@ -1201,7 +1199,6 @@ function respondToEventsChoices($context) {
 			respondToEventsChoices($context);			// Add events on to the altered html
 		}
 	});
-
 }
 
 /*
@@ -1256,7 +1253,7 @@ function respondToEvents($context) {
 			question = survey.forms[globals.gFormIndex].questions[globals.gItemIndex];
 		}
 		
-		$('#optionTable').html(option.getOptionTable(question, globals.gFormIndex, globals.gListName));
+		option.addOptionTable(question, globals.gFormIndex, globals.gListName);
 		option.setupChoiceView($('#filterType').val());
 		
 		respondToEventsChoices($context);
@@ -1301,7 +1298,8 @@ function respondToEvents($context) {
 			type,
 			optionList = $li.data("list_name"),
 			qname = $li.data("qname"),
-			labelType;
+			labelType,
+			linkedQuestionId = 0;
 		
 		if($li.hasClass("option")) {
 			type = "option";
@@ -1314,9 +1312,14 @@ function respondToEvents($context) {
 			newVal = $this.hasClass("prop_no");		// If set false then newVal will be true
 		} else if (prop === "autoplay") {
 			newVal = $this.val();
-		} else if (prop === "linked_survey") {
+		} else if (prop === "linked_target") {
 			if($this.hasClass("prop_no")) {
-				newVal = $this.closest('.row').find(".labelSelect").val();
+				linkedQuestionId = $this.closest('.row').find(".linkedQuestion").val();
+				if(!linkedQuestionId) {
+					linkedQuestionId = 0;		// HRK
+				}
+				newVal = $this.closest('.row').find(".linkedSurvey").val() + "::" +
+					linkedQuestionId;
 			} else {
 				newVal = undefined;
 			}
@@ -1327,8 +1330,8 @@ function respondToEvents($context) {
 
 	});
 	
-	// Respond to changes on a label select
-	$context.find('.labelSelect').off().change(function() {
+	// Respond to changes on linkedTarget (Survey or Question changed)
+	$context.find('.linkedTarget').off().change(function() {
 
 		var $this = $(this),
 			prop = $this.data("prop"),
@@ -1339,20 +1342,18 @@ function respondToEvents($context) {
 			type,
 			optionList = $li.data("list_name"),
 			qname = $li.data("qname"),
-			labelType;
+			labelType,
+			linkedQuestionId;
+	
+		type = "question";
+		labelType = "text";
 		
-		if($li.hasClass("option")) {
-			type = "option";
-		} else {
-			type = "question";
+		linkedQuestionId = $this.closest('.row').find(".linkedQuestion").val();
+		if(!linkedQuestionId) {
+			linkedQuestionId = 0;		// HRK
 		}
-
-		labelType = prop === "hint" ? "hint" : "text";
-		if (prop === "linked_survey") {
-			newVal = $this.val();
-			
-			updateLabel(type, formIndex, itemIndex, optionList, labelType, newVal, qname, prop); 
-		} 
+		newVal = $this.closest('.row').find(".linkedSurvey").val() + "::" + linkedQuestionId;	
+		updateLabel(type, formIndex, itemIndex, optionList, labelType, newVal, qname, prop); 
 		
 
 	});
@@ -1485,6 +1486,17 @@ function respondToEvents($context) {
 				question.deleteQuestion(item);
 			}
 		}); 
+		
+	});
+	
+	// Get linked questions
+	$context.find('.linkedSurvey').change(function() {
+		var $this = $(this),
+			$li = $this.closest('li'),
+			item = $li.prop("id"),
+			surveyId = $this.val();
+		
+		markup.getLinkedQuestions(item, surveyId, 0);
 		
 	});
 	
@@ -2138,11 +2150,11 @@ function updateLabel(type, formIndex, itemIndex, optionList, element, newVal, qn
 	
 	/*
 	 * If the question type is a calculate then the label will contain the calculation unless the
-	 * property type is name or linked_survey
+	 * property type is name or linked_target
 	 */
 	if(typeof questionType !== "undefined" && questionType === "calculate" 
 			&& prop !== "name"
-			&& prop !== "linked_survey") {	// Whatever the property for a calculation type the label field contains the calculation expression 
+			&& prop !== "linked_target") {	// Whatever the property for a calculation type the label field contains the calculation expression 
 		changeType = "property";
 		prop = "calculation";
 	} else {

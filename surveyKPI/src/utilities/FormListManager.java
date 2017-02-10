@@ -53,7 +53,8 @@ public class FormListManager {
 					ef.surveyLevel = surveyLevel;
 				} else if(previousSurveyId != ef.sId) {
 					// Different survey
-					ef.fromQuestionId = GeneralUtilityMethods.getLinkingQuestion(sd, ef.fId, previousSurveyId);
+					// TODO
+					//ef.fromQuestionId = GeneralUtilityMethods.getLinkingQuestion(sd, ef.fId, previousSurveyId);
 					ef.surveyLevel = ++surveyLevel;
 					previousSurveyId = ef.sId;
 				} else {

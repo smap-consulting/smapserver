@@ -822,16 +822,14 @@ public class GetXForm {
 			}
 		}
 		
-		boolean cascade = true;
-		String cascadeInstance = q.getCascadeInstance();
-		if(cascadeInstance == null) {
-			cascade = false;
-		}
+		boolean cascade = false;
+		String nodeset = q.getNodeset(true, template.getQuestionPaths());
 		
 		// Add the itemset
-		if(cascade) {
+		if(nodeset != null) {
+			cascade = true;
 			Element isElement = outputXML.createElement("itemset");
-			isElement.setAttribute("nodeset", q.getNodeset(true, template.getQuestionPaths()));			
+			isElement.setAttribute("nodeset", nodeset);			
 		
 			Element vElement = outputXML.createElement("value");
 			vElement.setAttribute("ref", q.getNodesetValue());
@@ -1049,7 +1047,7 @@ public class GetXForm {
 				// Create a blank form containing only the key values
 				hasData = true;
 				log.info("Outputting blank form");
-				populateBlankForm(outputXML, firstForm, cResults,  template, null, 
+				populateBlankForm(outputXML, firstForm, sd, template, null, 
 						sId, key, keyval, templateName, false);
 			} 
 			
@@ -1206,7 +1204,7 @@ public class GetXForm {
      *   b) as a java rosa template
      * @param outputDoc
      */
-    public void populateBlankForm(Document outputDoc, Form form, Connection sd, SurveyTemplate template,
+    public void populateBlankForm(Document outputDoc, Form form,  Connection sd, SurveyTemplate template,
        		Element parentElement,
     		int sId,
     		String key,
