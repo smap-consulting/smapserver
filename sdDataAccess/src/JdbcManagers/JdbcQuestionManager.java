@@ -75,7 +75,7 @@ public class JdbcQuestionManager {
 			+ "accuracy) "
 			+ "values (nextval('q_seq'), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?"
 				+ ", ?, ?, ?, ?, ?, ?, ?, ?, ?, ?"
-				+ ", ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);";
+				+ ", ?, ?, ?, ?, ?, ?, ?, ?, ?);";
 	
 	PreparedStatement pstmtGetBySurveyId;
 	PreparedStatement pstmtGetByFormId;
@@ -101,7 +101,7 @@ public class JdbcQuestionManager {
 			+ "constraint_msg,"
 			+ "required_msg,"
 			+ "appearance,"
-			+ "path,"
+			+ "path,"  
 			+ "nodeset,"
 			+ "nodeset_value,"
 			+ "nodeset_label,"
@@ -150,10 +150,10 @@ public class JdbcQuestionManager {
 		pstmt.setString(15, q.getRelevant(false, null));
 		pstmt.setString(16, q.getCalculate(false, null));
 		pstmt.setString(17, q.getConstraint(false, null));
-		pstmt.setString(18, q.getConstraintMsg());
+		pstmt.setString(18, q.getConstraintMsg()); // ok
 		pstmt.setString(19, q.getRequiredMsg());
 		pstmt.setString(20, q.getAppearance(false, null));
-		pstmt.setString(21, "not used");		// path deprecated
+		pstmt.setString(21, "");		// path deprecated
 		
 		String nodeset = null;
 		String nodeset_value = null;
@@ -177,9 +177,9 @@ public class JdbcQuestionManager {
 		pstmt.setString(23, nodeset_value);
 		pstmt.setString(24, nodeset_label);
 		
-		pstmt.setString(25, q.getColumnName());
+		pstmt.setString(25, q.getColumnName()); 
 		pstmt.setBoolean(26, q.isPublished());
-		pstmt.setInt(27, q.getListId());
+		pstmt.setInt(27, q.getListId());  
 		pstmt.setString(28, q.getAutoPlay());
 		pstmt.setString(29, q.getAccuracy());
 		

@@ -82,12 +82,14 @@ define([
 		/*
 		 * Set the filter type to custom if there are filters with a name other than _smap_cascade
 		 */
-		if(globals.gFilterArray.length > 0) {
-			filterType = "custom";
-		}
-		if(globals.gFilterArray.length === 1) {
-			if (globals.gFilterArray[0] === "_smap_cascade") {
-				filterType = "cascade";
+		if(question.choice_filter && question.choice_filter.trim().length > 0) {
+			if(globals.gFilterArray.length > 0) {
+				filterType = "custom";
+			}
+			if(globals.gFilterArray.length === 1) {
+				if (globals.gFilterArray[0] === "_smap_cascade") {
+					filterType = "cascade";
+				}
 			}
 		}
 

@@ -181,6 +181,55 @@
 	   		</div>
 	   		
 	   		<div class="bs-docs-section">
+	   			<h1 id="filters" class="page-header">
+	   				<a class="anchorjs-link " href="#errors" aria-label="Anchor link for: errors" 
+	   				data-anchorjs-icon="" style="font-family: anchorjs-icons; font-style: normal; 
+	   				font-variant: normal; font-weight: normal; position: absolute; margin-left: -1em; 
+	   				padding-right: 0.5em;">Choice Filters</a>
+	   			</h1>
+	   			<p>Filters can be used to change the choices that are shown for a select question based on a previous answer.</p>
+	   			
+	   			<p>Commonly they are used to implement what is called a "Cascading Select", for example the user may select a
+	   			country using a select_one question, then then select a city in a second select_one question. However the
+	   			cities available in the choice list should be restricted to those in the country that they have already selected.
+	   			However you can also restrict choices using answers from any previous question, not just another select, this
+	   			second case we call a custom filter"".</p>  
+	   			
+	   			<h3>Cascading Selects</h3>
+	   			<p>Because cascading selects are such a common version of choice filters the online editor makes their use simple.
+	   			Create a cascading select using the following steps:</p>
+	   			<ol>
+	   			<li>Create the initial select one question</li>
+	   			<li>Create a second select_one question whose choices will be dependent on the answer to the first</li>
+	   			<li>Select "cascading select" from the "filter" drop down<img src="images/help/filter1.jpg" class="img-responsive"></li>	
+	   			<li>This will add two fields to the choices form: "Previous Select Question" and "Previous Selection". It will
+	   			also add a check box to the left of each option</li>
+	   			<li>Then select a choice in the previous select question and the choices in the new question that will be shown
+	   			for that selection</li>
+				</ol>
+				<h3>Custom Filters</h3>
+				<p>Cascading selects are a special case of custom filters where the choices for a select question are 
+				dependent only on a single previously asked select question.  The choices can however be dependent on 
+				any previously question answers. Because of this flexibility the online editor provides a very similar interface to the
+				XLSForm editor.  You can do anything in the online editor that you can do in the XLSForm editor but, as in 
+				XLSForm it may require specialist knowledge to do this. Hence the following description assumes you
+				already know how to do choice filtering using xlsForm.  The approach with the online editor is to:</p>
+				<ol>
+	   			<li>Create the a select_one or select_nultiple question</li>
+	   			<li>Select "ccustom_filter" from the "filter" drop down<img src="images/help/filter2.jpg" class="img-responsive"></li>	
+	   			<li>This will add a text box to the choices form where you can type in the choice filter as per xlsForm</li>
+	   			<li>It will also add a button "Add Filter Column" that can be used to add a new filter column. Again as per the xlsForm.</li>
+	   			<li>You can show and hide the filter columns by selecting the checkbox next to its name</li>
+	   			<li>Then enter the filter value next to each choice as per xlsForm</li>
+	   			<li>If you have added a cascading filter to the form then you will see a "filter column" called _smap_cascade.  This is how
+	   			the cascading filter is added. Hence feel free to maintain your cascading selects using the custom filter approach.</li>
+				</ol>
+				
+	   		</div>
+	   		
+	   		
+	   		
+	   		<div class="bs-docs-section">
 	   			<h1 id="linking_surveys" class="page-header">
 	   				<a class="anchorjs-link " href="#errors" aria-label="Anchor link for: errors" 
 	   				data-anchorjs-icon="" style="font-family: anchorjs-icons; font-style: normal; 
@@ -802,6 +851,7 @@
 	  					<a href="#layout">Layout</a>
 	  					<a href="#adding_question">Adding questions and choices</a>
 	  					<a href="#question_properties">Question labels, Constraints and other properties</a>
+	  					<a href="#filters">Choice Filters</a>
 	  					<a href="#linking_surveys">Linking Surveys</a>
 	  					<a href="#errors">Validation</a>
 	  					<a href="#testing">Trying out your survey</a>

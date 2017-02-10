@@ -429,14 +429,16 @@ public class PDFSurveyManager {
 			int languageIdx) throws IOException, DocumentException {
 		try {
 			
-			boolean status = false;
-			
 			for(Result r : record) {
 				
 				String value = "";
 				boolean hideLabel = false;
 				String fieldName = getFieldName(formName, repeatIndex, r.name);
 				
+				/*
+				 * Set the value based on the result
+				 * Process subforms if this is a repeating group
+				 */
 				if(r.type.equals("form")) {
 					for(int k = 0; k < r.subForm.size(); k++) {
 						fillTemplate(pdfForm, r.subForm.get(k), basePath, fieldName, k, survey, languageIdx);
@@ -472,27 +474,33 @@ public class PDFSurveyManager {
 							}
 						}
 					}
-				} else if(r.value != null && r.type.equals("image")) {
-					value = r.value;
-					PdfUtilities.addImageTemplate(pdfForm, fieldName, basePath, value);
-					
 				} else {
 					value = r.value;
 				}
 	
-				if(value != null && !value.equals("") && !r.type.equals("image")) {
-					status = pdfForm.setField(fieldName, value);			
-					if(hideLabel) {
-						pdfForm.removeField(fieldName);
-					}
-							
-				} else {
-					//log.info("Skipping field: " + status + " : " + fieldName + " : " + value);
-				}
-				
+				/*
+				 * Add the value to the form
+				 * Alternatively remove the fieldName if the value is empty.
+				 */
 				if(value == null || value.trim().equals("")) {
-					pdfForm.removeField(fieldName);
-				}
+					try {
+						pdfForm.removeField(fieldName);
+					} catch (Exception e) {
+						log.info("Error removing field: " + fieldName + ": " + e.getMessage());
+					}
+				} else if(r.type.equals("image")) {
+					PdfUtilities.addImageTemplate(pdfForm, fieldName, basePath, value);
+				} else {				
+					if(hideLabel) {
+						try {
+							pdfForm.removeField(fieldName);
+						} catch (Exception e) {
+							log.info("Error removing field: " + fieldName + ": " + e.getMessage());
+						}
+					} else {
+						pdfForm.setField(fieldName, value);	
+					}	
+				} 
 				
 			}
 		} catch (Exception e) {

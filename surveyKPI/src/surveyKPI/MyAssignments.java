@@ -351,6 +351,7 @@ public class MyAssignments extends Application {
 			
 			tr.forms = new ArrayList<FormLocator> ();
 			while(resultSet.next()) {
+				boolean newManifestFile = false;
 				int sId = resultSet.getInt("s_id");
 				
 				/*
@@ -363,6 +364,7 @@ public class MyAssignments extends Application {
 				for( ManifestValue m : manifestList) {
 					
 					String filepath = null;
+					boolean fileRegenerated = false;
 					
 					log.info("Linked file:" + m.fileName);
 					
@@ -382,14 +384,20 @@ public class MyAssignments extends Application {
 					
 					log.info("CSV File is:  " + dirPath + " : directory path created");
 					
-					efm.createLinkedFile(connectionSD, cRel, sId, m.fileName , filepath, userName);
-					
+					fileRegenerated = efm.createLinkedFile(connectionSD, cRel, sId, m.fileName , filepath, userName);
+					if(fileRegenerated) {
+						newManifestFile = true;
+					}
 				}
 
 				
 				FormLocator fl = new FormLocator();
 				fl.ident = resultSet.getString("ident");
 				fl.version = resultSet.getInt("version");
+				if(newManifestFile) {
+					// The version of the form will have been incremented
+					fl.version++;
+				}
 				fl.name = resultSet.getString("display_name");
 				fl.project = resultSet.getString("name");
 				fl.pid = resultSet.getInt("pid");

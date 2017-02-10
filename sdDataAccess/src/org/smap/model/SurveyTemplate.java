@@ -1299,11 +1299,12 @@ public class SurveyTemplate {
 					
 					boolean cascade = false;
 					String listName = q.getListName();
-					if(listName != null) {
+					String label = q.getNodesetLabel();
+					if(listName != null && label != null) {
 						CascadeInstance ci = new CascadeInstance();
 						ci.name = listName;
 						ci.valueKey = q.getNodesetValue();
-						String label = q.getNodesetLabel();
+						
 						if(label.startsWith("jr:itext")) {
 							// Text id reference, set the label_id
 							int idx1 = label.indexOf('(');
