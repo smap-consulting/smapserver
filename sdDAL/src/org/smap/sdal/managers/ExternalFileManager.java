@@ -67,7 +67,7 @@ public class ExternalFileManager {
 	/*
 	 * Create a linked file
 	 */
-	public void createLinkedFile(Connection sd, 
+	public boolean createLinkedFile(Connection sd, 
 			Connection cRel, 
 			int sId, 			// The survey that contains the manifest item
 			String filename, 
@@ -83,6 +83,7 @@ public class ExternalFileManager {
 		filepath = filepath + ".csv";
 		File f = new File(filepath);
 		ArrayList<Pulldata> pdArray = null;
+		boolean regenerate = true;
 		
 		String sqlPulldata = "select pulldata from survey where s_id = ?";
 		PreparedStatement pstmtPulldata = null;
@@ -144,7 +145,6 @@ public class ExternalFileManager {
 			linked_sId = GeneralUtilityMethods.getSurveyId(sd, sIdent);
 			
 			// 2. Determine whether or not the file needs to be regenerated
-			boolean regenerate = true;
 			log.info("Test for regenerate of file: " + f.getAbsolutePath() + " : " + f.exists());
 			regenerate = regenerateFile(sd, cRel, linked_sId, sId, f.exists());
 			
@@ -291,6 +291,8 @@ public class ExternalFileManager {
 			if(pstmtData != null) try{pstmtData.close();}catch(Exception e) {}
 			if(pstmtPulldata != null) try{pstmtPulldata.close();}catch(Exception e) {}
 		}
+		
+		return regenerate;
 	}
 	
 	/*
@@ -311,7 +313,7 @@ public class ExternalFileManager {
 			bw.write(dkv);
 			if(non_unique_key) {
 				bw.write("_");
-				bw.write(String.valueOf(i));
+				bw.write(String.valueOf(i + 1));		// To confirm with position(..) which starts at 1
 			}
 			bw.write(nonUniqueRecords.get(i).toString());
 			bw.newLine();
