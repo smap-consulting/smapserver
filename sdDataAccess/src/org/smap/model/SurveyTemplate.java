@@ -1299,10 +1299,31 @@ public class SurveyTemplate {
 					
 					boolean cascade = false;
 					String listName = q.getListName();
+					String cascadeName = null;
 					String label = q.getNodesetLabel();
+					String nodeset = null;
+					try {
+						nodeset = q.getNodeset(false, null);
+					} catch (Exception e) {
+						
+					}
 					if(listName != null && label != null) {
+						
+						/*
+						 * If this survey was loaded from xlsForm then the list name will not be the same as the
+						 * cascade instance name
+						 * Hence get the cascade instanceName
+						 */
+						if(nodeset != null) {
+							int idx1 = nodeset.indexOf('(');
+							int idx2 = nodeset.indexOf(')', idx1 + 1);
+							cascadeName = nodeset.substring(idx1 + 2, idx2 - 1);
+						} else {
+							cascadeName = listName;
+						}
+						
 						CascadeInstance ci = new CascadeInstance();
-						ci.name = listName;
+						ci.name = cascadeName;
 						ci.valueKey = q.getNodesetValue();
 						
 						if(label.startsWith("jr:itext")) {
@@ -1316,7 +1337,7 @@ public class SurveyTemplate {
 	
 						// Cascade options are shared, check that this instance has not been added already by another question
 						
-						if(!cascadeInstanceLoaded(listName)) {
+						if(!cascadeInstanceLoaded(cascadeName)) {
 							cascadeInstances.add(ci);
 						}
 						cascade = true;
@@ -1334,9 +1355,9 @@ public class SurveyTemplate {
 						String oRef = qRef + "/" + o.getId();
 						if(oRef != null) {
 							if(cascade) {
-								o.setListName(listName);
+								o.setListName(cascadeName);
 								// Cascade options are shared, check that this option has not been added already by another question
-								if(!cascadeOptionLoaded(listName, o.getLabelId())) {
+								if(!cascadeOptionLoaded(cascadeName, o.getLabelId())) {
 									cascade_options.put(oRef, o);
 								}
 							} else {
