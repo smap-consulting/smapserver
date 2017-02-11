@@ -16,6 +16,7 @@ define({
 	"m_monitor": "Monitoring",
 	"m_user": "Users",
 	"m_assign": "Tasks",
+	"m_query": "Queries",
 	"m_help": "Help",
 	"m_forgot_password": "Forgot Password",
 	"m_register": "Register",

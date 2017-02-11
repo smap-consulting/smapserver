@@ -4,7 +4,7 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<meta charset="utf-8">
 
-	<title>Browse Results</title>
+	<title>Query</title>
 
     <link href="/css/bootstrap.min.css" rel="stylesheet">
     <link href="/font-awesome/css/font-awesome.css" rel="stylesheet">
@@ -28,12 +28,7 @@
 <script src="/js/libs/modernizr.js"></script>
 <script src="/js/app/custom.js"></script>  <!-- Override this in custom code to apply changes at run time -->
 
-<script>
-var isBrowseResults = true,
-	isManagedForms = false,
-	isDuplicates = false;
-</script>
-<script data-main="js/managed_forms" src="/js/libs/require.js"></script>
+<script data-main="js/query" src="/js/libs/require.js"></script>
 
 </head>
 <body>
@@ -65,7 +60,6 @@ var isBrowseResults = true,
 			<li id="m_duplicates" class="restrict_role admin_role"><a href="/tasks/duplicates.html"><i class="fa fa-filter"></i> <span class="lang" data-lang="mon_dup">dups</span></a></li>
 			<li id="m_mf" class="restrict_role admin_role manage_role"><a href="/tasks/managed_forms.html"><i class="fa fa-wpforms"></i> <span class="lang" data-lang="m_mf">manage</span></a></li>
 			<li id="m_web_forms" class="restrict_role enum_role"><a href="/webForm.html"><i class="fa fa-globe" aria-hidden="true"></i> <span class="lang" data-lang="m_web_forms">web forms</span></a></li>
-			<li id="m_query" class="restrict_role analyst_role"><a href="/query.html"><i class="fa fa-filter" aria-hidden="true"></i> <span class="lang" data-lang="m_queries">queries</span></a></li>
 			<li id="m_help"><a href="https://docs.google.com/folderview?id=0B5_SmpWlQYxvNExwSFV5X051Yjg&usp=docslist_api#" target="_blank"><i class="fa fa-info-circle"></i> <span class="lang" data-lang="m_help">help</span></a></li>
 	        
 	        <li class="nav-divider"></li>
@@ -116,7 +110,7 @@ var isBrowseResults = true,
         <div class="row wrapper border-bottom white-bg page-heading">
         	<div class="row">
 	        	<div class="col-sm-2">
-	            	<h2 class="lang" data-lang="m_br">browse</h2>   
+	            	<h2 class="lang" data-lang="m_query">query</h2>   
 	            </div>
 	            <div class="col-sm-5">
 	            	<div class="row">
