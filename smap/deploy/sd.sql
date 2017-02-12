@@ -656,3 +656,17 @@ alter table survey add column pulldata text;
 alter table question add column linked_target text;
 update question set linked_target = cast(linked_survey as text) where linked_survey > 0 and linked_target is null ;
 
+-- Create queries table
+CREATE SEQUENCE custom_query_seq START 1;
+ALTER SEQUENCE custom_query_seq OWNER TO ws;
+
+create TABLE custom_query (
+	id integer DEFAULT NEXTVAL('custom_query_seq') CONSTRAINT pk_custom_query PRIMARY KEY,
+	u_id integer REFERENCES users(id) ON DELETE CASCADE,
+	name text,
+	query text
+	
+);
+ALTER TABLE custom_query OWNER TO ws;
+
+

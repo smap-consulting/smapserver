@@ -84,6 +84,7 @@
         		
 	            <ul class="nav navbar-top-links navbar-right">
 	            
+	          
 	          		<li>
                     	<a href="#" id="m_refresh"><span class="lang" data-lang="m_refresh">refresh</span></a>
                 	</li>
@@ -95,6 +96,7 @@
                         	
                        	</ul>
                    </li>
+                	
                 	<li>
                     	<a class="right-sidebar-toggle">
                         	<i class="fa fa-cog"></i>
@@ -108,16 +110,15 @@
         
         <!-- Header Row -->
         <div class="row wrapper border-bottom white-bg page-heading">
-        	<div class="row">
-	        	<div class="col-sm-2">
-	            	<h2 class="lang" data-lang="m_query">query</h2>   
-	            </div>
-	            <div class="col-sm-5">
+        	<div class="col-sm-2">
+            	<h2 class="lang" data-lang="m_query">queries</h2>   
+            </div>
+           	<div class="col-sm-5">
 	            	<div class="row">
-						<form role="form" class="form-horizontal heading-element" id="service_filter_form">
-							<label class="lang col-sm-4 control-label" data-lang="c_project" for="project_name">project</label>
+						<form role="form" class="form-horizontal heading-element">
+							<label class="lang col-sm-4 control-label" data-lang="m_query" for="query">query</label>
 							<div class="col-sm-8">
-								<select class="project_list form-control" id="project_name"></select>
+								<select class="query_list form-control" id="query"></select>
 							</div>
 						</form>	
 					</div>
@@ -125,50 +126,42 @@
 	        	<div class="col-sm-5">
 	            	<div class="row">
 						<form role="form" class="form-horizontal heading-element" id="service_filter_form">
-							<label class="lang col-sm-4 control-label" data-lang="c_survey" for="survey_name">survey</label>
-							<div class="col-sm-8">
-								<select class="survey_select form-control" id="survey_name"></select>
-							</div>
+							 <button id="addQuery" type="button" class="btn btn-primary lang" data-lang="d_add_q">add</button>
 						</form>	
 					</div>
 	        	</div>
-	        </div>
-	        <div class="row">
-	        	<div class="col-sm-6">
-	            	<div class="row">
-						<form role="form" class="form-horizontal heading-element">
-							<label class="lang col-sm-4 control-label" data-lang="a_from_date" for="filter_from">from</label>
-							<div class="col-sm-8">
-								<input type="date" class="hasDatepicker survey_select form-control" id="filter_from"></select>
-							</div>
-						</form>	
-					</div>
-	        	</div>
-	        </div>
-        </div>
-        
-
+        </div>   
 		  
-        <!-- Results Panel -->
+       
+        <!-- Edit a query -->
         <div class="wrapper wrapper-content animated fadeInRight">
         	<div class="row">
                 <div class="col-lg-12">
                     <div class="ibox float-e-margins">
-                    	<div class="ibox-title">
-                            <div class="ibox-tools">
-                                <a class="genfile pdf"><i class="btn btn-danger fa fa-file-pdf-o fa-lg"></i></a>
-                                <a class="genfile xls"><i class="btn btn-success fa fa-file-excel-o fa-lg"></i></a>  
-                                <a class="genfile image"><i class="btn btn-warning fa fa-file-image-o fa-lg"></i></a> 
-                            </div>
-                            
-                        </div>
+                   
                         <div class="ibox-content">
                         	<div class="row">
 	                        	<div class="col-lg-12">
-		                        	<div class="table-responsive">
-		                        		<table id="trackingTable" class="table table-striped">
-		                            	</table>
-		                            </div>
+	                        		<div>
+	                        			<div class="table-responsive">
+	                        				<table class="table" id="queryTable">
+	                        					<thead>
+	                        						<tr>
+		                        						<th class="lang" data-lang="c_survey">survey</th>
+		                        						<th class="lang" data-lang="c_form">Form</th>
+		                        						<th class="lang" data-lang="c_question">question</th>
+		                        						<th class="lang" data-lang="d_from_f">from form</th>
+		                        						<th class="lang" data-lang="d_from_q">from question</th>
+		                        						<th></th>	<!-- delete icon -->
+		                        					</tr>
+	                        					</thead>
+	                        					<tbody>
+	                        					</tbody>
+	                        				</table>
+	                        			</div>
+	                        			<button type="button" class="lang" data-lang="d_add_f" id="addForm">add new form</button>
+	                        		</div>
+		                        	
 	                            </div>
                             </div>
                         </div>
@@ -176,200 +169,105 @@
              	</div>
         	</div>
         	<div id = "chartcontent"></div>
-       </div>
+       </div>	<!-- End results panel -->
     </div>
-
-       <div id="right-sidebar">
-            <div class="sidebar-container">
-
-                <ul class="nav nav-tabs navs-2">
-
-                    <li class="active"><a data-toggle="tab" href="#tab-1"><i class="fa fa-sort-amount-desc"></i></a></li>
-                    <li><a data-toggle="tab" href="#tab-2"><i class="fa fa-qrcode"></i></a></li>
-                 
-                </ul>
-
-                <div class="tab-content">
-                    <div id="tab-1" class="tab-pane active">
-                        <div class="sidebar-title">
-                            <h3> <span class="lang" data-lang="mf_sc">sort</span></h3>
-                            <small><i class="fa fa-tim"></i> <span class="lang" data-lang="mf_sc_i"></span></small>
-                        </div>
-
-						<div id="tab-columns-content"></div>
-
-                        <div class="sidebar-content">
-                           <button id="applyColumns" type="button" class="btn btn-primary lang" data-lang="c_apply">apply</button>
-  
-                        </div>
-                    </div>
-              
-                    <div id="tab-2" class="tab-pane">
-                        <div class="sidebar-title">
-                            <h3> <span class="lang" data-lang="mf_qr">qr</span></h3>
-                            <small><i class="fa fa-tim"></i> <span class="lang" data-lang="mf_bc_i"></span></small>
-                        </div>
-
-						<div id="tab-barcode-content"></div>
-
-                        <div class="sidebar-content">
-                           <button id="applyBarcodes" type="button" class="btn btn-primary lang" data-lang="c_apply">apply</button>
-  
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
 </div>
 
-
-<img class="hour_glass" src="/images/ajax-loader.gif" style="display:none;" alt="hourglass" height="60" width="60">
-
-<!-- Modal to edit a record -->
-<div id="editRecord" class="modal fade" aria-hidden="true">
-	<div class="modal-dialog custom-modal-width">
-		<div class="modal-content">
-			<div class="modal-header">
+<!-- Modal to add a query -->
+<div id="add_query_popup" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="addQueryLabel" aria-hidden="true">
+	<div class="modal-dialog">
+   		<div class="modal-content">
+   			<div class="modal-header">
      			<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+     			<h4 class="modal-title lang" id="addQueryLabel"></h4>
    			</div>
-			<div class="modal-body">
-				<div class="row">
-					<div class="col-sm-6 b-r"><h3 class="m-t-none m-b lang" data-lang="mf_fd">form data</h3>
-
-						<form id="surveyForm" role="form" class="form-horizontal">
-					
-						</form>
-					</div>
-					<div class="col-sm-6 b-r"><h3 class="m-t-none m-b lang" data-lang="mf_md">mgmt data</h3>
-
-						<form id="editRecordForm" role="form" class="form-horizontal">
-					
-						</form>
-						<button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_close">Close</button>
-						<button id="saveRecord" type="button" class="btn btn-primary lang" data-dismiss="modal" data-lang="c_save">Save</button>
-					</div>
-				</div>
-			</div>
+		    <div class="modal-body">
+				<form role="form" class="form-horizontal" id="add_form_form">
 				
+					<div class="form-group new_form">
+						<label for="new_query_name" data-lang="c_name" class="lang col-sm-2 control-label">Name</label>
+						<div class="col-sm-10">
+							<input type="text" id="new_query_name" required class="form-control">
+						</div>
+					</div>
+					
+					
+						
+				</form>	
+			</div>
+
+			<div class="modal-footer">
+            	<button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_close">Close</button>
+            	<button id="userProfileLogout"type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_logout">Logout</button>
+            	<button id="userProfileSave" type="button" class="btn btn-primary lang" data-dismiss="modal" data-lang="c_save">Save</button>
+        	</div>
 		</div>
 	</div>
 </div>
 
-<!-- Modal to edit a chart widget -->
-<div id="editWidget" class="modal fade" aria-hidden="true">
-	<div class="modal-dialog custom-modal-width">
-		<div class="modal-content">
-			<div class="modal-header">
-				<!--  <button id="shareRecord" type="button" class="btn btn-info"><i class="fa fa-share-alt"></i> <span class="lang" data-lang="n_share">get link</span></button> -->
+<!-- Modal to add a form to the query -->
+<div id="add_form_popup" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="addFormLabel" aria-hidden="true">
+	<div class="modal-dialog">
+   		<div class="modal-content">
+   			<div class="modal-header">
      			<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+     			<h4 class="modal-title lang" id="addFormLabel"></h4>
    			</div>
-			<div class="modal-body">
-				<div class="row">
-					<div class="col-sm-12 b-r"><h3 class="m-t-none m-b lang" data-lang="mf_fd">form data</h3>
-
-						<form id="chartForm" role="form" class="form-horizontal">
-						
-							<div>
-								<div class="form-group">
-				         			<label class="lang col-sm-2 control-label" data-lang="c_title" for="ew_title">title</label>
-									<div class="col-sm-10">
-										<input type="text" class="form-control title" id="ew_title">
-
-									</div>
-								</div>
-							</div>
-							
-							<div>
-								<div class="form-group">
-				         			<label class="lang col-sm-2 control-label" data-lang="a_type" for="ew_chart_type">chart_type</label>
-									<div class="col-sm-10">
-										<select class="form-control chart_type" id="ew_chart_type">
-										</select>
-									</div>
-								</div>
-							</div>
-							
-							<div>
-								<div class="form-group">
-				         			<label class="lang col-sm-2 control-label" data-lang="c_question" for="ew_question">question</label>
-									<div class="col-sm-10">
-										<select class="form-control question" id="ew_question">
-										</select>
-									</div>
-								</div>
-							</div>
-							
-							
-							<div class="numeric_only">
-								<div class="form-group">
-				         			<label class="lang col-sm-2 control-label" data-lang="a_fn" for="ew_fn">function</label>
-									<div class="col-sm-10">
-										<select class="form-control" id="ew_fn">
-											<option class="lang" value="count" data-lang="count">count</option>
-											<option class="lang" value="percent" data-lang="percent">percent</option>
-										</select>
-									</div>
-								</div>
-							</div>
-							
-							<div class="group_only">
-								<div class="form-group">
-				         			<label class="lang col-sm-2 control-label" data-lang="a_gb" for="ew_group">group</label>
-									<div class="col-sm-10">
-										<select class="form-control group_question" id="ew_group">
-										</select>
-									</div>
-								</div>
-							</div>
-							
-							<div class="date_range_only">
-								<div class="form-group">
-				         			<label class="col-sm-2 control-label" for="ew_date1"><span class="lang" data-lang="c_dateq" >date</span> 1</label>
-									<div class="col-sm-10">
-										<select class="form-control date_question" id="ew_date1">
-										</select>
-									</div>
-								</div>
-								<div class="form-group">
-				         			<label class="col-sm-2 control-label" for="ew_date2"><span class="lang" data-lang="c_dateq" >date</span> 2</label>
-									<div class="col-sm-10">
-										<select class="form-control date_question" id="ew_date2">
-										</select>
-									</div>
-								</div>
-							</div>
-							<div class="period_only">
-								<div class="form-group">
-				         			<label class="lang col-sm-2 control-label" data-lang="c_period" for="ew_period">period</label>
-									<div class="col-sm-10">
-										<select class="form-control" id="ew_period">
-											<option class="lang" value="day" data-lang="c_day">day</option>
-											<option class="lang" value="month" data-lang="c_month">month</option>
-											<option class="lang" value="year" data-lang="c_year">year</option>
-										</select>
-									</div>
-								</div>
-							</div>
-							<div class="form-group">
-			         			<label class="lang col-sm-2 control-label" data-lang="c_width" for="ew_width">width</label>
-								<div class="col-sm-10">
-									<select class="form-control" id="ew_width">
-										<option class="lang" value="3" data-lang="d_qtr">25</option>
-										<option class="lang" value="6" data-lang="d_half">50</option>
-										<option class="lang" value="9" data-lang="d_3qtr">75</option>
-										<option class="lang" value="12" data-lang="d_full">100</option>
-									</select>
-								</div>
-							</div>
-						</form>
+		     <div class="modal-body">
+				<form role="form" class="form-horizontal" id="add_form_form">
+				
+					<div class="form-group new_form">
+						<label for="new_query_name" data-lang="c_name" class="lang col-sm-2 control-label">Name</label>
+						<div class="col-sm-10">
+							<input type="text" id="new_query_name" required class="form-control">
+						</div>
 					</div>
 					
-				</div>
+					<div class="form-group">
+						<label for="project_name" class="lang col-sm-2 control-label" data-lang="c_project">Project :</label>
+						<div class="col-sm-10">
+							<select id="project_name" class="project_list form-control"></select>
+						</div>
+					</div>
+
+					<div class="form-group new_form" style="display:none;">
+						<div class="col-sm-offset-2 col-sm-10">
+							<div class="checkbox">
+								<label>
+									<input type="checkbox" id="base_on_existing" ><span data-lang="e_b_e" class="lang">BE</span>
+								</label>
+							</div>
+						</div>
+					</div>
+					<div class="form-group existing_form reusing_form">
+						<label for="survey_name" class="lang col-sm-2 control-label" data-lang="a_exp_leg1">survey</label>
+						<div class="col-sm-10">
+							<select id="survey_name" class="survey_select form-control"></select>
+						</div>
+					</div>
+					<div class="form-group reusing_form">
+						<label for="form_name" class="lang col-sm-2 control-label" data-lang="msg_sel_form">Form</label>
+						<div class="col-sm-10">
+							<select id="form_name" class="form_select form-control"></select>
+						</div>
+					</div>
+					<div class="form-group reusing_form" style="display:none;">
+						<div class="col-sm-offset-2 col-sm-10">
+							<div class="checkbox">
+								<label>
+									<input type="checkbox" id="shared_results" ><span data-lang="e_s_r" class="lang">SR</span>
+								</label>
+							</div>
+						</div>
+					</div>
+						
+				</form>	
 			</div>
+
 			<div class="modal-footer">
             	<button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_close">Close</button>
-            	<button id="editWidgetSave" type="button" class="btn btn-primary lang" data-dismiss="modal" data-lang="c_save">Save</button>
+            	<button id="userProfileLogout"type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_logout">Logout</button>
+            	<button id="userProfileSave" type="button" class="btn btn-primary lang" data-dismiss="modal" data-lang="c_save">Save</button>
         	</div>
 		</div>
 	</div>

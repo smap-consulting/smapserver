@@ -667,6 +667,10 @@ define({
 	"d_c_month": "Coount by month",
 	"d_c_year": "Count by year",
 	"d_add": "Add Chart",
+	"d_add_q": "Add Query",
+	"d_add_f": "Add New Form",
+	"d_from_f": "Link From Form",
+	"d_from_q": "Link From Question",
 	
 	// Review
 	"rev_upd_diff": "Update a different question to the source question",
