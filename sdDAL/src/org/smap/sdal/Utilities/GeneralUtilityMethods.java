@@ -2953,6 +2953,37 @@ public class GeneralUtilityMethods {
 	}
 	
 	/*
+	 * Get the question name from the question id
+	 */
+	public static String getNameForQuestion(Connection sd, int qId) throws SQLException {
+		
+		String name = null;
+		String sql = "select qname "
+				+ "from question "
+				+ "where q_id = ?";
+		
+		PreparedStatement pstmt = null;
+		
+		try {
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setInt(1, qId);
+			ResultSet rs = pstmt.executeQuery();
+			if(rs.next()) {
+				name = rs.getString(1);
+			}
+			
+		} catch(SQLException e) {
+			log.log(Level.SEVERE,"Error", e);
+			throw e;
+		} finally {
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+		}	
+		
+		return name;
+		
+	}
+	
+	/*
 	 * Get the id from the list name and survey Id
 	 * If the list does not exist then create it
 	 */

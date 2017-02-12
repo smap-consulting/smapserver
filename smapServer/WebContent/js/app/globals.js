@@ -92,6 +92,8 @@ define(function() {
 		gSelectedFilters: undefined,
 		gFilterArray: undefined,
 		
+		gSaveInProgress: false,
+		
 		gMainTable: undefined,			// Data tables
 		
 		gReports: undefined,			// reports

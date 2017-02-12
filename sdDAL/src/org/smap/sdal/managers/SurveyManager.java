@@ -1584,6 +1584,7 @@ public class SurveyManager {
 		PreparedStatement pstmtUpdateTranslations = null;
 		PreparedStatement pstmtUpdateQuestion = null;
 		PreparedStatement pstmtUpdateNodeset = null;
+		PreparedStatement pstmtAddNodeset = null;
 		
 		try {
 		
@@ -1724,6 +1725,16 @@ public class SurveyManager {
 								+ "and f_id in (select f_id from form where s_id = ?)";
 						pstmtUpdateNodeset = sd.prepareStatement(sqlUpdateNodeset);		
 						
+						// Add nodeset values if question type is being converted to a select question
+						// Note we can use the question name as the itemset name and assume no filters as this change of type has to happen first
+						String sqlAddNodeset = "update question "
+								+ "set nodeset = 'instance(''' || qname || ''')/root/item',"
+								+ "nodeset_value = 'name', "
+								+ "nodeset_label = 'jr:itext(itextId)',"
+								+ "l_id = ? "
+								+ "where q_id = ?";
+						pstmtAddNodeset = sd.prepareStatement(sqlAddNodeset);
+						
 						// Update for dependent properties
 						String sqlDependent = "update question set visible = ?, source = ? " +
 								"where q_id = ?";
@@ -1818,6 +1829,16 @@ public class SurveyManager {
 	
 							log.info("Update question property: " + pstmtProperty2.toString());
 							count = pstmtProperty2.executeUpdate();
+							
+							// If this question is being converted to q select then add the list id and nodeset
+							if(count > 0 && property.equals("qtype") && (ci.property.oldVal == null || !ci.property.oldVal.startsWith("select"))) {
+								String listName = GeneralUtilityMethods.getNameForQuestion(sd, ci.property.qId);
+								int l_id = GeneralUtilityMethods.getListId(sd, sId, listName);
+								pstmtAddNodeset.setInt(1, l_id);
+								pstmtAddNodeset.setInt(2, ci.property.qId);
+								log.info("Add nodeset: " + pstmtAddNodeset.toString());
+								pstmtAddNodeset.executeUpdate();
+							}
 						}
 						
 						if(ci.property.setVisible) {
@@ -2005,6 +2026,7 @@ public class SurveyManager {
 			try {if (pstmtUpdateEndGroup != null) {pstmtUpdateEndGroup.close();}} catch (SQLException e) {}
 			try {if (pstmtGetListname != null) {pstmtGetListname.close();}} catch (SQLException e) {}
 			try {if (pstmtUpdateNodeset != null) {pstmtUpdateNodeset.close();}} catch (SQLException e) {}
+			try {if (pstmtAddNodeset != null) {pstmtAddNodeset.close();}} catch (SQLException e) {}
 		
 		}
 	

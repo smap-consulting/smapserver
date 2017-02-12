@@ -1548,6 +1548,10 @@ function respondToEvents($context) {
 			survey = globals.model.survey,
 			name;
 		
+		if(globals.gSaveInProgress) {
+			return;
+		}
+		
 		gFormIndex = $questionElement.data("fid");
 		gItemIndex = $questionElement.data("id");
 		

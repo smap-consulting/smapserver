@@ -135,7 +135,7 @@ define([
 			changesString = JSON.stringify(changes);		
 		
 		setHasChanges(0);
-		
+		globals.gSaveInProgress = true;
 		addHourglass();
 		$.ajax({
 			url: url,
@@ -149,7 +149,8 @@ define([
 					idx = -1,
 					i;
 				
-				removeHourglass();			
+				removeHourglass();	
+				globals.gSaveInProgress = false;
 				
 				if(typeof responseFn === "function") { 
 					responseFn();
@@ -190,6 +191,7 @@ define([
 			},
 			error: function(xhr, textStatus, err) {
 				removeHourglass();
+				globals.gSaveInProgress = false;
 				
 				if(typeof responseFn === "function") { 
 					responseFn();
@@ -617,6 +619,7 @@ define([
 									qSeq: []
 								});
 								question.childFormIndex = survey.forms.length - 1;
+								
 							} else if(property.newVal == "geopoint" || property.newVal == "geoshape" || property.newVal == "geotrace") {
 								
 								// Set the question name automatically
@@ -636,7 +639,25 @@ define([
 										}
 								});
 								question.name = "the_geom";	
-							} 
+							
+							} else if(oldVal === "note") {
+								// Remove the readonly status
+								addToChangesetArray({
+										changeType: "property",	
+										action: "update",			
+										source: "editor",
+										property: {
+											type: "question",
+											prop: "readonly",		
+											newVal: false,
+											language: property.language,
+											formIndex: property.formIndex,
+											itemIndex: property.itemIndex
+										
+										}
+								});
+								question.readonly = false;	
+							}
 						} else if(property.prop === "name") {
 							// update the end group name
 							if(survey.forms[property.formIndex].questions[property.itemIndex].type === "begin group") {

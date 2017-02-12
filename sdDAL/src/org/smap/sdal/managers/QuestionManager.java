@@ -276,7 +276,7 @@ public class QuestionManager {
 				pstmtInsertQuestion.setString(11, q.defaultanswer );
 				pstmtInsertQuestion.setString(12, q.appearance);
 				pstmtInsertQuestion.setBoolean(13, q.visible);
-				pstmtInsertQuestion.setString(14, "No longer used");	// path
+				pstmtInsertQuestion.setString(14, "");	// path is no longer used
 				pstmtInsertQuestion.setBoolean(15, readonly);
 				pstmtInsertQuestion.setString(16, q.relevant);
 				pstmtInsertQuestion.setString(17, q.constraint);
@@ -328,7 +328,7 @@ public class QuestionManager {
 					pstmtForm.setInt(5, q.fId);
 					pstmtForm.setInt(6, qId);		// parent question id
 					pstmtForm.setString(7, q.calculation);
-					pstmtForm.setString(8, "No longer used");	// path
+					pstmtForm.setString(8, "");	// path is no longer used
 					pstmtForm.setInt(9, q.childFormIndex);
 					
 					log.info("SQL: Insert new form: " + pstmtForm.toString());
@@ -1289,7 +1289,7 @@ public class QuestionManager {
 			pstmtCreateForm.setString(4,  tablename);
 			pstmtCreateForm.setInt(5,  parentFormId);
 			pstmtCreateForm.setInt(6,  parentQuestionId);
-			pstmtCreateForm.setString(7,  "no longer used");	// path
+			pstmtCreateForm.setString(7,  "");	// path is no longer used
 			pstmtCreateForm.setString(8,  repeats);
 		
 			log.info("Create new form: " + pstmtCreateForm.toString());
