@@ -67,7 +67,7 @@ public class QueryManager {
 		ArrayList<Query> queries = new ArrayList<Query>();	// Results of request
 		
 		String sql = "select query.id, query.name, query.query "
-				+ "from query query, user u "
+				+ "from custom_query query, users u "
 				+ "where u.id = query.u_id "
 				+ "and u.ident = ? "
 				+ "order by query.name asc";
@@ -75,7 +75,8 @@ public class QueryManager {
 		
 		try {
 	
-			pstmt = sd.prepareStatement(sql);	
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setString(1, userIdent);
 
 			ResultSet rs = pstmt.executeQuery();
 			while(rs.next()) {

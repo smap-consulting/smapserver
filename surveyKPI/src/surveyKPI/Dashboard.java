@@ -202,14 +202,6 @@ public class Dashboard extends Application {
 			) { 
 		
 		Response response = null;
-
-		try {
-		    Class.forName("org.postgresql.Driver");	 
-		} catch (ClassNotFoundException e) {
-			log.log(Level.SEVERE,"Error: Can't find PostgreSQL JDBC Driver", e);
-			response = Response.serverError().build();
-		    return response;
-		}
 		
 		String user = request.getRemoteUser();
 		log.info("Settings:" + settings);
@@ -223,9 +215,9 @@ public class Dashboard extends Application {
 		PreparedStatement pstmtAddView = null;
 		PreparedStatement pstmtReplaceView = null;
 		
-		// Authorisation - Access
+		// Authorisation not required as dashboard settings are specific to each authenticated user
+		
 		Connection connectionSD = SDDataSource.getConnection("surveyKPI-Dashboard");
-		// End Authorisation
 
 		try {
 			connectionSD.setAutoCommit(false);

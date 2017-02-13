@@ -359,6 +359,7 @@ define({
 	"msg_leave": "You have made some changes and not saved them, are you sure you want to leave?",
 	"msg_not_f": "was not found",
 	"msg_ren": "renamed to",
+	"msg_nq": "You have no queries defined, use the 'add query' button to add one",
 	
 	// Editor
 	"e_b_e": "Base on existing form",
@@ -667,7 +668,7 @@ define({
 	"d_c_month": "Coount by month",
 	"d_c_year": "Count by year",
 	"d_add": "Add Chart",
-	"d_add_q": "Add Query",
+	"d_add_q": "Add New Query",
 	"d_add_f": "Add New Form",
 	"d_from_f": "Link From Form",
 	"d_from_q": "Link From Question",
@@ -691,6 +692,7 @@ define({
 	"rev_cq": "Changed Question",
 	"rev_sc": "Selcted Choice",
 	"rev_usc": "Un-Selected Choice"
+		
 		
 		
 });
