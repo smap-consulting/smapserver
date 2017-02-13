@@ -83,6 +83,9 @@ $(document).ready(function() {
 	
 	loadQueries();
 	
+	/*
+	 * Add a new query
+	 */
 	$('#addQuery').click(function(){
 		
 		$('.panel_msg').hide();
@@ -146,6 +149,9 @@ $(document).ready(function() {
 	
 	
 	
+	/*
+	 * Add a form to a query
+	 */
 	$('#addForm').click(function(){
 		$('#add_form_popup').modal("show");
 	});
