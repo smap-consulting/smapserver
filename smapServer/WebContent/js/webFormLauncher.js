@@ -225,7 +225,7 @@ function getKey(formData) {
 			if(xhr.readyState == 0 || xhr.status == 0) {
 	              return;  // Not an error
 			} else {
-				console.log("Error: Failed to get list of surveys: " + err);
+				console.log("Error: Failed to get key: " + err);
 			}
 		}
 	});	

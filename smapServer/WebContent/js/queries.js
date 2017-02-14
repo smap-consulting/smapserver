@@ -55,7 +55,8 @@ require([
          'bootstrap.file-input',
          'bootbox',
          'toggle',
-         'moment'], 
+         'moment',
+         'app/surveyCache'], 
 		function(
 				$, 
 				common, 
@@ -66,7 +67,8 @@ require([
 				bsfi, 
 				bootbox,
 				toggle,
-				moment) {
+				moment,
+				surveyCache) {
 
 
 
@@ -83,6 +85,9 @@ $(document).ready(function() {
 	
 	loadQueries();
 	
+	globals.gIsAdministrator = false;
+	getLoggedInUser(getSurveys, false, true, undefined, false, false);  // TODO set callback
+	
 	/*
 	 * Add a new query
 	 */
@@ -95,7 +100,9 @@ $(document).ready(function() {
 				name: undefined
 		};
 		
-		$('#queryEditForm')[0].reset();
+		//$('#queryEditForm')[0].reset();
+		$('#query_name').val("");
+		
 		$('.querycontent,.querytoolbar').toggle();
 	});
 	
@@ -176,6 +183,17 @@ $(document).ready(function() {
 	});
 	
 });
+
+/*
+ * Load surveys for the current project
+ */
+function getSurveys() {	
+	surveyCache.get(globals.gCurrentProject, showSurveys);
+}
+
+function showSurveys(surveyList) {
+	console.log(surveyList);
+}
 
 /*
  * Get queries and update the query lists on this page
