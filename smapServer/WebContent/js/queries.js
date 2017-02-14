@@ -160,8 +160,19 @@ $(document).ready(function() {
 	 * Change the update existing checkbox
 	 */
 	
-	$('#select_existing').change(function(){
-		$('.new_survey_only').toggle();
+	$('#select_existing').change(function() {
+		var $this = $(this);
+		
+		if($this.prop('checked')) {
+			if(gCurrentQuery.forms && gCurrentQuery.forms.length > 0) {
+				$('.new_survey_only').show();
+			} else {
+				$('.new_survey_only').hide();
+			}	
+		} else {
+			$('.new_survey_only').hide();
+		}
+			
 	});
 	
 });
