@@ -193,49 +193,58 @@
 		     <div class="modal-body">
 				<form role="form" class="form-horizontal" id="add_form_form">
 				
-					<div class="form-group new_form">
-						<label for="new_query_name" data-lang="c_name" class="lang col-sm-2 control-label">Name</label>
-						<div class="col-sm-10">
-							<input type="text" id="new_query_name" required class="form-control">
+					<div class="form-group">
+						<div class="col-sm-offset-2 col-sm-10">
+							<div class="checkbox">
+								<label>
+									<input type="checkbox" id="select_existing" ><span data-lang="t_ns" class="lang">new survey</span>
+								</label>
+							</div>
 						</div>
 					</div>
 					
 					<div class="form-group">
-						<label for="project_name" class="lang col-sm-2 control-label" data-lang="c_project">Project :</label>
+						<label for="new_project_name" class="lang col-sm-2 control-label" data-lang="c_project">Project :</label>
 						<div class="col-sm-10">
-							<select id="project_name" class="project_list form-control"></select>
+							<select id="new_project_name" class="project_list form-control"></select>
 						</div>
 					</div>
 
-					<div class="form-group new_form" style="display:none;">
-						<div class="col-sm-offset-2 col-sm-10">
-							<div class="checkbox">
-								<label>
-									<input type="checkbox" id="base_on_existing" ><span data-lang="e_b_e" class="lang">BE</span>
-								</label>
+					<div class="form-group">
+						<label for="new_survey_name" class="lang col-sm-2 control-label" data-lang="a_exp_leg1">survey</label>
+						<div class="col-sm-10">
+							<select id="new_survey_name" class="survey_select form-control"></select>
+						</div>
+					</div>
+					<div class="form-group">
+						<label for="new_form_name" class="lang col-sm-2 control-label" data-lang="msg_sel_form">Form</label>
+						<div class="col-sm-10">
+							<select id="new_form_name" class="form_select form-control"></select>
+						</div>
+					</div>
+					
+					<!-- Connection to an already selected question -->
+					<div class="new_survey_only well" style="display:none;">
+						
+						<div class="form-group">
+							<label for="exist_project_name" class="lang col-sm-2 control-label" data-lang="c_project">Project :</label>
+							<div class="col-sm-10">
+								<select id="exist_project_name" class="project_list form-control"></select>
 							</div>
 						</div>
-					</div>
-					<div class="form-group existing_form reusing_form">
-						<label for="survey_name" class="lang col-sm-2 control-label" data-lang="a_exp_leg1">survey</label>
+
+					<div class="form-group">
+						<label for="exist_survey_name" class="lang col-sm-2 control-label" data-lang="a_exp_leg1">survey</label>
 						<div class="col-sm-10">
-							<select id="survey_name" class="survey_select form-control"></select>
+							<select id="exist_survey_name" class="survey_select form-control"></select>
 						</div>
 					</div>
-					<div class="form-group reusing_form">
-						<label for="form_name" class="lang col-sm-2 control-label" data-lang="msg_sel_form">Form</label>
+					<div class="form-group">
+						<label for="exist_form_name" class="lang col-sm-2 control-label" data-lang="msg_sel_form">Form</label>
 						<div class="col-sm-10">
-							<select id="form_name" class="form_select form-control"></select>
+							<select id="exist_form_name" class="form_select form-control"></select>
 						</div>
 					</div>
-					<div class="form-group reusing_form" style="display:none;">
-						<div class="col-sm-offset-2 col-sm-10">
-							<div class="checkbox">
-								<label>
-									<input type="checkbox" id="shared_results" ><span data-lang="e_s_r" class="lang">SR</span>
-								</label>
-							</div>
-						</div>
 					</div>
 						
 				</form>	

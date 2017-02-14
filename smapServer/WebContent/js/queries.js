@@ -156,7 +156,13 @@ $(document).ready(function() {
 		$('#add_form_popup').modal("show");
 	});
 
-
+	/*
+	 * Change the update existing checkbox
+	 */
+	
+	$('#select_existing').change(function(){
+		$('.new_survey_only').toggle();
+	});
 	
 });
 
