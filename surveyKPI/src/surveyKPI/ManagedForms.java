@@ -69,10 +69,19 @@ import java.util.logging.Logger;
 @Path("/managed")
 public class ManagedForms extends Application {
 	
-	Authorise a = new Authorise(null, Authorise.ANALYST);
+	Authorise a = null;
+	Authorise aSuper = new Authorise(null, Authorise.ANALYST);
 	
 	private static Logger log =
 			 Logger.getLogger(Review.class.getName());
+	
+	public ManagedForms() {
+		
+		ArrayList<String> authorisations = new ArrayList<String> ();	
+		authorisations.add(Authorise.ANALYST);
+		authorisations.add(Authorise.MANAGE);		// Enumerators with MANAGE access can process managed forms
+		a = new Authorise(authorisations, null);		
+	}
 	
 	/*
 	 * Return the management configuration
@@ -202,8 +211,8 @@ public class ManagedForms extends Application {
 			superUser = GeneralUtilityMethods.isSuperUser(sd, request.getRemoteUser());
 		} catch (Exception e) {
 		}
-		a.isAuthorised(sd, request.getRemoteUser());
-		a.isValidSurvey(sd, request.getRemoteUser(), am.sId, false, superUser);
+		aSuper.isAuthorised(sd, request.getRemoteUser());
+		aSuper.isValidSurvey(sd, request.getRemoteUser(), am.sId, false, superUser);
 		// End Authorisation
 
 		String sql = "update survey set managed_id = ? where s_id = ?;";
