@@ -29,7 +29,7 @@ define([
          'app/globals'], 
 		function($, modernizr, lang, globals) {
 
-	var gSurveys = {};
+	var gForms = {};
 	
 	return {	
 		
@@ -38,24 +38,24 @@ define([
 	};
 	
 	/*
-	 * Get the surveys for a project
+	 * Get the forms in a survey
 	 */
-	function get(projectId, callback) {
+	function get(surveyId, callback) {
 		
-		if(gSurveys[projectId]) {
-			callback(gSurveys[projectId]);
+		if(gForms[surveyId]) {
+			callback(gForms[surveyId]);
 		} else {
 			
 			addHourglass();
 			
 			$.ajax({
-				url: "/surveyKPI/surveys?projectId=" + projectId + "&blocked=true",
+				url: "/surveyKPI/survey/" + surveyId + "/getMeta",
 				dataType: 'json',
 				cache: false,
 				success: function(data) {
 					removeHourglass();
-					gSurveys[projectId] = data;
-					callback(data);
+					gForms[surveyId] = data.forms;
+					callback(data.forms);
 				},
 				error: function(xhr, textStatus, err) {
 					
@@ -63,7 +63,7 @@ define([
 					if(xhr.readyState == 0 || xhr.status == 0) {
 			              return;  // Not an error
 					} else {
-						alert(localise.set["msg_err_get_s"] + ": " + err);
+						alert(localise.set["msg_err_get_f"] + ": " + err);
 					}
 				}
 			});

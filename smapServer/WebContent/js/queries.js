@@ -56,7 +56,8 @@ require([
          'bootbox',
          'toggle',
          'moment',
-         'app/surveyCache'], 
+         'app/surveyCache',
+         'app/formCache'], 
 		function(
 				$, 
 				common, 
@@ -68,7 +69,8 @@ require([
 				bootbox,
 				toggle,
 				moment,
-				surveyCache) {
+				surveyCache,
+				formCache) {
 
 
 
@@ -87,6 +89,11 @@ $(document).ready(function() {
 	
 	globals.gIsAdministrator = false;
 	getLoggedInUser(getSurveys, false, true, undefined, false, false);  // TODO set callback
+	
+	// Survey changes - update forms
+	$('#new_survey').change(function() {
+		getForms();
+	});
 	
 	/*
 	 * Add a new query
@@ -188,11 +195,54 @@ $(document).ready(function() {
  * Load surveys for the current project
  */
 function getSurveys() {	
-	surveyCache.get(globals.gCurrentProject, showSurveys);
+	var projectId = $('#new_project').val();
+	surveyCache.get(projectId, showSurveys);
 }
 
 function showSurveys(surveyList) {
-	console.log(surveyList);
+	var $elem = $('.survey_select'),
+		h = [],
+		idx = -1;
+	
+	$elem.empty();
+	
+	for(i = 0; i < surveyList.length; i++) {
+		item = surveyList[i];
+		h[++idx] = '<option value="';
+		h[++idx] = item.id;
+		h[++idx] = '">';
+		h[++idx] = item.displayName;
+		h[++idx] = '</option>';
+	}
+
+	$elem.empty().append(h.join(''));
+}
+
+/*
+ * Load forms for the current survey
+ */
+function getForms() {
+	var surveyId = $('#new_survey').val();
+	formCache.get(surveyId, showForms);
+}
+
+function showForms(formList) {
+	var $elem = $('.form_select'),
+		h = [],
+		idx = -1;
+
+	$elem.empty();
+
+	for(i = 0; i < formList.length; i++) {
+		item = formList[i];
+		h[++idx] = '<option value="';
+		h[++idx] = item.f_id;
+		h[++idx] = '">';
+		h[++idx] = item.form;
+		h[++idx] = '</option>';
+	}
+	
+	$elem.empty().append(h.join(''));
 }
 
 /*

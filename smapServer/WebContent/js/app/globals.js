@@ -107,7 +107,6 @@ define(function() {
 	function Selector() {
 		
 		this.dataItems = new Object();
-		//this.panelDataItems = new Object();
 		this.surveys = new Object();
 		this.surveysExtended = new Object();
 		this.surveyLanguages = new Object();
