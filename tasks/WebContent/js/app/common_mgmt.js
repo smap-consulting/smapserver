@@ -499,7 +499,7 @@ window.gTasks = {
 		 });
 		
 		 // Respond to date filter changes
-		 $('#filter_from').change( function() { globals.gMainTable.draw(); } );
+		 $('#filter_from, #filter_to').focusout( function() { globals.gMainTable.draw(); } );
 		 
 		 /*
 		  * Settings

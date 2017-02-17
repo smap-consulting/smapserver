@@ -477,12 +477,15 @@ require([
 	 if(!isDuplicates) {
 		 $.fn.dataTableExt.afnFiltering.push(
 					function( oSettings, aData, iDataIndex ) {
-						var fromDate = document.getElementById('filter_from').value;
+						var fromDate = document.getElementById('filter_from').value,
+							toDate = document.getElementById('filter_to').value;
+						
 						var dateCol = 2,
 							dateParts = [],
 							dataDate;
 	
 						fromDate=fromDate.replace(/\-/g, "");
+						toDate=toDate.replace(/\-/g, "");
 	
 						dataDate=aData[dateCol].replace(/\-/g, "");
 						dateParts = dataDate.split(" ");
@@ -490,12 +493,13 @@ require([
 							dataDate = dateParts[0];
 						}
 	
-						if ( fromDate === "" )
-						{
+						if ( fromDate === "" && toDate === "") {
 							return true;
-						}
-						else if ( fromDate <= dataDate )
-						{
+						} if ( fromDate === "" && toDate >= dataDate) {
+							return true;
+						} else if ( toDate === "" && fromDate <= dataDate) {
+							return true;
+						} else if ( fromDate <= dataDate && toDate >= dataDate)	{
 							return true;
 						}
 						
