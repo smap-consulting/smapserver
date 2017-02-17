@@ -1,6 +1,13 @@
 #!/bin/sh
 ##### Installation script for setting up basic Smap server without ssl or virtual hosts
 
+force=$1
+
+if [ "$force" == "force" ]
+then
+	echo "All existing data will be deleted"
+fi
+
 config="auto"
 clean="true"
 filelocn="/smap"
@@ -193,10 +200,16 @@ sudo -u postgres createuser -S -D -R ws
 echo "alter user ws with password 'ws1234'" | sudo -u postgres psql
 
 echo '##### 10. Create $sd database'
+
+if [ "$force" = "force" ]
+then
+	echo "drop database $sd;" | sudo -u postgres psql
+fi
+
 sd_exists=`sudo -u postgres psql -lqt | cut -d \| -f 1 | grep -w $sd | wc -l`
 if [ "$sd_exists"  = "0" ]
 then
-echo 'survey_definitions table does not exist'
+echo 'survey_definitions database does not exist'
 sudo -u postgres createdb -E UTF8 -O ws $sd
 echo "CREATE EXTENSION postgis;" | sudo -u postgres psql -d $sd 
 echo "ALTER TABLE geometry_columns OWNER TO ws; ALTER TABLE spatial_ref_sys OWNER TO ws; ALTER TABLE geography_columns OWNER TO ws;" | sudo -u postgres psql -d $sd
@@ -206,10 +219,16 @@ echo "==================> $sd database already exists.  Apply patches if necessa
 fi
 
 echo '##### 11. Create $results database'
+
+if [ "$force" = "force" ]
+then
+	echo "drop database $results;" | sudo -u postgres psql
+fi
+
 results_exists=`sudo -u postgres psql -lqt | cut -d \| -f 1 | grep -w $results | wc -l`
 if [ "$results_exists"  = "0" ]
 then
-echo 'results table does not exist'
+echo 'results database does not exist'
 sudo -u postgres createdb -E UTF8 -O ws $results
 echo "CREATE EXTENSION postgis;" | sudo -u postgres psql -d $results
 sudo -u postgres echo "ALTER TABLE geometry_columns OWNER TO ws; ALTER TABLE spatial_ref_sys OWNER TO ws; ALTER TABLE geography_columns OWNER TO ws;" | sudo -u postgres psql -d $results
