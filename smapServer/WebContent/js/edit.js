@@ -1431,6 +1431,10 @@ function respondToEvents($context) {
 	// Update the question name
 	$context.find('.qname').change(function(){
 
+		if(globals.gSaveInProgress) {
+			return;
+		}
+		
 		var $this = $(this),
 			$li = $this.closest('li'),
 			formIndex = $li.data("fid"),
@@ -1456,6 +1460,10 @@ function respondToEvents($context) {
 	$context.find('.add_question').off().click(function() {
 		var $this = $(this);
 		
+		if(globals.gSaveInProgress) {
+			return;
+		}
+		
 		addQuestion($this, "string");
 
 
@@ -1469,6 +1477,10 @@ function respondToEvents($context) {
 			$context,
 			justAddedId,
 			val;
+		
+		if(globals.gSaveInProgress) {
+			return;
+		}
 		
 		console.log("adding choices list");
 		$context = optionlist.add();
@@ -1487,6 +1499,10 @@ function respondToEvents($context) {
 		var $this = $(this),
 			$context,						// Updated Html
 			item = $(this).data("id");
+		
+		if(globals.gSaveInProgress) {
+			return;
+		}
 		
 		bootbox.confirm(localise.set["msg_del_q"], function(result) {
 			if(result) {
@@ -1529,6 +1545,10 @@ function respondToEvents($context) {
 			oldVal = $li.data("list_name"),
 			newVal = $this.val();
 		
+		if(globals.gSaveInProgress) {
+			return;
+		}
+		
 		// Only apply the update if there is no error on this option list
 		if(!$li.hasClass("error")) {
 			$li.data("list_name", newVal);	// First update the HTML
@@ -1544,6 +1564,10 @@ function respondToEvents($context) {
 		var $this = $(this),
 			$context,						// Updated Html
 			item = $(this).data("id");
+		
+		if(globals.gSaveInProgress) {
+			return;
+		}
 		
 		bootbox.confirm(localise.set["msg_del_cl"], function(result) {
 			if(result) {
@@ -1562,6 +1586,10 @@ function respondToEvents($context) {
 			published,
 			survey = globals.model.survey,
 			name;
+		
+		if(globals.gSaveInProgress) {
+			return;
+		}
 		
 		gFormIndex = $questionElement.data("fid");
 		gItemIndex = $questionElement.data("id");

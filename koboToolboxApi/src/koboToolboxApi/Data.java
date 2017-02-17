@@ -60,6 +60,7 @@ import org.smap.sdal.model.TableColumn;
 public class Data extends Application {
 	
 	Authorise a = null;
+	Authorise aSuper = null;
 	
 	private static Logger log =
 			 Logger.getLogger(Data.class.getName());
@@ -77,7 +78,14 @@ public class Data extends Application {
 		ArrayList<String> authorisations = new ArrayList<String> ();	
 		authorisations.add(Authorise.ANALYST);
 		authorisations.add(Authorise.ADMIN);
+		authorisations.add(Authorise.MANAGE);
 		a = new Authorise(authorisations, null);
+		
+		ArrayList<String> authorisationsSuper = new ArrayList<String> ();	
+		authorisationsSuper.add(Authorise.ANALYST);
+		authorisationsSuper.add(Authorise.ADMIN);
+		aSuper = new Authorise(authorisations, null);
+		
 	}
 	
 	/*
@@ -90,7 +98,7 @@ public class Data extends Application {
 		
 		// Authorisation - Access
 		Connection sd = SDDataSource.getConnection("koboToolBoxAPI-getData");
-		a.isAuthorised(sd, request.getRemoteUser());
+		aSuper.isAuthorised(sd, request.getRemoteUser());
 		
 		Response response = null;
 		
@@ -322,8 +330,8 @@ public class Data extends Application {
 			superUser = GeneralUtilityMethods.isSuperUser(sd, request.getRemoteUser());
 		} catch (Exception e) {
 		}
-		a.isAuthorised(sd, request.getRemoteUser());
-		a.isValidSurvey(sd, request.getRemoteUser(), sId, false, superUser);
+		aSuper.isAuthorised(sd, request.getRemoteUser());
+		aSuper.isValidSurvey(sd, request.getRemoteUser(), sId, false, superUser);
 		// End Authorisation
 		
 		Connection cResults = ResultsDataSource.getConnection("koboToolboxApi - get similar data records");

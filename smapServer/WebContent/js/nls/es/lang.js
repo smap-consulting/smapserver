@@ -346,7 +346,7 @@ define(
     "t_del_group": "Eliminar Grupo de Tareas",
     "t_lt_file": "Cargar Tareas desde Archivo",
     "t_choose_user": "Escoja el usuario para asignar la tarea seleccionada",
-    "t_ce": "Borrar tareas existentes",
+    "t_ce": "Borrar Datos Existentes",
     "t_ce_warn": "Esto borrará todos los datos existentes del formulario. Seguro que quiere hacer esto?",
     "t_ceg": "Crear Grupo de Tareas Vacio",
     "t_cfe": "Crear desde datos existentes",

@@ -334,6 +334,22 @@ function msgToText(msg) {
 
 
 function projectSet() {
+	var groups = globals.gLoggedInUser.groups,
+		group,
+		redirect = true,
+		i;
+	
+	for (i = 0; i < groups.length; i++) {
+		group = groups[i];
+		if(group.name === "admin" || group.name === "analyst") {
+			redirect = false;
+			break;
+		}
+	}
+	if(redirect) {
+		window.location.href = "/webForm.html";
+	}
+	
 	getSurveysForList(globals.gCurrentProject);			// Get surveys
 }
 
