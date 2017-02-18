@@ -396,7 +396,8 @@ require([
 		 	managedId,
 		 	title = $('#survey_name option:selected').text(),
 		 	project = $('#project_name option:selected').text(),
-		 	charts = [];
+		 	charts = [],
+		 	chartData;
 		 
 		 
 		 data = getTableData(globals.gMainTable, 
@@ -422,7 +423,13 @@ require([
 			 } else {
 				 managedId = gTasks.cache.surveyList[globals.gCurrentProject][gTasks.gSelectedSurveyIndex].managed_id;
 			 }
-			 generateFile(url, filename, format, mime, data, globals.gCurrentSurvey, managedId, title, project, charts);
+			 
+			 if(format === "xlsx") {
+				 chartData = chart.refreshCharts(true);
+			 }
+			 console.log(chartData);
+			 
+			 generateFile(url, filename, format, mime, data, globals.gCurrentSurvey, managedId, title, project, charts, chartData);
 		 } else {
 			 countImages = $('.svg-container svg').length;
 			 $('.svg-container svg').each(function(index) {
@@ -443,7 +450,7 @@ require([
 					 console.log("Got image: " + countImages);
 					 countImages--;
 					 if(countImages <= 0) {
-						 generateFile(url, filename, format, mime, undefined, globals.gCurrentSurvey, managedId, title, project, charts);
+						 generateFile(url, filename, format, mime, undefined, globals.gCurrentSurvey, managedId, title, project, charts, chartData);
 					 }
 				 });
 				

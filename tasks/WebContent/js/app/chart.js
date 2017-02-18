@@ -118,7 +118,7 @@ define([
 	/*
 	 * Show a report
 	 */
-	function refreshCharts() {
+	function refreshCharts(toXLS) {
 		
 		var results = globals.gMainTable.rows({
 	    	order:  'current',  // 'current', 'applied', 'index',  'original'
@@ -131,7 +131,8 @@ define([
 			chart,
 			date_col = getCol(report.date_q, gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].columns),
 			filtered = gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].filtered,
-			index = 0;
+			index = 0,
+			xlsResponse = [];
 		
 		for(i = 0; i < report.row.length; i++) {
 			
@@ -143,7 +144,11 @@ define([
 					
 					chart = filtered[j];
 					data = processData(results, chart);
-					addChart("#c_" + chart.name, data, chart, i, index++, true);
+					if(toXLS) {
+						getXlsResponseObject(xlsResponse, chart, data);
+					} else {
+						addChart("#c_" + chart.name, data, chart, i, index++, true);
+					}
 				}
 			} else {
 				/*
@@ -155,10 +160,47 @@ define([
 					chart.groupLabels = chart.groups.map(function(e) { return e.label; });
 					data = processData(results, chart);
 					
-					addChart("#c_" + chart.name, data, chart, i, j, false);
+					if(toXLS) {
+						getXlsResponseObject(xlsResponse, chart, data);
+					} else {
+						addChart("#c_" + chart.name, data, chart, i, j, false);
+					}
 					
 				}
 			}
+		}
+		
+		if(toXLS) {
+			return xlsResponse;
+		}  else {
+			return;
+		}
+	}
+	
+	/*
+	 * Add a charts data to the xlsResponse object if the data is to be sent to an XLS export
+	 */
+	function getXlsResponseObject(xlsResponse, chart, data) {
+		var newData,
+			i,
+			add = false;
+
+		if(chart.chart_type === "groupedBar") {
+			add = true;
+		} else if(chart.chart_type === "bar") {
+			for(i = 0; i < data.length; i++) {
+				
+			}
+		} else {
+			console.log("Unknown chart type: " + chart.chart_type);
+		}
+
+		if(add) {
+			xlsResponse.push({
+				chart_type: chart.chart_type,
+				name: chart.humanName,
+				data: data	
+			});	
 		}
 	}
 	

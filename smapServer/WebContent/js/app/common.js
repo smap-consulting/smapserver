@@ -1919,7 +1919,7 @@ function downloadFileErrorCheck() {
 /*
  * Post data to be converted into a file
  */
-function generateFile(url, filename, format, mime, data, sId, managedId, title, project, charts) {
+function generateFile(url, filename, format, mime, data, sId, managedId, title, project, charts, chartData) {
 
 	var payload = "sId=" + sId;
 	payload += "&format=" + format;
@@ -1938,6 +1938,9 @@ function generateFile(url, filename, format, mime, data, sId, managedId, title, 
 	}
 	if(charts) {
 		payload += "&charts=" + encodeURIComponent(JSON.stringify(charts));
+	}
+	if(chartData) {
+		payload += "&chartdata=" + encodeURIComponent(JSON.stringify(chartData));
 	}
 	payload = payload.replace(/%20/g, '+');
 	
