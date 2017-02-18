@@ -116,59 +116,61 @@ public class XLSReportsManager {
 		/*
 		 * Write the chart data if it is not null
 		 */
-		if(chartDataArray != null) {
+		if(chartDataArray != null) { 
 			for(int i = 0; i < chartDataArray.size(); i++) {
 				ChartData cd = chartDataArray.get(i);
-				String name = cd.name;
-				if(name == null || name.trim().length() == 0) {
-					name = "chart " + i;
-				}
-				System.out.println("Chart: " + name);
-				dataSheet = wb.createSheet(name);
 				
-				/*
-				 *  Add column headers
-				 */
-				int rowIndex = 0;
-				int colIndex = 0;
-				Row headerRow = dataSheet.createRow(rowIndex++);
-				CellStyle headerStyle = styles.get("header");
-				
-				// Add blank cell above the row labels
-				Cell cell = headerRow.createCell(colIndex++);
-		        cell.setCellStyle(headerStyle);
-		        cell.setCellValue("");
-		        
-		        // Add a column for each group
-		        ChartRow row = cd.data.get(0);
-		        ArrayList<ChartColumn> chartCols = row.pr;
-		        for(ChartColumn chartCol : chartCols) {
-		            cell = headerRow.createCell(colIndex++);
-		            cell.setCellStyle(headerStyle);
-		            cell.setCellValue(chartCol.key);
-		        }
-		        
-				/*
-				 *  Add rows
-				 */
-		        for(ChartRow chartRow : cd.data) {
-		        	colIndex = 0;
-		        	Row aRow = dataSheet.createRow(rowIndex++);
-				
-				
-					// Adde row label
-					cell = aRow.createCell(colIndex++);
-			        cell.setCellValue(chartRow.key);
-		        
-			        // Add a cell for each group
-			        chartCols = chartRow.pr;
+				if(cd.data.size() > 0) {
+					String name = cd.name;
+					if(name == null || name.trim().length() == 0) {
+						name = "chart " + i;
+					}
+					System.out.println("Chart: " + name);
+					dataSheet = wb.createSheet(name);
+					
+					/*
+					 *  Add column headers
+					 */
+					int rowIndex = 0;
+					int colIndex = 0;
+					Row headerRow = dataSheet.createRow(rowIndex++);
+					CellStyle headerStyle = styles.get("header");
+					
+					// Add blank cell above the row labels
+					Cell cell = headerRow.createCell(colIndex++);
+			        cell.setCellStyle(headerStyle);
+			        cell.setCellValue("");
+			        
+			        // Add a column for each group
+			        ChartRow row = cd.data.get(0);
+			        ArrayList<ChartColumn> chartCols = row.pr;
 			        for(ChartColumn chartCol : chartCols) {
-			            cell = aRow.createCell(colIndex++);
-			            int v = Integer.parseInt(chartCol.value);
-			            cell.setCellValue(v);
+			            cell = headerRow.createCell(colIndex++);
+			            cell.setCellStyle(headerStyle);
+			            cell.setCellValue(chartCol.key);
 			        }
-
-		        }
+			        
+					/*
+					 *  Add rows
+					 */
+			        for(ChartRow chartRow : cd.data) {
+			        	colIndex = 0;
+			        	Row aRow = dataSheet.createRow(rowIndex++);
+					
+					
+						// Adde row label
+						cell = aRow.createCell(colIndex++);
+				        cell.setCellValue(chartRow.key);
+			        
+				        // Add a cell for each group
+				        chartCols = chartRow.pr;
+				        for(ChartColumn chartCol : chartCols) {
+				            cell = aRow.createCell(colIndex++);
+				            cell.setCellValue(chartCol.value);
+				        }
+	
+			        }
+				}
 
 			}
 			

@@ -21,6 +21,6 @@ package org.smap.sdal.model;
 
 public class ChartColumn {
 	public String key;
-	public String value;
+	public double value;
 	
 }

@@ -183,14 +183,39 @@ define([
 	function getXlsResponseObject(xlsResponse, chart, data) {
 		var newData,
 			i,
-			add = false;
+			add = false,
+			name = chart.humanName;
 
 		if(chart.chart_type === "groupedBar") {
+			newData = data;
 			add = true;
 		} else if(chart.chart_type === "bar") {
+			newData = [];
+			add = true;
 			for(i = 0; i < data.length; i++) {
-				
+				newData.push({
+					key: data[i].key,
+					pr: [{
+						key: name,
+						value: data[i].value
+					}]
+				});
 			}
+		} else if(chart.chart_type === "wordcloud") {
+			newData = [];
+			add = true;
+			for (var p in data) {
+			    if (data.hasOwnProperty(p)) {
+			    	newData.push({
+						key: p,
+						pr: [{
+							key: name,
+							value: data[p]
+						}]
+					});
+			    }
+			}
+				
 		} else {
 			console.log("Unknown chart type: " + chart.chart_type);
 		}
@@ -199,7 +224,7 @@ define([
 			xlsResponse.push({
 				chart_type: chart.chart_type,
 				name: chart.humanName,
-				data: data	
+				data: newData	
 			});	
 		}
 	}
@@ -408,8 +433,6 @@ define([
 			  .entries(results);
 			
 			maxValue = d3.max(data, function(d) { return +d.value; });
-			console.log("Max value: " + maxValue);
-			console.log(data);
 			if(maxValue < 120) {
 				chart.scale = "seconds";
 			} else if(maxValue >= 120 && maxValue < 7200) {	// Between 2 minutes and 2 hours
