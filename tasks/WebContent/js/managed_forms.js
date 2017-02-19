@@ -413,10 +413,48 @@ require([
 		 	filename,
 		 	mime,
 			data,
+			settings = [],
 		 	managedId,
 		 	title = $('#survey_name option:selected').text(),
 		 	project = $('#project_name option:selected').text(),
-		 	charts = [];
+		 	charts = [],
+		 	chartData,
+		 	settingsObj,
+		 	fromVal,
+		 	toVal,
+		 	colCount = 0,
+		 	colName,
+		 	colValue,
+		 	i;
+		 
+		 /*
+		  * Get the settings
+		  */
+		 settingsObj = globals.gMainTable.settings();
+		 settings.push({
+			 k: "search",
+			 v: settingsObj.search()
+		 })
+		 settings.push({
+			k: "from",
+			v: $('#filter_from').val()
+		 });
+		 settings.push({
+			k: "to",
+			v: $('#filter_to').val()
+		 });
+		 colCount = globals.gMainTable.columns()[0].length;
+		 for(i = 0; i < colCount; i++) {
+			 colValue = globals.gMainTable.column(i).search();
+			 if(colValue && colValue.trim().length > 2) {
+				 
+				 settings.push({
+						k: $(globals.gMainTable.column(i).header()).find('span').text(),
+						v: colValue.substring(1, colValue.length - 1)	// Remove regexp
+					 });
+			 }
+			
+		 }
 		 
 		 
 		 data = getTableData(globals.gMainTable, 
@@ -442,7 +480,12 @@ require([
 			 } else {
 				 managedId = gTasks.cache.surveyList[globals.gCurrentProject][gTasks.gSelectedSurveyIndex].managed_id;
 			 }
-			 generateFile(url, filename, format, mime, data, globals.gCurrentSurvey, managedId, title, project, charts);
+			 
+			 if(format === "xlsx") {
+				 chartData = chart.refreshCharts(true);
+			 }
+			 
+			 generateFile(url, filename, format, mime, data, globals.gCurrentSurvey, managedId, title, project, charts, chartData, settings);
 		 } else {
 			 countImages = $('.svg-container svg').length;
 			 $('.svg-container svg').each(function(index) {
@@ -463,7 +506,7 @@ require([
 					 console.log("Got image: " + countImages);
 					 countImages--;
 					 if(countImages <= 0) {
-						 generateFile(url, filename, format, mime, undefined, globals.gCurrentSurvey, managedId, title, project, charts);
+						 generateFile(url, filename, format, mime, undefined, globals.gCurrentSurvey, managedId, title, project, charts, chartData, settings);
 					 }
 				 });
 				

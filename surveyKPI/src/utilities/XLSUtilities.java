@@ -42,6 +42,12 @@ public class XLSUtilities {
         CellStyle style = wb.createCellStyle();
         style.setFont(boldFont);
         styles.put("header", style);
+        
+        style = wb.createCellStyle();
+        style.setFont(boldFont);
+        style.setFillForegroundColor(IndexedColors.CORNFLOWER_BLUE.getIndex());
+        style.setFillPattern(CellStyle.SOLID_FOREGROUND);
+        styles.put("header2", style);
 
         style = wb.createCellStyle();
         style.setWrapText(true);
@@ -53,7 +59,7 @@ public class XLSUtilities {
         styles.put("begin repeat", style);
         
         style = wb.createCellStyle();
-        style.setFillForegroundColor(IndexedColors.DARK_YELLOW.getIndex());
+        style.setFillForegroundColor(IndexedColors.LIGHT_YELLOW.getIndex());
         style.setFillPattern(CellStyle.SOLID_FOREGROUND);
         styles.put("begin group", style);
         

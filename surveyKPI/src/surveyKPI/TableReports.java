@@ -36,6 +36,7 @@ import org.smap.sdal.Utilities.UtilityMethodsEmail;
 import org.smap.sdal.managers.LogManager;
 import org.smap.sdal.managers.PDFTableManager;
 import org.smap.sdal.managers.ManagedFormsManager;
+import org.smap.sdal.model.ChartData;
 import org.smap.sdal.model.KeyValue;
 import org.smap.sdal.model.ManagedFormConfig;
 import org.smap.sdal.model.Organisation;
@@ -89,8 +90,12 @@ public class TableReports extends Application {
 			@FormParam("charts") String charts,
 			@FormParam("format") String format,
 			@FormParam("title") String title,
-			@FormParam("project") String project
+			@FormParam("project") String project,
+			@FormParam("chartdata") String chartData,
+			@FormParam("settings") String settingsString
 			) throws Exception { 
+		
+		System.out.println("Chart data: " + chartData);
 		
 		// Authorisation - Access
 		Connection sd = SDDataSource.getConnection("surveyKPI-tables");
@@ -134,6 +139,7 @@ public class TableReports extends Application {
 				Type type = new TypeToken<ArrayList<ArrayList<KeyValue>>>(){}.getType();		
 				dArray = new Gson().fromJson(data, type);
 			}
+			
 			// Convert charts to an array
 			ArrayList<Chart> chartArray = null;
 			if(charts != null) {
@@ -141,9 +147,23 @@ public class TableReports extends Application {
 				chartArray = new Gson().fromJson(charts, type);
 			}
 			
+			// Convert chartData string to an object array
+			ArrayList<ChartData> chartDataArray = null;
+			if(chartData != null) {
+				Type type = new TypeToken<ArrayList<ChartData>>(){}.getType();		
+				chartDataArray = new Gson().fromJson(chartData, type);
+			}
+			
+			// Convert settings into an array of key value pairs
+			ArrayList<KeyValue> settings = null;
+			if(settingsString != null) {
+				Type type = new TypeToken<ArrayList<KeyValue>>(){}.getType();		
+				settings = new Gson().fromJson(settingsString, type);
+			}
+			
 			if(isXLS) {
 				XLSReportsManager xm = new XLSReportsManager(format);
-				xm.createXLSReportsFile(response.getOutputStream(), dArray, mfc, localisation, tz);
+				xm.createXLSReportsFile(response.getOutputStream(), dArray, chartDataArray, settings, mfc, localisation, tz);
 			} else if(isPdf) {
 				String basePath = GeneralUtilityMethods.getBasePath(request);
 				PDFTableManager pm = new PDFTableManager();

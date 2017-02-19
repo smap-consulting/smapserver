@@ -132,7 +132,7 @@ define([
 	/*
 	 * Show a report
 	 */
-	function refreshCharts() {
+	function refreshCharts(toXLS) {
 		
 		var results = globals.gMainTable.rows({
 	    	order:  'current',  // 'current', 'applied', 'index',  'original'
@@ -147,6 +147,7 @@ define([
 			filtered = gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].filtered,
 			index = 0,
 			dataLength = results.count();
+			xlsResponse = [];
 		
 		for(i = 0; i < gCurrentReport.row.length; i++) {
 			
@@ -157,10 +158,71 @@ define([
 					chart.groupLabels = chart.groups.map(function(e) { return e.label; });
 				}
 				data = processData(results, chart, dataLength);
-				
-				addChart("#c_" + chart.name, data, chart, i, j, false);		
+				if(toXLS) {
+					getXlsResponseObject(xlsResponse, chart, data);
+				} else {
+					addChart("#c_" + chart.name, data, chart, i, index++, true);
+				}
 
 			}
+		}
+		
+		if(toXLS) {
+			return xlsResponse;
+		}  else {
+			return;
+		}
+	}
+	
+	/*
+	 * Add a charts data to the xlsResponse object if the data is to be sent to an XLS export
+	 */
+	function getXlsResponseObject(xlsResponse, chart, data) {
+		var newData,
+			i,
+			add = false,
+			name = chart.humanName;
+
+		if(chart.chart_type === "groupedBar") {
+			newData = data;
+			add = true;
+		} else if(chart.chart_type === "bar") {
+			newData = [];
+			add = true;
+			for(i = 0; i < data.length; i++) {
+				newData.push({
+					key: data[i].key,
+					pr: [{
+						key: name,
+						value: data[i].value
+					}]
+				});
+			}
+		} else if(chart.chart_type === "wordcloud") {
+			newData = [];
+			add = true;
+			for (var p in data) {
+			    if (data.hasOwnProperty(p)) {
+			    	newData.push({
+						key: p,
+						pr: [{
+							key: name,
+							value: data[p]
+						}]
+					});
+			    }
+			}
+				
+		} else {
+			console.log("Unknown chart type: " + chart.chart_type);
+		}
+
+		if(add) {
+			xlsResponse.push({
+				chart_type: chart.chart_type,
+				name: chart.humanName,
+				data: newData	
+			});	
 		}
 	}
 	
@@ -379,8 +441,6 @@ define([
 			  .entries(results);
 			
 			maxValue = d3.max(data, function(d) { return +d.value; });
-			console.log("Max value: " + maxValue);
-			console.log(data);
 			if(maxValue < 120) {
 				chart.scale = "seconds";
 			} else if(maxValue >= 120 && maxValue < 7200) {	// Between 2 minutes and 2 hours

@@ -37,6 +37,9 @@ import org.apache.poi.xssf.usermodel.*;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.hssf.usermodel.HSSFHyperlink;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.smap.sdal.model.ChartColumn;
+import org.smap.sdal.model.ChartData;
+import org.smap.sdal.model.ChartRow;
 import org.smap.sdal.model.KeyValue;
 import org.smap.sdal.model.TableColumn;
 import org.smap.sdal.model.ManagedFormConfig;
@@ -60,12 +63,10 @@ public class XLSReportsManager {
 		String human_name;
 		int dataIndex;
 		int colIndex;
-		String type;
 		
-		public Column(ResourceBundle localisation, int dataIndex, String n, String type, int colIndex) {
+		public Column(ResourceBundle localisation, int dataIndex, String n, int colIndex) {
 			this.dataIndex = dataIndex;
 			this.colIndex = colIndex;
-			this.type = type;
 			name = n;
 			//human_name = localisation.getString(n);
 			human_name = n;		// Need to work out how to use translations when the file needs to be imported again
@@ -93,10 +94,12 @@ public class XLSReportsManager {
 	}
 	
 	/*
-	 * Write a data array to an XLS file
+	 * Write data from the dashboard to an XLS file
 	 */
 	public void createXLSReportsFile(OutputStream outputStream, 
 			ArrayList<ArrayList<KeyValue>> dArray, 
+			ArrayList<ChartData> chartDataArray,
+			ArrayList<KeyValue> settings,
 			ManagedFormConfig mfc,
 			ResourceBundle localisation, 
 			String tz) throws IOException {
@@ -109,9 +112,72 @@ public class XLSReportsManager {
 
 		ArrayList<Column> cols = getColumnList(mfc, dArray, localisation);
 		createHeader(cols, dataSheet, styles);	
-		processDataListForXLS(dArray, dataSheet, taskSettingsSheet, styles, cols, tz);
+		processDataListForXLS(dArray, dataSheet, taskSettingsSheet, styles, cols, tz, settings);
 		
-		System.out.println("Writing XLS");
+		/*
+		 * Write the chart data if it is not null
+		 */
+		if(chartDataArray != null) { 
+			for(int i = 0; i < chartDataArray.size(); i++) {
+				ChartData cd = chartDataArray.get(i);
+				
+				if(cd.data.size() > 0) {
+					String name = cd.name;
+					if(name == null || name.trim().length() == 0) {
+						name = "chart " + i;
+					}
+					name = name.replaceAll("[\\/\\*\\[\\]:\\?]", "");
+					dataSheet = wb.createSheet(name);
+					
+					/*
+					 *  Add column headers
+					 */
+					int rowIndex = 0;
+					int colIndex = 0;
+					Row headerRow = dataSheet.createRow(rowIndex++);
+					CellStyle headerStyle = styles.get("header");
+					
+					// Add blank cell above the row labels
+					Cell cell = headerRow.createCell(colIndex++);
+			        cell.setCellStyle(headerStyle);
+			        cell.setCellValue("");
+			        
+			        // Add a column for each group
+			        ChartRow row = cd.data.get(0);
+			        ArrayList<ChartColumn> chartCols = row.pr;
+			        for(ChartColumn chartCol : chartCols) {
+			            cell = headerRow.createCell(colIndex++);
+			            cell.setCellStyle(headerStyle);
+			            cell.setCellValue(chartCol.key);
+			        }
+			        
+					/*
+					 *  Add rows
+					 */
+			        for(ChartRow chartRow : cd.data) {
+			        	colIndex = 0;
+			        	Row aRow = dataSheet.createRow(rowIndex++);
+					
+					
+						// Adde row label
+						cell = aRow.createCell(colIndex++);
+				        cell.setCellValue(chartRow.key);
+			        
+				        // Add a cell for each group
+				        chartCols = chartRow.pr;
+				        for(ChartColumn chartCol : chartCols) {
+				            cell = aRow.createCell(colIndex++);
+				            cell.setCellValue(chartCol.value);
+				        }
+	
+			        }
+				}
+
+			}
+			
+
+		}
+		
 		wb.write(outputStream);
 		outputStream.close();
 	}
@@ -139,7 +205,7 @@ public class XLSReportsManager {
 				if(record != null) {
 					dataIndex = getDataIndex(record, tc.humanName);
 				}
-				cols.add(new Column(localisation, dataIndex, tc.humanName, tc.type, colIndex++));
+				cols.add(new Column(localisation, dataIndex, tc.humanName, colIndex++));
 			}
 		}
 	
@@ -192,7 +258,8 @@ public class XLSReportsManager {
 			Sheet settingsSheet,
 			Map<String, CellStyle> styles,
 			ArrayList<Column> cols,
-			String tz) throws IOException {
+			String tz,
+			ArrayList<KeyValue> settings) throws IOException {
 
 		ZoneId timeZoneId = ZoneId.of(tz);
 		ZoneId gmtZoneId = ZoneId.of("GMT");	
@@ -228,13 +295,31 @@ public class XLSReportsManager {
 		}
 		
 		// Populate settings sheet
-		Row settingsRow = settingsSheet.createRow(0);
-		Cell k = null;
-		Cell v = null;
-		k = settingsRow.createCell(0);
+		int settingsRowIdx = 0;
+		Row settingsRow = settingsSheet.createRow(settingsRowIdx++);
+		Cell k = settingsRow.createCell(0);
+		Cell v = settingsRow.createCell(1);
+		k.setCellStyle(styles.get("header"));	
 		k.setCellValue("Time Zone:");
-		v = settingsRow.createCell(1);
 		v.setCellValue(tz);
+		
+		// Show filter settings
+		settingsRowIdx++;
+		settingsRow = settingsSheet.createRow(settingsRowIdx++);
+		Cell f = settingsRow.createCell(0);
+		f.setCellStyle(styles.get("header2"));	
+		f.setCellValue("Filters:");
+		
+		if(settings != null) {
+			for(KeyValue kv : settings) {
+				settingsRow = settingsSheet.createRow(settingsRowIdx++);
+				k = settingsRow.createCell(1);
+				v = settingsRow.createCell(2);
+				k.setCellStyle(styles.get("header"));	
+				k.setCellValue(kv.k);
+				v.setCellValue(kv.v);
+			}
+		}
 	}
 	
 	
