@@ -91,7 +91,8 @@ public class TableReports extends Application {
 			@FormParam("format") String format,
 			@FormParam("title") String title,
 			@FormParam("project") String project,
-			@FormParam("chartdata") String chartData
+			@FormParam("chartdata") String chartData,
+			@FormParam("settings") String settingsString
 			) throws Exception { 
 		
 		System.out.println("Chart data: " + chartData);
@@ -153,9 +154,16 @@ public class TableReports extends Application {
 				chartDataArray = new Gson().fromJson(chartData, type);
 			}
 			
+			// Convert settings into an array of key value pairs
+			ArrayList<KeyValue> settings = null;
+			if(settingsString != null) {
+				Type type = new TypeToken<ArrayList<KeyValue>>(){}.getType();		
+				settings = new Gson().fromJson(settingsString, type);
+			}
+			
 			if(isXLS) {
 				XLSReportsManager xm = new XLSReportsManager(format);
-				xm.createXLSReportsFile(response.getOutputStream(), dArray, chartDataArray, mfc, localisation, tz);
+				xm.createXLSReportsFile(response.getOutputStream(), dArray, chartDataArray, settings, mfc, localisation, tz);
 			} else if(isPdf) {
 				String basePath = GeneralUtilityMethods.getBasePath(request);
 				PDFTableManager pm = new PDFTableManager();

@@ -94,11 +94,12 @@ public class XLSReportsManager {
 	}
 	
 	/*
-	 * Write a data from the dashboard to an XLS file
+	 * Write data from the dashboard to an XLS file
 	 */
 	public void createXLSReportsFile(OutputStream outputStream, 
 			ArrayList<ArrayList<KeyValue>> dArray, 
 			ArrayList<ChartData> chartDataArray,
+			ArrayList<KeyValue> settings,
 			ManagedFormConfig mfc,
 			ResourceBundle localisation, 
 			String tz) throws IOException {
@@ -111,7 +112,7 @@ public class XLSReportsManager {
 
 		ArrayList<Column> cols = getColumnList(mfc, dArray, localisation);
 		createHeader(cols, dataSheet, styles);	
-		processDataListForXLS(dArray, dataSheet, taskSettingsSheet, styles, cols, tz);
+		processDataListForXLS(dArray, dataSheet, taskSettingsSheet, styles, cols, tz, settings);
 		
 		/*
 		 * Write the chart data if it is not null
@@ -125,7 +126,7 @@ public class XLSReportsManager {
 					if(name == null || name.trim().length() == 0) {
 						name = "chart " + i;
 					}
-					System.out.println("Chart: " + name);
+					name = name.replaceAll("[\\/\\*\\[\\]:\\?]", "");
 					dataSheet = wb.createSheet(name);
 					
 					/*
@@ -257,7 +258,8 @@ public class XLSReportsManager {
 			Sheet settingsSheet,
 			Map<String, CellStyle> styles,
 			ArrayList<Column> cols,
-			String tz) throws IOException {
+			String tz,
+			ArrayList<KeyValue> settings) throws IOException {
 
 		ZoneId timeZoneId = ZoneId.of(tz);
 		ZoneId gmtZoneId = ZoneId.of("GMT");	
@@ -293,13 +295,31 @@ public class XLSReportsManager {
 		}
 		
 		// Populate settings sheet
-		Row settingsRow = settingsSheet.createRow(0);
-		Cell k = null;
-		Cell v = null;
-		k = settingsRow.createCell(0);
+		int settingsRowIdx = 0;
+		Row settingsRow = settingsSheet.createRow(settingsRowIdx++);
+		Cell k = settingsRow.createCell(0);
+		Cell v = settingsRow.createCell(1);
+		k.setCellStyle(styles.get("header"));	
 		k.setCellValue("Time Zone:");
-		v = settingsRow.createCell(1);
 		v.setCellValue(tz);
+		
+		// Show filter settings
+		settingsRowIdx++;
+		settingsRow = settingsSheet.createRow(settingsRowIdx++);
+		Cell f = settingsRow.createCell(0);
+		f.setCellStyle(styles.get("header2"));	
+		f.setCellValue("Filters:");
+		
+		if(settings != null) {
+			for(KeyValue kv : settings) {
+				settingsRow = settingsSheet.createRow(settingsRowIdx++);
+				k = settingsRow.createCell(1);
+				v = settingsRow.createCell(2);
+				k.setCellStyle(styles.get("header"));	
+				k.setCellValue(kv.k);
+				v.setCellValue(kv.v);
+			}
+		}
 	}
 	
 	
