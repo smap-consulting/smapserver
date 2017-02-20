@@ -541,7 +541,6 @@ define([
 			hGrp = [],
 			idxGrp = -1;
 			
-		console.log(report);
 		def = report.row[1].def;
 		
 		/*

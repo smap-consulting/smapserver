@@ -327,13 +327,6 @@ require([
 			}
 		});
 		
-		/*
-		 * Detect focus out on search input
-		 */
-		$('#trackingTable_filter input').focusout(function(){
-			alert("df");
-		});
-		
      });	 
 	 
 	/*

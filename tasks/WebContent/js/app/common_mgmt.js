@@ -500,7 +500,10 @@ window.gTasks = {
 		
 		 // Respond to date filter changes
 		 $('#filter_from, #filter_to').focusout( function() { globals.gMainTable.draw(); } );
-		 
+		 	
+		 // Respond to change of search
+		 $('#trackingTable_filter input').focusout(function() { globals.gMainTable.draw(); } );
+		
 		 /*
 		  * Settings
 		  */
