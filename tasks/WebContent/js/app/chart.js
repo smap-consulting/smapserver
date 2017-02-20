@@ -16,7 +16,7 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 /*
- * Functions for manipulating a question in the editor
+ * Chart functions
  */
 
 "use strict";
@@ -372,25 +372,27 @@ define([
 		   
 		    var data = {};
 		    for(i = 0; i < textArray.length; i++) {
-			    var words = textArray[i].split(/[ '\-\(\)\*":;\[\]|{},.!?]+/);
-			    if (words.length == 1){
-			    	if (data[words[0]]){
-		        		data[words[0]]++;
-		            } else {
-		            	data[words[0]] = 1;
-		            }
-			    } else {
-			    	words.forEach(function(word){
-				        var word = word.toLowerCase();
-				        if (word != "" && common.indexOf(word)==-1 && word.length>1){
-				        	if (data[word]){
-				        		data[word]++;
-				            } else {
-				            	data[word] = 1;
-				            }
-				        }
-			    	})
-			    }
+		    	if(textArray[i]) {
+				    var words = textArray[i].split(/[ '\-\(\)\*":;\[\]|{},.!?]+/);
+				    if (words.length == 1){
+				    	if (data[words[0]]){
+			        		data[words[0]]++;
+			            } else {
+			            	data[words[0]] = 1;
+			            }
+				    } else {
+				    	words.forEach(function(word){
+					        var word = word.toLowerCase();
+					        if (word != "" && common.indexOf(word)==-1 && word.length>1){
+					        	if (data[word]){
+					        		data[word]++;
+					            } else {
+					            	data[word] = 1;
+					            }
+					        }
+				    	})
+				    }
+		    	}
 		    }
 		} else if (chart.type === "select") {   
 			var i, j,
@@ -533,12 +535,14 @@ define([
 			   		d.type !== "image" && d.type !== "video" && d.type !== "audio"; 
 			}),
 			i,
-			def = report.row[1].def,
+			def,
 			h = [],
 			idx = -1,
 			hGrp = [],
 			idxGrp = -1;
 			
+		console.log(report);
+		def = report.row[1].def;
 		
 		/*
 		 * Merge select multiple columns into a single chart
