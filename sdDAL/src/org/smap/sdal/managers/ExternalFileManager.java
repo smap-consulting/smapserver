@@ -65,6 +65,23 @@ public class ExternalFileManager {
 	}
 	
 	/*
+	 * Call this method when a linker survey, that is a survey that links to another survey changes.
+	 * This will result in regenerate being called next time the survey is downloaded
+	 */
+	public void linkerChanged(Connection sd, int sId) throws SQLException {
+		String sql = "delete from linked_forms where linker_s_id = ?;";
+		PreparedStatement pstmt = null;
+		
+		try {
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setInt(1, sId);
+			pstmt.executeUpdate();
+		} finally {
+			if(pstmt != null){try {pstmt.close();}catch (Exception e) {}};
+		}
+	}
+	
+	/*
 	 * Create a linked file
 	 */
 	public boolean createLinkedFile(Connection sd, 
@@ -133,10 +150,7 @@ public class ExternalFileManager {
 				if(data_key == null) {
 					throw new Exception("Pulldata definition not found");
 				}
-				// TODO get values from database
-				//sIdent = "s1_1639";		// TEST
-				//data_key = "${cfs}-${group}";
-				//non_unique_key = true;
+				
 				
 			} else {
 				int idx = filename.indexOf('_');
@@ -412,16 +426,16 @@ public class ExternalFileManager {
 				
 				if(count > 0) {
 					regenerate = true;
+					
+					pstmtInsert = sd.prepareStatement(sqlInsert);
+					pstmtInsert.setInt(1, linked_sId);
+					pstmtInsert.setString(2, table);
+					pstmtInsert.setInt(3, count);
+					pstmtInsert.setInt(4, linker_sId);
+					
+					log.info("Regenerate: " + pstmtInsert.toString());
+					pstmtInsert.executeUpdate();
 				}
-				
-				pstmtInsert = sd.prepareStatement(sqlInsert);
-				pstmtInsert.setInt(1, linked_sId);
-				pstmtInsert.setString(2, table);
-				pstmtInsert.setInt(3, count);
-				pstmtInsert.setInt(4, linker_sId);
-				
-				log.info("Regenerate: " + pstmtInsert.toString());
-				pstmtInsert.executeUpdate();
 				
 
 			}

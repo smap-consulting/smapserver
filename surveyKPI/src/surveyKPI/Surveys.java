@@ -39,6 +39,7 @@ import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
+import org.smap.sdal.managers.ExternalFileManager;
 import org.smap.sdal.managers.SurveyManager;
 import org.smap.sdal.model.ChangeElement;
 import org.smap.sdal.model.ChangeItem;
@@ -480,7 +481,11 @@ public class Surveys extends Application {
 	
 			SurveyManager sm = new SurveyManager();
 			ChangeResponse resp = sm.applyChangeSetArray(connectionSD, cResults, sId, request.getRemoteUser(), changes);
-					
+			
+			// Force regeneration of any dynamic CSV files that this survey links to
+			ExternalFileManager efm = new ExternalFileManager();
+			efm.linkerChanged(connectionSD, sId);
+			
 			String respString = gson.toJson(resp);	// Create the response	
 			response = Response.ok(respString).build();
 			
