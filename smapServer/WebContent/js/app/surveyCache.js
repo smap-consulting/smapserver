@@ -34,7 +34,8 @@ define([
 	return {	
 		
 		get: get,
-		clear: clear
+		clear: clear,
+		getName: getName
 	};
 	
 	/*
@@ -78,6 +79,25 @@ define([
 		
 		gSurveys = {};
 
+	}
+	
+	/*
+	 * Get the name of a form given its id
+	 */
+	function getName(projectId, surveyId) {
+		var i,
+			surveyList = gSurveys[projectId],
+			name;
+		
+		if(surveyList) {
+			for(i = 0; i < surveyList.length; i++) {
+				if(surveyList[i].id = surveyId) {
+					name = surveyList[i].displayName;
+				}
+			}
+		}
+		return name;
+		
 	}
 	
 });

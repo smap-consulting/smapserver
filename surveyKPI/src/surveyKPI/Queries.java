@@ -108,7 +108,7 @@ public class Queries extends Application {
 		Response response = null;
 		Connection sd = SDDataSource.getConnection("surveyKPI-get query");
 		
-		// Authorisation not required - queries belong to any authtenticated user
+		// Authorisation not required - queries belong to any authenticated user
 	
 		try {
 			
@@ -148,6 +148,7 @@ public class Queries extends Application {
 
 		Gson gson=  new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
 		Query q = gson.fromJson(queryString, Query.class);
+		String formsString = gson.toJson(q.forms);
 		
 		String sqlInsert = "insert into custom_query (u_id, name, query) values(?, ?, ?)";
 		String sqlUpdate = "update custom_query set "
@@ -165,13 +166,13 @@ public class Queries extends Application {
 				pstmt = sd.prepareStatement(sqlInsert);
 				pstmt.setInt(1, uId);
 				pstmt.setString(2, q.name);
-				pstmt.setString(3, q.query);
+				pstmt.setString(3, formsString);
 				
 			} else {
 				// Update a query
 				pstmt = sd.prepareStatement(sqlUpdate);
 				pstmt.setString(1, q.name);
-				pstmt.setString(2, q.query);
+				pstmt.setString(2, formsString);
 				pstmt.setInt(3, uId);
 				pstmt.setInt(4, q.id);
 			}

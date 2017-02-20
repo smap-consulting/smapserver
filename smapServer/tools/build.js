@@ -43,6 +43,9 @@
             name: '../dashboard',
         },
         {
+            name: '../queries',
+        },
+        {
             name: '../userTrail',
 	    exclude: [ 'ol3/ol']
         }

@@ -15,6 +15,13 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 
 */
 
+/*
+ * Manage Queries
+ * Each Query has:
+ *     name
+ *     queryDetails
+ * Query Details
+ */
 var gUserLocale = navigator.language;
 if (Modernizr.localstorage) {
 	gUserLocale = localStorage.getItem('user_locale') || navigator.language;
@@ -89,6 +96,11 @@ $(document).ready(function() {
 	
 	globals.gIsAdministrator = false;
 	getLoggedInUser(getSurveys, false, true, undefined, false, false);  // TODO set callback
+	
+	// Project changes update surveys and forms
+	$('#new_project').change(function() {
+		getSurveys();
+	});
 	
 	// Survey changes - update forms
 	$('#new_survey').change(function() {
@@ -167,30 +179,80 @@ $(document).ready(function() {
 	 * Add a form to a query
 	 */
 	$('#addForm').click(function(){
+		setAddNewSurvey();
 		$('#add_form_popup').modal("show");
 	});
 
 	/*
-	 * Change the update existing checkbox
+	 * Change the addNewSurvey checkbox
 	 */
-	
-	$('#select_existing').change(function() {
+	$('#add_new_survey').change(function() {
 		var $this = $(this);
-		
-		if($this.prop('checked')) {
-			if(gCurrentQuery.forms && gCurrentQuery.forms.length > 0) {
-				$('.new_survey_only').show();
-			} else {
-				$('.new_survey_only').hide();
-			}	
-		} else {
-			$('.new_survey_only').hide();
-		}
+		addNewSurveyChanged($this.prop('checked'));
 			
+	});
+	
+	/*
+	 * Save a new form
+	 */
+	$('#addFormSave').click(function() {
+		var form = {};
+		
+		form.project = $('#new_project').val();
+		form.project_name = $('#new_project option:selected').text();
+		
+		form.survey = $('#new_survey').val();
+		form.survey_name = $('#new_survey option:selected').text();
+		
+		form.form = $('#new_form').val();
+		form.form_name = $('#new_form option:selected').text();
+		
+		form.question = $('#new_question').val();
+		
+		form.link_project = $('#link_project').val();
+		form.link_survey = $('#link_survey').val();
+		form.link_form = $('#elink_form').val();
+		form.link_question = $('#link_question').val();
+		
+		if(!gCurrentQuery.forms) {
+			gCurrentQuery.forms = [];
+		}
+		gCurrentQuery.forms.push(form);
+		updateFormEditor();
 	});
 	
 });
 
+/*
+ * Set the addNewSurvey checkbox to its initial value
+ */
+function setAddNewSurvey() {
+	
+	var on = false;
+	
+	if(!gCurrentQuery.forms  || gCurrentQuery.forms.length == 0) {
+		on = true;
+	} else {
+		// TODO set on if all forms in the survey list have been selected
+	}
+	$('#add_new_survey').prop('checked', on);
+	addNewSurveyChanged(on);
+}
+
+/*
+ * Enable / Disable elements based on the value of addNewSurvey
+ */
+function addNewSurveyChanged(isSet) {
+	if(isSet) {
+		if(gCurrentQuery.forms && gCurrentQuery.forms.length > 0) {
+			$('.new_survey_only').show();
+		} else {
+			$('.new_survey_only').hide();
+		}	
+	} else {
+		$('.new_survey_only').hide();
+	}
+}
 /*
  * Load surveys for the current project
  */
@@ -216,6 +278,7 @@ function showSurveys(surveyList) {
 	}
 
 	$elem.empty().append(h.join(''));
+	getForms();
 }
 
 /*
@@ -276,6 +339,39 @@ function loadQueries() {
  		});	 
  }
 
+/*
+ * Save the queries and then update the query lists on this page
+ */	
+function saveQuery() {
+ 	
+ 	var url="/surveyKPI/query",
+ 		queryString = JSON.stringify(gCurrentQuery);
+
+ 	addHourglass();
+
+	$.ajax({
+		url: url,
+		type: "POST",
+		cache: false,
+		dataType: 'json',
+		data: { query: queryString },
+		success: function(data) {	
+			removeHourglass();
+			gQueries = data;
+			showQueries();
+
+		}, error: function(xhr, textStatus, err) {
+ 				
+ 			removeHourglass();
+ 			if(xhr.readyState == 0 || xhr.status == 0) {
+ 				return;  // Not an error
+ 			} else {
+ 				alert("Error: Failed to save queries: " + err);
+ 			}
+ 		}
+ 	});	 
+ }
+
 function showQueries() {
 	var i,
 		item,
@@ -302,7 +398,7 @@ function showQueries() {
 				h[++idx] = item.name;
 				h[++idx] = '</td>';
 				h[++idx] = '<td>';
-				h[++idx] = item.query;	// TODO replace with a human readable escription
+				h[++idx] = item.query;	// TODO replace with a human readable description
 				h[++idx] = '</td>';
 				
 				// actions
@@ -331,14 +427,60 @@ function showQueries() {
 	// Add response to clicking on the edit button
 	$(".edit_link", $elem).click(function(){
 		var idx = $(this).data("idx");
+		
 		gCurrentQuery = jQuery.extend(true, {}, gQueries[idx]);
 
-		$('#queryEditForm')[0].reset();
-		$('#query_name').val(gCurrentQuery.name);
+		updateFormEditor();
+
 		$('.querycontent,.querytoolbar').toggle();
 	});
 
 		
+}
+
+function updateFormEditor() {
+	
+	var i,
+		idx = -1;
+		h = [],
+		needSep = false,
+		sep = ", "
+	
+	$('#queryEditForm')[0].reset();
+	$('#query_name').val(gCurrentQuery.name);
+	
+	if(gCurrentQuery.forms) {
+		for(i = 0; i < gCurrentQuery.forms.length; i++) {
+			h[++idx] = '<tr>';
+				needSep = false;
+				h[++idx] = '<td>';	// Project / survey / form
+					if(gCurrentQuery.forms[i].project) {
+						h[++idx] =  gCurrentQuery.forms[i].project_name;
+						needSep = true;
+					}
+					if(gCurrentQuery.forms[i].survey) {
+						if(needSep) {
+							h[++idx] = sep;
+						}
+						h[++idx] = gCurrentQuery.forms[i].survey_name;
+						needSep = true;
+					}
+					if(gCurrentQuery.forms[i].form) {
+						if(needSep) {
+							h[++idx] = sep;
+						}
+						h[++idx] =  gCurrentQuery.forms[i].form_name;
+						needSep = true;
+					}
+				h[++idx] = '</td>';
+				h[++idx] = '<td></td>';		// Question
+				h[++idx] = '<td></td>';		// Link project / survey / form
+				h[++idx] = '<td></td>';		// Link Question
+				
+			h[++idx] = '</tr>';
+		}
+	}
+	$('#queryTable tbody').html(h.join(''));
 }
 
 });

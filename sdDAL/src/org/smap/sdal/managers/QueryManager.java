@@ -1,6 +1,7 @@
 package org.smap.sdal.managers;
 
 import java.io.FileOutputStream;
+import java.lang.reflect.Type;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -22,13 +23,16 @@ import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.Utilities.UtilityMethodsEmail;
 import org.smap.sdal.model.EmailServer;
+import org.smap.sdal.model.ExportForm;
 import org.smap.sdal.model.Notification;
 import org.smap.sdal.model.NotifyDetails;
 import org.smap.sdal.model.Organisation;
 import org.smap.sdal.model.Query;
+import org.smap.sdal.model.QueryForm;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
 
 /*****************************************************************************
 
@@ -73,6 +77,9 @@ public class QueryManager {
 				+ "order by query.name asc";
 		PreparedStatement pstmt = null;
 		
+		Gson gson=  new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
+		Type type = new TypeToken<ArrayList<QueryForm>>(){}.getType();
+
 		try {
 	
 			pstmt = sd.prepareStatement(sql);
@@ -83,7 +90,8 @@ public class QueryManager {
 				Query q = new Query();
 				q.id = rs.getInt(1);
 				q.name = rs.getString(2);
-				q.query = rs.getString(3);
+				String formsString = rs.getString(3);
+				q.forms = gson.fromJson(formsString, type);
 				
 				queries.add(q);
 			}

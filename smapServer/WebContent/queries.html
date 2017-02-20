@@ -149,11 +149,10 @@
 	                       				<table class="table" id="queryTable">
 	                       					<thead>
 	                       						<tr>
-	                        						<th class="lang" data-lang="c_survey">survey</th>
 	                        						<th class="lang" data-lang="c_form">Form</th>
 	                        						<th class="lang" data-lang="c_question">question</th>
-	                        						<th class="lang" data-lang="d_from_f">from form</th>
-	                        						<th class="lang" data-lang="d_from_q">from question</th>
+	                        						<th class="lang" data-lang="d_from_f">link form</th>
+	                        						<th class="lang" data-lang="d_from_q">link question</th>
 	                        						<th></th>	<!-- delete icon -->
 	                        					</tr>
 	                       					</thead>
@@ -161,7 +160,7 @@
 	                       					</tbody>
 	                       				</table>
 	                       			</div>
-	                       			<button type="button" class="lang" data-lang="d_add_f" id="addForm">add new form</button>
+	                       			<button type="button" class="lang btn btn-primary btn-block" data-lang="d_add_f" id="addForm">add new form</button>
 								</div>
 												
 	                        </div>
@@ -197,7 +196,7 @@
 						<div class="col-sm-offset-2 col-sm-10">
 							<div class="checkbox">
 								<label>
-									<input type="checkbox" id="select_existing" ><span data-lang="t_ns" class="lang">new survey</span>
+									<input type="checkbox" id="add_new_survey" ><span data-lang="t_ns" class="lang">new survey</span>
 								</label>
 							</div>
 						</div>
@@ -235,30 +234,30 @@
 					<div class="new_survey_p1_only well" style="display:none;">
 						
 						<div class="form-group">
-							<label for="exist_project" class="lang col-sm-2 control-label" data-lang="c_project">Project :</label>
+							<label for="link_project" class="lang col-sm-2 control-label" data-lang="c_project">Project :</label>
 							<div class="col-sm-10">
-								<select id="exist_project" class="project_list form-control"></select>
+								<select id="link_project" class="project_list form-control"></select>
 							</div>
 						</div>
 	
 						<div class="form-group">
-							<label for="exist_survey" class="lang col-sm-2 control-label" data-lang="c_survey">survey</label>
+							<label for="link_survey" class="lang col-sm-2 control-label" data-lang="c_survey">survey</label>
 							<div class="col-sm-10">
-								<select id="exist_survey" class="survey_select form-control"></select>
+								<select id="link_survey" class="survey_select form-control"></select>
 							</div>
 						</div>
 						
 						<div class="form-group">
-							<label for="exist_form" class="lang col-sm-2 control-label" data-lang="c_form">Form</label>
+							<label for="link_form" class="lang col-sm-2 control-label" data-lang="c_form">Form</label>
 							<div class="col-sm-10">
-								<select id="exist_form" class="form_select form-control"></select>
+								<select id="link_form" class="form_select form-control"></select>
 							</div>
 						</div>
 						
 						<div class="form-group">
-							<label for="new_question" class="lang col-sm-2 control-label" data-lang="c_question">question</label>
+							<label for="link_question" class="lang col-sm-2 control-label" data-lang="c_question">question</label>
 							<div class="col-sm-10">
-								<select id="new_question" class="form_select form-control"></select>
+								<select id="link_question" class="form_select form-control"></select>
 							</div>
 						</div>
 					</div>
