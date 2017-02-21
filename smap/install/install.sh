@@ -173,6 +173,9 @@ then
 		sudo chmod 664 $service_dir/subscribers.service
 		sudo cp config_files/subscribers_fwd.service $service_dir
 		sudo chmod 664 $service_dir/subscribers_fwd.service
+		
+		sudo systemctl enable subscribers.service
+		sudo systemctl enable subscribers_fwd.service
 	fi
 	
 	if [ $u1604 -eq 0 ]; then

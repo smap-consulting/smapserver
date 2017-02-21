@@ -16,7 +16,7 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 /*
- * Functions for manipulating a question in the editor
+ * Drawing a line chart
  */
 
 "use strict";
