@@ -362,7 +362,7 @@ public class GetXForm {
 						t.setEnabled(true);
 					}
 				} else {
-					log.info("Error in enableTranslationRef(): No types for:" + ref);
+					log.info("Info. enableTranslationRef(): No types for:" + ref);
 				}
 			}
 		}

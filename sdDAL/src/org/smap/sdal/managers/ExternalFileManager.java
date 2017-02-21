@@ -159,7 +159,7 @@ public class ExternalFileManager {
 			linked_sId = GeneralUtilityMethods.getSurveyId(sd, sIdent);
 			
 			// 2. Determine whether or not the file needs to be regenerated
-			log.info("Test for regenerate of file: " + f.getAbsolutePath() + " : " + f.exists());
+			log.info("Test for regenerate of file: " + f.getAbsolutePath() + " File exists: " + f.exists());
 			regenerate = regenerateFile(sd, cRel, linked_sId, sId, f.exists());
 			
 			// 3.Get columns from appearance
@@ -207,7 +207,7 @@ public class ExternalFileManager {
 				if(sqlDef.hasRbacFilter) {
 					paramCount = rm.setRbacParameters(pstmtData, sqlDef.rfArray, paramCount);
 				}
-				log.info("Get CSV data" + pstmtData.toString());
+				log.info("Get CSV data: " + pstmtData.toString());
 				
 				// 6. Create the file
 				if(linked_pd && non_unique_key) {
@@ -239,7 +239,6 @@ public class ExternalFileManager {
 					String currentDkv = null;		// Current value of the data key
 					String dkv = null;
 					while(rs.next()) {
-						
 						dkv = rs.getString("_data_key");
 						System.out.println("Data key: " + dkv);
 						if(dkv != null && !dkv.equals(currentDkv)) {
@@ -379,6 +378,8 @@ public class ExternalFileManager {
 				String table = rs.getString(2);
 				int previousCount = rs.getInt(3);
 				
+				log.info("Existing count found: " + previousCount);
+				
 				String sqlCount = "select count(*) from " + table;
 				int count = 0;
 				try {
@@ -394,8 +395,11 @@ public class ExternalFileManager {
 					tableExists = false;
 				}
 				
+				log.info("New count: " + count);
+				
 				if(count != previousCount) {
 					regenerate = true;
+					log.info("Regenerating because the new count does not match the old count");
 					
 					pstmtUpdate = sd.prepareStatement(sqlUpdate);
 					pstmtUpdate.setInt(1, count);
@@ -408,34 +412,44 @@ public class ExternalFileManager {
 				
 			} else {
 				// Create a new entry
+				
+				
 				String table = GeneralUtilityMethods.getMainResultsTable(sd, cRel, linked_sId);
-				String sqlCount = "select count(*) from " + table;
 				int count = 0;
-				try {
-					pstmtCount = cRel.prepareStatement(sqlCount);
-					log.info("Regenerate: " + pstmtCount.toString());
-					ResultSet rsCount = pstmtCount.executeQuery();
-					if(rsCount.next()) {
-						count = rsCount.getInt(1);
+				if(table != null) {
+					log.info("Creating a new count entry");
+					String sqlCount = "select count(*) from " + table;
+					try {
+						pstmtCount = cRel.prepareStatement(sqlCount);
+						log.info("Regenerate: " + pstmtCount.toString());
+						ResultSet rsCount = pstmtCount.executeQuery();
+						if(rsCount.next()) {
+							count = rsCount.getInt(1);
+						}
+						
+						pstmtInsert = sd.prepareStatement(sqlInsert);
+						pstmtInsert.setInt(1, linked_sId);
+						pstmtInsert.setString(2, table);
+						pstmtInsert.setInt(3, count);
+						pstmtInsert.setInt(4, linker_sId);
+						
+						log.info("Create new count entry: " + pstmtInsert.toString());
+						pstmtInsert.executeUpdate();
+						
+						regenerate = true;
+						log.info("Regenerating because we created a new count entry");
+						
+					} catch(Exception e) {
+						log.log(Level.SEVERE, "Table not found", e);
+						tableExists = false;
 					}
-				} catch(Exception e) {
-					// Table may not exist yet
-					log.info("Exception creating new count entry: " + e.getMessage());
+					
+				} else {
+					log.info("Table " + table + " not found. Probably no data has been submitted");
 					tableExists = false;
 				}
 				
-				if(count > 0) {
-					regenerate = true;
-					
-					pstmtInsert = sd.prepareStatement(sqlInsert);
-					pstmtInsert.setInt(1, linked_sId);
-					pstmtInsert.setString(2, table);
-					pstmtInsert.setInt(3, count);
-					pstmtInsert.setInt(4, linker_sId);
-					
-					log.info("Regenerate: " + pstmtInsert.toString());
-					pstmtInsert.executeUpdate();
-				}
+				
 				
 
 			}
