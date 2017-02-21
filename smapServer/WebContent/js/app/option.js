@@ -82,19 +82,23 @@ define([
 		/*
 		 * Set the filter type to custom if there are filters with a name other than _smap_cascade
 		 */
-		if(question.choice_filter && question.choice_filter.trim().length > 0) {
-			if(globals.gFilterArray.length > 0) {
-				filterType = "custom";
-			}
-			if(globals.gFilterArray.length === 1) {
-				if (globals.gFilterArray[0] === "_smap_cascade") {
-					filterType = "cascade";
+		if(question) {
+			$('.filter_only').show();
+
+			if(question.choice_filter && question.choice_filter.trim().length > 0) {
+				if(globals.gFilterArray.length > 0) {
+					filterType = "custom";
+				}
+				if(globals.gFilterArray.length === 1) {
+					if (globals.gFilterArray[0] === "_smap_cascade") {
+						filterType = "cascade";
+					}
 				}
 			}
+	
+			// Set the custom filter view by default
+			$('#filterType').val(filterType);
 		}
-
-		// Set the custom filter view by default
-		$('#filterType').val(filterType);
 		
 		return $cv;
 	}
@@ -261,7 +265,7 @@ define([
 						}
 						
 						// A control to select the filter type
-						h[++idx] = '<div class="form-group">';
+						h[++idx] = '<div class="form-group filter_only" style="display:none;">';
 							h[++idx] = '<label class="col-sm-2">';
 								h[++idx] = localise.set["c_filter"];
 							h[++idx] = '</label>';

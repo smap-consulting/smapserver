@@ -357,7 +357,9 @@ $(document).ready(function() {
 		$('.dropdown-toggle').parent().removeClass("open");
 		$('.navbar-collapse').removeClass("in");
 		
-		$('#i_ident').val(globals.model.survey.ident);		
+		$('#i_name').val(globals.model.survey.displayName);
+		$('#i_ident').val(globals.model.survey.ident);
+		$('#i_version').val(globals.model.survey.version);
 		$('#i_created').val(localTime(globals.model.survey.created));		
 		$('#i_based_on').val(globals.model.survey.basedOn);	
 		$('#i_table_names').val(tableNames);
@@ -839,6 +841,7 @@ function respondToEventsChoices($context) {
 		
 		$('.editorContent').toggle();
 		$('.notoptionslist').show();
+		refreshForm();
 	});
 	
 	$('#addFilter', $context).off().click(function() {
@@ -1265,7 +1268,7 @@ function respondToEvents($context) {
 		
 		respondToEventsChoices($context);
 		updateViewControls();
-		
+
 		/*
 		globals.gSelQuestionProperty = globals.gSelProperty;	// Restore selProperty and selLabel for options
 		globals.gSelProperty = globals.gSelChoiceProperty;
@@ -1868,7 +1871,7 @@ function mediaPropSelected($this) {
  * Add a new question after an add new question button identified by $this is selected
  */
 function addQuestion($this, type) {
-	var $context,						// Updated Html
+	var $context,						// Updated HTML
 		survey = globals.model.survey,
 		prop = $('#selProperty').val(),
 		qId,
@@ -2400,6 +2403,7 @@ function updateViewControls() {
 		$('.o_only').show();
 		globals.gSelLabel = $('#selProperty > li.o_only.default').text();
 	}
+	globals.gSelProperty = "label";
 	$('#propSelected').text(globals.gSelLabel);
 }
 
