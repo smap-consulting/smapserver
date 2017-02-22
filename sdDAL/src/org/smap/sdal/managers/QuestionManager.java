@@ -289,6 +289,7 @@ public class QuestionManager {
 				String nodeset_value = null;
 				String nodeset_label = null;
 				String cascade_instance = null;
+				
 				if(q.type.startsWith("select")) {
 					cascade_instance = GeneralUtilityMethods.cleanName(q.list_name, true, false, false);
 					nodeset = GeneralUtilityMethods.getNodesetFromChoiceFilter(q.choice_filter, cascade_instance);
@@ -843,6 +844,9 @@ public class QuestionManager {
 					}
 					
 				}
+				
+				SurveyManager sm = new SurveyManager();
+				sm.removeUnusedSurveyManifests(sd, sId);
 				
 			}
 			

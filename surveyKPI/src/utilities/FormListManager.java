@@ -5,6 +5,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.logging.Logger;
 
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
@@ -115,18 +116,9 @@ public class FormListManager {
 				fId = ef.parent;
 			}
 			
-			// Set survey level in reverse
+			Collections.reverse(formList);		// Reverse the order to parent then child
 		} finally  {
 			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}	
-		}
-		
-		for(int i = 0; i < formList.size(); i++) {
-			System.out.println("   Survey: " + formList.get(i).sId);
-			System.out.println("   Form: " + formList.get(i).fId);
-			System.out.println("   Question: " + formList.get(i).fromQuestionId);
-			System.out.println("   Table: " + formList.get(i).table);
-			System.out.println("   SurveyLevel: " + formList.get(i).surveyLevel);
-			System.out.println();
 		}
 		
 		return formList;

@@ -2665,7 +2665,7 @@ public class SurveyManager {
 	/*
 	 * Clean up the survey manifests removing any that are no longer used
 	 */
-	private void removeUnusedSurveyManifests(Connection sd, int sId) throws SQLException, Exception {
+	void removeUnusedSurveyManifests(Connection sd, int sId) throws SQLException, Exception {
 		
 		String sql = "select appearance, calculate from question "
 				+ "where f_id in (select f_id from form where s_id = ?) "

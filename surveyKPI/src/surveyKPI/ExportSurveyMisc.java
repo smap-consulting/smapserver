@@ -413,7 +413,7 @@ public class ExportSurveyMisc extends Application {
 					int code = 0;
 					String modifiedFormat = format;
 					if(format.equals("spss")) {
-						modifiedFormat = "stata";		// hAck to generate a zip file with a csv file
+						modifiedFormat = "stata";		// hack to generate a zip file with a csv file in it
 					}
 					Process proc = Runtime.getRuntime().exec(new String [] {"/bin/sh", "-c", "/smap_bin/getshape.sh " + 
 							database_name + " " +

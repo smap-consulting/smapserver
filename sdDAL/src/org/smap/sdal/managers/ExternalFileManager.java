@@ -127,15 +127,19 @@ public class ExternalFileManager {
 			if(filename.startsWith(PD_IDENT)) {
 				linked_pd = true;	
 				
-				int idx = filename.indexOf('_');
 				sIdent = filename.substring(PD_IDENT.length());
 				
 				pstmtPulldata = sd.prepareStatement(sqlPulldata);
 				pstmtPulldata.setInt(1, sId);
+				log.info("Get pulldata key from survey: " + pstmtPulldata.toString());
 				rs = pstmtPulldata.executeQuery();
 				if(rs.next()) {
 					Type type = new TypeToken<ArrayList<Pulldata>>(){}.getType();
 					pdArray = new Gson().fromJson(rs.getString(1), type); 
+					if(pdArray == null) {
+						throw new Exception("Pulldata definition not found for survey: " + sId + " and file " + filename + 
+								". Set the pulldata definition from the online editor file menu.");
+					}
 					for(int i = 0; i < pdArray.size(); i++) {
 						if(pdArray.get(i).survey.equals(sIdent)) {
 							data_key = pdArray.get(i).data_key;
