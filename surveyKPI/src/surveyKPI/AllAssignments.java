@@ -519,7 +519,7 @@ public class AllAssignments extends Application {
 		
 							QuestionInfo filterQuestion = null;
 							String filterSql = null;
-							if(as.filter != null) {
+							if(as.filter != null && as.filter.qId > 0) {
 								String fValue = null;
 								String fValue2 = null;
 								filterQuestion = new QuestionInfo(sId, as.filter.qId, connectionSD, false, as.filter.lang, urlprefix);

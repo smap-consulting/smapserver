@@ -826,7 +826,8 @@ CREATE TABLE public.linked_forms (
 	Linked_s_id integer REFERENCES survey(s_id) ON DELETE CASCADE,
 	linked_table text,
 	number_records integer,
-	linker_s_id integer REFERENCES survey(s_id) ON DELETE CASCADE
+	linker_s_id integer REFERENCES survey(s_id) ON DELETE CASCADE,
+	link_file text
 );
 ALTER TABLE public.linked_forms OWNER TO ws;
 

@@ -164,7 +164,7 @@ public class ExternalFileManager {
 			
 			// 2. Determine whether or not the file needs to be regenerated
 			log.info("Test for regenerate of file: " + f.getAbsolutePath() + " File exists: " + f.exists());
-			regenerate = regenerateFile(sd, cRel, linked_sId, sId, f.exists());
+			regenerate = regenerateFile(sd, cRel, linked_sId, sId, f.exists(), f.getAbsolutePath());
 			
 			// 3.Get columns from appearance
             if(regenerate) {
@@ -291,9 +291,7 @@ public class ExternalFileManager {
 					
 		            log.info("Process exitValue: " + code);
 				}
-	            
-				// 7. Update the version of the survey that links to this file
-	            GeneralUtilityMethods.updateVersion(sd, sId);			
+	            			
             }
             
 			
@@ -346,21 +344,23 @@ public class ExternalFileManager {
 			Connection cRel,
 			int linked_sId, 
 			int linker_sId,
-			boolean fileExists) throws SQLException {
+			boolean fileExists,
+			String filepath) throws SQLException {
         
 		boolean regenerate = false;
 		boolean tableExists = true;
 		
 		String sql = "select id, linked_table, number_records from linked_forms "
 				+ "where linked_s_id = ? "
-				+ "and linker_s_id = ?;";
+				+ "and linker_s_id = ? "
+				+ "and link_file = ?;";
 		PreparedStatement pstmt = null;
 		
 		PreparedStatement pstmtCount = null;
 		
 		String sqlInsert = "insert into linked_forms "
-				+ "(Linked_s_id, linked_table, number_records,linker_s_id) "
-				+ "values(?, ?, ?, ?)";
+				+ "(Linked_s_id, linked_table, number_records,linker_s_id, link_file) "
+				+ "values(?, ?, ?, ?, ?)";
 		PreparedStatement pstmtInsert = null;
 		
 		String sqlUpdate = "update linked_forms "
@@ -374,6 +374,7 @@ public class ExternalFileManager {
 			pstmt = sd.prepareStatement(sql);
 			pstmt.setInt(1, linked_sId);
 			pstmt.setInt(2, linker_sId);
+			pstmt.setString(3, filepath);
 			log.info("Get existing count info: " + pstmt.toString());
 			
 			ResultSet rs = pstmt.executeQuery();
@@ -417,7 +418,6 @@ public class ExternalFileManager {
 			} else {
 				// Create a new entry
 				
-				
 				String table = GeneralUtilityMethods.getMainResultsTable(sd, cRel, linked_sId);
 				int count = 0;
 				if(table != null) {
@@ -436,6 +436,7 @@ public class ExternalFileManager {
 						pstmtInsert.setString(2, table);
 						pstmtInsert.setInt(3, count);
 						pstmtInsert.setInt(4, linker_sId);
+						pstmtInsert.setString(5, filepath);
 						
 						log.info("Create new count entry: " + pstmtInsert.toString());
 						pstmtInsert.executeUpdate();
@@ -451,10 +452,7 @@ public class ExternalFileManager {
 				} else {
 					log.info("Table " + table + " not found. Probably no data has been submitted");
 					tableExists = false;
-				}
-				
-				
-				
+				}		
 
 			}
 		} finally {

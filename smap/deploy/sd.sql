@@ -651,3 +651,12 @@ alter table organisation add column ft_review_final boolean default true;
 
 -- Upgrade to 17.01
 alter table survey add column pulldata text;
+alter table linked_forms add column link_file text;
+delete from linked_forms where linked_s_id not in (select s_id from survey);
+alter table linked_forms add constraint lf_survey1 FOREIGN KEY (linked_s_id)
+	REFERENCES survey (s_id) MATCH SIMPLE
+	ON UPDATE NO ACTION ON DELETE CASCADE;
+delete from linked_forms where linker_s_id not in (select s_id from survey);
+alter table linked_forms add constraint lf_survey2 FOREIGN KEY (linker_s_id)
+	REFERENCES survey (s_id) MATCH SIMPLE
+	ON UPDATE NO ACTION ON DELETE CASCADE;
