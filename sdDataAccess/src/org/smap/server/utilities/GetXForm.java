@@ -362,7 +362,7 @@ public class GetXForm {
 						t.setEnabled(true);
 					}
 				} else {
-					log.info("Error in enableTranslationRef(): No types for:" + ref);
+					log.info("Info. enableTranslationRef(): No types for:" + ref);
 				}
 			}
 		}
@@ -826,7 +826,7 @@ public class GetXForm {
 		String nodeset = q.getNodeset(true, template.getQuestionPaths());
 		
 		// Add the itemset
-		if(nodeset != null) {
+		if(nodeset != null && !GeneralUtilityMethods.isExternalChoices(q.getAppearance(true, template.getQuestionPaths()))) {
 			cascade = true;
 			Element isElement = outputXML.createElement("itemset");
 			isElement.setAttribute("nodeset", nodeset);			

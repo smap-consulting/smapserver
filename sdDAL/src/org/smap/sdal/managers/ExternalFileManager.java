@@ -126,15 +126,19 @@ public class ExternalFileManager {
 			if(filename.startsWith(PD_IDENT)) {
 				linked_pd = true;	
 				
-				int idx = filename.indexOf('_');
 				sIdent = filename.substring(PD_IDENT.length());
 				
 				pstmtPulldata = sd.prepareStatement(sqlPulldata);
 				pstmtPulldata.setInt(1, sId);
+				log.info("Get pulldata key from survey: " + pstmtPulldata.toString());
 				rs = pstmtPulldata.executeQuery();
 				if(rs.next()) {
 					Type type = new TypeToken<ArrayList<Pulldata>>(){}.getType();
 					pdArray = new Gson().fromJson(rs.getString(1), type); 
+					if(pdArray == null) {
+						throw new Exception("Pulldata definition not found for survey: " + sId + " and file " + filename + 
+								". Set the pulldata definition from the online editor file menu.");
+					}
 					for(int i = 0; i < pdArray.size(); i++) {
 						if(pdArray.get(i).survey.equals(sIdent)) {
 							data_key = pdArray.get(i).data_key;
@@ -158,8 +162,8 @@ public class ExternalFileManager {
 			linked_sId = GeneralUtilityMethods.getSurveyId(sd, sIdent);
 			
 			// 2. Determine whether or not the file needs to be regenerated
-			log.info("Test for regenerate of file: " + f.getAbsolutePath() + " : " + f.exists());
-			regenerate = regenerateFile(sd, cRel, linked_sId, sId, f.exists());
+			log.info("Test for regenerate of file: " + f.getAbsolutePath() + " File exists: " + f.exists());
+			regenerate = regenerateFile(sd, cRel, linked_sId, sId, f.exists(), f.getAbsolutePath());
 			
 			// 3.Get columns from appearance
             if(regenerate) {
@@ -206,7 +210,7 @@ public class ExternalFileManager {
 				if(sqlDef.hasRbacFilter) {
 					paramCount = rm.setRbacParameters(pstmtData, sqlDef.rfArray, paramCount);
 				}
-				log.info("Get CSV data" + pstmtData.toString());
+				log.info("Get CSV data: " + pstmtData.toString());
 				
 				// 6. Create the file
 				if(linked_pd && non_unique_key) {
@@ -286,9 +290,7 @@ public class ExternalFileManager {
 					
 		            log.info("Process exitValue: " + code);
 				}
-	            
-				// 7. Update the version of the survey that links to this file
-	            GeneralUtilityMethods.updateVersion(sd, sId);			
+	            			
             }
             
 			
@@ -341,21 +343,23 @@ public class ExternalFileManager {
 			Connection cRel,
 			int linked_sId, 
 			int linker_sId,
-			boolean fileExists) throws SQLException {
+			boolean fileExists,
+			String filepath) throws SQLException {
         
 		boolean regenerate = false;
 		boolean tableExists = true;
 		
 		String sql = "select id, linked_table, number_records from linked_forms "
 				+ "where linked_s_id = ? "
-				+ "and linker_s_id = ?;";
+				+ "and linker_s_id = ? "
+				+ "and link_file = ?;";
 		PreparedStatement pstmt = null;
 		
 		PreparedStatement pstmtCount = null;
 		
 		String sqlInsert = "insert into linked_forms "
-				+ "(Linked_s_id, linked_table, number_records,linker_s_id) "
-				+ "values(?, ?, ?, ?)";
+				+ "(Linked_s_id, linked_table, number_records,linker_s_id, link_file) "
+				+ "values(?, ?, ?, ?, ?)";
 		PreparedStatement pstmtInsert = null;
 		
 		String sqlUpdate = "update linked_forms "
@@ -369,6 +373,7 @@ public class ExternalFileManager {
 			pstmt = sd.prepareStatement(sql);
 			pstmt.setInt(1, linked_sId);
 			pstmt.setInt(2, linker_sId);
+			pstmt.setString(3, filepath);
 			log.info("Get existing count info: " + pstmt.toString());
 			
 			ResultSet rs = pstmt.executeQuery();
@@ -376,6 +381,8 @@ public class ExternalFileManager {
 				int id = rs.getInt(1);
 				String table = rs.getString(2);
 				int previousCount = rs.getInt(3);
+				
+				log.info("Existing count found: " + previousCount);
 				
 				String sqlCount = "select count(*) from " + table;
 				int count = 0;
@@ -392,8 +399,11 @@ public class ExternalFileManager {
 					tableExists = false;
 				}
 				
+				log.info("New count: " + count);
+				
 				if(count != previousCount) {
 					regenerate = true;
+					log.info("Regenerating because the new count does not match the old count");
 					
 					pstmtUpdate = sd.prepareStatement(sqlUpdate);
 					pstmtUpdate.setInt(1, count);
@@ -406,9 +416,11 @@ public class ExternalFileManager {
 				
 			} else {
 				// Create a new entry
+				
 				String table = GeneralUtilityMethods.getMainResultsTable(sd, cRel, linked_sId);
 				int count = 0;
 				if(table != null) {
+					log.info("Creating a new count entry");
 					String sqlCount = "select count(*) from " + table;
 					try {
 						pstmtCount = cRel.prepareStatement(sqlCount);
@@ -423,36 +435,23 @@ public class ExternalFileManager {
 						pstmtInsert.setString(2, table);
 						pstmtInsert.setInt(3, count);
 						pstmtInsert.setInt(4, linker_sId);
+						pstmtInsert.setString(5, filepath);
 						
-						log.info("Regenerate: " + pstmtInsert.toString());
+						log.info("Create new count entry: " + pstmtInsert.toString());
 						pstmtInsert.executeUpdate();
+						
+						regenerate = true;
+						log.info("Regenerating because we created a new count entry");
 						
 					} catch(Exception e) {
 						log.log(Level.SEVERE, "Table not found", e);
 						tableExists = false;
 					}
 					
-					if(count > 0) {
-						regenerate = true;
-					}
 				} else {
 					log.info("Table " + table + " not found. Probably no data has been submitted");
 					tableExists = false;
-				}
-				
-				if(count > 0) {
-					regenerate = true;
-					
-					pstmtInsert = sd.prepareStatement(sqlInsert);
-					pstmtInsert.setInt(1, linked_sId);
-					pstmtInsert.setString(2, table);
-					pstmtInsert.setInt(3, count);
-					pstmtInsert.setInt(4, linker_sId);
-					
-					log.info("Regenerate: " + pstmtInsert.toString());
-					pstmtInsert.executeUpdate();
-				}
-				
+				}		
 
 			}
 		} finally {

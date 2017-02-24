@@ -632,7 +632,11 @@ define([
 			h[++idx] = '</div>';		// End of row
 
 		} else {
-			h[++idx] = '<textarea class="labelProp has_tt" title="';
+			h[++idx] = '<textarea class="labelProp has_tt';
+			if(question.type === 'calculate') {
+				h[++idx] = ' calculate';
+			}
+			h[++idx] = '" title="';
 			if(question.type === 'calculate') {
 				h[++idx] = 'Add calculation here';
 			} else {

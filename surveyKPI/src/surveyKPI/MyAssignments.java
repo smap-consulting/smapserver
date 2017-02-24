@@ -389,20 +389,25 @@ public class MyAssignments extends Application {
 						newManifestFile = true;
 					}
 				}
-
+				
 				
 				FormLocator fl = new FormLocator();
 				fl.ident = resultSet.getString("ident");
 				fl.version = resultSet.getInt("version");
-				if(newManifestFile) {
-					// The version of the form will have been incremented
-					fl.version++;
-				}
 				fl.name = resultSet.getString("display_name");
 				fl.project = resultSet.getString("name");
 				fl.pid = resultSet.getInt("pid");
 				fl.tasks_only = resultSet.getBoolean("tasks_only");
 				fl.hasManifest = translationMgr.hasManifest(connectionSD, userName, sId);
+				
+				// If a new manifest was created then increase the version of this file so that it will be requested again by clients
+	            if(newManifestFile) {
+	            	//GeneralUtilityMethods.updateVersion(connectionSD, sId);	// Temporary - should rely on dirty flag to force refresh
+	            	//fl.version++;		
+	            	fl.dirty = true;
+	            } else {
+	            	fl.dirty = false;
+	            }	
 				
 				tr.forms.add(fl);
 			}

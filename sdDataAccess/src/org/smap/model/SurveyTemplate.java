@@ -1302,12 +1302,14 @@ public class SurveyTemplate {
 					String cascadeName = null;
 					String label = q.getNodesetLabel();
 					String nodeset = null;
+					boolean isExternal = false;
 					try {
 						nodeset = q.getNodeset(false, null);
+						isExternal = GeneralUtilityMethods.isExternalChoices(q.getAppearance(true, getQuestionPaths()));
 					} catch (Exception e) {
 						
 					}
-					if(listName != null && label != null) {
+					if(listName != null && label != null && !isExternal) { 
 						
 						/*
 						 * If this survey was loaded from xlsForm then the list name will not be the same as the

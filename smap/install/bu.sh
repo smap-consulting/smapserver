@@ -1,4 +1,7 @@
 #!/bin/sh
+export PATH=/usr/local/bin:$PATH
+export HOME=/var/lib/postgresql
+
 # back up the databases on this host
 file="smap_bu.tgz"
 final_file="`cat ~ubuntu/hostname`-`date +\%Y-\%m-\%d`-smap_bu.tgz.gpg"

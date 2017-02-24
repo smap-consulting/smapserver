@@ -10,4 +10,5 @@ public class FormLocator {
 	public String url;
 	public String manifestUrl;
 	public boolean hasManifest;
+	public boolean dirty;	// Set true if the manifest has been updated and the client should refresh
 }

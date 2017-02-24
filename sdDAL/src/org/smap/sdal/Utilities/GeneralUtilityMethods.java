@@ -3902,6 +3902,18 @@ public class GeneralUtilityMethods {
 		}
 		
 		return lt;
+	/*
+	 * Return true if the appearance value indicates that there are external choices in this
+	 * question
+	 */
+	public static boolean isExternalChoices(String appearance) {
+		boolean external = false;
+		
+		if(appearance != null && appearance.toLowerCase().trim().contains("search(")) {
+			external = true;
+		}
+		
+		return external;
 	}
 
 }

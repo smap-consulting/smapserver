@@ -454,6 +454,14 @@ textarea {
 	height: 60px;
 }
 
+#formList textarea[data-prop="label"] {
+	background-color: #cbeeff;
+}
+
+#formList textarea.calculate {
+	background-color: #fef33e; !important
+}
+
 .fileupload-progress > .progress {
 	margin-bottom: 0px;	
 }
@@ -690,4 +698,6 @@ td.completed, td.submitted {
   stroke: #fff;
   stroke-width: 1.5px;
 }
+
+
 
