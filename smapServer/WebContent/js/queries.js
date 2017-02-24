@@ -84,7 +84,8 @@ require([
 window.moment = moment;
 
 var gQueries,
-	gCurrentQuery;
+	gCurrentQuery,
+	gCurrentFormNewSurvey;
 
 'use strict';
 
@@ -179,7 +180,7 @@ $(document).ready(function() {
 	 * Add a form to a query
 	 */
 	$('#addForm').click(function(){
-		setAddNewSurvey();
+		setAddNewForm();
 		$('#add_form_popup').modal("show");
 	});
 
@@ -194,9 +195,17 @@ $(document).ready(function() {
 	
 	/*
 	 * Save a new form
+	 * Rules:  
+	 *   1) Each new form must produce only a single record for each value of the existing form it is attached to
+	 *   	a) For forms in the same survey this is established through the parent hierarchy
+	 *   	b) For forms in a different survey this can be tested against data - maybe have a validate query option
+	 *   2) When you add a form into an existing survey the links need to be recalculated
+	 *   	For example a -> b -> c  a is is added first, then c, when b is added the links are rechecked
+	 * 
 	 */
 	$('#addFormSave').click(function() {
-		var form = {};
+		var form = {},
+			valid = true;
 		
 		form.project = $('#new_project').val();
 		form.project_name = $('#new_project option:selected').text();
@@ -209,16 +218,43 @@ $(document).ready(function() {
 		
 		form.question = $('#new_question').val();
 		
-		form.link_project = $('#link_project').val();
-		form.link_survey = $('#link_survey').val();
-		form.link_form = $('#elink_form').val();
-		form.link_question = $('#link_question').val();
+		// If this is a new survey for the query then add the linking data
+		if(gCurrentFormNewSurvey) {
+			form.link_project = $('#link_project').val();
+			form.link_survey = $('#link_survey').val();
+			form.link_form = $('#elink_form').val();
+			form.link_question = $('#link_question').val();
+		}
 		
 		if(!gCurrentQuery.forms) {
 			gCurrentQuery.forms = [];
 		}
+		
+		if(valid === true) {
+			if(gCurrentQuery.forms.length > 0) {
+				for(i = 0; i < gCurrentQuery.forms.length; i++) {
+					// validate that the form has not already been added
+					if(gCurrentQuery.forms[i].form === form.form) {
+						valid = false;
+						msg = localise.set["msg_dup_f"];
+						break;
+					}
+				}
+			}
+		}
+		
+		// Show an error if validation failed
+		if(!valid) {
+			$('.add_form_msg').show().addClass('alert-danger').removeClass('alert-success').html(msg);
+			return;
+		}
+		
+		
+		
+
 		gCurrentQuery.forms.push(form);
 		updateFormEditor();
+		$('#add_form_popup').modal("hide");
 	});
 	
 });
@@ -226,16 +262,19 @@ $(document).ready(function() {
 /*
  * Set the addNewSurvey checkbox to its initial value
  */
-function setAddNewSurvey() {
+function setAddNewForm() {
 	
 	var on = false;
 	
-	if(!gCurrentQuery.forms  || gCurrentQuery.forms.length == 0) {
-		on = true;
-	} else {
+	//if(!gCurrentQuery.forms  || gCurrentQuery.forms.length == 0) {
+	//	on = true;
+	//} else {
 		// TODO set on if all forms in the survey list have been selected
-	}
-	$('#add_new_survey').prop('checked', on);
+	//}
+	//$('#add_new_survey').prop('checked', on);
+	
+	gCurrentFormNewSurvey = false;
+	$('.add_form_msg').hide();
 	addNewSurveyChanged(on);
 }
 

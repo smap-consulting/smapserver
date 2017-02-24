@@ -361,6 +361,7 @@ define({
 	"msg_not_f": "was not found",
 	"msg_ren": "renamed to",
 	"msg_nq": "You have no queries defined, use the 'add query' button to add one",
+	"msg_dup_f": "This form is already in the query",
 	
 	// Editor
 	"e_b_e": "Base on existing form",
