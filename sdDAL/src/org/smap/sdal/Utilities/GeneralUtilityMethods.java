@@ -3902,6 +3902,8 @@ public class GeneralUtilityMethods {
 		}
 		
 		return lt;
+	}
+	
 	/*
 	 * Return true if the appearance value indicates that there are external choices in this
 	 * question

@@ -278,7 +278,7 @@ $(document).ready(function() {
 	  * Get the user details so we have the default project
 	  * Then load the available projects for the user and load the panels for the default project
 	  */
-	getLoggedInUser(getPanels, false, true);
+	getLoggedInUser(loggedInUserIdentified, false, true);
 	
 	// Set change function on projects
 	$('#project_name').change(function() {
@@ -297,6 +297,11 @@ $(document).ready(function() {
 	enableUserProfile();
 	
 });
+
+function loggedInUserIdentified(projectId) {
+	getPanels(projectId);
+	getQueries(true);		// Get Queries accessible to this user including ones published by others
+}
 
 /*
  * Remove any text enclosed in brackets ( ), this is assumed to be hints to the enumerator

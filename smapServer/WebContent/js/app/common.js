@@ -644,6 +644,54 @@ function getLoggedInUser(callback, getAll, getProjects, getOrganisationsFn, hide
 }
 
 /*
+ * Get the users queries
+ */
+function getQueries(published) {
+ 	
+	var url="/surveyKPI/query" + (published ? "?published=true" : "");
+
+ 	addHourglass();
+
+	$.ajax({
+		url: url,
+		dataType: 'json',
+		cache: false,
+		success: function(data) {
+ 			var h = [],
+ 				idx = -1,
+ 				i,
+ 				item,
+ 				$elem = $('#export_query');
+ 				
+			removeHourglass();
+			
+			if(data && data.length > 0) {
+				for(i = 0; i < data.length; i++) {
+					item = data[i];
+					h[++idx] = '<option value="';
+					h[++idx] = item.id;
+					h[++idx] = '">';
+					h[++idx] = '<td>';
+					h[++idx] = item.name;	
+					h[++idx] = '</option>';
+				}
+			}
+			
+			$elem.html(h.join(''));
+			
+		}, error: function(xhr, textStatus, err) {
+ 				
+ 				removeHourglass();
+ 				if(xhr.readyState == 0 || xhr.status == 0) {
+ 		              return;  // Not an error
+ 				} else {
+ 					alert("Error: Failed to get list of queriess: " + err);
+ 				}
+ 			}
+ 		});	 
+}
+
+/*
  * ===============================================================
  * Common functions for managing media (on both the edit page and shared resource page)
  * ===============================================================

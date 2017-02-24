@@ -386,7 +386,8 @@ function exportExtendedChanged() {
 		
 		if(expExtended) {
 			
-			$('.showextselect').show();
+			$('.selectquery').show();
+			$('.selectsurvey').hide();
 			$('.showshape').hide();
 			sMeta = globals.gSelector.getSurveyExtended(sId);
 			if(!sMeta) {
@@ -397,7 +398,8 @@ function exportExtendedChanged() {
 		} else {
 			
 			$('.showshape').show();
-			$('.showextselect').hide();
+			$('.selectquery').hide();
+			$('.selectsurvey').show();
 			
 		}
 	});
@@ -411,32 +413,32 @@ function setExportControls() {
 	$('#export').next().find("button:contains('Export')").removeClass("ui-state-disabled");
 	
 	if(format === "osm") {
-		$('.showshape,.showspreadsheet,.showxls,.showthingsat,.showtrail, .showmedia, .showlqas, .showext, .showextselect').hide();
-		$('.showosm,.showro,.showlang').show();
+		$('.showshape,.showspreadsheet,.showxls,.showthingsat,.showtrail, .showmedia, .showlqas, .showquery, .selectquery').hide();
+		$('.showosm,.showro,.showlang, selectsurvey').show();
 	} else if(format === "shape" || format === "kml" || format === "vrt" || format === "csv") {
 		$('.showspreadsheet,.showxls,.showosm,.showthingsat, .showmedia, .showlqas').hide();
-		$('.showshape,.showro,.showlang, .showext').show();
+		$('.showshape,.showro,.showlang, .showquery').show();
 	} else if(format === "stata" || format === "spss") {
-		$('.showxls,.showosm,.showthingsat, .showmedia, .showlqas, .showext, showextselect').hide();
-		$('.showshape,.showspreadsheet,.showro,.showlang').show();
+		$('.showxls,.showosm,.showthingsat, .showmedia, .showlqas, .showquery, .selectquery').hide();
+		$('.showshape,.showspreadsheet,.showro,.showlang, .selectsurvey').show();
 	} else if(format === "thingsat") {
-		$('.showxls,.showosm, .showmedia, .showlqas, .showext, showextselect').hide();
-		$('.showshape,.showspreadsheet,.showro,.showlang').show();
+		$('.showxls,.showosm, .showmedia, .showlqas, .showquery, .selectquery').hide();
+		$('.showshape,.showspreadsheet,.showro,.showlang, .selectsurvey').show();
 		showModel();			// Show the thingsat model
 	} else if(format === "trail") {
-		$('.showxls,.showosm,.showro,.showlang,.showthingsat, .showmedia, .showlqas, .showext, .showextselect').hide();
-		$('.showshape,.showspreadsheet').show();
+		$('.showxls,.showosm,.showro,.showlang,.showthingsat, .showmedia, .showlqas, .showquery, .selectquery').hide();
+		$('.showshape,.showspreadsheet, .selectsurvey').show();
 	} else if(format === "media") {
-		$('.showshape, .showxls,.showosm,.showro,.showlang,.showthingsat,.showmedia, .showlqas, .showext, .showextselect').hide();
-		$('.showspreadsheet,.showmedia, .showlang').show();
+		$('.showshape, .showxls,.showosm,.showro,.showlang,.showthingsat,.showmedia, .showlqas, .showquery, .selectsurvey').hide();
+		$('.showspreadsheet,.showmedia, .showlang, selectquery').show();
 	} else if(format === "lqas") {
-		$('.showshape, .showxls,.showosm,.showro,.showlang,.showthingsat,.showmedia, .showlqas, .showext, .showextselect').hide();
-		$('.showlqas').show();
+		$('.showshape, .showxls,.showosm,.showro,.showlang,.showthingsat,.showmedia, .showlqas, .showquery, .selectquery').hide();
+		$('.showlqas, .selectsurvey').show();
 		getReports(showReportList, undefined, "lqas");
 		
 	} else {
-		$('.showshape,.showspreadsheet,.showxls,.showosm,.showthingsat, .showmedia, .showlqas, .showext, .showextselect').hide();
-		$('.showxls,.showspreadsheet,.showro,.showlang').show();
+		$('.showshape,.showspreadsheet,.showxls,.showosm,.showthingsat, .showmedia, .showlqas, .showquery, .selectquery').hide();
+		$('.showxls,.showspreadsheet,.showro,.showlang, .selectsurvey').show();
 	}
 }
 

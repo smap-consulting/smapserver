@@ -100,6 +100,7 @@ public class Queries extends Application {
 	@GET
 	@Produces("application/json")
 	public Response getQueries(
+			@QueryParam("published") boolean published,	// Include queries not owned by user but accessible (TODO)
 			@Context HttpServletRequest request
 			) throws IOException {
 		

@@ -275,7 +275,7 @@ define({
 	"a_rd": "Report Definition",
 	"a_embed": "Embed Images in Excel File",
 	"a_hxl": "HXL",
-	"a_ext": "Show linked surveys",
+	"a_query": "Select a query",
 	"a_fn": "Function",
 	
 	

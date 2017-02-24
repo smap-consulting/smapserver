@@ -120,8 +120,21 @@
 	<div id="export" title="Export Results" style="display:none;">
 		<form>
 			<fieldset class="ui-widget-content">
-				<label for="export_survey" class="lang" data-lang="c_survey">survey</label>
-				<select id="export_survey"></select>
+				
+				<div class="showquery" style="display:none;">
+					<label for="extendedSelect" class="lang" data-lang="a_query">export queries</label>
+					<input type="checkbox" id="exportExtended"/>
+				</div>
+				
+				<div class="selectsurvey">
+					<label for="export_survey" class="lang" data-lang="c_survey">survey</label>
+					<select id="export_survey"></select>
+				</div>
+			
+				<div class="selectquery" style="display:none;">
+					<label for="export_query" class="lang" data-lang="m_query">queries</label>
+					<select id="export_query"></select>
+				</div>			
 
 				<label for="exportformat" class="lang" data-lang="c_type">type</label>
 				<select id="exportformat">
@@ -138,8 +151,9 @@
 					<option value="thingsat">Thingsat</option>
 				</select>
 			</fieldset><br/>
-			<fieldset class="ui-widget-content">
-				<div class="showspreadsheet">
+			
+			<div class="showspreadsheet">
+				<fieldset class="ui-widget-content">
 					<div class="showxls">	
 						<label for="export_xlstype" class="lang" data-lang="c_xlstype">xls</label>
 						<select id="export_xlstype">
@@ -168,21 +182,10 @@
 						<label for="embedImages" class="lang" data-lang="a_hxl">hxl:</label>	
 						<input type="checkbox" id="incHxl"/>
 					</div>
-					
-				</div>
 
-			</fieldset><br/>		
+				</fieldset><br/>
+			</div>		
 			
-			<!--
-			<div class="showro">	
-				<label for="exportReadOnly" class="lang" data-lang="a_exp_notes">Export notes:</label>
-				<input type="checkbox" id="exportReadOnly"/>
-			</div>
-			-->
-			<div class="showext" style="display:none;">
-				<label for="extendedSelect" class="lang" data-lang="a_ext">linked surveys</label>
-				<input type="checkbox" id="exportExtended"/>
-			</div>
 			<div class="showosm" style="display:none;">
 				<fieldset class="ui-widget-content">
 					<legend class="ui-widget-header ui-corner-all lang" data-lang="a_sel_ways">Select ways (if any):</legend>
@@ -201,9 +204,11 @@
 					<div class="shapeforms"></div>
 				</fieldset>
 			</div>
+			<!-- 
 			<div class="showextselect" style="display:none;">
 				<div style="width: 100%; height:400px;" id="extsvg"></div>
 			</div>
+			-->
 			<div class="showmedia" style="display:none;">
 				<fieldset class="ui-widget-content">
 					<legend class="ui-widget-header ui-corner-all lang" data-lang="msg_sel_media">Select Media:</legend>
