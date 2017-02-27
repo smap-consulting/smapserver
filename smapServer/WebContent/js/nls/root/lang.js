@@ -256,6 +256,7 @@ define({
 	"a_exp_merge": "Compress select multiples:",
 	"a_sel_ways": "Select ways (if any):",
 	"a_sel_forms": "Select forms to include:",
+	"a_sel_query": "There aare no queries to export.  You will need to create one using the queries menu in the dashboard module",
 	"a_sel_model": "Edit survey model",
 	"a_type": "Chart Type",
 	"a_showon": "Show on",
