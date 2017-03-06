@@ -1441,6 +1441,7 @@ function isBusinessServer() {
 			hostname.indexOf('reachnettechnologies.com') < 0 &&
 			hostname.indexOf('blueoakenergy.com') < 0 &&
 			hostname.indexOf('.icanreach.com') < 0 &&
+			hostname.indexOf('encontactone.com') < 0 &&
 			hostname.indexOf('10.0') != 0) {
 		bs = false;
 		$('.bus_only').hide();
@@ -1462,6 +1463,7 @@ function isSelfRegistrationServer() {
 			hostname !== 'sg.smap.com.au' &&
 			hostname.indexOf('reachnettechnologies.com') < 0 &&
 			hostname.indexOf('.icanreach.com') < 0 &&
+			hostname.indexOf('encontactone.com') < 0 &&
 			hostname !== 'app.kontrolid.com') {
 		sr = false;
 	}

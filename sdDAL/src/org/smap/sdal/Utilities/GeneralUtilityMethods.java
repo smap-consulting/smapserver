@@ -299,6 +299,7 @@ public class GeneralUtilityMethods {
 				!host.endsWith("reachnettechnologies.com") &&
 				!host.endsWith("blueoakenergy.com") &&
 				!host.endsWith(".icanreach.com") &&
+				!host.endsWith("encontactone.com") &&
 				!host.endsWith(".kontrolid.com") &&
 				!host.endsWith(".smap.com.au")) {
 			businessServer = false;;
@@ -316,6 +317,7 @@ public class GeneralUtilityMethods {
 				!host.equals("localhost") &&
 				!host.endsWith("reachnettechnologies.com") &&
 				!host.endsWith("datacollect.icanreach.com") &&
+				!host.endsWith("encontactone.com") &&
 				!host.equals("app.kontrolid.com")) {
 			
 			log.info("Self registration check failed: " + host);
