@@ -592,7 +592,7 @@ public class SurveyTemplate {
 		int options = 0;
 	}
 	
-	public ArrayList multipleGeoms() {
+	public ArrayList<String> multipleGeoms() {
 		HashMap <String, FormDesc> forms = new HashMap <String, FormDesc> ();
 		ArrayList<String> badForms = new ArrayList<String> ();
 		
@@ -685,20 +685,22 @@ public class SurveyTemplate {
 		for (Question q : questionList) {
 			String qName = q.getName();
 			
-			Form f = getForm(q.getFormRef());
-			String fName = null;
-			if(f != null) {
-				fName = f.getName();
-			} else {
-				fName = "_topLevelForm";
-			}
-			
-			String existingQuestion = questionMap.get(qName.trim().toLowerCase());
-			if(existingQuestion != null) {
-				badNames.add(qName + " in forms(" + fName + "," + existingQuestion + ")");
-				System.out.println("Duplicate Question:" + qName + " in form:" + fName);
-			} else {
-				questionMap.put(qName.trim().toLowerCase(), fName);
+			if(!qName.equals("the_geom")) {
+				Form f = getForm(q.getFormRef());
+				String fName = null;
+				if(f != null) {
+					fName = f.getName();
+				} else {
+					fName = "_topLevelForm";
+				}
+				
+				String existingQuestion = questionMap.get(qName.trim().toLowerCase());
+				if(existingQuestion != null) {
+					badNames.add(qName + " in forms(" + fName + "," + existingQuestion + ")");
+					System.out.println("Duplicate Question:" + qName + " in form:" + fName);
+				} else {
+					questionMap.put(qName.trim().toLowerCase(), fName);
+				}
 			}
 			
 		}

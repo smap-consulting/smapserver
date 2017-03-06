@@ -297,7 +297,7 @@ public class TemplateUpload extends Application {
 			model.getSurvey().setLoadedFromXls(resp.isXls);
 			
 			// If there is more than one geom per form or too many questions then throw an error
-			ArrayList formsWithError = null;
+			ArrayList<String> formsWithError = null;
 			if((formsWithError = model.multipleGeoms()).size() > 0) {		
 				String mesg = "";
 				for(int i = 0; i < formsWithError.size(); i++) {

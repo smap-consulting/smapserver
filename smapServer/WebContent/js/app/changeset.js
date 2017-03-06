@@ -935,6 +935,7 @@ define([
 							// We moved a question thats in the change queue
 							item.question.formIndex = targetForm;
 							item.question.itemIndex = itemIndex;
+							item.question.fId = survey.forms[targetForm].id;
 						}
 					}
 				}

@@ -328,7 +328,7 @@ public class ExportSurveyMisc extends Application {
 						
 					w.println("* Created by Smap Server");
 					w.println("version 9");
-					w.println("import delimited "+  sqlDesc.target_table + ".csv, clear");
+					w.println("import delimited bindquote(strict) "+  sqlDesc.target_table + ".csv, clear");
 					w.println("tempvar temp");
 							
 						// Write the label values

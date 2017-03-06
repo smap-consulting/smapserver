@@ -1487,6 +1487,7 @@ function isBusinessServer() {
 			hostname.indexOf('kontrolid.com') < 0 &&
 			hostname.indexOf('zarkman.com') < 0 &&
 			hostname.indexOf('reachnettechnologies.com') < 0 &&
+			hostname.indexOf('blueoakenergy.com') < 0 &&
 			hostname.indexOf('.icanreach.com') < 0 &&
 			hostname.indexOf('10.0') != 0) {
 		bs = false;
