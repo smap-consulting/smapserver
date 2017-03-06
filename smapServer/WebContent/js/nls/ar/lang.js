@@ -580,7 +580,7 @@ define(
     "d_min": "دقائق ",
     "d_hour": "ساعات",
     "d_c_day": "Count by day",
-    "d_c_month": "Coount by month",
+    "d_c_month": "Count by month",
     "d_c_year": "Count by year",
     "rev_upd_diff": "Update a different question to the source question",
     "rev_q_upd": "Question to update",

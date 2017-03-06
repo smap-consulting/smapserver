@@ -416,6 +416,10 @@ require([
 			 v: settingsObj.search()
 		 })
 		 settings.push({
+			k: "Filter Date",
+			v: $('#filter_from :selected').text()
+		 });
+		 settings.push({
 			k: "from",
 			v: $('#filter_from').val()
 		 });
@@ -521,32 +525,39 @@ require([
 		 $.fn.dataTableExt.afnFiltering.push(
 					function( oSettings, aData, iDataIndex ) {
 						var fromDate = document.getElementById('filter_from').value,
-							toDate = document.getElementById('filter_to').value;
+							toDate = document.getElementById('filter_to').value,
+							dateCol = $('#date_question').val();
 						
-						var dateCol = 2,
-							dateParts = [],
-							dataDate;
+						var dateParts = [],
+							dataDate,
+							dataDateVal;
 	
 						fromDate=fromDate.replace(/\-/g, "");
 						toDate=toDate.replace(/\-/g, "");
 	
-						dataDate=aData[dateCol].replace(/\-/g, "");
-						dateParts = dataDate.split(" ");
-						if(dateParts.length > 0) {
-							dataDate = dateParts[0];
-						}
-	
-						if ( fromDate === "" && toDate === "") {
-							return true;
-						} if ( fromDate === "" && toDate >= dataDate) {
-							return true;
-						} else if ( toDate === "" && fromDate <= dataDate) {
-							return true;
-						} else if ( fromDate <= dataDate && toDate >= dataDate)	{
-							return true;
-						}
+						dataDateVal = aData[dateCol];
 						
-						return false;
+						if(dataDateVal) {
+							dataDate=dataDateVal.replace(/\-/g, "");
+							dateParts = dataDate.split(" ");
+							if(dateParts.length > 0) {
+								dataDate = dateParts[0];
+							}
+		
+							if ( fromDate === "" && toDate === "") {
+								return true;
+							} if ( fromDate === "" && toDate >= dataDate) {
+								return true;
+							} else if ( toDate === "" && fromDate <= dataDate) {
+								return true;
+							} else if ( fromDate <= dataDate && toDate >= dataDate)	{
+								return true;
+							}
+							
+							return false;
+						} else {
+							return true;
+						}
 					
 					}
 				);

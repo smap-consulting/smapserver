@@ -500,7 +500,8 @@ window.gTasks = {
 		
 		 // Respond to date filter changes
 		 $('#filter_from, #filter_to').focusout( function() { globals.gMainTable.draw(); } );
-		 	
+		 $('#date_question').change(function() { globals.gMainTable.draw(); });	
+		 
 		 // Respond to change of search
 		 $('#trackingTable_filter input').focusout(function() { globals.gMainTable.draw(); } );
 		
@@ -828,6 +829,7 @@ window.gTasks = {
 						 	humanName: "_group"
 						 });
 					 }
+					 setDateChoices();
 					 showManagedData(sId, '#trackingTable', undefined);
 				 },
 				 error: function(xhr, textStatus, err) {
@@ -840,12 +842,40 @@ window.gTasks = {
 				 }
 			 });
 		 } else {
+			 setDateChoices();
 			 showManagedData(sId, '#trackingTable', undefined);
 		 }
 	 }
 	 
 	 /*
-	  * Get the currently selcted recoord
+	  * Set the available dates for filtering
+	  */
+	 function setDateChoices() {
+		 debugger;
+		 var columns = gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].columns,
+		 	i,
+		 	h = [],
+		 	idx = -1,
+		 	devValue;
+		 
+		 for(i = 0; i < columns.length; i++ ) {
+			 if(columns[i].type === "dateTime" || columns[i].type === "date") {
+				 if(i == 0 || columns[i].name === "_start") {
+					 defValue = i;
+				 }
+				 h[++idx] = '<option value="';
+				 h[++idx] = i;
+				 h[++idx] = '">';
+				 h[++idx] = columns[i].humanName;
+				 h[++idx] = '</option>';
+			 }
+		 }
+		 $('#date_question').html(h.join(''));
+		 $('#date_question').val(defValue);
+	 }
+	 
+	 /*
+	  * Get the currently selected recoord
 	  */
 	 function getSelectedRecord() {
 	 	
