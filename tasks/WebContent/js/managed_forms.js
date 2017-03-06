@@ -330,7 +330,7 @@ require([
 			
 			if(typeof masterRecord != "undefined") {
 				// 1. Hide results other than this primary result
-				showManagedData(globals.gCurrentSurvey, '#trackingTable', masterRecord);
+				showManagedData(globals.gCurrentSurvey, '#content', masterRecord);
 				
 				// 2. Get related surveys and show it
 				getRelatedList(globals.gCurrentSurvey, masterRecord);
@@ -338,8 +338,17 @@ require([
 		});
 		
 		/*
-		 * Chart menus
+		 * Dashboard menus
 		 */
+		$('#m_map_view').click( function () {
+			initialiseOl3Map();
+			$('#chart_content').hide();
+			$('#map_content').show();
+		});
+		$('#m_chart_view').click( function () {
+			$('#chart_content').show();
+			$('#map_content').hide();
+		});
 		
 		// Add a new chart
 		$('#m_add_chart').click( function () {
@@ -533,7 +542,7 @@ require([
 	 // Respond to duplicate gReports menu
 	 if(isDuplicates) {
 		 $('#duplicateSearch').click(function(){
-			 showDuplicateData(globals.gCurrentSurvey, '#trackingTable');
+			 showDuplicateData(globals.gCurrentSurvey);
 		 });
 	 }
 

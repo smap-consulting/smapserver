@@ -100,6 +100,7 @@ define({
 	"c_blocked": "Blocked",
 	"c_graph": "Graph",
 	"c_map": "Map",
+	"c_charts": "Charts",
 	"c_maps": "Maps",
 	"c_map_layers": "Map Layers",	
 	"c_table": "Table",
