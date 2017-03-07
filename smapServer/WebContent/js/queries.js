@@ -512,14 +512,22 @@ function updateFormEditor() {
 						needSep = true;
 					}
 				h[++idx] = '</td>';
-				h[++idx] = '<td></td>';		// Question
-				h[++idx] = '<td></td>';		// Link project / survey / form
-				h[++idx] = '<td></td>';		// Link Question
+				h[++idx] = '<td></td>';				// Question
+				h[++idx] = '<td></td>';				// Link project / survey / form
+				h[++idx] = '<td></td>';				// Link Question
+				h[++idx] = '<td><button value="';	// Delete button
+				h[++idx] = i;
+				h[++idx] = '" class="form_del btn btn-danger"><span class="glyphicon glyphicon-trash" aria-hidden="true"></span> </button></td>';		// Link Question
 				
 			h[++idx] = '</tr>';
 		}
+		$('#queryTable tbody').html(h.join(''));
+		$('#queryTable .form_del').click(function(){
+			gCurrentQuery.forms.splice($(this).val(), 1);
+			updateFormEditor();
+		});
 	}
-	$('#queryTable tbody').html(h.join(''));
+	
 }
 
 });
