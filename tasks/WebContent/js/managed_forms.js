@@ -414,10 +414,10 @@ require([
 		 settings.push({
 			 k: "search",
 			 v: settingsObj.search()
-		 })
+		 });
 		 settings.push({
 			k: "Filter Date",
-			v: $('#filter_from :selected').text()
+			v: $('#date_question :selected').text()
 		 });
 		 settings.push({
 			k: "from",
