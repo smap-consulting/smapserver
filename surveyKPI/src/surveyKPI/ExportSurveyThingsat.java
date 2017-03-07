@@ -36,7 +36,6 @@ import model.Neo4J;
 import model.Property;
 import model.Thingsat;
 import model.ThingsatDO;
-import utilities.FormListManager;
 
 import org.apache.commons.io.FileUtils;
 import org.smap.sdal.Utilities.Authorise;
@@ -45,6 +44,7 @@ import org.smap.sdal.Utilities.QueryGenerator;
 import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.managers.LogManager;
+import org.smap.sdal.managers.QueryManager;
 import org.smap.sdal.model.ExportForm;
 import org.smap.sdal.model.QueryForm;
 import org.smap.sdal.model.SqlDesc;
@@ -184,11 +184,11 @@ public class ExportSurveyThingsat extends Application {
 			/*
 			 * Update the form list with additional info
 			 */
-			FormListManager flm = new FormListManager();
+			QueryManager qm = new QueryManager();
 			if(formList == null) {
-				formList = flm.getFormList(connectionSD, sId, fId);
+				formList = qm.getFormList(connectionSD, sId, fId);
 			} else {
-				flm.setFormList(connectionSD, formList);
+				qm.extendFormList(connectionSD, formList);
 			}
 			
 			/*

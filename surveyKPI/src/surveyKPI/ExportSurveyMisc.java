@@ -49,6 +49,7 @@ import org.smap.sdal.Utilities.QueryGenerator;
 import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.managers.LogManager;
+import org.smap.sdal.managers.QueryManager;
 import org.smap.sdal.managers.SpssManager;
 import org.smap.sdal.model.ColDesc;
 import org.smap.sdal.model.ExportForm;
@@ -61,8 +62,6 @@ import org.w3c.dom.Element;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
-
-import utilities.FormListManager;
 
 /*
  * Various types of export related to a survey
@@ -218,11 +217,11 @@ public class ExportSurveyMisc extends Application {
 				 * Get the list of forms and surveys to be exported
 				 */
 				ArrayList<QueryForm> formList = null;
-				FormListManager flm = new FormListManager();
+				QueryManager qm = new QueryManager();
 				if(query) {
-					formList = flm.getFormListFromQuery(connectionSD, targetId);	// Get the form list from the query
+					formList = qm.getFormListFromQuery(connectionSD, targetId);	// Get the form list from the query
 				} else {
-					formList = flm.getFormList(connectionSD, targetId, fId);		// Get a form list for this survey / form combo
+					formList = qm.getFormList(connectionSD, targetId, fId);		// Get a form list for this survey / form combo
 				}
 				
 				// Get the SQL for this query

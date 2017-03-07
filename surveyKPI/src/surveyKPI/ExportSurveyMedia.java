@@ -40,6 +40,7 @@ import org.smap.sdal.Utilities.QueryGenerator;
 import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.managers.LogManager;
+import org.smap.sdal.managers.QueryManager;
 import org.smap.sdal.model.ColDesc;
 import org.smap.sdal.model.ExportForm;
 import org.smap.sdal.model.OptionDesc;
@@ -52,7 +53,6 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 
-import utilities.FormListManager;
 import utilities.QuestionInfo;
 
 /*
@@ -205,11 +205,11 @@ public class ExportSurveyMedia extends Application {
 				/*
 				 * Update the form list with additional info
 				 */
-				FormListManager flm = new FormListManager();
+				QueryManager qm = new QueryManager();
 				if(formList == null) {
-					formList = flm.getFormList(connectionSD, sId, mediaQInfo.getFId());
+					formList = qm.getFormList(connectionSD, sId, mediaQInfo.getFId());
 				} else {
-					flm.setFormList(connectionSD, formList);
+					qm.extendFormList(connectionSD, formList);
 				}
 				
 				// Get the SQL for this query
