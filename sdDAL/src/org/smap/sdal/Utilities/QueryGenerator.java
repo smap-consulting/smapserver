@@ -32,6 +32,7 @@ import org.smap.sdal.managers.RoleManager;
 import org.smap.sdal.model.ColDesc;
 import org.smap.sdal.model.ExportForm;
 import org.smap.sdal.model.OptionDesc;
+import org.smap.sdal.model.QueryForm;
 import org.smap.sdal.model.SqlDesc;
 import org.smap.sdal.model.SqlFrag;
 import org.smap.sdal.model.TableColumn;
@@ -66,7 +67,7 @@ public class QueryGenerator {
 			Date endDate,
 			int dateId,
 			boolean superUser,
-			ArrayList<ExportForm> formList,
+			ArrayList<QueryForm> formList,
 			int formListIdx) throws Exception {
 		
 		SqlDesc sqlDesc = new SqlDesc();
@@ -80,7 +81,7 @@ public class QueryGenerator {
 		PreparedStatement pstmtListLabels = null;
 		try {
 
-			ExportForm form = formList.get(formListIdx);
+			QueryForm form = formList.get(formListIdx);
 			
 			
 			sqlDesc.target_table = form.table;
@@ -173,7 +174,7 @@ public class QueryGenerator {
 		 * Add the tables
 		 */
 		for(int i = 0; i < formList.size(); i++) {
-			ExportForm ef = formList.get(i);
+			QueryForm ef = formList.get(i);
 			if(i > 0) {
 				shpSqlBuf.append(",");
 			}
@@ -186,7 +187,7 @@ public class QueryGenerator {
 		 * Exclude "bad" records
 		 */
 		for(int i = 0; i < formList.size(); i++) {
-			ExportForm ef = formList.get(i);
+			QueryForm ef = formList.get(i);
 			if(i > 0) {
 				shpSqlBuf.append(" and ");
 			}
@@ -207,14 +208,14 @@ public class QueryGenerator {
 				
 				shpSqlBuf.append(" and ");
 				
-				ExportForm form = formList.get(i);
-				ExportForm prevForm = formList.get(i - 1);
+				QueryForm form = formList.get(i);
+				QueryForm prevForm = formList.get(i - 1);
 
 				shpSqlBuf.append(prevForm.table);
 				if(form.fromQuestionId > 0) {
 					if(form.toQuestionId > 0) {
 						shpSqlBuf.append(".");
-						shpSqlBuf.append(GeneralUtilityMethods.getColumnNameFromId(connectionSD, prevForm.sId, form.toQuestionId));
+						shpSqlBuf.append(GeneralUtilityMethods.getColumnNameFromId(connectionSD, prevForm.survey, form.toQuestionId));
 						shpSqlBuf.append(" = ");
 					} else {
 						shpSqlBuf.append("._hrk = ");
@@ -225,7 +226,7 @@ public class QueryGenerator {
 				shpSqlBuf.append(form.table);
 				if(form.fromQuestionId > 0) {
 					shpSqlBuf.append(".");
-					shpSqlBuf.append(GeneralUtilityMethods.getColumnNameFromId(connectionSD, form.sId, form.fromQuestionId));
+					shpSqlBuf.append(GeneralUtilityMethods.getColumnNameFromId(connectionSD, form.survey, form.fromQuestionId));
 				} else {
 					shpSqlBuf.append(".parkey");
 				}
@@ -318,7 +319,7 @@ public class QueryGenerator {
 			Date endDate,
 			int dateId,
 			boolean superUser,
-			ArrayList<ExportForm> formList,
+			ArrayList<QueryForm> formList,
 			int formListIdx
 			) throws SQLException {
 		
@@ -327,7 +328,7 @@ public class QueryGenerator {
 			colLimit = 244;
 		}
 		
-		ExportForm form = formList.get(formListIdx);
+		QueryForm form = formList.get(formListIdx);
 		
 		if(formListIdx > 0) {
 			
@@ -366,7 +367,7 @@ public class QueryGenerator {
 				sId,
 				user,
 				form.parent,
-				form.fId,
+				form.form,
 				form.table,
 				exp_ro,
 				false,				// Don't include parent key

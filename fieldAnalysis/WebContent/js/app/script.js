@@ -89,20 +89,27 @@ $(document).ready(function() {
 			        		exp_from_date = $('#exp_from_date').datepicker({ dateFormat: 'yy-mm-dd' }).val(),
 			        		exp_to_date = $('#exp_to_date').datepicker({ dateFormat: 'yy-mm-dd' }).val(),
 			        		dateQuestionId = $('#export_date_question option:selected').val(),
-			        		exportQuerySel = $('#exportQuerySel').prop("checked");
+			        		exportQuerySel = $('#exportQuerySel').prop("checked"),
+			        		queryName = $('#export_query option:selected').text(),
+			        		filename;
 		        		
+		        		// Set the filename of the exported file
 		        		if(exportQuerySel) {
-		        			//formList = extended_model.getPath();
-		        			
 		        			if(!queryId) {
 		        				alert(localise.set["a_sel_query"]);
 		        				return(false);
 		        			}
+	        				filename = queryName;
+	        				
 		        		} else {	
 			        		if(sId == "-1") {
 			        			alert(localise.set["msg_pss"]);
 			        			return(false);
 			        		}
+		        			filename = displayName;
+		        		}
+		        		if(!filename) {
+		        			filename = "export";
 		        		}
 		        		
 		        		// TODO validate dates
@@ -126,8 +133,10 @@ $(document).ready(function() {
 		        				|| format === "stata") {
 		        			
 		        			if(exportQuerySel) {
-		        				sId = undefined;
+			        			sId = undefined;
+		        				form = 0;
 		        			} else {
+		        				
 			        			forms = $(':radio:checked', '.shapeforms').map(function() {
 			        			      return this.value;
 			        			    }).get();
@@ -137,7 +146,7 @@ $(document).ready(function() {
 			        			}	
 			        			form = forms[0];
 		        			}
-		        			url = exportSurveyMisc(sId, displayName, form, 
+		        			url = exportSurveyMisc(sId, filename, form, 
 		        					format, exportReadOnly, language,
 		        					exp_from_date, exp_to_date, dateQuestionId, queryId);
 		        		

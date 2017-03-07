@@ -901,8 +901,6 @@ public class TaskManager {
 			}
 			String geoType = null;
 			String sql = null;
-			String initial_data_url = null;
-			String targetInstanceId = null;
 			
 			/*
 			 * 4. Location
@@ -943,8 +941,8 @@ public class TaskManager {
 			pstmt.setString(5, webformUrl);
 			pstmt.setString(6, geoType);
 			pstmt.setString(7, location);
-			pstmt.setString(8, initial_data_url);	
-			pstmt.setString(9, targetInstanceId);
+			pstmt.setString(8, tf.properties.initial_data);	
+			pstmt.setString(9, tf.properties.update_id);
 			pstmt.setString(10, tf.properties.address);
 			if(tf.properties.from == null) {
 				Calendar cal = Calendar.getInstance();
@@ -1171,7 +1169,7 @@ public class TaskManager {
 	public void deleteTask(Connection sd, int tId, int pId) throws SQLException {
 		
 		String sqlUsers = "delete from users where temporary = true and id in "
-				+ "(select assignee from assignments a, tasks t where a.task_id = ? "
+				+ "(select a.assignee from assignments a, tasks t where a.task_id = ? "
 				+ "and a.task_id = t.id "
 				+ "and t.p_id = ?)"; 
 		PreparedStatement pstmtUsers = null;

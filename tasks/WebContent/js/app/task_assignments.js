@@ -224,10 +224,10 @@ $(document).ready(function() {
 		
 		url += globals.gCurrentProject + "/" + globals.gCurrentTaskGroup;
 		
+		taskFeature = $.extend(true, {}, gCurrentTaskFeature);
 		/*
 		 * Set the properties of the taskFeature from the dialog
 		 */
-		taskFeature.properties.id = gCurrentTaskFeature.properties.id;		// task id
 		if(!taskFeature.properties.id || taskFeature.properties.id == "") {
 			taskFeature.properties["id"] = 0;
 		}
@@ -1182,7 +1182,6 @@ function editTask(isNew, task, taskFeature) {
 	$('#tp_guidance').val(task.guidance);
 	if(task.update_id && task.update_id.length > 0) {
 		$('#initial_data').html(getInitialDataLink(task.form_id, task.update_id)); 
-				//' ' + getInitialDataUrl(task.form_id, task.update_id));
 	}
 	
 	$('#task_properties').modal("show"); 

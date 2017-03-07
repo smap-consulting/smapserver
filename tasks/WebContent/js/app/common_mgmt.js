@@ -878,7 +878,6 @@ window.gTasks = {
 	  * Set the available dates for filtering
 	  */
 	 function setDateChoices() {
-
 		 var columns = gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].columns,
 		 	i,
 		 	h = [],

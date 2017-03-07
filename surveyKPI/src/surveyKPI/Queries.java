@@ -23,6 +23,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -147,8 +148,23 @@ public class Queries extends Application {
 		Response response = null;
 		Connection sd = SDDataSource.getConnection("surveyKPI-save query");
 
-		Gson gson=  new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
+		Gson gson=  new GsonBuilder().setDateFormat("yyyy-MM-dd").create();		
 		Query q = gson.fromJson(queryString, Query.class);
+		
+		// Validate that the user has access to the survey in this query
+		boolean superUser = false;
+		try {
+			superUser = GeneralUtilityMethods.isSuperUser(sd, request.getRemoteUser());
+		} catch (Exception e) {
+		}
+		HashMap<Integer, String> checkedSurveys = new HashMap<Integer, String> ();
+		for(int i = 0; i < q.forms.size(); i++) {
+			int survey = q.forms.get(i).survey;
+			if(checkedSurveys.get(new Integer(survey)) == null) {
+				a.isValidSurvey(sd, request.getRemoteUser(), q.forms.get(i).survey, false, superUser);
+				checkedSurveys.put(new Integer(survey), "checked");
+			}
+		}
 		String formsString = gson.toJson(q.forms);
 		
 		String sqlInsert = "insert into custom_query (u_id, name, query) values(?, ?, ?)";

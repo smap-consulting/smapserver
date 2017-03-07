@@ -53,6 +53,7 @@ import org.smap.sdal.managers.SpssManager;
 import org.smap.sdal.model.ColDesc;
 import org.smap.sdal.model.ExportForm;
 import org.smap.sdal.model.OptionDesc;
+import org.smap.sdal.model.QueryForm;
 import org.smap.sdal.model.SqlDesc;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -97,7 +98,7 @@ public class ExportSurveyMisc extends Application {
 	@GET
 	@Path("/shape")
 	public Response exportSurveyMisc (@Context HttpServletRequest request, 
-			@PathParam("sId") int sId,
+			@PathParam("sId") int targetId,
 			@PathParam("filename") String filename,
 			@QueryParam("form") int fId,
 			@QueryParam("language") String language,
@@ -107,7 +108,8 @@ public class ExportSurveyMisc extends Application {
 			@QueryParam("from") Date startDate,
 			@QueryParam("to") Date endDate,
 			@QueryParam("dateId") int dateId,
-			@QueryParam("forms") String forms,
+			//@QueryParam("forms") String forms,
+			@QueryParam("query") boolean query,			// Set true if the value in sId is a query id rather than a survey id
 			@Context HttpServletResponse response) {
 
 		ResponseBuilder builder = Response.ok();
@@ -116,22 +118,10 @@ public class ExportSurveyMisc extends Application {
 		
 		HashMap<ArrayList<OptionDesc>, String> labelListMap = new  HashMap<ArrayList<OptionDesc>, String> ();
 		
-		log.info("userevent: " + request.getRemoteUser() + " Export " + sId + " as a "+ format + " file to " + filename + " starting from form " + fId);
+		log.info("userevent: " + request.getRemoteUser() + " Export " + targetId + " as a "+ format + " file to " + filename + " starting from form " + fId);
 		
 		String urlprefix = request.getScheme() + "://" + request.getServerName() + "/";		
-		
-		/*
-		 * Get the list of forms and surveys to be exported
-		 * Needs to be done prior to authorisation as it includes the list of surveys
-		 */
-		ArrayList<ExportForm> formList = null;
-		
-		System.out.println("Forms: " + forms);
-		if(forms != null) {
-			Type type = new TypeToken<ArrayList<ExportForm>>(){}.getType();
-			Gson gson=  new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
-			formList = gson.fromJson(forms, type);
-		}
+				
 		
 		// Authorisation - Access
 		Connection connectionSD = SDDataSource.getConnection("surveyKPI-ExportSurveyMisc");
@@ -142,6 +132,8 @@ public class ExportSurveyMisc extends Application {
 		}
 		
 		a.isAuthorised(connectionSD, request.getRemoteUser());
+		
+		/*
 		if(formList != null) {
 			HashMap<Integer, String> checkedSurveys = new HashMap<Integer, String> ();
 			for(int i = 0; i < formList.size(); i++) {
@@ -152,11 +144,15 @@ public class ExportSurveyMisc extends Application {
 				}
 			}
 		} else {
-			a.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false, superUser);
+		*/
+		if(query) {
+			a.isValidQuery(connectionSD, request.getRemoteUser(), targetId, false, superUser);
+		} else {
+			a.isValidSurvey(connectionSD, request.getRemoteUser(), targetId, false, superUser);
 		}
 		// End Authorisation
 
-		lm.writeLog(connectionSD, sId, request.getRemoteUser(), "view", "Export as: " + format);
+		lm.writeLog(connectionSD, targetId, request.getRemoteUser(), "view", "Export as: " + format);
 		
 		String escapedFileName = null;
 		try {
@@ -170,7 +166,7 @@ public class ExportSurveyMisc extends Application {
 		escapedFileName = escapedFileName.replace("+", " "); // Spaces ok for file name within quotes
 		escapedFileName = escapedFileName.replace("%2C", ","); // Commas ok for file name within quotes
 
-		if(sId != 0) {
+		if(targetId != 0) {
 			
 			Connection connectionResults = null;
 			PreparedStatement pstmtDefLang = null;
@@ -200,7 +196,7 @@ public class ExportSurveyMisc extends Application {
 					// A language should be set for stata / spss exports, use the default
 					String sqlDefLang = "select def_lang from survey where s_id = ?; ";
 					pstmtDefLang = connectionSD.prepareStatement(sqlDefLang);
-					pstmtDefLang.setInt(1, sId);
+					pstmtDefLang.setInt(1, targetId);			// TODO How will this work with queries?
 					ResultSet resultSet = pstmtDefLang.executeQuery();
 					if (resultSet.next()) {
 						language = resultSet.getString(1);
@@ -208,7 +204,7 @@ public class ExportSurveyMisc extends Application {
 							// Just get the first language in the list	
 							String sqlDefLang2 = "select distinct language from translation where s_id = ?; ";
 							pstmtDefLang2 = connectionSD.prepareStatement(sqlDefLang2);
-							pstmtDefLang2.setInt(1, sId);
+							pstmtDefLang2.setInt(1, targetId);
 							ResultSet resultSet2 = pstmtDefLang2.executeQuery();
 							if (resultSet2.next()) {
 								language = resultSet2.getString(1);
@@ -217,20 +213,22 @@ public class ExportSurveyMisc extends Application {
 					}
 				}
 
+	
 				/*
-				 * Update the form list with additional info
+				 * Get the list of forms and surveys to be exported
 				 */
+				ArrayList<QueryForm> formList = null;
 				FormListManager flm = new FormListManager();
-				if(formList == null) {
-					formList = flm.getFormList(connectionSD, sId, fId);
+				if(query) {
+					formList = flm.getFormListFromQuery(connectionSD, targetId);	// Get the form list from the query
 				} else {
-					flm.setFormList(connectionSD, formList);
+					formList = flm.getFormList(connectionSD, targetId, fId);		// Get a form list for this survey / form combo
 				}
 				
 				// Get the SQL for this query
 				SqlDesc sqlDesc = QueryGenerator.gen(connectionSD, 
 						connectionResults,
-						sId,
+						targetId,
 						fId,
 						language, 
 						format, 
@@ -389,7 +387,7 @@ public class ExportSurveyMisc extends Application {
 								connectionSD,
 								request.getRemoteUser(),
 								language,
-								sId);
+								targetId);
 						
 						w.print(sps);
 						w.close();	

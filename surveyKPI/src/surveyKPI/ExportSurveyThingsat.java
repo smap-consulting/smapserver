@@ -46,6 +46,7 @@ import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.managers.LogManager;
 import org.smap.sdal.model.ExportForm;
+import org.smap.sdal.model.QueryForm;
 import org.smap.sdal.model.SqlDesc;
 
 import com.google.gson.Gson;
@@ -106,7 +107,7 @@ public class ExportSurveyThingsat extends Application {
 		 * Get the list of forms and surveys to be exported
 		 * Needs to be done prior to authorisation as it includes the list of surveys
 		 */
-		ArrayList<ExportForm> formList = null;
+		ArrayList<QueryForm> formList = null;
 		
 		if(forms != null) {
 			Type type = new TypeToken<ArrayList<ExportForm>>(){}.getType();
@@ -125,9 +126,9 @@ public class ExportSurveyThingsat extends Application {
 		if(formList != null) {
 			HashMap<Integer, String> checkedSurveys = new HashMap<Integer, String> ();
 			for(int i = 0; i < formList.size(); i++) {
-				int survey = formList.get(i).sId;
+				int survey = formList.get(i).survey;
 				if(checkedSurveys.get(new Integer(survey)) == null) {
-					a.isValidSurvey(connectionSD, request.getRemoteUser(), formList.get(i).sId, false, superUser);
+					a.isValidSurvey(connectionSD, request.getRemoteUser(), formList.get(i).survey, false, superUser);
 					checkedSurveys.put(new Integer(survey), "checked");
 				}
 			}
