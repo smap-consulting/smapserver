@@ -113,12 +113,12 @@ public class ExportSurveyMedia extends Application {
 		 * Get the list of forms and surveys to be exported
 		 * Needs to be done prior to authorisation as it includes the list of surveys
 		 */
-		ArrayList<QueryForm> formList = null;
+		ArrayList<QueryForm> queryList = null;
 		
 		if(forms != null) {
 			Type type = new TypeToken<ArrayList<QueryForm>>(){}.getType();
 			Gson gson=  new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
-			formList = gson.fromJson(forms, type);
+			queryList = gson.fromJson(forms, type);
 		}
 		
 		// Authorisation - Access
@@ -129,12 +129,12 @@ public class ExportSurveyMedia extends Application {
 		} catch (Exception e) {
 		}
 		a.isAuthorised(connectionSD, request.getRemoteUser());
-		if(formList != null) {
+		if(queryList != null) {
 			HashMap<Integer, String> checkedSurveys = new HashMap<Integer, String> ();
-			for(int i = 0; i < formList.size(); i++) {
-				int survey = formList.get(i).survey;
+			for(int i = 0; i < queryList.size(); i++) {
+				int survey = queryList.get(i).survey;
 				if(checkedSurveys.get(new Integer(survey)) == null) {
-					a.isValidSurvey(connectionSD, request.getRemoteUser(), formList.get(i).survey, false, superUser);
+					a.isValidSurvey(connectionSD, request.getRemoteUser(), queryList.get(i).survey, false, superUser);
 					checkedSurveys.put(new Integer(survey), "checked");
 				}
 			}
@@ -206,11 +206,12 @@ public class ExportSurveyMedia extends Application {
 				 * Update the form list with additional info
 				 */
 				QueryManager qm = new QueryManager();
-				if(formList == null) {
-					formList = qm.getFormList(connectionSD, sId, mediaQInfo.getFId());
+				if(queryList == null) {
+					queryList = qm.getFormList(connectionSD, sId, mediaQInfo.getFId());
 				} else {
-					qm.extendFormList(connectionSD, formList);
+					qm.extendFormList(connectionSD, queryList);
 				}
+				QueryForm startingForm = qm.getQueryTree(connectionSD, queryList);	// Convert the query list into a tree
 				
 				// Get the SQL for this query
 				SqlDesc sqlDesc = QueryGenerator.gen(connectionSD, 
@@ -234,8 +235,7 @@ public class ExportSurveyMedia extends Application {
 						endDate,
 						dateId,
 						superUser,
-						formList,
-						formList.size() - 1);
+						startingForm);
 				
 				/*
 				 * 1. Create the target folder

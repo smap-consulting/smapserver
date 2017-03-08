@@ -211,7 +211,6 @@ public class ExportSurveyMisc extends Application {
 						}
 					}
 				}
-
 	
 				/*
 				 * Get the list of forms and surveys to be exported
@@ -247,8 +246,7 @@ public class ExportSurveyMisc extends Application {
 						endDate,
 						dateId,
 						superUser,
-						queryList,
-						queryList.size() - 1);
+						startingForm);
 
 				String basePath = GeneralUtilityMethods.getBasePath(request);					
 				String filepath = basePath + "/temp/" + String.valueOf(UUID.randomUUID());	// Use a random sequence to keep survey name unique
