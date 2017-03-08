@@ -1,5 +1,7 @@
 package org.smap.sdal.model;
 
+import java.util.ArrayList;
+
 public class QueryForm {
 	public int project;
 	public String project_name;
@@ -17,4 +19,6 @@ public class QueryForm {
 	public String table;
 	public int parent;
 	public int surveyLevel;
+	public boolean hidden;		// This is a hidden form only used for linking.  No data is returned	
+	public ArrayList<QueryForm> childForms = null;
 }

@@ -7,6 +7,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
 import java.util.logging.Logger;
 
 import org.smap.sdal.model.Query;
@@ -106,16 +108,10 @@ public class QueryManager {
 			if(rs.next()) {
 				String queryString = rs.getString(1);
 				qfList = gson.fromJson(queryString, type);
-				if(qfList != null) {
-					// Add the table name
-					for(int i = 0; i < qfList.size(); i++) {
-						
-					}
-				}
 			}
 			
-			extendFormList(sd, qfList);
-			Collections.reverse(qfList);		// Reverse the order to parent then child
+			//extendFormList(sd, qfList);
+			//Collections.reverse(qfList);		// Reverse the order to parent then child
 		} finally  {
 			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}	
 		}
@@ -174,8 +170,140 @@ public class QueryManager {
 	
 	/*
 	 * Convert a list of query forms into a tree structure that can be used to create the sql
+	 * Also extend the data stored with each form entry to assist with query generation
 	 */
-	public void getQueryTree() {
+	private class SurveyDefn {
+		int sId;
+		ArrayList<QueryForm> forms = new ArrayList<QueryForm> ();
+		
+		public SurveyDefn(int sId) {
+			this.sId = sId;
+		}
+	}
+	
+	public QueryForm getQueryTree(Connection sd, ArrayList<QueryForm> queryList) throws SQLException {
+		
+		HashMap<Integer, SurveyDefn> surveys = new HashMap<Integer, SurveyDefn> ();
+		
+		String sql = "select table_name, parentform from form " 
+				+ "where f_id = ? "
+				+ "and s_id = ?";	
+		PreparedStatement pstmt = null;
+		
+		try {
+			pstmt = sd.prepareStatement(sql);
+			
+			// 1. Get the surveys and add the forms for each survey in an ordered list
+			for(QueryForm qf : queryList) {
+				if(surveys.get(qf.survey) == null) {
+					int sId = qf.survey;
+					SurveyDefn surveyDefn = new SurveyDefn(sId);
+					
+					// Add the array of forms from parent to child in this survey that are included in the form list
+					// These forms must be in a single path, no branches
+					// Start with any arbitrary form and create an array of forms up to the highest level parent
+					parentsToForm(pstmt, surveyDefn.forms, qf, queryList, -1);
+					surveys.put(qf.survey, surveyDefn);
+				} else {
+					// Add the form to the array of forms in its survey
+					SurveyDefn surveyDefn = surveys.get(qf.survey);
+					QueryForm lastForm = surveyDefn.forms.get(surveyDefn.forms.size() - 1);
+					parentsToForm(pstmt, surveyDefn.forms, qf, queryList, lastForm.form);
+				}
+			}
+		} finally {
+			if(pstmt != null) try{pstmt.close();} catch(Exception e) {};
+		}
+		
+		// Get the top level form and convert to a tree
+		List<Integer> surveyIds = new ArrayList<Integer>(surveys.keySet());
+		SurveyDefn topSurvey = null;
+		for(int i = 0; i < surveyIds.size(); i++) {
+			topSurvey = surveys.get(surveyIds.get(new Integer(i)));	// TODO modify to work with more than one survey
+			break;
+		}
+		QueryForm startingForm = topSurvey.forms.get(0);
+		if(topSurvey.forms.size() > 1) {
+			QueryForm currentForm = startingForm;
+			for(int i = 1; i < topSurvey.forms.size(); i++) {
+				currentForm.childForms = new ArrayList<QueryForm> ();
+				currentForm.childForms.add(topSurvey.forms.get(i));
+				currentForm = topSurvey.forms.get(i);
+			}
+		}
+		
+		return startingForm;
+		
+	}
+	
+	private ArrayList<QueryForm> parentsToForm(
+			PreparedStatement pstmt, 
+			ArrayList<QueryForm> orderedList,
+			QueryForm qf, 
+			ArrayList<QueryForm> queryList,
+			int stopForm) throws SQLException {
+		
+		ArrayList<QueryForm> tempList = new ArrayList<QueryForm> ();
+		getFormsAscending(pstmt, qf.survey, qf.form, tempList, stopForm);
+		Collections.reverse(tempList);    // Order the list from parent to child
+		
+		// Add items to the ordered list if they are part of the query or are linking forms
+		boolean added = false;
+		for(int i = 0; i < tempList.size(); i++) {
+			QueryForm tempForm = tempList.get(i);
+			QueryForm listForm = getFormFromQuery(tempForm.survey, tempForm.form, queryList);
+			if (listForm != null) {
+				listForm.table = tempForm.table;
+				orderedList.add(listForm);
+			} else if(added == true) {
+				listForm = new QueryForm();
+				listForm.form = tempForm.form;
+				listForm.survey = tempForm.survey;
+				listForm.table = tempForm.table;
+				listForm.hidden = true;
+				orderedList.add(listForm);
+			}
+		}
+		
+		return orderedList;
+	}
+	
+	private QueryForm getFormFromQuery(int sId, int fId, ArrayList<QueryForm> queryList) {
+		QueryForm qf = null;
+		for(int i = 0; i < queryList.size(); i++) {
+			if(queryList.get(i).survey == sId && queryList.get(i).form == fId) {
+				qf = queryList.get(i);
+				break;
+			}
+		}
+		return qf;
+	}
+	
+	private void getFormsAscending(PreparedStatement pstmt, int sId, 
+			int fId, 
+			ArrayList<QueryForm> tempList, 
+			int stopForm) throws SQLException {
+		
+		pstmt.setInt(1, fId);
+		pstmt.setInt(2, sId);
+		
+		ResultSet rs = pstmt.executeQuery();
+		if(rs.next()) {
+			int parent = rs.getInt(2);
+			
+			QueryForm qf = new QueryForm();
+			qf.survey = sId;
+			qf.form = fId;
+			qf.table = rs.getString(1);
+			
+			tempList.add(qf);
+			
+			if(parent != stopForm && parent != 0) {
+				getFormsAscending(pstmt, sId, parent, tempList, stopForm);
+			}
+			
+			
+		}
 		
 	}
 	

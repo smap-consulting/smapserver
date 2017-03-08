@@ -216,13 +216,14 @@ public class ExportSurveyMisc extends Application {
 				/*
 				 * Get the list of forms and surveys to be exported
 				 */
-				ArrayList<QueryForm> formList = null;
+				ArrayList<QueryForm> queryList = null;
 				QueryManager qm = new QueryManager();
 				if(query) {
-					formList = qm.getFormListFromQuery(connectionSD, targetId);	// Get the form list from the query
+					queryList = qm.getFormListFromQuery(connectionSD, targetId);	// Get the form list from the query
 				} else {
-					formList = qm.getFormList(connectionSD, targetId, fId);		// Get a form list for this survey / form combo
+					queryList = qm.getFormList(connectionSD, targetId, fId);		// Get a form list for this survey / form combo
 				}
+				QueryForm startingForm = qm.getQueryTree(connectionSD, queryList);	// Convert the query list into a tree
 				
 				// Get the SQL for this query
 				SqlDesc sqlDesc = QueryGenerator.gen(connectionSD, 
@@ -246,8 +247,8 @@ public class ExportSurveyMisc extends Application {
 						endDate,
 						dateId,
 						superUser,
-						formList,
-						formList.size() - 1);
+						queryList,
+						queryList.size() - 1);
 
 				String basePath = GeneralUtilityMethods.getBasePath(request);					
 				String filepath = basePath + "/temp/" + String.valueOf(UUID.randomUUID());	// Use a random sequence to keep survey name unique
