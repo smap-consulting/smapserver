@@ -303,7 +303,7 @@ public class Authorise {
 		}
 		
  		if(count == 0) {
- 			log.info("Survey validation failed for: " + user + " query was: " + queryId);
+ 			log.info("Error: Query validation failed for: " + user + " query was: " + queryId);
  			
  			SDDataSource.closeConnection("isValidQuery", conn);
 			

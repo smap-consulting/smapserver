@@ -136,7 +136,7 @@ $(document).ready(function() {
 			        			sId = undefined;
 		        				form = 0;
 		        			} else {
-		        				
+		        				queryId = undefined;
 			        			forms = $(':radio:checked', '.shapeforms').map(function() {
 			        			      return this.value;
 			        			    }).get();
