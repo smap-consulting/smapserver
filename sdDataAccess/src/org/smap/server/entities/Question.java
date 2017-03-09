@@ -287,8 +287,26 @@ public class Question {
 		return relativePath;
 	}
 	
-	public String getNodeset(boolean convertToXPath, HashMap<String, String> questionPaths) throws Exception {
+	public String getNodeset(boolean convertToXPath, HashMap<String, String> questionPaths, boolean embedExternalSearch) throws Exception {
+		
 		String v = nodeset;
+		if(embedExternalSearch) {
+			// Potentially add a filter using the appearance value to the nodeset
+			System.out.println("Add filter from: " + appearance + " to: " + nodeset);
+			if(nodeset != null) {
+				// First remove any filter added through setting of choice_filter this is incompatible with the use of search()
+				int idx = nodeset.indexOf('[');
+				if (idx >= 0) {
+					// nodeset = nodeset.substring(0, idx);
+				}
+				if(appearance != null && appearance.contains("search")) {
+					String [] params = appearance.split(",");
+				}
+			}
+			System.out.println("New nodeset: " + nodeset);
+	
+		}
+		
 		
 		if(convertToXPath) {
 			v = UtilityMethods.convertAllxlsNames(v, false, questionPaths, f_id);

@@ -184,7 +184,7 @@ public class Survey extends Application {
 					
 					try {
 						SurveyTemplate template = new SurveyTemplate();
-						template.readDatabase(sId);
+						template.readDatabase(sId, false);
 						GetXForm xForm = new GetXForm();
 						
 						String xmlForm = xForm.get(template, false);

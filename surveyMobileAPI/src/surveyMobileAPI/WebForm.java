@@ -380,12 +380,13 @@ public class WebForm extends Application{
 			
 			// Get the XML of the Form
 			SurveyTemplate template = new SurveyTemplate();
-			template.readDatabase(survey.id);
+			template.readDatabase(survey.id, true);
 			String surveyClass = template.getSurveyClass();
 			
 			//template.printModel();	// debug
 			GetXForm xForm = new GetXForm();
-			String formXML = xForm.get(template, true);		
+			String formXML = xForm.get(template, true);	
+			System.out.println(formXML);  // debug
 			
 			// If required get the instance data 
 			String instanceXML = null;
@@ -479,11 +480,6 @@ public class WebForm extends Application{
 			 * Fix issue with itemsets not having images replaces
 			 * TODO The best approach is probably to replace XSL with POJ rather than attempting complex text replacement
 			 */
-    		//String respString = outputString.toString();
-			//Pattern p = Pattern.compile("(<span.*or-form-image.*>)(/surveyKPI.*)(</span>)");
-			//Matcher m = p.matcher(respString);
-			//respString = m.replaceAll("xxxxxxxxxx $2 xxxxxxxxxx");
-			//respString = m.replaceAll("<img class='active' src='$2' alt='image'>");
 			String respString = outputString.toString();
 			response = Response.status(Status.OK).entity(respString).build();
     		
@@ -1018,7 +1014,7 @@ public class WebForm extends Application{
 
 			// Get the XML of the Form
 			SurveyTemplate template = new SurveyTemplate();
-			template.readDatabase(survey.id);
+			template.readDatabase(survey.id, false);
 			
 			//template.printModel();	// debug
 			GetXForm xForm = new GetXForm();

@@ -61,7 +61,8 @@ public class GetXForm {
 	private String gInstanceId = null;
 	private String gSurveyClass = null;
 	private ArrayList<String> gFilenames;
-
+	private boolean embedExternalSearch = false;
+	
 	private static Logger log =
 			 Logger.getLogger(GetXForm.class.getName());
 	
@@ -76,6 +77,9 @@ public class GetXForm {
      	   
        	String response = null;
        	this.template = template;
+       	if(isWebForms) {
+       		embedExternalSearch = true;		// Webforms do not support search
+       	}
   	    
        	Connection sd = null;
     	try {
@@ -317,7 +321,7 @@ public class GetXForm {
 	    			
 	    			// If this is a choice question, add the items
 	    			if(q.getType().startsWith("select")) {
-	    			   	Collection <Option> options = q.getChoices(sd); 
+	    			   	Collection <Option> options = q.getValidChoices(sd); 
 	    		    	List <Option> optionList = new ArrayList <Option> (options);
 	    		    	
 	    		    	for(Option o : optionList) {
@@ -823,10 +827,11 @@ public class GetXForm {
 		}
 		
 		boolean cascade = false;
-		String nodeset = q.getNodeset(true, template.getQuestionPaths());
+		String nodeset = q.getNodeset(true, template.getQuestionPaths(), embedExternalSearch);
 		
 		// Add the itemset
-		if(nodeset != null && !GeneralUtilityMethods.isExternalChoices(q.getAppearance(true, template.getQuestionPaths()))) {
+		if(nodeset != null && 
+				(!GeneralUtilityMethods.isExternalChoices(q.getAppearance(true, template.getQuestionPaths())) || embedExternalSearch)) {
 			cascade = true;
 			Element isElement = outputXML.createElement("itemset");
 			isElement.setAttribute("nodeset", nodeset);			
@@ -960,6 +965,10 @@ public class GetXForm {
     		itemElement.appendChild(valueElement);		
     		
     		// Add other elements that are used for selecting relevant values
+    		
+    		if(embedExternalSearch) {
+    			
+    		}
     		o.setCascadeKeyValues();	// Set the key value pairs from the filter string
     		HashMap<String, String> cvs = o.getCascadeKeyValues();
         	List<String> keyList = new ArrayList<String>(cvs.keySet());

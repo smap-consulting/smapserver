@@ -212,7 +212,7 @@ public class SubscriberBatch {
 										String templateName = instance.getTemplateName();
 										SurveyTemplate template = new SurveyTemplate();
 										
-										template.readDatabase(sd, templateName);					
+										template.readDatabase(sd, templateName, false);					
 										template.extendInstance(sd, instance, true);	// Extend the instance with information from the template
 										// instance.getTopElement().printIEModel("   ");	// Debug
 										

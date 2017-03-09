@@ -1433,6 +1433,7 @@ public class SurveyManager {
 		PreparedStatement pstmtOptionGet = null;
 		PreparedStatement pstmtOptionInsert = null;
 		PreparedStatement pstmtMaxSeq = null;
+		PreparedStatement pstmtOptionUpdate = null;
 		
 		try {
 			
@@ -1442,9 +1443,14 @@ public class SurveyManager {
 					+ "and o.ovalue = ?;";
 			pstmtOptionGet = connectionSD.prepareStatement(sqlOptionGet);
 			
-			String sqlOptionInsert = "insert into option  (o_id, l_id, seq, label_id, ovalue, externalfile, column_name) "
-					+ "values(nextval('o_seq'), ?, ?, ?, ?, 'true', ?);"; 			
+			String sqlOptionInsert = "insert into option  (o_id, l_id, seq, label_id, ovalue, externalfile, column_name, cascade_filters) "
+					+ "values(nextval('o_seq'), ?, ?, ?, ?, 'true', ?, ?);"; 			
 			pstmtOptionInsert = connectionSD.prepareStatement(sqlOptionInsert);
+			
+			String sqlOptionUpdate = "update option  set cascade_filters = ? "
+					+ "where l_id = ? "
+					+ "and ovalue = ?"; 			
+			pstmtOptionUpdate = connectionSD.prepareStatement(sqlOptionUpdate);
 			
 			String sqlLangInsert = "insert into translation  (t_id, s_id, language, text_id, type, value) values(nextval('t_seq'), ?, ?, ?, ?, ?);"; 			
 			pstmtLangInsert = connectionSD.prepareStatement(sqlLangInsert);
@@ -1475,6 +1481,8 @@ public class SurveyManager {
 				pstmtOptionGet.setInt(1, ci.option.l_id);
 				pstmtOptionGet.setString(2, ci.option.value);
 				
+				Gson gson=  new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd").create();
+				
 				log.info("Get text_id for option: " + pstmtOptionGet.toString());
 				rs = pstmtOptionGet.executeQuery();
 				if(rs.next()) {
@@ -1487,6 +1495,11 @@ public class SurveyManager {
 					pstmtLangUpdate.setString(4, ci.option.value);
 					log.info("Update existing option label: " + pstmtLangUpdate.toString());
 					count = pstmtLangUpdate.executeUpdate();
+					
+					pstmtOptionUpdate.setString(1, gson.toJson(ci.option.cascade_filters));
+					pstmtOptionUpdate.setInt(2, ci.option.l_id);
+					pstmtOptionUpdate.setString(3, ci.option.value);
+					pstmtOptionUpdate.executeUpdate();
 					
 				} else {
 					
@@ -1501,6 +1514,7 @@ public class SurveyManager {
 					pstmtOptionInsert.setString(3, text_id);
 					pstmtOptionInsert.setString(4, ci.option.value);
 					pstmtOptionInsert.setString(5, GeneralUtilityMethods.cleanName(ci.option.value, false, false, false) );
+					pstmtOptionInsert.setString(6, gson.toJson(ci.option.cascade_filters));
 					
 					log.info("===================== Insert new option from file: " + pstmtOptionInsert.toString());
 					count = pstmtOptionInsert.executeUpdate();
@@ -1522,7 +1536,7 @@ public class SurveyManager {
 				if(count > 0) {
 					ci.changeType = "option";
 					ci.source = source;
-					Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
+					
 					pstmtChangeLog.setInt(1, sId);
 					pstmtChangeLog.setInt(2, version);
 					pstmtChangeLog.setString(3, gson.toJson(new ChangeElement(ci, "external option")));
@@ -1548,6 +1562,7 @@ public class SurveyManager {
 			try {if (pstmtOptionInsert != null) {pstmtOptionInsert.close();}} catch (SQLException e) {}
 			try {if (pstmtOptionGet != null) {pstmtOptionGet.close();}} catch (SQLException e) {}
 			try {if (pstmtMaxSeq != null) {pstmtMaxSeq.close();}} catch (SQLException e) {}
+			try {if (pstmtOptionUpdate != null) {pstmtOptionUpdate.close();}} catch (SQLException e) {}
 		}
 	}
 		

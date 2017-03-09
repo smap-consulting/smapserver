@@ -1454,8 +1454,8 @@ public class GeneralUtilityMethods {
 			String cols [] = parser.parseLine(line);
 	       
 			CSVFilter filter = new CSVFilter(cols, qAppearance);								// Get a filter
-			ValueLabelCols vlc = getValueLabelCols(connectionSD, qId, qName, cols);		// Identify the columns in the CSV file that have the value and label
-
+			ValueLabelCols vlc = getValueLabelCols(connectionSD, qId, qName, cols);				// Identify the columns in the CSV file that have the value and label
+			
 			while(line != null) {
 				line = br.readLine();
 				if(line != null) {
@@ -1470,6 +1470,7 @@ public class GeneralUtilityMethods {
 						c.qType = qType;
 						c.option.externalLabel = optionCols[vlc.label];
 						c.option.value = optionCols[vlc.value];
+						c.option.cascade_filters = filter.GetCascadeFilter(optionCols);
 						//c.property.type = "option";
 		    		  
 						ciList.add(c);
@@ -1513,6 +1514,7 @@ public class GeneralUtilityMethods {
 		try {
 			pstmt = connectionSD.prepareStatement(sql);
 			pstmt.setInt(1,  qId);
+			log.info("Get value/label combos: " + pstmt.toString());
 			ResultSet rs = pstmt.executeQuery();
 			if(rs.next()) {
 				String valueName = rs.getString(1);

@@ -99,7 +99,7 @@ public class FormXML extends Application{
 		try {	    
 
 			SurveyTemplate template = new SurveyTemplate();
-			template.readDatabase(survey.id);
+			template.readDatabase(survey.id, false);
 			//template.printModel();	// debug
 			GetXForm xForm = new GetXForm();
 			response = xForm.get(template, false);
@@ -155,7 +155,7 @@ public class FormXML extends Application{
 		try {	    
 
 			SurveyTemplate template = new SurveyTemplate();
-			template.readDatabase(survey.id);
+			template.readDatabase(survey.id, false);
 			//template.printModel();	// debug
 			GetXForm xForm = new GetXForm();
 			response = xForm.get(template, false);

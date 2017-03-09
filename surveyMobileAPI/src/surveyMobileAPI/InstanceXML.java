@@ -124,7 +124,7 @@ public class InstanceXML extends Application{
 		try {
 			
            	SurveyTemplate template = new SurveyTemplate();
-			template.readDatabase(survey.id);
+			template.readDatabase(survey.id, false);
 			
 			GetXForm xForm = new GetXForm();
 			String instanceXML = xForm.getInstance(survey.id, templateName, template, key, keyval, priKey, false, false);	

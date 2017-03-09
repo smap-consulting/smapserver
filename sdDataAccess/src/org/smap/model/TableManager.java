@@ -94,7 +94,7 @@ public class TableManager {
 			} else {
 				log.info("        Table does not exist");
 				SurveyTemplate template = new SurveyTemplate();   
-				template.readDatabase(sd, sName);	
+				template.readDatabase(sd, sName, false);	
 				writeAllTableStructures(sd, cResults, template);
 				tableCreated = true;
 			}
