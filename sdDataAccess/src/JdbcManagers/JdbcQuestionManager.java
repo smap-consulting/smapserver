@@ -160,12 +160,12 @@ public class JdbcQuestionManager {
 		String nodeset_label = null;
 		if(q.getType().startsWith("select")) {
 			
-			nodeset = q.getNodeset(false, null);
+			nodeset = q.getNodeset(false, null, false);
 			if(nodeset == null || nodeset.trim().length() == 0) {
-				// the remaining item list values
-				//nodeset = GeneralUtilityMethods.getNodesetFromChoiceFilter(null, q.getListName());
-				//nodeset_value = "name";
-				//nodeset_label = "jr:itext(itextId)";
+				// the remaining item list values TODO is there an issue with this??????
+				nodeset = GeneralUtilityMethods.getNodesetFromChoiceFilter(null, q.getListName());
+				nodeset_value = "name";
+				nodeset_label = "jr:itext(itextId)";
 				//cascade_instance = q.getListName();
 			} else {
 				nodeset_value = q.getNodesetValue();
