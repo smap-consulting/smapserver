@@ -495,7 +495,6 @@ public class TemplateUpload extends Application {
 		        				response.foundErrorMsg = true;
 		        			} else {
 		        				response.errMesg.add("$e_unknown");
-		        				response.hints.add("$e_get_help");
 		        				//response.hints.add("Contact your system administrator for support");
 		        				if(!line.equals("errors.PyXFormError")) {
 		        					response.foundErrorMsg = true;
@@ -611,7 +610,8 @@ public class TemplateUpload extends Application {
         				|| line.trim().startsWith("at sun")
         				|| line.trim().startsWith("at java") 
         				|| line.trim().startsWith("Result: Invalid")
-        				|| line.trim().length() == 0) {
+        				|| line.trim().length() == 0
+        				|| line.endsWith("xml does not exist.")) {
         			// ignore all of the above
         		} else if(line.startsWith("Content is not allowed in prolog")) {
         			response.errMesg.add(line);

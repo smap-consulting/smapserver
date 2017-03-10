@@ -321,7 +321,12 @@ public class GetXForm {
 	    			
 	    			// If this is a choice question, add the items
 	    			if(q.getType().startsWith("select")) {
-	    			   	Collection <Option> options = q.getValidChoices(sd); 
+	    				Collection <Option> options = null; 
+	    				if(embedExternalSearch) {
+	    					options = q.getValidChoices(sd);
+	    				} else {
+	    					options = q.getChoices(sd); 
+	    				}
 	    		    	List <Option> optionList = new ArrayList <Option> (options);
 	    		    	
 	    		    	for(Option o : optionList) {
