@@ -967,10 +967,6 @@ public class SurveyManager {
 		try { if (pstmtGetLinkable != null) {pstmtGetLinkable.close();}} catch (SQLException e) {}
 	}
 	
-
-	
-
-	
 	
 	/*
 	 * Get the project id and the block status of a survey given its ident
@@ -2709,4 +2705,205 @@ public class SurveyManager {
 			if(pstmtClear != null) try {pstmtClear.close();} catch(Exception e) {}
 		}
 	}
+	
+	/*
+	 * Add the options any CSV files referenced by this question
+	 * This code largely duplicates the code in SurveyTemplate.java however it references the SDAL
+	 *  version of a question object rather than the old sdDataAccess version of Question
+	 */
+	public void writeExternalChoicesForQuestions(
+			Connection sd, 
+			Connection cResults, 
+			String basePath,
+			String user,
+			int sId) throws Exception {
+		
+		org.smap.sdal.managers.SurveyManager sm = new org.smap.sdal.managers.SurveyManager();
+
+		ArrayList<Question> questionList = getQuestionsForSurvey(sd, sId, false);
+		ArrayList<ChangeSet> changes = new ArrayList<ChangeSet> ();
+
+		try {
+			for(Question q : questionList) {
+	
+				if(q.type.equals("select1")) {
+					
+					// Check to see if this appearance references a manifest file
+					String appearance = q.appearance;
+					if(appearance != null && appearance.toLowerCase().trim().contains("search(")) {
+						// Yes it references a manifest
+						
+						int idx1 = appearance.indexOf('(');
+						int idx2 = appearance.indexOf(')');
+						if(idx1 > 0 && idx2 > idx1) {
+							String criteriaString = appearance.substring(idx1 + 1, idx2);
+							
+							String criteria [] = criteriaString.split(",");
+							if(criteria.length > 0) {
+								
+								if(criteria[0] != null && criteria[0].length() > 2) {	// allow for quotes
+									String filename = criteria[0].trim();
+									filename = filename.substring(1, filename.length() -1);
+									filename += ".csv";
+									log.info("We have found a manifest link to " + filename);
+									
+									ChangeSet cs = new ChangeSet();
+									cs.changeType = "option";
+									cs.source = "file";
+									cs.items = new ArrayList<ChangeItem> ();
+									changes.add(cs);
+	
+									int oId = org.smap.sdal.Utilities.GeneralUtilityMethods.getOrganisationId(sd, user, 0);
+					
+									String filepath = basePath + "/media/organisation/" + oId + "/" + filename;		
+									File file = new File(filepath);
+	
+									org.smap.sdal.Utilities.GeneralUtilityMethods.getOptionsFromFile(
+										sd,
+										cs.items,
+										file,
+										filename,
+										q.columnName,
+										q.l_id,
+										q.id,				
+										"select",
+										appearance);
+					
+								}
+							}
+						}
+					}
+				}
+			}
+			
+			sm.applyChangeSetArray(sd, cResults, sId, user, changes);
+			
+		} catch(Exception e) {
+			// Record exception but otherwise ignore
+			e.printStackTrace();
+		} 
+			
+	}
+	
+	/*
+	 * Get the questions for a survey
+	 */
+	public ArrayList<Question> getQuestionsForSurvey(Connection sd, int sId, 
+			boolean getPropertyTypeQuestions) throws Exception {
+		
+		ArrayList<Question> questions = new ArrayList<Question> ();
+		
+		// SQL to get the questions belonging to a form
+		ResultSet rsGetQuestions = null;
+		String sqlGetQuestions = "select q.q_id, "
+				+ "q.qname, "
+				+ "q.qtype, "
+				+ "q.qtext_id, "
+				+ "q.infotext_id, "
+				+ "q.source, " 
+				+ "q.calculate, "
+				+ "q.seq, " 
+				+ "q.defaultanswer, "
+				+ "q.appearance, "
+				+ "q.qconstraint, "
+				+ "q.constraint_msg, "
+				+ "q.required_msg, "
+				+ "q.nodeset, "
+				+ "q.relevant, "
+				+ "q.visible, "
+				+ "q.readonly, "
+				+ "q.mandatory, "
+				+ "q.published, "
+				+ "q.column_name, "
+				+ "q.source_param, "
+				+ "q.path, "
+				+ "q.soft_deleted, "
+				+ "q.autoplay,"
+				+ "q.accuracy,"
+				+ "q.linked_survey,"
+				+ "q.l_id "
+				+ "from question q,form f "
+				+ "where q.f_id = f.f_id "
+				+ "and f.s_id = ? "
+				+ "order by q.f_id, q.seq asc;";
+		PreparedStatement pstmtGetQuestions = sd.prepareStatement(sqlGetQuestions);
+
+		/*
+		 * Get the questions for this form
+		 */
+		try {
+			pstmtGetQuestions.setInt(1, sId);
+			log.info("Get questions for survey: " + pstmtGetQuestions.toString());
+			rsGetQuestions = pstmtGetQuestions.executeQuery();
+			
+			boolean inMeta = false;				// Set true if the question is in the meta group
+			while (rsGetQuestions.next()) {
+				Question q = new Question();
+				
+				q.id = rsGetQuestions.getInt(1);
+				q.name = rsGetQuestions.getString(2);
+				q.type = rsGetQuestions.getString(3);
+				q.text_id = rsGetQuestions.getString(4);
+				q.hint_id = rsGetQuestions.getString(5);
+				q.source = rsGetQuestions.getString(6);
+				q.calculation = GeneralUtilityMethods.convertAllXpathNames(rsGetQuestions.getString(7), true);
+				q.seq = rsGetQuestions.getInt(8);
+				q.defaultanswer = rsGetQuestions.getString(9);
+				q.appearance = GeneralUtilityMethods.convertAllXpathNames(rsGetQuestions.getString(10), true);
+				
+				q.constraint = GeneralUtilityMethods.convertAllXpathNames(rsGetQuestions.getString(11), true);
+				q.constraint_msg = rsGetQuestions.getString(12);
+				q.required_msg = rsGetQuestions.getString(13);
+				q.choice_filter = GeneralUtilityMethods.getChoiceFilterFromNodeset(rsGetQuestions.getString(14), true);
+				
+				q.relevant = GeneralUtilityMethods.convertAllXpathNames(rsGetQuestions.getString(15), true);
+				q.visible = rsGetQuestions.getBoolean(16);
+				q.readonly = rsGetQuestions.getBoolean(17);
+				q.required = rsGetQuestions.getBoolean(18);
+				q.published = rsGetQuestions.getBoolean(19);
+				q.columnName = rsGetQuestions.getString(20);
+				q.source_param = rsGetQuestions.getString(21);
+				q.path = rsGetQuestions.getString(22);
+				q.soft_deleted = rsGetQuestions.getBoolean(23);
+				q.autoplay = rsGetQuestions.getString(24);
+				q.accuracy = rsGetQuestions.getString(25);
+				q.linked_survey = rsGetQuestions.getInt(26);
+				q.l_id = rsGetQuestions.getInt(27);
+				if(q.autoplay == null) {
+					q.autoplay = "none";
+				}
+				
+				// Set an indicator if this is a property type question (_device etc)
+				q.propertyType = GeneralUtilityMethods.isPropertyType(q.source_param, q.name);
+				
+				// Discard property type questions if they have not been asked for
+				if(q.propertyType && !getPropertyTypeQuestions) {
+					continue;
+				}
+				
+				
+				// Track if this question is in the meta group
+				if(q.name.equals("meta")) {
+					inMeta = true;
+				} else if(q.name.equals("meta_groupEnd")) {
+					inMeta = false;
+				}
+				q.inMeta = inMeta;
+				
+				// If the survey was loaded from xls it will not have a list name
+				if(q.list_name == null || q.list_name.trim().length() == 0) {
+					q.list_name = q.name;
+				}
+				
+			
+				questions.add(q);
+			}
+		} finally {
+			// Close statements
+			try { if (pstmtGetQuestions != null) {pstmtGetQuestions.close();}} catch (SQLException e) {}
+		}
+		
+		return questions;
+	}
+	
 }
