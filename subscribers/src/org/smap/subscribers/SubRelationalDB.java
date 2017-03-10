@@ -920,11 +920,16 @@ public class SubRelationalDB extends Subscriber {
 					}
 					
 				} else if(qType.equals("geopoint")) {
-					// Geo point parameters are separated by a space and in the order Y X
+					// Geo point parameters are separated by a space and in the order Y X Altitude Accuracy
 					// To store as a Point in the db this order needs to be reversed
+					System.out.println("Location: " + value);
 					String params[] = value.split(" ");
 					if(params.length > 1) {
-						value = "ST_GeomFromText('POINT(" + params[1] + " " + params[0] + ")', 4326)";
+						//value = "ST_GeomFromText('POINT(" + params[1] + " " + params[0] + ")', 4326)";
+						value = "ST_SetSRID(ST_MakePoint(" 
+								+ String.valueOf(Double.parseDouble(params[1])) + ","
+								+ String.valueOf(Double.parseDouble(params[0]))
+								+ "), 4326)";
 					} else {
 						System.out.println("Error: Invalid geometry point detected: " + value);
 						value = "null";

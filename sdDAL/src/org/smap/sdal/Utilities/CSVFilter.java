@@ -38,7 +38,6 @@ public class CSVFilter {
 	private boolean includeAll = true;
 	private Rule r1 = null;
 	private Rule r2 = null;		// Secondary filter rule
-	private String cascade_filters = null;
 	
 	public CSVFilter(String [] cols, String appearance) {
 		int idx1 = appearance.indexOf('(');

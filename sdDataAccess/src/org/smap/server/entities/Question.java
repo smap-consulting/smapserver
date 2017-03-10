@@ -297,10 +297,13 @@ public class Question {
 				// First remove any filter added through setting of choice_filter this is incompatible with the use of search()
 				int idx = nodeset.indexOf('[');
 				if (idx >= 0) {
-					// nodeset = nodeset.substring(0, idx);
+					nodeset = nodeset.substring(0, idx);
 				}
-				if(appearance != null && appearance.contains("search")) {
-					String [] params = appearance.split(",");
+				
+				String filterQuestion = GeneralUtilityMethods.getFirstSearchQuestionFromAppearance(appearance);
+				System.out.println("Filter question: " + filterQuestion );
+				if(filterQuestion != null) {
+					nodeset += "[ _smap_cascade = " + filterQuestion + " ]";
 				}
 			}
 			System.out.println("New nodeset: " + nodeset);

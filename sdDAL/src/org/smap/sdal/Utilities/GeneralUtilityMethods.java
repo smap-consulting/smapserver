@@ -3852,5 +3852,31 @@ public class GeneralUtilityMethods {
 		
 		return external;
 	}
+	
+	/*
+	 * Get the search question from appearance
+	 * Used when converting searches into cascading selects
+	 */
+	public static String getFirstSearchQuestionFromAppearance(String appearance) {
+		String filterQuestion = null;
+		
+		if(appearance != null && appearance.toLowerCase().trim().contains("search(")) {
+			int idx1 = appearance.indexOf('(');
+			int idx2 = appearance.indexOf(')');
+			
+			if(idx1 > 0 && idx2 > idx1) {
+				String criteriaString = appearance.substring(idx1 + 1, idx2);
+				log.info("#### criteria for csv filter: " + criteriaString);
+				String criteria [] = criteriaString.split(",");
+				if(criteria.length >= 4) {
+					// remove quotes
+					filterQuestion = criteria[3].trim();
+
+				}
+			}
+		}
+		
+		return filterQuestion;
+	}
 
 }
