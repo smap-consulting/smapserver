@@ -290,23 +290,24 @@ public class Question {
 	public String getNodeset(boolean convertToXPath, HashMap<String, String> questionPaths, boolean embedExternalSearch) throws Exception {
 		
 		String v = nodeset;
+		
 		if(embedExternalSearch) {
 			// Potentially add a filter using the appearance value to the nodeset
 			System.out.println("Add filter from: " + appearance + " to: " + nodeset);
-			if(nodeset != null) {
+			if(v != null) {
 				// First remove any filter added through setting of choice_filter this is incompatible with the use of search()
-				int idx = nodeset.indexOf('[');
+				int idx = v.indexOf('[');
 				if (idx >= 0) {
-					nodeset = nodeset.substring(0, idx);
+					v = v.substring(0, idx);
 				}
 				
 				String filterQuestion = GeneralUtilityMethods.getFirstSearchQuestionFromAppearance(appearance);
 				System.out.println("Filter question: " + filterQuestion );
 				if(filterQuestion != null) {
-					nodeset += "[ _smap_cascade = " + filterQuestion + " ]";
+					v += "[ _smap_cascade = " + filterQuestion + " ]";
 				}
 			}
-			System.out.println("New nodeset: " + nodeset);
+			System.out.println("New nodeset: " + v);
 	
 		}
 		
