@@ -28,7 +28,6 @@ import java.io.InputStreamReader;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -61,7 +60,6 @@ import org.smap.sdal.Utilities.AuthorisationException;
 import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.SDDataSource;
-import org.smap.sdal.Utilities.UtilityMethodsEmail;
 import org.smap.server.utilities.PutXForm;
 
 import com.google.gson.Gson;
@@ -271,7 +269,7 @@ public class TemplateUpload extends Application {
 				model.getSurvey().setDisplayName(displayName);
 				model.getSurvey().setFileName(resp.fileName);
 			} else {
-				mesgArray.add("No survey name");		// TODO Language
+				mesgArray.add("No survey name");
 				
 				return getErrorResponse(request,  mesgArray, null, null, serverName, projectName, displayName, fileName);
 			}
@@ -280,7 +278,7 @@ public class TemplateUpload extends Application {
 			if(projectId != -1) {
 				model.getSurvey().setProjectId(projectId);
 			} else {
-				mesgArray.add("No project");		// TODO Language
+				mesgArray.add("No project");	
 
 				return getErrorResponse(request,  mesgArray, null, null, serverName, projectName, displayName, fileName);
 			}

@@ -1361,13 +1361,13 @@ public class SurveyTemplate {
 						if(oRef != null) {
 							if(cascade) {
 								// Add if external choices are not to be included or they are and this is an external choice
-								if(!embedExternalSearch || o.getExternalFile()) {
+								//if(!embedExternalSearch || o.getExternalFile()) {
 									o.setListName(cascadeName);
 									// Cascade options are shared, check that this option has not been added already by another question
 									if(!cascadeOptionLoaded(cascadeName, o.getLabelId())) {
 										cascade_options.put(oRef, o);
 									}
-								}
+								//}
 							} else {
 								options.put(oRef, o);
 							}

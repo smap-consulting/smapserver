@@ -750,8 +750,8 @@ public class UtilityMethodsEmail {
 		// First try the survey level
 		path = basePath + "/media/" + sIdent + "/" + fileName;	
 		thumbsPath = basePath + "/media/" + sIdent + "/thumbs/" + fileName;	
-		log.info("Info: Getting file url for file: " + path);
 		
+		log.info("Info: Getting file url for file: " + path);
 		file = new File(path);
 		if(file.exists()) {
 			manifest.url = "/surveyKPI/file/" + fileName + "/survey/" + sId;
@@ -766,6 +766,7 @@ public class UtilityMethodsEmail {
 			// Second try the organisation level
 			path = basePath + "/media/organisation/" + oId + "/" + fileName;
 			thumbsPath = basePath + "/media/organisation/" + oId + "/thumbs/" + fileName;
+			log.info("Info: Getting file url for file: " + path);
 			file = new File(path);
 			if(file.exists()) {
 				manifest.url = "/surveyKPI/file/" + fileName + "/organisation";
