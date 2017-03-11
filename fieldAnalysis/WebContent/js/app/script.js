@@ -396,7 +396,7 @@ function exportExtendedChanged() {
 			}
 		} else {
 			
-			$('.showshape').show();
+			setExportControls();
 			$('.showextselect').hide();
 			
 		}
