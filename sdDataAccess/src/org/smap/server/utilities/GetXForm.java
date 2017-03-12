@@ -484,6 +484,15 @@ public class GetXForm {
     				
     				elementStack.push(currentParent);
 					currentParent = questionElement;
+					
+					// Add a timing element if we have entered the meta group
+					if(q.getName().equals("meta")) {
+						if(template.getSurvey().getTimingData()) {
+							questionElement = outputDoc.createElement("timing");
+		    				questionElement.setTextContent("timing.csv");
+							currentParent.appendChild(questionElement);	
+						}
+					}
     				
     			} else if(qType.equals("end group")) {	
     				
@@ -580,12 +589,8 @@ public class GetXForm {
             		
        				elementStack.push(currentParent);
     				currentParent = questionElement;
-    			}
-    			
-    			
+    			}	
     		}
-
-    		
     	}
     }
    

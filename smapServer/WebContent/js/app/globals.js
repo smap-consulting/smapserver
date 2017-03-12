@@ -706,6 +706,7 @@ define(function() {
 				$('#set_project_name option:selected').val(),
 				$('#set_default_language option:selected').text(),
 				$('#task_file').prop('checked'),
+				$('#timing_data').prop('checked'),
 				$('#set_hrk').val()
 			);
 			
@@ -717,6 +718,7 @@ define(function() {
 				this.survey.p_id = current.p_id;
 				this.survey.def_lang = current.def_lang;
 				this.survey.task_file = current.task_file;
+				this.survey.timing_data = current.timing_data;
 				this.survey.hrk = current.hrk;
 			}
 			
@@ -732,13 +734,14 @@ define(function() {
 								this.survey.p_id, 
 								this.survey.def_lang,
 								this.survey.task_file,
+								this.survey.timing_data,
 								this.hrk
 								));
 			
 			this.forceSettingsChange = false;
 		} 
 		
-		this.createSettingsObject = function(displayName, instanceNameDefn, surveyClass, p_id, def_lang, task_file, hrk) {
+		this.createSettingsObject = function(displayName, instanceNameDefn, surveyClass, p_id, def_lang, task_file, timing_data, hrk) {
 			
 			var projId;
 			if(typeof p_id === "string") {
@@ -753,6 +756,7 @@ define(function() {
 				p_id: projId,
 				def_lang: def_lang,
 				task_file: task_file,
+				timing_data: timing_data,
 				hrk: hrk
 			}
 		}

@@ -467,6 +467,7 @@ define(
     "ed_i_c": "Created",
     "ed_st": "Shared Table",
     "ed_ld": "Allow Loading data from file",
+    "ed_td": "Collect timining data from the phone",
     "ed_i_bo": "Based On",
     "ed_i_tn": "Table Names",
     "ed_tlf": "Top Level Form",

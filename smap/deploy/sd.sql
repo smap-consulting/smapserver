@@ -660,3 +660,6 @@ delete from linked_forms where linker_s_id not in (select s_id from survey);
 alter table linked_forms add constraint lf_survey2 FOREIGN KEY (linker_s_id)
 	REFERENCES survey (s_id) MATCH SIMPLE
 	ON UPDATE NO ACTION ON DELETE CASCADE;
+	
+-- Upgrade to 17.02
+alter table survey add column timing_data boolean;

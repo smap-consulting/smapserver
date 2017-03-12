@@ -642,6 +642,7 @@ public class Surveys extends Application {
 			
 			// Update the settings
 			String sql = "update survey set display_name = ?, name = ?, def_lang = ?, task_file = ?, "
+					+ "timing_data = ?, "
 					+ "p_id = ?, "
 					+ "instance_name = ?, "
 					+ "version = ?, "
@@ -657,12 +658,13 @@ public class Surveys extends Application {
 			pstmt.setString(2, newSurveyName);
 			pstmt.setString(3, survey.def_lang);
 			pstmt.setBoolean(4, survey.task_file);
-			pstmt.setInt(5, survey.p_id);
-			pstmt.setString(6, survey.instanceNameDefn);
-			pstmt.setInt(7, version);
-			pstmt.setString(8, survey.surveyClass);
-			pstmt.setString(9, survey.hrk);
-			pstmt.setInt(10, sId);
+			pstmt.setBoolean(5, survey.timing_data);
+			pstmt.setInt(6, survey.p_id);
+			pstmt.setString(7, survey.instanceNameDefn);
+			pstmt.setInt(8, version);
+			pstmt.setString(9, survey.surveyClass);
+			pstmt.setString(10, survey.hrk);
+			pstmt.setInt(11, sId);
 			
 			log.info("Saving survey: " + pstmt.toString());
 			int count = pstmt.executeUpdate();

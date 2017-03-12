@@ -197,7 +197,7 @@ public class SurveyManager {
 		ResultSet resultSet = null;
 		StringBuffer sql = new StringBuffer();
 		sql.append("select s.s_id, s.name, s.ident, s.display_name, s.deleted, s.blocked, p.name, p.id,"
-				+ "s.def_lang, s.task_file, u.o_id, s.class,"
+				+ "s.def_lang, s.task_file, s.timing_data, u.o_id, s.class,"
 				+ "s.instance_name, s.hrk, s.based_on, s.shared_table, s.created, loaded_from_xls,"
 				+ "s.pulldata, s.version "
 				+ "from survey s, users u, user_project up, project p "
@@ -239,19 +239,20 @@ public class SurveyManager {
 				s.setPId(resultSet.getInt(8));
 				s.def_lang = resultSet.getString(9);
 				s.task_file = resultSet.getBoolean(10);
-				s.o_id = resultSet.getInt(11);
-				s.surveyClass = resultSet.getString(12);
-				s.instanceNameDefn = GeneralUtilityMethods.convertAllXpathNames(resultSet.getString(13), true);
-				s.hrk = resultSet.getString(14);
-				s.basedOn = resultSet.getString(15);
-				s.sharedTable = resultSet.getBoolean(16);
-				s.created = resultSet.getTimestamp(17);
-				s.loadedFromXLS = resultSet.getBoolean(18);
+				s.timing_data = resultSet.getBoolean(11);
+				s.o_id = resultSet.getInt(12);
+				s.surveyClass = resultSet.getString(13);
+				s.instanceNameDefn = GeneralUtilityMethods.convertAllXpathNames(resultSet.getString(14), true);
+				s.hrk = resultSet.getString(15);
+				s.basedOn = resultSet.getString(16);
+				s.sharedTable = resultSet.getBoolean(17);
+				s.created = resultSet.getTimestamp(18);
+				s.loadedFromXLS = resultSet.getBoolean(19);
 				
 				Type type = new TypeToken<ArrayList<Pulldata>>(){}.getType();
-				s.pulldata = new Gson().fromJson(resultSet.getString(19), type); 
+				s.pulldata = new Gson().fromJson(resultSet.getString(20), type); 
 				
-				s.version = resultSet.getInt(20);
+				s.version = resultSet.getInt(21);
 				// Get the pdf template
 				File templateFile = GeneralUtilityMethods.getPdfTemplate(basePath, s.displayName, s.p_id);
 				if(templateFile.exists()) {

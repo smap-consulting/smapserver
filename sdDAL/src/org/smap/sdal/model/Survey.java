@@ -22,6 +22,7 @@ public class Survey {
 	public String instanceNameDefn;
 	public String def_lang;
 	public boolean task_file;		// Set true if this data from a file can be pre-loaded into this survey
+	public boolean timing_data;		// Set true if timing data is to be collected for this survey
 	public String surveyClass;
 	public boolean deleted;
 	public boolean blocked;
