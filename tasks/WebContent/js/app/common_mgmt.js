@@ -897,7 +897,9 @@ window.gTasks = {
 			 }
 		 }
 		 $('#date_question').html(h.join(''));
-		 $('#date_question').val(defValue);
+		 if(typeof defValue !== "undefined") {
+			 $('#date_question').val(defValue);
+		 }
 	 }
  
 	 /*
@@ -1174,7 +1176,7 @@ window.gTasks = {
 	 
 	 
 	 /*
-	  * Add html to show a form to edit a record
+	  * Add HTML to show a form to edit a record
 	  */
 	 function showEditRecordForm(record, columns, $editForm, $surveyForm) {
 		var 

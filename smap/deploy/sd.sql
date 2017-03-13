@@ -665,6 +665,7 @@ alter table linked_forms add constraint lf_survey2 FOREIGN KEY (linker_s_id)
 alter table question add column linked_target text;
 update question set linked_target = cast(linked_survey as text) where linked_survey > 0 and linked_target is null ;
 
+-- upgrade to 17.03
 -- Create queries table
 CREATE SEQUENCE custom_query_seq START 1;
 ALTER SEQUENCE custom_query_seq OWNER TO ws;
@@ -677,4 +678,29 @@ create TABLE custom_query (
 	
 );
 ALTER TABLE custom_query OWNER TO ws;
+
+-- Create view tables
+CREATE SEQUENCE user_view_seq START 1;
+ALTER SEQUENCE user_view_seq OWNER TO ws;
+
+create TABLE user_view (
+	id INTEGER DEFAULT NEXTVAL('user_view_seq') CONSTRAINT pk_user_view PRIMARY KEY,
+	u_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+	v_id INTEGER REFERENCES survey_view(id) ON DELETE CASCADE,
+	access text		-- read || write || write
+	);
+ALTER TABLE user_view OWNER TO ws;
+
+DROP SEQUENCE IF EXISTS survey_view_seq CASCADE;
+CREATE SEQUENCE survey_view_seq START 1;
+ALTER SEQUENCE survey_view_seq OWNER TO ws;
+
+create TABLE survey_view (
+	id integer DEFAULT NEXTVAL('survey_view_seq') CONSTRAINT pk_survey_view PRIMARY KEY,
+	s_id integer,		-- optional survey id
+	m_id integer,		-- optional managed id requires s_id to be set
+	query_id integer,	-- optional query id
+	view text
+);
+ALTER TABLE survey_view OWNER TO ws;
 

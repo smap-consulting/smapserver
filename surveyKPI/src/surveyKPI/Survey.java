@@ -1044,6 +1044,17 @@ public class Survey extends Application {
 					log.info("Delete dashboard panels: " + pstmt.toString());
 					pstmt.executeUpdate();
 					
+					
+					/*
+					 * Delete any survey views that reference this survey
+					 */
+					sql = "delete from survey_view where s_id = ?;";	
+					try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+					pstmt = connectionSD.prepareStatement(sql);
+					pstmt.setInt(1, sId);
+					log.info("Delete survey views: " + pstmt.toString());
+					pstmt.executeUpdate();
+					
 					/*
 					 * Delete any tasks that are to update this survey
 					 */

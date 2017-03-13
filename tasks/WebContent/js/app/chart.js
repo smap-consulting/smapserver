@@ -79,7 +79,7 @@ define([
 			//	reset = true;
 			//}
 			gEdChart.qIdx = $('#ew_question').val();
-			if(gEdChart.qIdx) {		// Question specified
+			if(typeof gEdChart.qIdx !== "undefined" && filtered) {		// Question specified
 				gEdChart.name = filtered[gEdChart.qIdx].name;
 				gEdChart.type = filtered[gEdChart.qIdx].type;
 			}
