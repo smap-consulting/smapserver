@@ -7934,3 +7934,8 @@ input:not([type="radio"]):not([type="checkbox"]), textarea {
   border: none !important;
   width: 100% !important;
 }
+
+/* show images without cutting them off */
+fieldset.question {
+	overflow:auto;
+}

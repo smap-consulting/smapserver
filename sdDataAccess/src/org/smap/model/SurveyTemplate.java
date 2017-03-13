@@ -1352,22 +1352,35 @@ public class SurveyTemplate {
 					 * Get options for this question
 					 */
 					om = new JdbcOptionManager(sd);
-					//List <Option> oList = oPersist.getByQuestionId(q.getId());
 					List <Option> oList = om.getByListId(q.getListId());
+					
+					/*
+					 * Either internal or external(from a file) choices should be included in cascade lists
+					 */
+					boolean includeExternal = false;
+					if(embedExternalSearch) {
+						for(int j= 0; j < oList.size(); j++) {
+							if(oList.get(j).getExternalFile()) {
+								includeExternal = true;		// Include external choices if there are any external choices in the list
+								break;
+							}
+						}
+					}
+					
 					for(int j= 0; j < oList.size(); j++) {
 						Option o = oList.get(j);
 						o.setQuestionRef(qRef);
 						String oRef = qRef + "/" + o.getId();
 						if(oRef != null) {
 							if(cascade) {
-								// Add if external choices are not to be included or they are and this is an external choice
-								//if(!embedExternalSearch || o.getExternalFile()) {
+
+								if((includeExternal && o.getExternalFile()) || (!includeExternal && !o.getExternalFile())) {
 									o.setListName(cascadeName);
 									// Cascade options are shared, check that this option has not been added already by another question
 									if(!cascadeOptionLoaded(cascadeName, o.getLabelId())) {
 										cascade_options.put(oRef, o);
 									}
-								//}
+								}
 							} else {
 								options.put(oRef, o);
 							}
