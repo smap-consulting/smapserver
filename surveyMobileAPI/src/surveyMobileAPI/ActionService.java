@@ -42,12 +42,12 @@ import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.managers.ActionManager;
-import org.smap.sdal.managers.ManagedFormsManager;
+import org.smap.sdal.managers.SurveyViewManager;
 import org.smap.sdal.managers.SurveyManager;
 import org.smap.sdal.managers.TableDataManager;
 import org.smap.sdal.model.Action;
 import org.smap.sdal.model.Form;
-import org.smap.sdal.model.ManagedFormConfig;
+import org.smap.sdal.model.SurveyViewDefn;
 import org.smap.sdal.model.Survey;
 
 import com.google.gson.Gson;
@@ -198,8 +198,8 @@ public class ActionService extends Application{
 	    
 	    output.append("<script>");
 	    	
-	    ManagedFormsManager mfm = new ManagedFormsManager();
-		ManagedFormConfig mfc = mfm.getManagedFormConfig(sd, cResults, a.sId, a.managedId, uIdent, 
+	    SurveyViewManager mfm = new SurveyViewManager();
+		SurveyViewDefn mfc = mfm.getSurveyView(sd, cResults, a.sId, a.managedId, uIdent, 
 				GeneralUtilityMethods.getOrganisationIdForSurvey(sd, a.sId),
 				superUser);
 		String urlprefix = GeneralUtilityMethods.getUrlPrefix(request);
@@ -324,7 +324,7 @@ public class ActionService extends Application{
 		return output.toString();
 	}
 	
-	private StringBuffer getManagedConfig(ManagedFormConfig mfc) throws SQLException, Exception {
+	private StringBuffer getManagedConfig(SurveyViewDefn mfc) throws SQLException, Exception {
 		
 		StringBuffer output = new StringBuffer();
 		
@@ -338,7 +338,7 @@ public class ActionService extends Application{
 	
 	private StringBuffer getRecord(Connection sd, 
 			Connection cResults, 
-			ManagedFormConfig mfc, 
+			SurveyViewDefn mfc, 
 			int sId, 
 			int prikey,
 			String urlprefix, 

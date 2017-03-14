@@ -13,7 +13,7 @@ import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONObject;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.model.Form;
-import org.smap.sdal.model.ManagedFormConfig;
+import org.smap.sdal.model.SurveyViewDefn;
 import org.smap.sdal.model.ManagedFormItem;
 import org.smap.sdal.model.SqlFrag;
 import org.smap.sdal.model.SqlFragParam;

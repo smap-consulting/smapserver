@@ -260,7 +260,7 @@ public class Authorise {
 	/*
 	 * Verify that the user is entitled to access this particular query
 	 */
-	public boolean isValidQuery(Connection conn, String user, int queryId, boolean isDeleted, boolean superUser)
+	public boolean isValidQuery(Connection conn, String user, int queryId)
 			throws ServerException, AuthorisationException, NotFoundException {
 		ResultSet resultSet = null;
 		PreparedStatement pstmt = null;

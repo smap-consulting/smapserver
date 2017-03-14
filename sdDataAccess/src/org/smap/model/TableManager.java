@@ -12,7 +12,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.smap.model.SurveyTemplate;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
-import org.smap.sdal.managers.ManagedFormsManager;
+import org.smap.sdal.managers.SurveyViewManager;
 import org.smap.sdal.model.ChangeItem;
 import org.smap.sdal.model.TableColumn;
 import org.smap.server.entities.Form;
@@ -145,7 +145,7 @@ public class TableManager {
 			PreparedStatement pstmtAdd = null;
 			
 			ArrayList<TableColumn> columns = new ArrayList<TableColumn> ();
-			ManagedFormsManager qm = new ManagedFormsManager();
+			SurveyViewManager qm = new SurveyViewManager();
 			qm.getDataProcessingConfig(sd, managedId, columns, null, GeneralUtilityMethods.getOrganisationIdForSurvey(sd, sId));
 			
 			org.smap.sdal.model.Form f = GeneralUtilityMethods.getTopLevelForm(sd, sId);	// Get the table name of the top level form

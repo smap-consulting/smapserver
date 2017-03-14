@@ -19,7 +19,7 @@ import org.smap.sdal.Utilities.PdfUtilities;
 import org.smap.sdal.model.DisplayItem;
 import org.smap.sdal.model.KeyValue;
 import org.smap.sdal.model.Label;
-import org.smap.sdal.model.ManagedFormConfig;
+import org.smap.sdal.model.SurveyViewDefn;
 import org.smap.sdal.model.Option;
 import org.smap.sdal.model.Result;
 import org.smap.sdal.model.TableColumn;
@@ -145,7 +145,7 @@ public class PDFTableManager {
 			Connection sd,
 			OutputStream outputStream, 
 			ArrayList<ArrayList<KeyValue>> dArray, 
-			ManagedFormConfig mfc,
+			SurveyViewDefn mfc,
 			ResourceBundle localisation, 
 			String tz,
 			boolean landscape,
@@ -328,7 +328,7 @@ public class PDFTableManager {
 	/*
 	 * Get the columns for the Pdf file
 	 */
-	private ArrayList<PdfColumn> getPdfColumnList(ManagedFormConfig mfc, 
+	private ArrayList<PdfColumn> getPdfColumnList(SurveyViewDefn mfc, 
 			ArrayList<ArrayList<KeyValue>> dArray, 
 			ResourceBundle localisation) {
 		

@@ -152,9 +152,11 @@ window.gTasks = {
 			
 			 saveCurrentProject(-1, globals.gCurrentSurvey);
 			 if(isManagedForms) {
-				 getSurveyConfig(globals.gCurrentSurvey, gTasks.cache.surveyList[globals.gCurrentProject][gTasks.gSelectedSurveyIndex].managed_id);
+				 getSurveyView(0, globals.gCurrentSurvey, 
+						 gTasks.cache.surveyList[globals.gCurrentProject][gTasks.gSelectedSurveyIndex].managed_id,
+						 0);
 			 } else {
-				 getSurveyConfig(globals.gCurrentSurvey, 0);
+				 getSurveyView(0, globals.gCurrentSurvey, 0, 0);
 			 }
 			 if(!isDuplicates) {
 				 getReport(gReport);
@@ -827,10 +829,19 @@ window.gTasks = {
 	 /*
 	  * Get the columns for a survey
 	  */
-	 function getSurveyConfig(sId, managed_id) {
+	 function getSurveyView(viewId, sId, managedId, queryId) {
 		 
-		 if(!gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex]) {
-			 var url = '/surveyKPI/managed/config/' + sId + "/" + managed_id;
+		 var url;
+		 
+		 if(viewId != 0) {
+			 url = '/surveyKPI/surveyview/' + viewId;
+		 } else {
+			 url = '/surveyKPI/surveyview/default';
+			 url += '?survey=' + sId;
+			 url += '&managed=' + managedId;
+			 url += '&query=' + queryId;
+		 }
+		 if(!gTasks.cache.surveyConfig[url]) {
 			 
 			 addHourglass();
 			 $.ajax({
@@ -840,7 +851,7 @@ window.gTasks = {
 				 success: function(data) {
 					 removeHourglass();
 					 gConfigLoaded = true;
-					 gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex] = data;
+					 gTasks.cache.surveyConfig[url] = data;
 					 console.log("Config loaded: " + gDataLoaded + " : " + gReportLoaded + " : " + gConfigLoaded)
 					 if(gReportLoaded && gDataLoaded) {
 						 chart.setChartList();	// Enable charts based on this survey config

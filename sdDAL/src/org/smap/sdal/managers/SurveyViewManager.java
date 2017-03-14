@@ -12,7 +12,7 @@ import java.util.logging.Logger;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.model.Form;
 import org.smap.sdal.model.KeyValue;
-import org.smap.sdal.model.ManagedFormConfig;
+import org.smap.sdal.model.SurveyViewDefn;
 import org.smap.sdal.model.ManagedFormItem;
 import org.smap.sdal.model.ManagedFormUserConfig;
 import org.smap.sdal.model.TableColumn;
@@ -44,37 +44,64 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 /*
  * Managed Forms
  */
-public class ManagedFormsManager {
+public class SurveyViewManager {
 	
 	private static Logger log =
-			 Logger.getLogger(ManagedFormsManager.class.getName());
+			 Logger.getLogger(SurveyViewManager.class.getName());
 	
 	/*
 	 * Get the Managed Form Configuration
 	 */
-	public ManagedFormConfig getManagedFormConfig(
+	public SurveyViewDefn getSurveyView(
 			Connection sd, 
 			Connection cResults,
+			int uId,
+			int viewId,
 			int sId,
 			int managedId,
 			String uIdent,
 			int oId,
 			boolean superUser) throws SQLException, Exception  {
 		
-		ManagedFormConfig mfc = new ManagedFormConfig();
+		SurveyViewDefn mfc = new SurveyViewDefn();
 		ManagedFormUserConfig savedConfig = null;
 		
-		// SQL to get default settings for this user and survey
-		String sql = "select settings from general_settings where u_id = ? and s_id = ? and key='mf';";
+		// SQL to get view details
+		String sql = "select view "
+				+ "from survey_view sv, user_view uv "
+				+ "where sv.id = uv.v_id "
+				+ "and sv.id = ? "
+				+ "and uv. u_id = ? ";
 		PreparedStatement pstmt = null;
 		
 		ResultSet rs = null;
 		Gson gson=  new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd").create();
 		try {
 
-			int uId = GeneralUtilityMethods.getUserId(sd, uIdent);	// Get user id
-			Form f = GeneralUtilityMethods.getTopLevelForm(sd, sId); // Get formId of top level form and its table name
+			// Get the survey view
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setInt(1, viewId);
+			pstmt.setInt(2, uId);
+			log.info("Get view defn: " + pstmt.toString());
 			
+			rs = pstmt.executeQuery();
+			if(rs.next()) {
+				String sView = rs.getString(1);
+				if(sView != null) {
+					Type type = new TypeToken<ManagedFormUserConfig>(){}.getType();	
+					try {
+						savedConfig = gson.fromJson(sView, type);
+					} catch (Exception e) {
+						log.log(Level.SEVERE,"Error: ", e);
+						savedConfig = new ManagedFormUserConfig ();		// If there is an error its likely that the structure of the config file has been changed and we should start from scratch
+					}
+				}
+				
+			}
+			
+			
+			
+			Form f = GeneralUtilityMethods.getTopLevelForm(sd, sId); // Get formId of top level form and its table name
 			ArrayList<TableColumn> columnList = GeneralUtilityMethods.getColumnsInForm(
 					sd,
 					cResults,
@@ -268,6 +295,39 @@ public class ManagedFormsManager {
 	}
 	
 	/*
+	 * Get default view id
+	 */
+	public int getDefaultView(Connection sd, int uId, int sId, int managedId, int queryId) throws SQLException {
+		int viewId = 0;
+		
+		String sqlGetDefault = "select v_id from default_user_view "
+				+ "where u_id = ? "
+				+ "and s_id = ? "
+				+ "and query_id = ? "
+				+ "and m_id = ?";
+		PreparedStatement pstmtGetDefault = null;
+		
+		try {
+			
+			pstmtGetDefault = sd.prepareStatement(sqlGetDefault);
+			
+			pstmtGetDefault.setInt(1, uId);
+			pstmtGetDefault.setInt(2, sId);
+			pstmtGetDefault.setInt(3, queryId);
+			pstmtGetDefault.setInt(4, managedId);
+			
+			ResultSet rs = pstmtGetDefault.executeQuery();
+			if(rs.next()) {
+				viewId = rs.getInt(1);
+			}
+		} finally {
+			if(pstmtGetDefault != null) { try{pstmtGetDefault.close();}catch(Exception e) {}}
+		}
+		
+		return viewId;
+	}
+	
+	/*
 	 * Identify any columns that should be dropped
 	 */
 	private boolean keepThis(String name) {
@@ -315,19 +375,7 @@ public class ManagedFormsManager {
 	
 
 	
-	/*
-	 * Set a default filter value
-	 */
-	private boolean filterDefault(String type) {
-		boolean filter = false;
-		
-		if(type.equals("select1") 
-				) {
-			filter = true;
-		}
-		
-		return filter;
-	}
+
 	
 }
 

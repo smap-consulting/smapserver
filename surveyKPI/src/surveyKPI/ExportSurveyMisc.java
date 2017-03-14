@@ -145,7 +145,7 @@ public class ExportSurveyMisc extends Application {
 		} else {
 		*/
 		if(query) {
-			a.isValidQuery(connectionSD, request.getRemoteUser(), targetId, false, superUser);
+			a.isValidQuery(connectionSD, request.getRemoteUser(), targetId);
 		} else {
 			a.isValidSurvey(connectionSD, request.getRemoteUser(), targetId, false, superUser);
 		}

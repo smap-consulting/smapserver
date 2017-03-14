@@ -286,18 +286,6 @@ create TABLE user_project (
 	);
 ALTER TABLE user_project OWNER TO ws;
 
-DROP SEQUENCE IF EXISTS user_view_seq CASCADE;
-CREATE SEQUENCE user_view_seq START 1;
-ALTER SEQUENCE user_view_seq OWNER TO ws;
-
-DROP TABLE IF EXISTS user_view CASCADE;
-create TABLE user_view (
-	id INTEGER DEFAULT NEXTVAL('user_view_seq') CONSTRAINT pk_user_view PRIMARY KEY,
-	u_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-	v_id INTEGER REFERENCES survey_view(id) ON DELETE CASCADE,
-	access TEXT		-- read || write || write
-	);
-ALTER TABLE user_view OWNER TO ws;
 
 DROP SEQUENCE IF EXISTS role_seq CASCADE;
 CREATE SEQUENCE role_seq START 1;
@@ -908,3 +896,31 @@ create TABLE survey_view (
 	view text
 );
 ALTER TABLE survey_view OWNER TO ws;
+
+DROP SEQUENCE IF EXISTS user_view_seq CASCADE;
+CREATE SEQUENCE user_view_seq START 1;
+ALTER SEQUENCE user_view_seq OWNER TO ws;
+
+DROP TABLE IF EXISTS user_view CASCADE;
+create TABLE user_view (
+	id INTEGER DEFAULT NEXTVAL('user_view_seq') CONSTRAINT pk_user_view PRIMARY KEY,
+	u_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+	v_id INTEGER REFERENCES survey_view(id) ON DELETE CASCADE,
+	access TEXT		-- read || write || write
+	);
+ALTER TABLE user_view OWNER TO ws;
+
+DROP SEQUENCE IF EXISTS default_user_view_seq CASCADE;
+CREATE SEQUENCE default_user_view_seq START 1;
+ALTER SEQUENCE default_user_view_seq OWNER TO ws;
+
+DROP TABLE IF EXISTS default_user_view CASCADE;
+create TABLE default_user_view (
+	id INTEGER DEFAULT NEXTVAL('default_user_view_seq') CONSTRAINT pk_default_user_view PRIMARY KEY,
+	u_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+	s_id integer,		-- survey id
+	m_id integer,		-- managed id requires s_id to be set
+	query_id integer,	-- query id
+	v_id integer REFERENCES survey_view(id) ON DELETE CASCADE		-- view id
+	);
+ALTER TABLE default_user_view OWNER TO ws;

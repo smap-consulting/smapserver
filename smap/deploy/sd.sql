@@ -704,3 +704,16 @@ create TABLE survey_view (
 );
 ALTER TABLE survey_view OWNER TO ws;
 
+CREATE SEQUENCE default_user_view_seq START 1;
+ALTER SEQUENCE default_user_view_seq OWNER TO ws;
+
+create TABLE default_user_view (
+	id INTEGER DEFAULT NEXTVAL('default_user_view_seq') CONSTRAINT pk_default_user_view PRIMARY KEY,
+	u_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+	s_id integer,		-- survey id
+	m_id integer,		-- managed id requires s_id to be set
+	query_id integer,	-- query id
+	v_id integer REFERENCES survey_view(id) ON DELETE CASCADE		-- view id
+	);
+ALTER TABLE default_user_view OWNER TO ws;
+

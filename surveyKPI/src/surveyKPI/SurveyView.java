@@ -38,13 +38,13 @@ import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.managers.ActionManager;
 import org.smap.sdal.managers.LinkageManager;
-import org.smap.sdal.managers.ManagedFormsManager;
+import org.smap.sdal.managers.SurveyViewManager;
 import org.smap.sdal.model.Action;
 import org.smap.sdal.model.ActionLink;
 import org.smap.sdal.model.Filter;
 import org.smap.sdal.model.Form;
 import org.smap.sdal.model.Link;
-import org.smap.sdal.model.ManagedFormConfig;
+import org.smap.sdal.model.SurveyViewDefn;
 import org.smap.sdal.model.ManagedFormItem;
 import org.smap.sdal.model.ManagedFormUserConfig;
 import org.smap.sdal.model.Role;
@@ -99,12 +99,86 @@ public class SurveyView extends Application {
 	}
 	
 	/*
+	 * Get the default survey view for the provided survey, managedId or query
+	 */
+	@GET
+	@Path("/default")
+	@Produces("application/json")
+	public Response getDefaultSurveyView(
+			@Context HttpServletRequest request,
+			@QueryParam("survey") int sId,
+			@QueryParam("managed") int managedId,
+			@QueryParam("query") int queryId) throws Exception {
+		
+		if(managedId > 0 && sId == 0) {
+			throw new Exception("If you specify a managedId then you must also specify the survey id");
+		} else if(queryId > 0 && sId > 0) {
+			throw new Exception("You cannot specify a query id and a survey id");
+		} else if(queryId == 0 && sId == 0) {
+			throw new Exception("You must specify either a query id or a survey id");
+		}
+		
+		// Authorisation - Access
+		Connection sd = SDDataSource.getConnection("surveyKPI-GetReportConfig");
+		boolean superUser = false;
+		try {
+			superUser = GeneralUtilityMethods.isSuperUser(sd, request.getRemoteUser());
+		} catch (Exception e) {
+		}
+		if(sId > 0) {
+			aNormal.isValidSurvey(sd, request.getRemoteUser(), sId, false, superUser);
+			if(managedId > 0) {
+				aManage.isValidManagedForm(sd, request.getRemoteUser(), managedId);
+			}
+		} else if(queryId > 0) {
+			aNormal.isValidQuery(sd, request.getRemoteUser(), queryId);
+		}
+		// End Authorisation
+		
+		Connection cResults = ResultsDataSource.getConnection("surveyKPI-GetReportConfig");
+		Response response = null;
+		Gson gson=  new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd").create();
+		try {
+
+			int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser(), 0);
+			SurveyViewManager svm = new SurveyViewManager();
+			
+			// Get the default view
+			int uId = GeneralUtilityMethods.getUserId(sd, request.getRemoteUser());
+			int viewId = svm.getDefaultView(sd, uId, sId, managedId, queryId);
+			
+			SurveyViewDefn sv = svm.getSurveyView(sd, cResults, uId, viewId, sId, managedId, request.getRemoteUser(), oId, superUser);
+			
+			/*
+			 * Remove data that is only used on the server
+			 */
+			for(TableColumn tc : sv.columns) {
+				tc.actions = null;
+				tc.calculation = null;
+			}
+			response = Response.ok(gson.toJson(sv)).build();
+		
+				
+		} catch (Exception e) {
+			log.log(Level.SEVERE, "Error", e);
+		    response = Response.serverError().entity(e.getMessage()).build();
+		} finally {
+			SDDataSource.closeConnection("surveyKPI-GetReportConfig", sd);
+			ResultsDataSource.closeConnection("surveyKPI-GetReportConfig", cResults);
+		}
+
+
+		return response;
+	}	
+	
+	/*
 	 * Return the survey view
 	 */
 	@GET
 	@Path("/{viewId}")
 	@Produces("application/json")
-	public Response getReportConfig(@Context HttpServletRequest request,
+	public Response getReportConfig(
+			@Context HttpServletRequest request,
 			@PathParam("viewId") int viewId) { 
 		
 		// Authorisation - Access
