@@ -839,9 +839,9 @@ window.gTasks = {
 			 url = '/surveyKPI/surveyview/default';
 			 url += '?survey=' + sId;
 			 url += '&managed=' + managedId;
-			 url += '&query=' + queryId;
+			 url += '&query=' + queryId;		// ignore for moment, ie note caching is done only on survey index
 		 }
-		 if(!gTasks.cache.surveyConfig[url]) {
+		 if(!gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex]) {
 			 
 			 addHourglass();
 			 $.ajax({
@@ -851,7 +851,7 @@ window.gTasks = {
 				 success: function(data) {
 					 removeHourglass();
 					 gConfigLoaded = true;
-					 gTasks.cache.surveyConfig[url] = data;
+					 gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex] = data;
 					 console.log("Config loaded: " + gDataLoaded + " : " + gReportLoaded + " : " + gConfigLoaded)
 					 if(gReportLoaded && gDataLoaded) {
 						 chart.setChartList();	// Enable charts based on this survey config
@@ -1248,71 +1248,74 @@ window.gTasks = {
 		
 		 // Create osm layer
 		 var osm = new ol.layer.Tile({source: new ol.source.OSM()}); 
-		 // Add the map	
-		 gMap = new ol.Map({
-	        target: 'map',
-	        layers: [
-	                         new ol.layer.Group({
-	                             'title': 'Base maps',
-	                             layers: [
-	                                 new ol.layer.Group({
-	                                     title: 'Water color with labels',
-	                                     type: 'base',
-	                                     combine: true,
-	                                     visible: false,
-	                                     layers: [
-	                                         new ol.layer.Tile({
-	                                             source: new ol.source.Stamen({
-	                                                 layer: 'watercolor'
-	                                             })
-	                                         }),
-	                                         new ol.layer.Tile({
-	                                             source: new ol.source.Stamen({
-	                                                 layer: 'terrain-labels'
-	                                             })
-	                                         })
-	                                     ]
-	                                 }),
-	                                 new ol.layer.Tile({
-	                                     title: 'Water color',
-	                                     type: 'base',
-	                                     visible: false,
-	                                     source: new ol.source.Stamen({
-	                                         layer: 'watercolor'
-	                                     })
-	                                 }),
-	                                 new ol.layer.Tile({
-	                                     title: 'OSM',
-	                                     type: 'base',
-	                                     visible: true,
-	                                     source: new ol.source.OSM()
-	                                 })
-	                             ]
-	                         }),
-	                         new ol.layer.Group({
-	                             title: 'Overlays',
-	                             layers: [
-	                                 new ol.layer.Tile({
-	                                     title: 'Countries',
-	                                     source: new ol.source.TileWMS({
-	                                         url: 'http://demo.opengeo.org/geoserver/wms',
-	                                         params: {'LAYERS': 'ne:ne_10m_admin_1_states_provinces_lines_shp'},
-	                                         serverType: 'geoserver'
-	                                     })
-	                                 })
-	                             ]
-	                         })
-	                     ],
-	        view: new ol.View(
-	        		{
-	        			center: ol.proj.transform([0.0, 0.0], 'EPSG:4326', 'EPSG:3857'),
-	        			zoom: 1
-	        		}
-	        	)
-	      });
 		 
-		 var layerSwitcher = new ol.control.LayerSwitcher({
-		        tipLabel: 'Legend' // Optional label for button
-		    });
-		 gMap.addControl(layerSwitcher);
+		 // Add the map	
+		 if(!gMap) {
+			 gMap = new ol.Map({
+		        target: 'map',
+		        layers: [
+		                         new ol.layer.Group({
+		                             'title': 'Base maps',
+		                             layers: [
+		                                 new ol.layer.Group({
+		                                     title: 'Water color with labels',
+		                                     type: 'base',
+		                                     combine: true,
+		                                     visible: false,
+		                                     layers: [
+		                                         new ol.layer.Tile({
+		                                             source: new ol.source.Stamen({
+		                                                 layer: 'watercolor'
+		                                             })
+		                                         }),
+		                                         new ol.layer.Tile({
+		                                             source: new ol.source.Stamen({
+		                                                 layer: 'terrain-labels'
+		                                             })
+		                                         })
+		                                     ]
+		                                 }),
+		                                 new ol.layer.Tile({
+		                                     title: 'Water color',
+		                                     type: 'base',
+		                                     visible: false,
+		                                     source: new ol.source.Stamen({
+		                                         layer: 'watercolor'
+		                                     })
+		                                 }),
+		                                 new ol.layer.Tile({
+		                                     title: 'OSM',
+		                                     type: 'base',
+		                                     visible: true,
+		                                     source: new ol.source.OSM()
+		                                 })
+		                             ]
+		                         }),
+		                         new ol.layer.Group({
+		                             title: 'Overlays',
+		                             layers: [
+		                                 new ol.layer.Tile({
+		                                     title: 'Countries',
+		                                     source: new ol.source.TileWMS({
+		                                         url: 'http://demo.opengeo.org/geoserver/wms',
+		                                         params: {'LAYERS': 'ne:ne_10m_admin_1_states_provinces_lines_shp'},
+		                                         serverType: 'geoserver'
+		                                     })
+		                                 })
+		                             ]
+		                         })
+		                     ],
+		        view: new ol.View(
+		        		{
+		        			center: ol.proj.transform([0.0, 0.0], 'EPSG:4326', 'EPSG:3857'),
+		        			zoom: 1
+		        		}
+		        	)
+		      });
+			 
+			 var layerSwitcher = new ol.control.LayerSwitcher({
+			        tipLabel: 'Legend' // Optional label for button
+			    });
+			 gMap.addControl(layerSwitcher);
+		 }
 	 }

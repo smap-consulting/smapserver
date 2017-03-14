@@ -124,6 +124,8 @@ require([
         		 chart,
         		 datatables,
         		 svgsave) {
+	
+	gMapLayersShown = false;
 
 	/*
 	 * Report definition
@@ -342,12 +344,33 @@ require([
 		 */
 		$('#m_map_view').click( function () {
 			initialiseOl3Map();
-			$('#chart_content').hide();
+			if(gMapLayersShown) {
+				$('.main_content').removeClass("col-lg-12").addClass("col-lg-8");
+				$('.map_layers').show();
+			} else {
+				$('.main_content').removeClass("col-lg-8").addClass("col-lg-12");
+				$('.map_layers').hide();
+			}
+			$('#showlayers').show();
+			$('#table_content').hide();
 			$('#map_content').show();
 		});
-		$('#m_chart_view').click( function () {
-			$('#chart_content').show();
+		$('#m_table_view').click( function () {
+			$('#showlayers').hide();
+			$('#table_content').show();
 			$('#map_content').hide();
+		});
+		
+		// Show the layers selector
+		$('#showlayers').click( function () {
+			gMapLayersShown = !gMapLayersShown;
+			if(gMapLayersShown) {
+				$('.main_content').removeClass("col-lg-12").addClass("col-lg-8");
+				$('.map_layers').show();
+			} else {
+				$('.main_content').removeClass("col-lg-8").addClass("col-lg-12");
+				$('.map_layers').hide();
+			}
 		});
 		
 		// Add a new chart
