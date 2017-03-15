@@ -608,6 +608,7 @@ define({
 	"br_cc": "Select the columns that you want to test for similarities in the data. For each column that you want to test you can select a function to broaden the range of values that will match.",
 	"br_s": "Search",
 	"br_sdx": "Soundex",
+	"br_cd": "Use the table of data for this survey view",
 	
 	// Shared Resources
 	"sr_res": "Images Video Audio and CSV Files",

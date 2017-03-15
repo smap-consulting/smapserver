@@ -357,6 +357,8 @@ require([
 		});
 		$('#m_table_view').click( function () {
 			$('#showlayers').hide();
+			$('.main_content').removeClass("col-lg-8").addClass("col-lg-12");
+			$('.map_layers').hide();
 			$('#table_content').show();
 			$('#map_content').hide();
 		});
@@ -376,6 +378,11 @@ require([
 		// Add a new chart
 		$('#m_add_chart').click( function () {
 			chart.addNewChart();
+		});
+		
+		// Add a new map layer
+		$('.addlayer').click( function () {
+			$('#layerEdit').modal("show");
 		});
 		
 		

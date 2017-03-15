@@ -124,6 +124,7 @@ public class SurveyViewManager {
 			/*
 			 * Get the users custom configuration that has been stored for this survey
 			 */
+			try{pstmt.close();}catch(Exception e) {}
 			pstmt = sd.prepareStatement(sql);	 
 			pstmt.setInt(1,  uId);
 			pstmt.setInt(2,  sId);
@@ -172,6 +173,9 @@ public class SurveyViewManager {
 						}
 					}
 					
+					if(tc.name.equals("the_geom")) {
+						tc.name = "_geolocation";
+					}
 					if(tc.include) {
 						mfc.columns.add(tc);
 					}

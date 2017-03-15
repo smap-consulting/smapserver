@@ -198,8 +198,9 @@ public class ActionService extends Application{
 	    
 	    output.append("<script>");
 	    	
+	    int uId = GeneralUtilityMethods.getUserId(sd, uIdent);
 	    SurveyViewManager mfm = new SurveyViewManager();
-		SurveyViewDefn mfc = mfm.getSurveyView(sd, cResults, a.sId, a.managedId, uIdent, 
+		SurveyViewDefn mfc = mfm.getSurveyView(sd, cResults, uId, 0, a.sId, a.managedId, uIdent, 
 				GeneralUtilityMethods.getOrganisationIdForSurvey(sd, a.sId),
 				superUser);
 		String urlprefix = GeneralUtilityMethods.getUrlPrefix(request);

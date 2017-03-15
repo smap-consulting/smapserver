@@ -424,6 +424,69 @@ var isBrowseResults = true,
 	</div>
 </div>
 
+<!-- Modal to edit a map layer -->
+<div id="layerEdit" class="modal fade" aria-hidden="true">
+	<div class="modal-dialog custom-modal-width">
+		<div class="modal-content">
+			<div class="modal-header">
+				<!--  <button id="shareRecord" type="button" class="btn btn-info"><i class="fa fa-share-alt"></i> <span class="lang" data-lang="n_share">get link</span></button> -->
+     			<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+   			</div>
+			<div class="modal-body">
+				<div class="row">
+					<div class="col-sm-12 b-r"><h3 class="m-t-none m-b lang" data-lang="mf_fd">form data</h3>
+
+						<form id="chartForm" role="form" class="form-horizontal">
+						
+							<div class="form-group">
+			         			<label class="lang col-sm-2 control-label" data-lang="c_title" for="ml_title">title</label>
+								<div class="col-sm-10">
+									<input type="text" class="form-control title" id="ml_title">
+								</div>
+							</div>
+						
+							<div class="form-group">
+								<div class="col-sm-offset-2 col-sm-10">
+									<div class="checkbox">
+										<label>
+											<input type="checkbox" id="usecurrent_tabledata" checked><span data-lang="br_cd" class="lang">current table data</span>
+										</label>
+									</div>
+								</div>
+							</div>
+							
+						
+							<!--  
+							<div class="form-group">
+			         			<label class="lang col-sm-2 control-label" data-lang="c_survey" for="ml_survey">survey</label>
+								<div class="col-sm-10">
+									<select class="form-control" id="ml_survey">
+									</select>
+								</div>
+							</div>
+							
+							<div class="form-group">
+			         			<label class="lang col-sm-2 control-label" data-lang="c_survey" for="ml_survey">survey</label>
+								<div class="col-sm-10">
+									<select class="form-control" id="ml_survey">
+									</select>
+								</div>
+							</div>
+							-->
+						
+						</form>
+					</div>
+					
+				</div>
+			</div>
+			<div class="modal-footer">
+            	<button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_close">Close</button>
+            	<button id="editWidgetSave" type="button" class="btn btn-primary lang" data-dismiss="modal" data-lang="c_save">Save</button>
+        	</div>
+		</div>
+	</div>
+</div>
+
 <!-- Modal to allow the user to edit their own details -->
 <div id="modify_me_popup" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="modifyMeLabel" aria-hidden="true">
 	<div class="modal-dialog">
