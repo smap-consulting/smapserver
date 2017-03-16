@@ -553,6 +553,8 @@ define({
 	"mf_sel": "Select the form that you want to manage and the oversight form that you want to manage it with.",
 	"mf_ao": "Available oversight forms",
 	"mf_mf": "Managed forms",
+	"mf_ld": "Layer details",
+	"mf_tr": "A title is required",
 	
 	// Logout
 	"lo_back": "Back",

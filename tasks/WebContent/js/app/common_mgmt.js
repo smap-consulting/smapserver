@@ -180,12 +180,12 @@ window.gTasks = {
 		 	idx = -1;
 		 	
 		// Add form group and label
-		h[++idx] = '<div class="form-group"><label class="col-lg-4 control-label">';
+		h[++idx] = '<div class="form-group"><label class="col-md-4 control-label">';
 		h[++idx] = configItem.humanName;
 		h[++idx] = '</label>';
 		
 		// Add Data
-		h[++idx] = ' <div class="col-lg-8">';
+		h[++idx] = ' <div class="col-md-8">';
 		if(configItem.readonly) {		// Read only text
 			h[++idx] = '<input type="text" disabled="" class="form-control" value="';
 			h[++idx] = record[configItem.name];
@@ -974,7 +974,7 @@ window.gTasks = {
 		 	tableId = "relTable" + itemIndex;
 		 
 		 h[++idx] = '<div class="row">'
-			 h[++idx] = '<div class="col-lg-12">';
+			 h[++idx] = '<div class="col-md-12">';
              	h[++idx] = '<div class="ibox float-e-margins">';
              		h[++idx] = '<div class="ibox-title">';
              			h[++idx] = '<h5>';
@@ -982,7 +982,7 @@ window.gTasks = {
              		h[++idx] = '</div>';
              		h[++idx] = '<div class="ibox-content">';
                  		h[++idx] = '<div class="row">';
-	                 		h[++idx] = '<div class="col-lg-12">';
+	                 		h[++idx] = '<div class="col-md-12">';
 	                 			h[++idx] = '<table id="';
 	                 				h[++idx] = tableId;
 	                 				h[++idx] = '" class="table table-striped table-responsive toggle-arrow-tiny" data-page-size="8">';
@@ -1161,6 +1161,7 @@ window.gTasks = {
 					 gReportLoaded = true;
 					 if(data) {
 						 chart.setReport(data);
+						 map.setLayers(data.layers);
 					 } else {
 						 chart.setReport(gReport);
 					 }
@@ -1244,78 +1245,4 @@ window.gTasks = {
 		$editForm.find('[autofocus]').focus();
 	 }
 	 
-	 function initialiseOl3Map() {
-		
-		 // Create osm layer
-		 var osm = new ol.layer.Tile({source: new ol.source.OSM()}); 
-		 
-		 // Add the map	
-		 if(!gMap) {
-			 gMap = new ol.Map({
-		        target: 'map',
-		        layers: [
-		                         new ol.layer.Group({
-		                             'title': 'Base maps',
-		                             layers: [
-		                                 new ol.layer.Group({
-		                                     title: 'Water color with labels',
-		                                     type: 'base',
-		                                     combine: true,
-		                                     visible: false,
-		                                     layers: [
-		                                         new ol.layer.Tile({
-		                                             source: new ol.source.Stamen({
-		                                                 layer: 'watercolor'
-		                                             })
-		                                         }),
-		                                         new ol.layer.Tile({
-		                                             source: new ol.source.Stamen({
-		                                                 layer: 'terrain-labels'
-		                                             })
-		                                         })
-		                                     ]
-		                                 }),
-		                                 new ol.layer.Tile({
-		                                     title: 'Water color',
-		                                     type: 'base',
-		                                     visible: false,
-		                                     source: new ol.source.Stamen({
-		                                         layer: 'watercolor'
-		                                     })
-		                                 }),
-		                                 new ol.layer.Tile({
-		                                     title: 'OSM',
-		                                     type: 'base',
-		                                     visible: true,
-		                                     source: new ol.source.OSM()
-		                                 })
-		                             ]
-		                         }),
-		                         new ol.layer.Group({
-		                             title: 'Overlays',
-		                             layers: [
-		                                 new ol.layer.Tile({
-		                                     title: 'Countries',
-		                                     source: new ol.source.TileWMS({
-		                                         url: 'http://demo.opengeo.org/geoserver/wms',
-		                                         params: {'LAYERS': 'ne:ne_10m_admin_1_states_provinces_lines_shp'},
-		                                         serverType: 'geoserver'
-		                                     })
-		                                 })
-		                             ]
-		                         })
-		                     ],
-		        view: new ol.View(
-		        		{
-		        			center: ol.proj.transform([0.0, 0.0], 'EPSG:4326', 'EPSG:3857'),
-		        			zoom: 1
-		        		}
-		        	)
-		      });
-			 
-			 var layerSwitcher = new ol.control.LayerSwitcher({
-			        tipLabel: 'Legend' // Optional label for button
-			    });
-			 gMap.addControl(layerSwitcher);
-		 }
-	 }
+

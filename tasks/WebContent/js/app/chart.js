@@ -579,7 +579,7 @@ define([
 			 */
 		    wrapper = chartRow.enter()
 		    	.append("div").attr("class", function(d) {
-		    		return "aChart col-lg-" + (d.width ? d.width : "6");
+		    		return "aChart col-md-" + (d.width ? d.width : "6");
 		    		})
 		    		.attr("id", function(d) {return "c_" + d.name + "_ibox"})
 		    	.append("div").attr("class", "ibox float-e-margins");

@@ -98,6 +98,7 @@ require([
          'globals',
          'moment',
          'app/chart',
+         'app/map',
          'datatables.net-bs',
          'svgsave',
          'datatables.select',
@@ -122,6 +123,7 @@ require([
         		 globals,
         		 moment,
         		 chart,
+        		 map,
         		 datatables,
         		 svgsave) {
 	
@@ -343,12 +345,12 @@ require([
 		 * Dashboard menus
 		 */
 		$('#m_map_view').click( function () {
-			initialiseOl3Map();
+			map.init();
 			if(gMapLayersShown) {
-				$('.main_content').removeClass("col-lg-12").addClass("col-lg-8");
+				$('.main_content').removeClass("col-md-12").addClass("col-md-8");
 				$('.map_layers').show();
 			} else {
-				$('.main_content').removeClass("col-lg-8").addClass("col-lg-12");
+				$('.main_content').removeClass("col-md-8").addClass("col-md-12");
 				$('.map_layers').hide();
 			}
 			$('#showlayers').show();
@@ -357,32 +359,15 @@ require([
 		});
 		$('#m_table_view').click( function () {
 			$('#showlayers').hide();
-			$('.main_content').removeClass("col-lg-8").addClass("col-lg-12");
+			$('.main_content').removeClass("col-md-8").addClass("col-md-12");
 			$('.map_layers').hide();
 			$('#table_content').show();
 			$('#map_content').hide();
 		});
 		
-		// Show the layers selector
-		$('#showlayers').click( function () {
-			gMapLayersShown = !gMapLayersShown;
-			if(gMapLayersShown) {
-				$('.main_content').removeClass("col-lg-12").addClass("col-lg-8");
-				$('.map_layers').show();
-			} else {
-				$('.main_content').removeClass("col-lg-8").addClass("col-lg-12");
-				$('.map_layers').hide();
-			}
-		});
-		
 		// Add a new chart
 		$('#m_add_chart').click( function () {
 			chart.addNewChart();
-		});
-		
-		// Add a new map layer
-		$('.addlayer').click( function () {
-			$('#layerEdit').modal("show");
 		});
 		
 		
