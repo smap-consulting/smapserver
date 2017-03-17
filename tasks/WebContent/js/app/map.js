@@ -28,11 +28,14 @@ define([
          'globals'], 
 		function($, modernizr, lang, globals) {
 
-	var gLayers = [];
+	var gMap,
+		gLayers = [];
 	
 	return {
 		init: init,
-		setLayers: setLayers
+		setLayers: setLayers,
+		refreshLayer: refreshLayer,
+		refreshAllLayers: refreshAllLayers
 	};
 	
 	function setLayers(layers) {
@@ -137,14 +140,65 @@ define([
 		 
 		
 	 }
+	
+	/*
+	 * Redisplay a single layer
+	 */
+	function refreshLayer(index) {
+		
+		var results = globals.gMainTable.rows({
+	    	order:  'current',  // 'current', 'applied', 'index',  'original'
+	    	page:   'all',      // 'all',     'current'
+	    	search: 'applied',     // 'none',    'applied', 'removed'
+		}).data();
+		
+		updateSingleLayer(index, results);
+	}
+	
+	/*
+	 * Redisplay all layers
+	 */
+	function refreshAllLayers() {
+		
+	}
+	
+	/*
+	 * Set up a single layer
+	 * This function is called by both refreshLayer and refreshAllLayers as refreshLayer has to do some setup
+	 *  that is also done by refreshAllLayers
+	 */
+	function updateSingleLayer(index, results) {
+		
+		var geoJson;
+		
+		// Get a geoson of data
+		geoJson = getGeoJson(results, gLayers[index]);
+		console.log(JSON.stringify(geoJson));
+		// Get a style
+		
+		// Add the layer if it does not exist, else up date it
+		var vectorSource = new ol.source.Vector({
+	        features: (new ol.format.GeoJSON()).readFeatures(geoJson, 
+	        		{
+    	 		dataProjection :'EPSG:4326', 
+    	 		featureProjection: 'EPSG:3857'
+        	 })
+	      });
+		
+		var vectorLayer = new ol.layer.Vector({
+	        source: vectorSource
+	      });
+		
+		gMap.addLayer(vectorLayer);
+	}
+	
+	function addLayer() {
+		$('#layerInfo').show();
+		$('#ml_title').val("");
+		$('#layerEdit').modal("show");
+	}
 	 
-	 function addLayer() {
-		 $('#layerInfo').show();
-		 $('#ml_title').val("");
-		 $('#layerEdit').modal("show");
-	 }
-	 
-	 function saveLayer() {
+	function saveLayer() {
 		 
 		 var title = $('#ml_title').val(),
 		 	local = $('#usecurrent_tabledata').is(':checked')
@@ -159,10 +213,34 @@ define([
 		 layer.title = title;
 		 layer.local = local;
 		 
-		 gLayers.push(layer);
-		 
+		 gLayers.push(layer);	 
 		 $('#layerEdit').modal("hide");	// All good close the modal
+		 
+		 refreshLayer(gLayers.length - 1)
 		
 	 };
+	 
+	/*
+	 * Process the data according to the layer specification
+	 */
+	function getGeoJson(results, layer) {
+		
+		var i;
+		
+		var geoJson = {
+				type: "FeatureCollection",
+				
+				features: []
+		};
+		
+		for(i = 0; i < results.length; i++) {
+			geoJson.features.push(
+					{ "type": "Feature",
+						"geometry": {"type": "Point", "coordinates": results[i]._geolocation},
+						"properties": {}
+					});		
+		}
+		return geoJson;
+	}
 
 });

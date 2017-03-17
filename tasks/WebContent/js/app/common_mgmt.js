@@ -119,8 +119,7 @@ window.gTasks = {
 	
 	var gReportLoaded = false,
 		gDataLoaded = false,
-		gConfigLoaded = false,
-		gMap;
+		gConfigLoaded = false;
 	 
 	 /*
 	  * Function called when the current project is changed
