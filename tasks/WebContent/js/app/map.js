@@ -169,12 +169,27 @@ define([
 	 */
 	function updateSingleLayer(index, results) {
 		
-		var geoJson;
-		
-		// Get a geoson of data
-		geoJson = getGeoJson(results, gLayers[index]);
-		console.log(JSON.stringify(geoJson));
-		// Get a style
+		var geoJson = getGeoJson(results, gLayers[index]);		// Get a geoson of data
+		//var styles = getStyles(gLayers[index]);					// Get the styles
+		var defaultStyle = new ol.style.Style({
+            fill: new ol.style.Fill({
+                color: 'rgba(255, 100, 50, 0.3)'
+            }),
+            stroke: new ol.style.Stroke({
+                width: 2,
+                color: 'rgba(255, 100, 50, 0.8)'
+            }),
+            image: new ol.style.Circle({
+                fill: new ol.style.Fill({
+                    color: 'rgba(255, 0, 0, 0.5)'
+                }),
+                stroke: new ol.style.Stroke({
+                    width: 1,
+                    color: 'rgba(255, 255, 255, 0.8)'
+                }),
+                radius: 7
+            }),
+        });
 		
 		// Add the layer if it does not exist, else up date it
 		var vectorSource = new ol.source.Vector({
@@ -186,7 +201,8 @@ define([
 	      });
 		
 		var vectorLayer = new ol.layer.Vector({
-	        source: vectorSource
+	        source: vectorSource,
+	        style: [defaultStyle]
 	      });
 		
 		gMap.addLayer(vectorLayer);
@@ -242,5 +258,9 @@ define([
 		}
 		return geoJson;
 	}
+	
+	/*
+	 * Return a default style
+	 */
 
 });
