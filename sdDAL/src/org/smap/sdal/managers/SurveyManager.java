@@ -787,7 +787,7 @@ public class SurveyManager {
 				q.published = rsGetQuestions.getBoolean(20);
 				q.columnName = rsGetQuestions.getString(21);
 				q.source_param = rsGetQuestions.getString(22);
-				q.path = rsGetQuestions.getString(23);
+				//q.path = rsGetQuestions.getString(23);
 				q.soft_deleted = rsGetQuestions.getBoolean(24);
 				q.autoplay = rsGetQuestions.getString(25);
 				q.accuracy = rsGetQuestions.getString(26);

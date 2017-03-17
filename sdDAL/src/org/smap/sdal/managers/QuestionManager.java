@@ -461,7 +461,7 @@ public class QuestionManager {
 				groupQuestion.seq = newSeq++;
 				
 				groupQuestion.name = rs.getString(1);
-				groupQuestion.path =  rs.getString(2);
+				//groupQuestion.path =  rs.getString(2);
 				groupQuestion.type = rs.getString(3);
 				groupQuestion.sourceSeq = rs.getInt(4);
 				
