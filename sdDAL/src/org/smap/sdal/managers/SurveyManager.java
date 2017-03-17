@@ -843,7 +843,7 @@ public class SurveyManager {
 			}
 			
 			s.forms.add(f);
-			s.forms_orig.add(f);
+			//s.forms_orig.add(f);
 			
 		} 
 		
@@ -931,7 +931,7 @@ public class SurveyManager {
 			}
 				
 			s.optionLists.put(listName, optionList);
-			s.optionLists_orig.put(listName, optionList);
+			//s.optionLists_orig.put(listName, optionList);
 			
 		}
 		

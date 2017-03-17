@@ -485,6 +485,12 @@ define(function() {
 			}
 		];
 		
+		// Set the survey model
+		this.setSurveyData = function(data) {
+			this.survey = data;
+			this.survey.forms_orig = $.extend(true, {}, data.forms);
+			this.survey.optionLists_orig = $.extend(true, {}, data.optionLists);
+		}
 		
 		// Save the settings for the survey
 		this.save_settings = function() {

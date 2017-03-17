@@ -384,7 +384,7 @@ $(document).ready(function() {
 				success: function(data) {
 					removeHourglass();
 					$('#editLanguageModal').modal("hide");
-					globals.model.survey = data;
+					globals.model.setSurveyData(data);
 					setLanguages(data.languages, refreshForm);
 					//refreshForm();
 				},

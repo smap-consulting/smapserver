@@ -27,9 +27,9 @@ public class Survey {
 	public boolean blocked;
 	public boolean hasManifest;
 	public ArrayList<Form> forms = new ArrayList<Form> ();
-	public ArrayList<Form> forms_orig = new ArrayList<Form> ();		// Original values so that the client can track changes while editing
+	//public ArrayList<Form> forms_orig = new ArrayList<Form> ();		// Original values so that the client can track changes while editing
 	public HashMap<String, OptionList> optionLists = new HashMap<String, OptionList> ();
-	public HashMap<String, OptionList> optionLists_orig = new HashMap<String, OptionList> ();
+	//public HashMap<String, OptionList> optionLists_orig = new HashMap<String, OptionList> ();
 	public ArrayList<Language> languages = new ArrayList<Language> (); 
 	public ArrayList<ServerSideCalculate> sscList  = new ArrayList<ServerSideCalculate> ();
 	public ArrayList<ManifestValue> surveyManifest  = new ArrayList<ManifestValue> ();

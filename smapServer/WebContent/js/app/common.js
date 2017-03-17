@@ -1320,7 +1320,7 @@ function getSurveyDetails(callback) {
 			cache: false,
 			success: function(data) {
 				removeHourglass();
-				globals.model.survey = data;
+				globals.model.setSurveyData(data);
 				globals.model.setSettings();
 				setLanguages(data.languages, callback);
 				
@@ -1426,7 +1426,7 @@ function createNewSurvey(name, existing, existing_survey, existing_form, shared_
 		success: function(data) {
 			removeHourglass();
 
-			globals.model.survey = data;
+			globals.model.setSurveyData(data);
 			globals.model.setSettings();
 			globals.gCurrentSurvey = data.id;
 			
