@@ -10,13 +10,6 @@
     	jquery_ui: 'empty:',
     	app: '../app',
     	wfapp: '../app/webform',
-	"enketo-core": "../../build/js/enketo-bundle",
-//        "enketo-js": "../../../../../enketo-core/src/js",
-//        "mergexml": "../../../../../enketo-core/node_modules/mergexml",
-//        "lie": "../../../../../enketo-core/node_modules/lie/dist/lie",
-//        "text": "../../../../../enketo-core/lib/text/text",
-//        "widgets": "../../../../../enketo-core/src/js/widgets",
-//        "widgets": "../../../../../enketo-core/src/widget/note/notewidget",
     	lang_location: '..',
 	bootbox: 'bootbox.min',
 	moment: 'moment-with-locales.min',
@@ -52,9 +45,6 @@
         },
         {
             name: '../queries',
-        },
-        {
-            name: '../main-webform',
         },
         {
             name: '../userTrail',

@@ -21,6 +21,8 @@ local.properties
 .settings/
 .loadpath
 
+.idea
+
 # enketo 
 combined.min.js
 enketo-core.min.js

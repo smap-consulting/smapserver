@@ -591,10 +591,6 @@ public class WebForm extends Application{
 					output.append("\";");
 				}
 		output.append("</script>");
-		
-		// Webforms script
-		output.append("<script type='text/javascript' src='/build/js/webform-combined.min.js'></script>\n");
-		
 		output.append("</head>\n");
 		
 		return output;
@@ -700,7 +696,11 @@ public class WebForm extends Application{
 		output.append(addMain(request, formXML, dataToEditId, orgId, false, surveyClass, null, localisation));
 		output.append(getDialogs());
 		
+		// Webforms script
+		output.append("<script src='/build/js/webform-bundle.js'></script>\n");
+		
 		output.append("</body>");
+		
 		return output;
 	}
 	
