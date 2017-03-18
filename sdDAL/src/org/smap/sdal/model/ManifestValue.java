@@ -9,6 +9,7 @@ import java.io.File;
 public class ManifestValue {
 	public String value;
 	public String fileName;
+	public String baseName;
 	public String url;
 	public String thumbsUrl;
 	public File file;

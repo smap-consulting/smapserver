@@ -1,5 +1,10 @@
 package org.smap.server.utilities;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.io.Writer;
@@ -32,9 +37,12 @@ import org.smap.model.CascadeInstance;
 import org.smap.model.SurveyTemplate;
 import org.smap.model.Results;
 import org.smap.sdal.Utilities.ApplicationException;
+import org.smap.sdal.Utilities.CSVParser;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
+import org.smap.sdal.managers.TranslationManager;
+import org.smap.sdal.model.ManifestValue;
 import org.smap.server.entities.Form;
 import org.smap.server.entities.Option;
 import org.smap.server.entities.Question;
@@ -182,10 +190,28 @@ public class GetXForm {
     	    	populateCascadeOptions(outputDoc, rootElement, cis.get(i));
     		}
     	}
+    	
+    	// Add pulldata instances as required by enketo 	
+    	if(isWebForms) {
+	    	TranslationManager tm = new TranslationManager();
+	    	List<ManifestValue> manifests = tm.getPulldataManifests(sd, template.getSurvey().getId());
+	    	for(int i = 0; i < manifests.size(); i++) {
+	    		ManifestValue mv = manifests.get(i);
+	    		Element pulldataElement = outputDoc.createElement("instance");
+				pulldataElement.setAttribute("id", mv.baseName);
+				pulldataElement.setAttribute("src", "jr://csv/" + mv.baseName + ".csv");
+				modelElement.appendChild(pulldataElement);
+				Element rootElement = outputDoc.createElement("root");
+    	    	pulldataElement.appendChild(rootElement);
+				populateCSVElements(outputDoc, rootElement, mv.filePath);
+	    	}
+    	}
+	    	
     	// Add forms to bind elements
-    	if(firstForm != null) {		
-    		populateForm(sd, outputDoc, modelElement, BIND, firstForm, isWebForms);
-    	} 	   	
+	    if(firstForm != null) {		
+	    	populateForm(sd, outputDoc, modelElement, BIND, firstForm, isWebForms);
+	    } 	 
+
     }
 
     /*
@@ -974,7 +1000,42 @@ public class GetXForm {
     	}
     }
     
+    public void populateCSVElements(Document outputXML, Element parent, 
+    		String filepath) throws Exception {
 
+    	BufferedReader br = null;
+    	File file = new File(filepath); 	
+    	System.out.println("Getting CSV from file: " + file.getAbsolutePath());
+    	
+    	try {
+	    	FileReader reader = new FileReader(file);
+			br = new BufferedReader(reader);
+			CSVParser parser = new CSVParser();
+	       
+			// Get Header
+			String line = br.readLine();
+			String cols [] = parser.parseLine(line);
+			
+			while(line != null) {
+				line = br.readLine();
+				if(line != null) {
+					String [] values = parser.parseLine(line);
+
+					Element item = outputXML.createElement("item");
+					parent.appendChild(item);
+					Element elem = null;
+					for(int i = 0; i  < cols.length; i++) {
+						elem = outputXML.createElement(cols[i]);
+						elem.setTextContent(values[i]);
+		    	    	item.appendChild(elem);
+					}
+				}
+			}
+    	} finally {
+    		try {br.close();} catch(Exception e) {};
+    	}
+    }
+    
     /*
      * Get the instance data for an XForm as a string
      */

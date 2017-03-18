@@ -387,6 +387,8 @@ public class WebForm extends Application{
 			GetXForm xForm = new GetXForm();
 			String formXML = xForm.get(template, true);		
 			
+			System.out.println("xml: " + formXML);
+			
 			// If required get the instance data 
 			String instanceXML = null;
 			String instanceStrToEditId = null;
@@ -422,11 +424,7 @@ public class WebForm extends Application{
     					mv.url = url;
     					jr.manifestList.add(mv);
     				} else {
-    					if(type.equals("csv")) {
-    						//formXML = formXML.replaceFirst("</instance>", "</instance><instance id=\"hhplotdetails\" src=\"/media/organisation/1/hhplotdetails.csv\" />");
-    					} else {
-    						formXML = formXML.replaceAll("jr://" + type + "/" + name, url);
-    					}
+    					formXML = formXML.replaceAll("jr://" + type + "/" + name, url);
     				}
     			}
 			}
