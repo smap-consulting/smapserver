@@ -26,6 +26,7 @@ local.properties
 # enketo 
 combined.min.js
 enketo-core.min.js
+webform-bundle.js
 
 # External tool builders
 .externalToolBuilders/

@@ -579,6 +579,7 @@ public class WebForm extends Application{
 	    output.append("<script type='text/javascript'>window.location = 'modern_browsers';</script>\n");
 		output.append("<![endif]-->\n");
 			
+		output.append("<script src='/js/libs/modernizr.js'></script>");
 		output.append(addData(request, formXML, instanceXML, dataToEditId, assignmentId, accessKey));
 		// Add the google API key
 		output.append("<script>");
