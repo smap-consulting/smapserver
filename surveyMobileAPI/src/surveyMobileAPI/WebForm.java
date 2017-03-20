@@ -550,14 +550,13 @@ public class WebForm extends Application{
 		output.append("<head>\n");
 		output.append("<link href='https://fonts.googleapis.com/css?family=Open+Sans:400,700,600&subset=latin,cyrillic-ext,cyrillic,greek-ext,greek,vietnamese,latin-ext' rel='stylesheet' type='text/css'>\n");
 
-		//output.append("<link type='text/css' href='/build/css/webform_smap.css' media='all' rel='stylesheet' />\n");
 		output.append("<link type='text/css' href='/build/css/webform.css' media='all' rel='stylesheet' />\n");
-		//output.append("<link type='text/css' href='/build/css/webform_print_formhub.css' media='print' rel='stylesheet' />\n");
 		if(surveyClass != null && surveyClass.trim().contains("theme-grid")) {
 			output.append("<link type='text/css' href='/build/css/grid.css' media='all' rel='stylesheet' />\n");
 			output.append("<link type='text/css' href='/build/css/grid-print.css' media='print' rel='stylesheet'/>\n");	
 		} else {
-			output.append("<link type='text/css' href='/build/css/default.css' media='all' rel='stylesheet' />\n");			
+			//output.append("<link type='text/css' href='/build/css/plain.css' media='all' rel='stylesheet' />\n");	
+			//output.append("<link type='text/css' href='/build/css/plain-print.css' media='all' rel='stylesheet' />\n");
 			output.append("<link type='text/css' href='/build/css/formhub.css' media='all' rel='stylesheet' />\n");			
 			output.append("<link type='text/css' href='/build/css/formhub-print.css' media='print' rel='stylesheet'/>\n");
 		}
@@ -951,8 +950,9 @@ public class WebForm extends Application{
 		if(surveyClass !=null && surveyClass.contains("pages")) {
 			output.append("<a class='previous-page disabled' href='#'>Back</a>\n");
 			output.append("<a class='next-page' href='#'>Next</span></a>\n");
-		}		
-		output.append("<img src=/images/enketo.png style=\"position: absolute; right: 0px; bottom: 0px; height:40px;\">");
+		}	
+		output.append("<div class=\"enketo-power\" style=\"margin-bottom: 30px;\">Powered by <a href=\"http://enketo.org\" title=\"enketo.org website\"><img src=\"/images/enketo_bare_150x56.png\" alt=\"enketo logo\" /></a> </div>");
+		//output.append("<img src=/images/enketo.png style=\"position: absolute; right: 0px; bottom: 0px; height:40px;\">");
 		output.append("</div>\n");	// main controls
 		
 		

@@ -21,41 +21,38 @@ module.exports={
 
 },{}],2:[function(require,module,exports){
 /**
- * This file is just meant to facilitate enketo-core development as a standalone library.
- *
- * When using enketo-core as a library inside your app, it is recommended to just **ignore** this file.
- * Place a replacement for this controller elsewhere in your app.
+ * Main entry point for webforms
+ * Calls enketo library
  */
 
 var $ = require( 'jquery' );
 window.jQuery = $; // required for bootstrap-timepicker
 var support = require( './src/js/support' );
 
-var fileManager = require( './src/js/file-manager' );
 var loadErrors;
 var form;
 var formStr;
 var modelStr;
 
 // WebForm
+var fileStore = require( './webform/file-storage' );
 var recordStore = require('./webform/store');
-var fileStore = require('./webform/file-manager');
 var controller = require('./webform/controller-webform');
 
 window.enketo = controller;             // Make controller global so it can be called by cordova app
 
 if(typeof surveyData !== "undefined") {
-	controller.init( 'form.or:eq(0)', {
-	recordStore: recordStore,
-	fileStore: fileStore,
-	submitInterval: 300 * 1000
-	} );
+    controller.init( 'form.or:eq(0)', {
+        recordStore: recordStore,
+        fileStore: fileStore,
+        submitInterval: 300 * 1000
+    } );
 }
 
 
 
 
-},{"./src/js/file-manager":34,"./src/js/support":36,"./webform/controller-webform":59,"./webform/file-manager":60,"./webform/store":64,"jquery":22}],3:[function(require,module,exports){
+},{"./src/js/support":37,"./webform/controller-webform":60,"./webform/file-storage":61,"./webform/store":65,"jquery":22}],3:[function(require,module,exports){
 /*!
  * Datepicker for Bootstrap v1.6.4 (https://github.com/eternicode/bootstrap-datepicker)
  *
@@ -37991,7 +37988,7 @@ define( function( require, exports, module ) {
 } );
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./Form-logic-error":28,"./extend":32,"./plugins":35,"./utils":37,"./xpath-evaluator-binding":40,"jquery":22,"lie":24,"mergexml/mergexml":25,"text!enketo-config":1}],30:[function(require,module,exports){
+},{"./Form-logic-error":28,"./extend":32,"./plugins":35,"./utils":38,"./xpath-evaluator-binding":41,"jquery":22,"lie":24,"mergexml/mergexml":25,"text!enketo-config":1}],30:[function(require,module,exports){
 if ( typeof exports === 'object' && typeof exports.nodeName !== 'string' && typeof define !== 'function' ) {
     var define = function( factory ) {
         factory( require, exports, module );
@@ -39673,6 +39670,16 @@ define( function( require, exports, module ) {
                     return model.evaluate( 'concat("uuid:", uuid())', 'string' );
                 }
                 return o.curVal;
+            },
+            'instance': function( o ) {         // smap - Store instanceID in a global, this may be preset if form is laoded from the store
+                if(!gLoadedInstanceID) {
+                    gLoadedInstanceID = ( o.curVal.length > 0 ) ? o.curVal : model.evaluate( "concat('uuid:', uuid())", 'string' );
+                }
+                //store the current instanceID as data on the form element so it can be easily accessed by e.g. widgets
+                $form.data( {
+                    instanceID: gLoadedInstanceID
+                } );
+                return gLoadedInstanceID;
             }
         };
 
@@ -40296,7 +40303,7 @@ define( function( require, exports, module ) {
     module.exports = Form;
 } );
 
-},{"../../package":27,"./Form-model":29,"./extend":32,"./fake-translator":33,"./plugins":35,"./utils":37,"./widgets-controller":38,"jquery":22,"jquery-touchswipe":21,"lie":24,"text!enketo-config":1}],31:[function(require,module,exports){
+},{"../../package":27,"./Form-model":29,"./extend":32,"./fake-translator":33,"./plugins":35,"./utils":38,"./widgets-controller":39,"jquery":22,"jquery-touchswipe":21,"lie":24,"text!enketo-config":1}],31:[function(require,module,exports){
 if ( typeof exports === 'object' && typeof exports.nodeName !== 'string' && typeof define !== 'function' ) {
     var define = function( factory ) {
         factory( require, exports, module );
@@ -40641,9 +40648,13 @@ define( function( require, exports, module ) {
         var file;
         var newFilename;
         var files = [];
+        var $media;
+        var $preview;
 
         // first get any files inside file input elements
         $( 'form.or input[type="file"]' ).each( function() {
+            $media = $( this );                                             // smap
+            $preview = $media.parent().find(".file-preview").find("img");   // smap
             file = this.files[ 0 ];
             if ( file && file.name ) {
                 // Correct file names by adding a unique-ish postfix
@@ -40654,7 +40665,10 @@ define( function( require, exports, module ) {
                 file = new Blob( [ file ], {
                     type: file.type
                 } );
+
                 file.name = newFilename;
+                file.dataUrl = $preview.attr("src");                         // smap
+
                 files.push( file );
             }
         } );
@@ -40681,7 +40695,7 @@ define( function( require, exports, module ) {
     };
 } );
 
-},{"./utils":37,"jquery":22,"lie":24}],35:[function(require,module,exports){
+},{"./utils":38,"jquery":22,"lie":24}],35:[function(require,module,exports){
 if ( typeof exports === 'object' && typeof exports.nodeName !== 'string' && typeof define !== 'function' ) {
     var define = function( factory ) {
         factory( require, exports, module );
@@ -40770,6 +40784,241 @@ if ( typeof exports === 'object' && typeof exports.nodeName !== 'string' && type
     };
 }
 /**
+ * @preserve Copyright 2013 Martijn van de Rijdt
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
+ * Deals with printing
+ */
+
+define( function( require, exports, module ) {
+    'use strict';
+    var $ = require( 'jquery' );
+    var dpi, printStyleSheet;
+    var $printStyleSheetLink;
+
+    // make sure setDpi is not called until DOM is ready
+    $( document ).ready( function() {
+        setDpi();
+    } );
+
+    /**
+     * Calculates the dots per inch and sets the dpi property
+     */
+    function setDpi() {
+        var dpiO = {};
+        var e = document.body.appendChild( document.createElement( 'DIV' ) );
+        e.style.width = '1in';
+        e.style.padding = '0';
+        dpiO.v = e.offsetWidth;
+        e.parentNode.removeChild( e );
+        dpi = dpiO.v;
+    }
+
+    /**
+     * Gets print stylesheets
+     * @return {Element} [description]
+     */
+    function getPrintStyleSheet() {
+        var sheet;
+        // document.styleSheets is an Object not an Array!
+        for ( var i in document.styleSheets ) {
+            if ( document.styleSheets.hasOwnProperty( i ) ) {
+                sheet = document.styleSheets[ i ];
+                if ( sheet.media.mediaText === 'print' ) {
+                    return sheet;
+                }
+            }
+        }
+        return null;
+    }
+
+    function getPrintStyleSheetLink() {
+        return $( 'link[media="print"]:eq(0)' );
+    }
+
+    /**
+     * Applies the print stylesheet to the current view by changing stylesheets media property to 'all'
+     */
+    function styleToAll() {
+        // sometimes, setStylesheet fails upon loading
+        printStyleSheet = printStyleSheet || getPrintStyleSheet();
+        $printStyleSheetLink = $printStyleSheetLink || getPrintStyleSheetLink();
+        // Chrome:
+        printStyleSheet.media.mediaText = 'all';
+        // Firefox:
+        $printStyleSheetLink.attr( 'media', 'all' );
+    }
+
+    /**
+     * Resets the print stylesheet to only apply to media 'print'
+     */
+    function styleReset() {
+        printStyleSheet.media.mediaText = 'print';
+        $printStyleSheetLink.attr( 'media', 'print' );
+        $( '.print-height-adjusted, .print-width-adjusted, .main' )
+            .removeAttr( 'style' )
+            .removeClass( 'print-height-adjusted print-width-adjusted' );
+        $( '.back-to-screen-view' ).off( 'click' ).remove();
+    }
+
+    function isGrid() {
+        return /theme-.*grid.*/.test( $( 'form.or' ).attr( 'class' ) );
+    }
+
+    function fixGrid( paper ) {
+        var $row, $el, top, rowTop, maxWidth, diff;
+
+        // to ensure cells grow correctly with text-wrapping before fixing heights and widths.
+        $( '.main' ).css( 'width', getPaperPixelWidth( paper ) ).addClass( 'print-width-adjusted' );
+        // wait for browser repainting after width change
+        setTimeout( function() {
+            // the -1px adjustment is necessary because the h3 element width is calc(100% + 1px)
+            maxWidth = $( '#form-title' ).outerWidth() - 1;
+            $( '.question, .note, .trigger' ).not( '.draft' ).each( function() {
+                $el = $( this );
+                top = $el.offset().top;
+                rowTop = ( rowTop || rowTop === 0 ) ? rowTop : top;
+                $row = $row || $el;
+
+                if ( top === rowTop ) {
+                    $row = $row.add( $el );
+                } else if ( top > rowTop ) {
+                    var height,
+                        widths = [],
+                        cumulativeWidth = 0,
+                        maxHeight = 0;
+
+                    $row.each( function() {
+                        height = $( this ).outerHeight();
+                        maxHeight = ( height > maxHeight ) ? height : maxHeight;
+                        widths.push( Number( $( this ).css( 'width' ).replace( 'px', '' ) ) );
+                    } );
+                    $row.addClass( 'print-height-adjusted' ).css( 'height', maxHeight + 'px' );
+
+                    // adjusts widths if w-values don't add up to 100%
+                    widths.forEach( function( width ) {
+                        cumulativeWidth += width;
+                    } );
+
+                    if ( cumulativeWidth < maxWidth ) {
+
+                        diff = maxWidth - cumulativeWidth;
+                        $row.each( function( index ) {
+                            var width = widths[ index ] + ( widths[ index ] / cumulativeWidth ) * diff;
+                            // round down to 2 decimals to avoid 100.001% totals
+                            $( this )
+                                .css( 'width', ( Math.floor( ( width * 100 / maxWidth ) * 100 ) / 100 ) + '%' )
+                                .addClass( 'print-width-adjusted' );
+                        } );
+                    }
+                    // start a new row
+                    $row = $el;
+                    rowTop = $el.offset().top;
+                } else {
+                    console.error( 'unexpected question top position: ', top, 'for element:', $el, 'expected >=', rowTop );
+                }
+            } );
+            // Chrome 34 doesn't like the fact that main has an inline fixed width (see issue #99)
+            // since we do not need it any more, after we have set the adjusted widths to a %-value, we can remove it. 
+            $( '.main' ).css( 'width', 'auto' ).removeClass( 'print-width-adjusted' );
+
+            $( window ).trigger( 'printviewready' );
+        }, 1000 );
+    }
+
+    function getPaperPixelWidth( paper ) {
+        var printWidth;
+        // the final margin is determined by the browser's print functionality
+        // better too large than too small here
+        var margin = 0.4;
+        var formats = {
+            A4: {
+                width: 8.27,
+                height: 11.69
+            },
+            letter: {
+                width: 8.5,
+                height: 11
+            }
+        };
+
+        printWidth = ( paper.orientation === 'portrait' ) ? formats[ paper.format ].width : formats[ paper.format ].height;
+
+        return ( ( printWidth - ( 2 * margin ) ) * dpi ) + 'px';
+    }
+
+    /**
+     * Show print setting dialog and proceed upon user's direction.
+     */
+    function confirmPaperSettingsAndPrint( confirm ) {
+        var texts = {
+            dialog: 'print',
+            heading: 'Select Print Settings'
+        };
+        var options = {
+            posButton: 'Prepare',
+            posAction: function( values ) {
+                fixGrid( values );
+                $( window ).one( 'printviewready', function() {
+                    window.print();
+                } );
+            },
+            negButton: 'Close',
+            negAction: function() {
+                styleReset();
+            },
+            afterAction: function() {
+                setTimeout( function() {
+                    styleReset();
+                }, 1500 );
+            }
+        };
+
+        // TODO: would be nice if fixGrid can become synchronous again or
+        // a progress is shown when it is churning away.
+
+        confirm( texts, options );
+    }
+
+    /**
+     * Prints the form after first setting page breaks (every time it is called)
+     */
+    function printForm( confirm ) {
+        if ( isGrid() ) {
+            styleToAll();
+            // add temp reset button, just in case somebody gets stuck in print view
+            $( '<button class="btn back-to-screen-view">Back to Normal View</button>' ).prependTo( $( 'form.or' ) ).on( 'click', function() {
+                styleReset();
+            } );
+            confirmPaperSettingsAndPrint( confirm );
+        } else {
+            window.print();
+        }
+    }
+
+    module.exports = printForm;
+} );
+
+},{"jquery":22}],37:[function(require,module,exports){
+if ( typeof exports === 'object' && typeof exports.nodeName !== 'string' && typeof define !== 'function' ) {
+    var define = function( factory ) {
+        factory( require, exports, module );
+    };
+}
+/**
  * Detects features. Replacement for Modernizr.
  */
 
@@ -40798,7 +41047,7 @@ define( function( require, exports, module ) {
     module.exports = features;
 } );
 
-},{}],37:[function(require,module,exports){
+},{}],38:[function(require,module,exports){
 if ( typeof exports === 'object' && typeof exports.nodeName !== 'string' && typeof define !== 'function' ) {
     var define = function( factory ) {
         factory( require, exports, module );
@@ -40903,7 +41152,7 @@ define( function( require, exports, module ) {
     };
 } );
 
-},{}],38:[function(require,module,exports){
+},{}],39:[function(require,module,exports){
 if ( typeof exports === 'object' && typeof exports.nodeName !== 'string' && typeof define !== 'function' ) {
     var define = function( factory ) {
         factory( require, exports, module );
@@ -41118,7 +41367,7 @@ define( function( require, exports, module ) {
 
 } );
 
-},{"./support":36,"jquery":22,"text!enketo-config":1,"widgets":39}],39:[function(require,module,exports){
+},{"./support":37,"jquery":22,"text!enketo-config":1,"widgets":40}],40:[function(require,module,exports){
 if ( typeof exports === 'object' && typeof exports.nodeName !== 'string' && typeof define !== 'function' ) {
     var define = function( factory ) {
         factory( require, exports, module );
@@ -41150,7 +41399,7 @@ define( function( require, exports, module ) {
     module.exports = widgets;
 } );
 
-},{"../widget/analog-scale/analog-scalepicker":41,"../widget/big-image/image-viewer":42,"../widget/comment/commentwidget":43,"../widget/compact/compactpicker":44,"../widget/date/datepicker-extended":45,"../widget/datetime/datetimepicker-extended":46,"../widget/distress/distresspicker":47,"../widget/file/filepicker":48,"../widget/geo/geopicker":49,"../widget/horizontal-choices/horizontalchoices":50,"../widget/note/notewidget":51,"../widget/radio/radiopicker":52,"../widget/select-desktop/selectpicker":53,"../widget/select-likert/likertitem":54,"../widget/select-mobile/selectpicker":55,"../widget/table/tablewidget":56,"../widget/time/timepicker-extended":57}],40:[function(require,module,exports){
+},{"../widget/analog-scale/analog-scalepicker":42,"../widget/big-image/image-viewer":43,"../widget/comment/commentwidget":44,"../widget/compact/compactpicker":45,"../widget/date/datepicker-extended":46,"../widget/datetime/datetimepicker-extended":47,"../widget/distress/distresspicker":48,"../widget/file/filepicker":49,"../widget/geo/geopicker":50,"../widget/horizontal-choices/horizontalchoices":51,"../widget/note/notewidget":52,"../widget/radio/radiopicker":53,"../widget/select-desktop/selectpicker":54,"../widget/select-likert/likertitem":55,"../widget/select-mobile/selectpicker":56,"../widget/table/tablewidget":57,"../widget/time/timepicker-extended":58}],41:[function(require,module,exports){
 var XPathJS = require( 'enketo-xpathjs' );
 
 module.exports = function() {
@@ -41178,7 +41427,7 @@ module.exports = function() {
     } );
 };
 
-},{"enketo-xpathjs":19}],41:[function(require,module,exports){
+},{"enketo-xpathjs":19}],42:[function(require,module,exports){
 if ( typeof exports === 'object' && typeof exports.nodeName !== 'string' && typeof define !== 'function' ) {
     var define = function( factory ) {
         factory( require, exports, module );
@@ -41429,7 +41678,7 @@ define( function( require, exports, module ) {
     };
 } );
 
-},{"../../js/Widget":31,"bootstrap-slider-basic":4,"jquery":22}],42:[function(require,module,exports){
+},{"../../js/Widget":31,"bootstrap-slider-basic":4,"jquery":22}],43:[function(require,module,exports){
 if ( typeof exports === 'object' && typeof exports.nodeName !== 'string' && typeof define !== 'function' ) {
     var define = function( factory ) {
         factory( require, exports, module );
@@ -41498,7 +41747,7 @@ define( function( require, exports, module ) {
     };
 } );
 
-},{"../../js/Widget":31,"jquery":22}],43:[function(require,module,exports){
+},{"../../js/Widget":31,"jquery":22}],44:[function(require,module,exports){
 if ( typeof exports === 'object' && typeof exports.nodeName !== 'string' && typeof define !== 'function' ) {
     var define = function( factory ) {
         factory( require, exports, module );
@@ -41701,7 +41950,7 @@ define( function( require, exports, module ) {
     };
 } );
 
-},{"../../js/Widget":31,"jquery":22,"translator":33}],44:[function(require,module,exports){
+},{"../../js/Widget":31,"jquery":22,"translator":33}],45:[function(require,module,exports){
 if ( typeof exports === 'object' && typeof exports.nodeName !== 'string' && typeof define !== 'function' ) {
     var define = function( factory ) {
         factory( require, exports, module );
@@ -41783,7 +42032,7 @@ define( function( require, exports, module ) {
     };
 } );
 
-},{"../../js/Widget":31,"jquery":22}],45:[function(require,module,exports){
+},{"../../js/Widget":31,"jquery":22}],46:[function(require,module,exports){
 if ( typeof exports === 'object' && typeof exports.nodeName !== 'string' && typeof define !== 'function' ) {
     var define = function( factory ) {
         factory( require, exports, module );
@@ -41982,7 +42231,7 @@ define( function( require, exports, module ) {
     };
 } );
 
-},{"../../js/Widget":31,"../../js/support":36,"bootstrap-datepicker":3,"jquery":22}],46:[function(require,module,exports){
+},{"../../js/Widget":31,"../../js/support":37,"bootstrap-datepicker":3,"jquery":22}],47:[function(require,module,exports){
 if ( typeof exports === 'object' && typeof exports.nodeName !== 'string' && typeof define !== 'function' ) {
     var define = function( factory ) {
         factory( require, exports, module );
@@ -42197,7 +42446,7 @@ define( function( require, exports, module ) {
     };
 } );
 
-},{"../../js/Widget":31,"../../js/extend":32,"../../js/support":36,"bootstrap-datepicker":3,"bootstrap-timepicker":5,"jquery":22}],47:[function(require,module,exports){
+},{"../../js/Widget":31,"../../js/extend":32,"../../js/support":37,"bootstrap-datepicker":3,"bootstrap-timepicker":5,"jquery":22}],48:[function(require,module,exports){
 if ( typeof exports === 'object' && typeof exports.nodeName !== 'string' && typeof define !== 'function' ) {
     var define = function( factory ) {
         factory( require, exports, module );
@@ -42354,7 +42603,7 @@ define( function( require, exports, module ) {
     };
 } );
 
-},{"../../js/Widget":31,"bootstrap-slider-basic":4,"jquery":22}],48:[function(require,module,exports){
+},{"../../js/Widget":31,"bootstrap-slider-basic":4,"jquery":22}],49:[function(require,module,exports){
 if ( typeof exports === 'object' && typeof exports.nodeName !== 'string' && typeof define !== 'function' ) {
     var define = function( factory ) {
         factory( require, exports, module );
@@ -42587,7 +42836,7 @@ define( function( require, exports, module ) {
     };
 } );
 
-},{"../../js/Widget":31,"../../js/file-manager":34,"../../js/utils":37,"jquery":22}],49:[function(require,module,exports){
+},{"../../js/Widget":31,"../../js/file-manager":34,"../../js/utils":38,"jquery":22}],50:[function(require,module,exports){
 if ( typeof exports === 'object' && typeof exports.nodeName !== 'string' && typeof define !== 'function' ) {
     var define = function( factory ) {
         factory( require, exports, module );
@@ -42629,7 +42878,17 @@ define( function( require, exports, module ) {
         'attribution': '© <a href=\"http://openstreetmap.org\">OpenStreetMap</a> | <a href=\"www.openstreetmap.org/copyright\">Terms</a>'
     } ];
     var searchSource = 'https://maps.googleapis.com/maps/api/geocode/json?address={address}&sensor=true&key={api_key}';
-    var googleApiKey = config.googleApiKey || config.google_api_key;
+
+    // Start smap - get google api key from server
+    var smapGoogleApiKey;
+    if(typeof smapConfig === "undefined") {
+        smapGoogleApiKey = $('#googleApiKey').text();
+    } else {
+        smapGoogleApiKey = smapConfig.googleApiKey;
+    }
+    var googleApiKey = smapGoogleApiKey || config.googleApiKey || config.google_api_key;
+    // end smap
+
     var iconSingle = L.divIcon( {
         iconSize: 24,
         className: 'enketo-geopoint-marker'
@@ -44274,7 +44533,7 @@ define( function( require, exports, module ) {
     };
 } );
 
-},{"../../js/Widget":31,"jquery":22,"leaflet":23,"lie":24,"text!enketo-config":1,"translator":33}],50:[function(require,module,exports){
+},{"../../js/Widget":31,"jquery":22,"leaflet":23,"lie":24,"text!enketo-config":1,"translator":33}],51:[function(require,module,exports){
 if ( typeof exports === 'object' && typeof exports.nodeName !== 'string' && typeof define !== 'function' ) {
     var define = function( factory ) {
         factory( require, exports, module );
@@ -44362,7 +44621,7 @@ define( function( require, exports, module ) {
     };
 } );
 
-},{"../../js/Widget":31,"jquery":22}],51:[function(require,module,exports){
+},{"../../js/Widget":31,"jquery":22}],52:[function(require,module,exports){
 if ( typeof exports === 'object' && typeof exports.nodeName !== 'string' && typeof define !== 'function' ) {
     var define = function( factory ) {
         factory( require, exports, module );
@@ -44377,7 +44636,7 @@ define( function( require, exports, module ) {
     };
 } );
 
-},{}],52:[function(require,module,exports){
+},{}],53:[function(require,module,exports){
 if ( typeof exports === 'object' && typeof exports.nodeName !== 'string' && typeof define !== 'function' ) {
     var define = function( factory ) {
         factory( require, exports, module );
@@ -44522,7 +44781,7 @@ define( function( require, exports, module ) {
     };
 } );
 
-},{"../../js/Widget":31,"../../js/plugins":35,"jquery":22}],53:[function(require,module,exports){
+},{"../../js/Widget":31,"../../js/plugins":35,"jquery":22}],54:[function(require,module,exports){
 /**
  * @preserve Copyright 2012 Silvio Moreto, Martijn van de Rijdt & Modilabs
  *
@@ -44952,7 +45211,7 @@ module.exports = {
     'selector': 'select:not(#form-languages)'
 };
 
-},{"../../js/Widget":31,"jquery":22,"translator":33}],54:[function(require,module,exports){
+},{"../../js/Widget":31,"jquery":22,"translator":33}],55:[function(require,module,exports){
 if ( typeof exports === 'object' && typeof exports.nodeName !== 'string' && typeof define !== 'function' ) {
     var define = function( factory ) {
         factory( require, exports, module );
@@ -44965,7 +45224,7 @@ define( function( require, exports, module ) {
     };
 } );
 
-},{}],55:[function(require,module,exports){
+},{}],56:[function(require,module,exports){
 if ( typeof exports === 'object' && typeof exports.nodeName !== 'string' && typeof define !== 'function' ) {
     var define = function( factory ) {
         factory( require, exports, module );
@@ -45079,7 +45338,7 @@ define( function( require, exports, module ) {
 
 } );
 
-},{"../../js/Widget":31,"jquery":22}],56:[function(require,module,exports){
+},{"../../js/Widget":31,"jquery":22}],57:[function(require,module,exports){
 if ( typeof exports === 'object' && typeof exports.nodeName !== 'string' && typeof define !== 'function' ) {
     var define = function( factory ) {
         factory( require, exports, module );
@@ -45092,7 +45351,7 @@ define( function( require, exports, module ) {
     };
 } );
 
-},{}],57:[function(require,module,exports){
+},{}],58:[function(require,module,exports){
 if ( typeof exports === 'object' && typeof exports.nodeName !== 'string' && typeof define !== 'function' ) {
     var define = function( factory ) {
         factory( require, exports, module );
@@ -45213,7 +45472,7 @@ define( function( require, exports, module ) {
     };
 } );
 
-},{"../../js/Widget":31,"../../js/support":36,"bootstrap-timepicker":5,"jquery":22}],58:[function(require,module,exports){
+},{"../../js/Widget":31,"../../js/support":37,"bootstrap-timepicker":5,"jquery":22}],59:[function(require,module,exports){
 /**
  * @preserve Copyright 2013 Martijn van de Rijdt
  *
@@ -45242,6 +45501,7 @@ if ( typeof exports === 'object' && typeof exports.nodeName !== 'string' && type
 define( function( require, exports, module ) {
 //define( [ 'wfapp/gui', 'wfapp/settings', 'wfapp/store', 'jquery' ], function( gui, settings, store, $ ) {
 
+    var gui = require('./gui');
     var store = require('./store');
     var $ = require( 'jquery' );
 
@@ -45888,7 +46148,7 @@ define( function( require, exports, module ) {
     };
 } );
 
-},{"./store":64,"jquery":22}],59:[function(require,module,exports){
+},{"./gui":62,"./store":65,"jquery":22}],60:[function(require,module,exports){
 /**
  * @preserve Copyright 2013 Martijn van de Rijdt
  *
@@ -45925,6 +46185,7 @@ define( function( require, exports, module ) {
     var gui = require('./gui');
     var connection = require('./connection');
     var $ = require( 'jquery' );
+    var ecFm = require('../src/js/file-manager');
     require('bootstrap');
 
     var form, $form, $formprogress, formSelector, originalSurveyData, store, fileManager, startEditData;
@@ -45952,7 +46213,7 @@ define( function( require, exports, module ) {
         surveyData.instanceStrToEdit = surveyData.instanceStrToEdit || null;
 
         // Open an existing record if we need to
-        if(fileManager.isFileReaderSupported()) {
+        if(fileManager.isSupported()) {
             var recordName = store.getRecord( "draft" );	// Draft identifies the name of a draft record that is being opened
             if(recordName) {
 
@@ -45964,6 +46225,7 @@ define( function( require, exports, module ) {
 
                 // Set the global instanceID of the restored form so that filePicker can find media
                 var model = new FormModel( record.data );
+                model.init();
                 window.gLoadedInstanceID = model.getInstanceID();
 
                 // Delete the draft key
@@ -45979,10 +46241,8 @@ define( function( require, exports, module ) {
         /*
          * Initialise file manager if it is supported in this browser
          * The fileSystems API is used to store images prior to upload when operating offline
-         * This API is only available under Chrome. It is also not being standardised and presumably at
-         * some point it will be replaced, by a future cross browser standard.
          */
-        if ( fileManager.isFileStorageSupported() ) {
+        if ( fileManager.isSupported() ) {
             fileManager.init();
             if ( !store || store.getRecordList().length === 0 ) {
                 fileManager.deleteAll();
@@ -46110,7 +46370,7 @@ define( function( require, exports, module ) {
         var texts, choices, record, saveResult, overwrite,
             count = 0,
             i,
-            media = getMedia(),
+            media = ecFm.getCurrentFiles(),
             recordResult = {};
 
         draft = draft || getDraftStatus();
@@ -46179,32 +46439,18 @@ define( function( require, exports, module ) {
 
 
             // Save any media
+            var dirname = "/" + form.getInstanceID();
             if ( media.length > 0 ) {
-                fileManager.createDir( gLoadedInstanceID, {
-                    success: function() {
-                        for ( i = 0; i < media.length; i++ ) {
-                            fileManager.saveFile( media[ i ], {
-                                success: function() {
-                                    count++;
-                                    if ( count === media.length ) {
-                                        saveResult = writeRecord( recordName, record, draft );
-                                    }
-                                },
-                                error: function( e ) {
-                                    console.log( "File Save Error" );
-                                    console.log( e );
-                                    count++;
-                                    if ( count === media.length ) {
-                                        saveResult = writeRecord( recordName, record, draft );
-                                    }
-                                }
-                            }, gLoadedInstanceID );
-                        }
-                    },
-                    error: function() {
-                        console.log( "++++++++ Failed to create directory: " + instanceID );
+                fileManager.deleteDir( dirname );        // Remove any existing media
+                for ( i = 0; i < media.length; i++ ) {
+                    fileManager.saveFile( media[ i ], dirname );
+
+                    count++;
+                    if ( count === media.length ) {
+                        saveResult = writeRecord( recordName, record, draft );
                     }
-                } );
+                }
+
             } else {
                 saveResult = writeRecord( recordName, record, draft );
             }
@@ -46305,12 +46551,11 @@ define( function( require, exports, module ) {
 
     /*
      * Return true if this form can be saved and submitted asynchronously. This is possible if either:
-     *   1) The browser supports FileReader and there are no media files in the survey
-     *   2) or, the browser supports FileStorage
+     *   1) The browser supports FileReader
      */
     function canSaveRecord() {
 
-        if ( fileManager.isFileStorageSupported() || ( fileManager.isFileReaderSupported() && getMedia().length === 0 ) ) {
+        if ( fileManager.isSupported() ) {
             console.log( "Can Save record:" );
             return true;
         } else {
@@ -46384,10 +46629,11 @@ define( function( require, exports, module ) {
                 instanceID;
 
             if(model) {
+                model.init();
                 instanceID = model.getInstanceID();
             }
 
-            if ( fileManager.isFileStorageSupported() ) {
+            if ( fileManager.isSupported() ) {
                 fileManager.deleteDir( instanceID );
             }
             if ( store ) {
@@ -46402,6 +46648,7 @@ define( function( require, exports, module ) {
      */
     function getMedia() {
         var $media,
+            $preview,
             elem,
             count,
             i,
@@ -46414,13 +46661,16 @@ define( function( require, exports, module ) {
 
         $( '[type="file"]' ).each( function() {
             $media = $( this );
+            $preview = $media.parent().find(".file-preview").find("img");
+            name = $media.parent().find(".fake-file-input").text();
             elem = $media[ 0 ];
 
             for ( i = 0; i < elem.files.length; i++ ) {
                 filename = elem.files[ i ].name;
                 mediaArray.push( {
-                    name: filename,
-                    file: elem.files[ i ]
+                    name: name,
+                    file: elem.files[ i ],
+                    dataUrl: $preview.attr("src")
                 } );
             }
         } );
@@ -46494,38 +46744,24 @@ define( function( require, exports, module ) {
             if ( $fileNodes.length > 0 ) {
                 $fileNodes.each( function() {
 
+
                     fileO = {
-                        newName: $( this ).nodeName,
                         fileName: $( this ).text()
                     };
 
-                    fileManager.retrieveFile( directory, fileO, {
-                        success: function( fileObj ) {
-                            count++;
-                            if ( fileObj ) {
-                                var filename = fileObj.fileName;
-                                media.push( {
-                                    name: filename,
-                                    file: fileObj.file
-                                } );
-                                sizes.push( fileObj.file.size );
-                            } else {
-                                // Smap allow for file not to be found, as we could be be editing an existing record and the image was not replaced
-                                //failedFiles.push( fileO.fileName );
-                            }
-                            if ( count == $fileNodes.length ) {
-                                distributeFiles();
-                            }
-                        },
-                        error: function( e ) {
-                            count++;
-                            //failedFiles.push( fileO.fileName );
-                            console.error( 'Error occured when trying to retrieve ' + fileO.fileName + ' from local filesystem', e );
-                            if ( count == $fileNodes.length ) {
-                                distributeFiles();
-                            }
-                        }
-                    } );
+                    var fileObj = fileManager.retrieveFile( directory, fileO);
+                    count++;
+                    if ( fileObj ) {
+                        media.push( fileObj );
+                        sizes.push( fileObj.size );
+                    } else {
+                        // Smap allow for file not to be found, as we could be be editing an existing record and the image was not replaced
+                        //failedFiles.push( fileO.fileName );
+                    }
+                    if ( count == $fileNodes.length ) {
+                        distributeFiles();
+                    }
+
                 } );
             } else {
                 recordPrepped = basicRecordPrepped( 1, 0 );
@@ -46542,7 +46778,9 @@ define( function( require, exports, module ) {
                     recordPrepped = basicRecordPrepped( batches.length, k );
                     for ( l = 0; l < batches[ k ].length; l++ ) {
                         fileIndex = batches[ k ][ l ];
-                        recordPrepped.formData.append( media[ fileIndex ].name, media[ fileIndex ].file );
+                        //recordPrepped.formData.append( media[ fileIndex ].name, media[ fileIndex ].file );
+                        var blob = dataURLtoBlob(media[ fileIndex ].dataUrl);
+                        recordPrepped.formData.append( media[ fileIndex ].fileName, blob, media[ fileIndex ].fileName );
                     }
                     callbacks.success( recordPrepped );
                 }
@@ -46551,6 +46789,16 @@ define( function( require, exports, module ) {
                 callbacks.success( recordPrepped );
             }
 
+        }
+
+        // From: http://stackoverflow.com/questions/6850276/how-to-convert-dataurl-to-file-object-in-javascript
+        function dataURLtoBlob(dataurl) {
+            var arr = dataurl.split(','), mime = arr[0].match(/:(.*?);/)[1],
+                bstr = atob(arr[1]), n = bstr.length, u8arr = new Uint8Array(n);
+            while(n--){
+                u8arr[n] = bstr.charCodeAt(n);
+            }
+            return new Blob([u8arr], {type:mime});
         }
 
         if ( immediate ) {
@@ -46722,7 +46970,7 @@ define( function( require, exports, module ) {
 
         //remove filesystem folder after successful submission
         $( document ).on( 'submissionsuccess', function( ev, recordName, instanceID ) {
-            if ( fileManager.isFileStorageSupported() ) {
+            if ( fileManager.isSupported() ) {
                 fileManager.deleteDir( instanceID );
             }
             if ( store ) {
@@ -46997,7 +47245,7 @@ define( function( require, exports, module ) {
 
 } );
 
-},{"../src/js/Form":30,"../src/js/Form-model":29,"./connection":58,"./gui":61,"bootstrap":6,"jquery":22}],60:[function(require,module,exports){
+},{"../src/js/Form":30,"../src/js/Form-model":29,"../src/js/file-manager":34,"./connection":59,"./gui":62,"bootstrap":6,"jquery":22}],61:[function(require,module,exports){
 /**
  * Simple file manager with cross-browser support. That uses the FileReader
  * to create previews. Can be replaced with a more advanced version that
@@ -47019,24 +47267,26 @@ define( function( require, exports, module ) {
 
     var Q = require('./q');
     var $ = require( 'jquery' );
+    var utils = require ( '../src/js/utils');
+
+    var FM_STORAGE_PREFIX = "fs::";
 
     var maxSize,
-        supported = typeof FileReader !== 'undefined',
-        notSupportedAdvisoryMsg = '',
-        fileStorageSupported = false,
         currentQuota = null,
         currentQuotaUsed = null,
         currentDir,
         filesystemReady,
-        getFilesystem,
         fs,
         DEFAULTBYTESREQUESTED = 100 * 1024 * 1024;
 
-    // Check for support for file systems API (Chrome only)
-    window.requestFileSystem = window.requestFileSystem || window.webkitRequestFileSystem;
-    window.resolveLocalFileSystemURL = window.resolveLocalFileSystemURL || window.webkitResolveLocalFileSystemURL;
-    fileStorageSupported = ( typeof window.requestFileSystem !== 'undefined' && typeof window.resolveLocalFileSystemURL !== 'undefined' && typeof navigator.webkitPersistentStorage !== 'undefined' );
+    var supported = typeof FileReader !== 'undefined';
 
+    // Check for support for file systems API (Chrome only)
+    /*
+     window.requestFileSystem = window.requestFileSystem || window.webkitRequestFileSystem;
+     window.resolveLocalFileSystemURL = window.resolveLocalFileSystemURL || window.webkitResolveLocalFileSystemURL;
+     fileStorageSupported = ( typeof window.requestFileSystem !== 'undefined' && typeof window.resolveLocalFileSystemURL !== 'undefined' && typeof navigator.webkitPersistentStorage !== 'undefined' );
+     */
 
     /**
      * Initialize the file manager .
@@ -47046,11 +47296,6 @@ define( function( require, exports, module ) {
         var deferred = Q.defer();
 
         // Initialise fileSystem storage if it is supported
-        if (fileStorageSupported) {
-            setCurrentQuotaUsed();
-            filesystemReady = getFilesystem();
-        }
-
         if (supported) {
             deferred.resolve(true);
         } else {
@@ -47064,12 +47309,8 @@ define( function( require, exports, module ) {
      * Whether filemanager is supported in browser
      * @return {Boolean}
      */
-    function isFileReaderSupported() {
+    function isSupported() {
         return supported;
-    }
-
-    function isFileStorageSupported() {
-        return fileStorageSupported;
     }
 
     /**
@@ -47100,6 +47341,7 @@ define( function( require, exports, module ) {
                 error = new Error('File too large (max ' +
                     ( Math.round(( _getMaxSize() * 100 ) / ( 1024 * 1024 )) / 100 ) +
                     ' Mb)');
+                console.log("Error: " + error);
                 deferred.reject(error);
             } else {
                 reader = new FileReader();
@@ -47163,76 +47405,18 @@ define( function( require, exports, module ) {
      * @param {Function=} callbackComplete  function to call when complete
      */
     function deleteAll (callbackComplete) {
-        callbackComplete = callbackComplete || function () {
-            };
 
-        var process = {
-            entryFound: function (entry) {
-                if (entry.isDirectory) {
-                    entry.removeRecursively(
-                        function () {
-                            setCurrentQuotaUsed();
-                            console.log('Directory: ' + entry.name + ' deleted');
-                        },
-                        errorHandler
-                    );
-                } else {
-                    entry.remove(function () {
-                            setCurrentQuotaUsed();
-                            console.log('File: ' + entry.name + ' deleted');
-                        },
-                        errorHandler
-                    );
-                }
-            },
-            complete: callbackComplete
-        };
+        console.log("delete all local storage");
 
-        filesystemReady.done(function () {
-            _traverseAll(process);
-        });
-    };
-
-    /**
-     * traverses all folders and files in root
-     * @param  {{entryFound: Function, complete}} process [description]
-     */
-     function _traverseAll(process) {
-        var entry, type,
-            dirReader = fs.root.createReader();
-
-        // Call the reader.readEntries() until no more results are returned.
-        var readEntries = function () {
-            dirReader.readEntries(function (results) {
-                if (!results.length) {
-                    process.complete();
-                } else {
-                    for (var i = 0; i < results.length; i++) {
-                        entry = results[i];
-                        process.entryFound(entry);
-                    }
-                    readEntries();
-                }
-            }, errorHandler);
-        };
-        readEntries();
-    };
-
-    /**
-     * Requests the amount of storage used (asynchronously) and sets variable (EXPERIMENTAL/UNSTABLE API)
-     */
-     function setCurrentQuotaUsed() {
-        console.log("Set current quota used");
-        if (typeof navigator.webkitPersistentStorage.queryUsageAndQuota !== 'undefined') {
-            navigator.webkitPersistentStorage.queryUsageAndQuota(
-                function (quotaUsed) {
-                    currentQuotaUsed = quotaUsed;
-                    console.log("++++++ Quota Used: " + quotaUsed + " out of " + currentQuota);
-                },
-                errorHandler
-            );
+        for (var key in localStorage){
+            console.log("Storage item: " + key);
+            if(key.startsWith(FM_STORAGE_PREFIX)) {
+                console.log("Delete item: " + key);
+                localStorage.removeItem(key);
+            }
         }
     };
+
 
     function getCurrentQuota() {
         return currentQuota;
@@ -47246,7 +47430,7 @@ define( function( require, exports, module ) {
      * generic error handler
      * @param  {(Error|FileError|string)=} e [description]
      */
-     function errorHandler(e) {
+    function errorHandler(e) {
         var msg = '';
 
         if (typeof e !== 'undefined') {
@@ -47276,143 +47460,85 @@ define( function( require, exports, module ) {
     };
 
     /**
-     * Returns jquery promise object that will be resolved when the user has approved the use of the filesystem
-     * @return {*} jquery promise object
-     */
-     function getFilesystem() {
-        var deferred = $.Deferred();
-
-        if (!fs) {
-            requestQuota(
-                DEFAULTBYTESREQUESTED, {
-                    success: function (grantedBytes) {
-                        requestFileSystem(
-                            PERSISTENT,
-                            grantedBytes,
-                            function (fsys) {
-                                fs = fsys;
-                                deferred.resolve();
-                            },
-                            function (e) {
-                                errorHandler(e);
-                            }
-                        );
-                    },
-                    error: errorHandler
-                }
-            );
-        } else {
-            deferred.resolve();
-        }
-        return deferred.promise();
-    };
-
-    /**
-     * Requests PERSISTENT file storage (may prompt user) asynchronously
-     * @param  {number}                     bytesRequested the storage size in bytes that is requested
-     * @param  {Object.<string, Function>}  callbacks      callback functions (error, and success)
-     */
-     function requestQuota (bytesRequested, callbacks) {
-        console.log('requesting persistent filesystem quota');
-        $(document).trigger('quotarequest', bytesRequested); //just to facilitate testing
-        navigator.webkitPersistentStorage.requestQuota(
-            bytesRequested,
-            callbacks.success,
-            callbacks.error
-        );
-    };
-
-    /**
      * Deletes a complete directory with all its contents
      * @param {string}                                  name        name of directory
      * @param {{success: Function, error: Function}}    callbacks   callback functions (error, and success)
      */
-     function deleteDir(name, callbacks) {
+    function deleteDir(name) {
 
-        callbacks = callbacks || {
-                success: function () {
-                },
-                error: function () {
+        if(typeof name !== "undefined") {
+            console.log("delete directory: " + name);
+
+            for (var key in localStorage) {
+                console.log("Storage item: " + key);
+                if (key.startsWith(FM_STORAGE_PREFIX + name)) {
+                    console.log("Delete item: " + key);
+                    localStorage.removeItem(key);
                 }
-            };
-
-        console.log('going to delete filesystem directory: ' + name);
-
-        filesystemReady.done(function () {
-            console.log('fs is ready, going for it!');
-            fs.root.getDirectory(name, {},
-                function (dirEntry) {
-                    dirEntry.removeRecursively(
-                        function () {
-                            setCurrentQuotaUsed();
-                            callbacks.success();
-                        },
-                        function (e) {
-                            errorHandler(e);
-                            callbacks.error();
-                        }
-                    );
-                },
-                errorHandler
-            );
-        });
+            }
+        }
     };
 
     /**
-     * Saves a file (asynchronously) in the directory provided upon initialization
+     * Saves a file (synchronously) in the directory provided upon initialization
      * @param  {File}                       file      File object from input field
      * @param  {Object.<string, Function>}  callbacks callback functions (error, and success)
      */
-     function saveFile(file, callbacks, instanceId) {
+    function saveFile(media, dirname) {
 
-        filesystemReady.done(function () {
-            var filePath = _getDirPrefix(instanceId) + file.name;
-            console.log('saving file with url: ' + filePath);
-            fs.root.getFile(
-                filePath, {
-                    create: true,
-                    exclusive: false
-                },
-                function (fileEntry) {
-                    fileEntry.createWriter(function (fileWriter) {
-                        fileWriter.write(file.file);
-                        fileWriter.onwriteend = function (e) {
-                            console.log("Write end");
-                            if (e.total === e.loaded) {
-                                setCurrentQuotaUsed();
-                                console.log('complete file stored, with persistent url:' + fileEntry.toURL());
-                                if (callbacks.success) {
-                                    callbacks.success(fileEntry.toURL());
-                                }
-                            }
-                        };
-                        fileWriter.onerror = function (e) {
-                            console.log("Error");
-                            console.log(e);
-                            var newBytesRequest,
-                                targetError = e.target.error;
-                            if (targetError instanceof FileError && targetError.code === window.FileError.QUOTA_EXCEEDED_ERR) {
-                                newBytesRequest = ( ( e.total * 5 ) < DEFAULTBYTESREQUESTED ) ? currentQuota + DEFAULTBYTESREQUESTED : currentQuota + ( 5 * e.total );
-                                console.log('Required storage exceeding quota, going to request more, in bytes: ' + newBytesRequest);
-                                requestQuota(
-                                    newBytesRequest, {
-                                        success: function (bytes) {
-                                            console.log('request for additional quota approved! (quota: ' + bytes + ' bytes)');
-                                            currentQuota = bytes;
-                                            saveFile(file, callbacks);
-                                        },
-                                        error: callbacks.error
-                                    }
-                                );
-                            } else {
-                                callbacks.error(e);
-                            }
-                        };
-                    }, callbacks.error);
-                },
-                callbacks.error
-            );
-        });
+        console.log("save file: " + media.name + " : " + dirname);
+        localStorage.setItem(FM_STORAGE_PREFIX + dirname + "/" + media.name, media.dataUrl );
+
+        /*
+         filesystemReady.done(function () {
+         var filePath = _getDirPrefix(instanceId) + file.name;
+         console.log('saving file with url: ' + filePath);
+         fs.root.getFile(
+         filePath, {
+         create: true,
+         exclusive: false
+         },
+         function (fileEntry) {
+         fileEntry.createWriter(function (fileWriter) {
+         fileWriter.write(file.file);
+         fileWriter.onwriteend = function (e) {
+         console.log("Write end");
+         if (e.total === e.loaded) {
+         setCurrentQuotaUsed();
+         console.log('complete file stored, with persistent url:' + fileEntry.toURL());
+         if (callbacks.success) {
+         callbacks.success(fileEntry.toURL());
+         }
+         }
+         };
+         fileWriter.onerror = function (e) {
+         console.log("Error");
+         console.log(e);
+         var newBytesRequest,
+         targetError = e.target.error;
+         if (targetError instanceof FileError && targetError.code === window.FileError.QUOTA_EXCEEDED_ERR) {
+         newBytesRequest = ( ( e.total * 5 ) < DEFAULTBYTESREQUESTED ) ? currentQuota + DEFAULTBYTESREQUESTED : currentQuota + ( 5 * e.total );
+         console.log('Required storage exceeding quota, going to request more, in bytes: ' + newBytesRequest);
+         requestQuota(
+         newBytesRequest, {
+         success: function (bytes) {
+         console.log('request for additional quota approved! (quota: ' + bytes + ' bytes)');
+         currentQuota = bytes;
+         saveFile(file, callbacks);
+         },
+         error: callbacks.error
+         }
+         );
+         } else {
+         callbacks.error(e);
+         }
+         };
+         }, callbacks.error);
+         },
+         callbacks.error
+         );
+         });
+         */
     };
 
     /**
@@ -47430,7 +47556,18 @@ define( function( require, exports, module ) {
      * @param {{newName: string, fileName: string}} fileO           object of file properties
      * @param {{success:Function, error:Function}}  callbacks       callback functions (error, and success)
      */
-     function retrieveFile(directoryName, fileO, callbacks) {
+    function retrieveFile(dirname, file) {
+
+        var key = FM_STORAGE_PREFIX + "/" + dirname + "/" + file.fileName;
+
+        file.dataUrl = localStorage.getItem( key );
+        if(file.dataUrl) {
+            file.size = file.dataUrl.length;
+        } else {
+            file.size = 0;
+        }
+        return file;
+        /*
         var retrievedFile = {},
             pathPrefix = _getDirPrefix(directoryName),
             callbacksForFileEntry = {
@@ -47458,87 +47595,9 @@ define( function( require, exports, module ) {
             success: callbacksForFileEntry.success,
             error: callbacksForFileEntry.error
         });
+        */
     };
 
-    /**
-     * Retrieves a file from a fileEntry (asynchronously)
-     * @param  {FileEntry} fileEntry [description]
-     * @param  {{success:function(File), error: ?function(FileError)}} callbacks [description]
-     */
-     function retrieveFileFromFileEntry(fileEntry, callbacks) {
-        fileEntry.file(callbacks.success, callbacks.error);
-    };
-
-    /**
-     * Obtains a fileEntry (asynchronously)
-     * @param  {string}                             fullPath    full filesystem path to the file
-     * @param {{success:Function, error:Function}}  callbacks   callback functions (error, and success)
-     */
-     function retrieveFileEntry(fullPath, callbacks) {
-        console.debug('retrieving fileEntry for: ' + fullPath);
-
-        filesystemReady.done(function () {
-            fs.root.getFile(fullPath, {},
-                function (fileEntry) {
-                    console.log('fileEntry retrieved: ', fileEntry, 'persistent URL: ', fileEntry.toURL());
-                    callbacks.success(fileEntry);
-                },
-                function (e) {
-                    console.log('file with path: ' + fullPath + ' not found');
-                    console.log(e);
-                    callbacks.success(null);		// smap missing files ok
-                    //callbacks.error( e );
-                }
-            );
-        });
-    };
-
-    /**
-     * Creates a directory
-     * @param  {string}                                 name      name of directory
-     * @param  {{success: Function, error: Function}}   callbacks callback functions (error, and success)
-     */
-     function createDir(name, callbacks) {
-
-        callbacks = callbacks || {
-                success: function () {
-                },
-                error: function () {
-                }
-            };
-
-        filesystemReady.done(function () {
-            fs.root.getDirectory(name, {
-                    create: true
-                },
-                function (dirEntry) {
-                    setCurrentQuotaUsed();
-                    console.log('Directory: ' + name + ' created (or found)', dirEntry);
-                    callbacks.success();
-                },
-                function (e) {
-                    console.log('error during creation of directory', e);
-                    var newBytesRequest; //,
-                    if (e instanceof FileError && e.code === window.FileError.QUOTA_EXCEEDED_ERR) {
-                        console.log('Required storage exceeding quota, going to request more.');
-                        newBytesRequest = ( ( e.total * 5 ) < DEFAULTBYTESREQUESTED ) ? currentQuota + DEFAULTBYTESREQUESTED : currentQuota + ( 5 * e.total );
-                        requestQuota(
-                            newBytesRequest, {
-                                success: function (bytes) {
-                                    currentQuota = bytes;
-                                    createDir(name, callbacks);
-                                },
-                                error: callbacks.error
-                            }
-                        );
-                    } else {
-                        callbacks.error(e);
-                    }
-                }
-                //TODO: ADD similar request for additional storage if FileError.QUOTA_EXCEEEDED_ERR is thrown as done in saveFile()
-            );
-        });
-    };
 
     /*
      * **********************************************
@@ -47546,9 +47605,7 @@ define( function( require, exports, module ) {
      * **********************************************
      */
     module.exports = {
-        isFileReaderSupported: isFileReaderSupported,
-        isFileStorageSupported: isFileStorageSupported,
-        notSupportedAdvisoryMsg: notSupportedAdvisoryMsg,
+        isSupported: isSupported,
         isWaitingForPermissions: isWaitingForPermissions,
         init: init,
         getFileUrl: getFileUrl,
@@ -47558,13 +47615,12 @@ define( function( require, exports, module ) {
         getCurrentQuota: getCurrentQuota,
         getCurrentQuotaUsed: getCurrentQuotaUsed,
         saveFile: saveFile,
-        retrieveFile: retrieveFile,
-        createDir: createDir
+        retrieveFile: retrieveFile
     };
 
 } );
 
-},{"./q":63,"jquery":22}],61:[function(require,module,exports){
+},{"../src/js/utils":38,"./q":64,"jquery":22}],62:[function(require,module,exports){
 /**
  * @preserve Copyright 2013 Martijn van de Rijdt
  *
@@ -47597,6 +47653,7 @@ define( function( require, exports, module ) {
 
     var $ = require( 'jquery' );
     var plugin = require('./plugin');
+    var printForm = require('../src/js/print');
 
     var nav, pages, updateStatus, feedbackBar,
         supportLink = '<a href="mailto:' + settings[ 'supportEmail' ] + '">' + settings[ 'supportEmail' ] + '</a>';
@@ -48214,7 +48271,7 @@ define( function( require, exports, module ) {
     };
 } );
 
-},{"./plugin":62,"jquery":22}],62:[function(require,module,exports){
+},{"../src/js/print":36,"./plugin":63,"jquery":22}],63:[function(require,module,exports){
 if ( typeof exports === 'object' && typeof exports.nodeName !== 'string' && typeof define !== 'function' ) {
     var define = function( factory ) {
         factory( require, exports, module );
@@ -48269,7 +48326,7 @@ define( function( require, exports, module ) {
 
 } );
 
-},{"jquery":22}],63:[function(require,module,exports){
+},{"jquery":22}],64:[function(require,module,exports){
 (function (process){
 // vim:ts=4:sts=4:sw=4:
 /*!
@@ -50232,7 +50289,7 @@ define( function( require, exports, module ) {
 } );
 
 }).call(this,require('_process'))
-},{"_process":26}],64:[function(require,module,exports){
+},{"_process":26}],65:[function(require,module,exports){
 /**
  * @preserve Copyright 2013 Martijn van de Rijdt
  *
@@ -50261,7 +50318,9 @@ define( function( require, exports, module ) {
     var $ = require( 'jquery' );
 
     "use strict";
-    var RESERVED_KEYS = ['user_locale', '__settings', 'null', '__history', 'Firebug', 'undefined', '__bookmark', '__counter', '__current_server', '__loadLog', '__writetest', '__maxSize'],
+    var RESERVED_KEYS = ['user_locale', '__settings', 'null', '__history', 'Firebug', 'undefined', '__bookmark', '__counter',
+            '__current_server', '__loadLog', '__writetest', '__maxSize'
+        ],
         localStorage = window.localStorage;
 
     // Could be replaced by Modernizr function if Modernizr remains used in final version
@@ -50450,7 +50509,7 @@ define( function( require, exports, module ) {
 
         for (i = 0; i < localStorage.length; i++) {
             key = localStorage.key(i);
-            if (!isReservedKey(key)) {
+            if (!isReservedKey(key) && !key.startsWith("fs::")) {
 
                 // get record -
                 record = getRecord(key);
