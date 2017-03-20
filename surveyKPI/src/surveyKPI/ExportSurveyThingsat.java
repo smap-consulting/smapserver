@@ -36,7 +36,6 @@ import model.Neo4J;
 import model.Property;
 import model.Thingsat;
 import model.ThingsatDO;
-import utilities.FormListManager;
 
 import org.apache.commons.io.FileUtils;
 import org.smap.sdal.Utilities.Authorise;
@@ -45,7 +44,9 @@ import org.smap.sdal.Utilities.QueryGenerator;
 import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.managers.LogManager;
+import org.smap.sdal.managers.QueryManager;
 import org.smap.sdal.model.ExportForm;
+import org.smap.sdal.model.QueryForm;
 import org.smap.sdal.model.SqlDesc;
 
 import com.google.gson.Gson;
@@ -106,12 +107,12 @@ public class ExportSurveyThingsat extends Application {
 		 * Get the list of forms and surveys to be exported
 		 * Needs to be done prior to authorisation as it includes the list of surveys
 		 */
-		ArrayList<ExportForm> formList = null;
+		ArrayList<QueryForm> queryList = null;
 		
 		if(forms != null) {
 			Type type = new TypeToken<ArrayList<ExportForm>>(){}.getType();
 			Gson gson=  new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
-			formList = gson.fromJson(forms, type);
+			queryList = gson.fromJson(forms, type);
 		}
 		
 		// Authorisation - Access
@@ -122,12 +123,12 @@ public class ExportSurveyThingsat extends Application {
 		} catch (Exception e) {}
 		
 		a.isAuthorised(connectionSD, request.getRemoteUser());
-		if(formList != null) {
+		if(queryList != null) {
 			HashMap<Integer, String> checkedSurveys = new HashMap<Integer, String> ();
-			for(int i = 0; i < formList.size(); i++) {
-				int survey = formList.get(i).sId;
+			for(int i = 0; i < queryList.size(); i++) {
+				int survey = queryList.get(i).survey;
 				if(checkedSurveys.get(new Integer(survey)) == null) {
-					a.isValidSurvey(connectionSD, request.getRemoteUser(), formList.get(i).sId, false, superUser);
+					a.isValidSurvey(connectionSD, request.getRemoteUser(), queryList.get(i).survey, false, superUser);
 					checkedSurveys.put(new Integer(survey), "checked");
 				}
 			}
@@ -183,12 +184,13 @@ public class ExportSurveyThingsat extends Application {
 			/*
 			 * Update the form list with additional info
 			 */
-			FormListManager flm = new FormListManager();
-			if(formList == null) {
-				formList = flm.getFormList(connectionSD, sId, fId);
+			QueryManager qm = new QueryManager();
+			if(queryList == null) {
+				queryList = qm.getFormList(connectionSD, sId, fId);
 			} else {
-				flm.setFormList(connectionSD, formList);
+				qm.extendFormList(connectionSD, queryList);
 			}
+			QueryForm startingForm = qm.getQueryTree(connectionSD, queryList);	// Convert the query list into a tree
 			
 			/*
 			 * Get the sql
@@ -214,8 +216,7 @@ public class ExportSurveyThingsat extends Application {
 					endDate,
 					dateId,
 					superUser,
-					formList,
-					formList.size() - 1);
+					startingForm);
 			
 			pstmt = connectionResults.prepareStatement(sqlDesc.sql + ";");
 			ResultSet rs = pstmt.executeQuery();

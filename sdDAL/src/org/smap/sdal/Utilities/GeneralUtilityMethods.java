@@ -34,6 +34,7 @@ import org.smap.sdal.model.ChangeItem;
 import org.smap.sdal.model.Form;
 import org.smap.sdal.model.KeyValue;
 import org.smap.sdal.model.Language;
+import org.smap.sdal.model.LinkedTarget;
 import org.smap.sdal.model.ManifestInfo;
 import org.smap.sdal.model.Option;
 import org.smap.sdal.model.RoleColumnFilter;
@@ -3299,27 +3300,30 @@ public class GeneralUtilityMethods {
 		
 		ArrayList<SurveyLinkDetails> sList = new ArrayList<SurveyLinkDetails> ();
 		
-		String sql = "select q.q_id, f.f_id, s.s_id "
+		String sql = "select q.q_id, f.f_id, s.s_id, linked_target "
 				+ "from question q, form f, survey s "
 				+ "where q.f_id = f.f_id "
 				+ "and f.s_id = s.s_id "
-				+ "and q.linked_survey = ?";
+				+ "and split_part(q.linked_target, '::', 1) = ?";
 		PreparedStatement pstmt = null;
 		
 		try {
 			pstmt = sd.prepareStatement(sql);
-			pstmt.setInt(1,sId);
+			pstmt.setString(1,String.valueOf(sId));
 			log.info("Getting linking surveys: " + pstmt.toString() );
 			
 			ResultSet rs = pstmt.executeQuery();
 			while(rs.next()) {
 				SurveyLinkDetails sld = new SurveyLinkDetails();
-				sld.toSurveyId = sId;
 				
 				sld.fromQuestionId = rs.getInt(1);
 				sld.fromFormId = rs.getInt(2);
 				sld.fromSurveyId = rs.getInt(3);
 
+				LinkedTarget lt = GeneralUtilityMethods.getLinkTargetObject(rs.getString(4));
+				sld.toSurveyId = lt.sId;
+				sld.toQuestionId = lt.qId;
+				
 				if(sld.fromSurveyId != sld.toSurveyId) {
 					sList.add(sld);
 				}
@@ -3336,9 +3340,9 @@ public class GeneralUtilityMethods {
 	}
 	
 	/*
-	 * Get the question that links to the provide survey from the provided form
-	 */
-	public static int getLinkingQuestion(Connection sd, int formFromId, int surveyToId) {
+	 * Get the question that links to the provided survey/question from the provided form
+	 *
+	public static int getLinkingQuestion(Connection sd, int formFromId, String linkedTarget) {
 		
 		int questionId = 0;
 		
@@ -3346,13 +3350,13 @@ public class GeneralUtilityMethods {
 				+ "from question q, form f "
 				+ "where q.f_id = f.f_id "
 				+ "and f.f_id = ? "
-				+ "and q.linked_survey = ?";
+				+ "and q.linked_target = ?";
 		PreparedStatement pstmt = null;
 		
 		try {
 			pstmt = sd.prepareStatement(sql);
 			pstmt.setInt(1, formFromId);
-			pstmt.setInt(2, surveyToId);
+			pstmt.setString(2, linkedTarget);
 			log.info("Getting linking surveys: " + pstmt.toString() );
 			
 			ResultSet rs = pstmt.executeQuery();
@@ -3370,20 +3374,21 @@ public class GeneralUtilityMethods {
 		
 		return questionId;
 	}
+	*/
 	
 	/*
-	 * Get the surveys that the provided form links to
+	 * Get the surveys and questions that the provided form links to
 	 */
 	public static ArrayList<SurveyLinkDetails> getLinkedSurveys(Connection sd, int sId) {
 		
 		ArrayList<SurveyLinkDetails> sList = new ArrayList<SurveyLinkDetails> ();
 		
-		String sql = "select q.q_id, f.f_id, q.linked_survey "
+		String sql = "select q.q_id, f.f_id, q.linked_target "
 				+ "from question q, form f, survey s "
 				+ "where q.f_id = f.f_id "
 				+ "and f.s_id = s.s_id "
 				+ "and s.s_id = ? "
-				+ "and q.linked_survey != 0";
+				+ "and q.linked_target is not null";
 		PreparedStatement pstmt = null;
 		
 		try {
@@ -3398,7 +3403,9 @@ public class GeneralUtilityMethods {
 				sld.fromQuestionId = rs.getInt(1);
 				sld.fromFormId = rs.getInt(2);
 				
-				sld.toSurveyId = rs.getInt(3);
+				LinkedTarget lt = GeneralUtilityMethods.getLinkTargetObject(rs.getString(3));
+				sld.toSurveyId = lt.sId;
+				sld.toQuestionId = lt.qId;
 
 				if(sld.fromSurveyId != sld.toSurveyId) {
 					sList.add(sld);
@@ -3605,6 +3612,40 @@ public class GeneralUtilityMethods {
 			if(rs.next()) {
 				f.id = rs.getInt("f_id");
 				f.tableName = rs.getString("table_name");
+			}
+			
+		} catch(SQLException e) {
+			log.log(Level.SEVERE,"Error", e);
+			throw e;
+		} finally {
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+		}	
+		
+		return f;
+		
+	}
+	
+	/*
+	 * Get the details of the form that contains the specified question
+	 */
+	public static Form getFormWithQuestion(Connection sd, int qId) throws SQLException {
+		
+		Form f = new Form ();
+		
+		String sql = "select  "
+				+ "f_id,"
+				+ "from question "
+				+ "where q_id = ? ";
+		PreparedStatement pstmt = null;
+		
+		
+		try {
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setInt(1,  qId);
+			
+			ResultSet rs = pstmt.executeQuery();
+			if(rs.next()) {
+				f.id = rs.getInt("f_id");
 			}
 			
 		} catch(SQLException e) {
@@ -3837,6 +3878,35 @@ public class GeneralUtilityMethods {
 			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 		}	
 		
+	}
+	
+	/*
+	 * Convert a :: separated String into surveyId and Question Id
+	 */
+	public static LinkedTarget getLinkTargetObject(String in) {
+		LinkedTarget lt = new LinkedTarget();
+		
+		if(in != null) {
+			String[] values = in.split("::");
+			if(values.length > 0) {
+				String sId = values[0].trim();
+				try {
+					lt.sId = Integer.parseInt(sId);
+				} catch(Exception e) {
+					log.log(Level.SEVERE,"Error converting linked survey id; " + sId, e);
+				}
+			}
+			if(values.length > 1) {
+				String qId = values[1].trim();
+				try {
+					lt.qId = Integer.parseInt(qId);
+				} catch(Exception e) {
+					log.log(Level.SEVERE,"Error converting linked question id; " + qId, e);
+				}
+			}
+		}
+		
+		return lt;
 	}
 	
 	/*

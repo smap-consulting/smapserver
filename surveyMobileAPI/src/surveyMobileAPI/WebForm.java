@@ -233,7 +233,6 @@ public class WebForm extends Application{
 		} 
 		log.info("Requesting " + type);
 		
-		System.out.println();
 		return getWebform(request, type, formIdent, datakey, datakeyvalue, assignmentId, callback, 
 				request.getRemoteUser(), 
 				false,
@@ -264,9 +263,8 @@ public class WebForm extends Application{
 			type = "json";
 			
 		} 
-		log.info("Requesting " + type);
-		
-		System.out.println("Tempuser: " + tempUser);
+		log.info("Requesting " + type);	
+		log.info("Tempuser: " + tempUser);
 		return getWebform(request, type, formIdent, datakey, datakeyvalue, assignmentId, callback, 
 				tempUser, 
 				false,
@@ -385,9 +383,8 @@ public class WebForm extends Application{
 			
 			//template.printModel();	// debug
 			GetXForm xForm = new GetXForm();
-			String formXML = xForm.get(template, true);	
-			System.out.println(formXML);  // debug
-			
+			String formXML = xForm.get(template, true);		
+
 			// If required get the instance data 
 			String instanceXML = null;
 			String instanceStrToEditId = null;
@@ -423,11 +420,7 @@ public class WebForm extends Application{
     					mv.url = url;
     					jr.manifestList.add(mv);
     				} else {
-    					if(type.equals("csv")) {
-    						//formXML = formXML.replaceFirst("</instance>", "</instance><instance id=\"hhplotdetails\" src=\"/media/organisation/1/hhplotdetails.csv\" />");
-    					} else {
-    						formXML = formXML.replaceAll("jr://" + type + "/" + name, url);
-    					}
+    					formXML = formXML.replaceAll("jr://" + type + "/" + name, url);
     				}
     			}
 			}
@@ -548,14 +541,13 @@ public class WebForm extends Application{
 		output.append("<head>\n");
 		output.append("<link href='https://fonts.googleapis.com/css?family=Open+Sans:400,700,600&subset=latin,cyrillic-ext,cyrillic,greek-ext,greek,vietnamese,latin-ext' rel='stylesheet' type='text/css'>\n");
 
-		//output.append("<link type='text/css' href='/build/css/webform_smap.css' media='all' rel='stylesheet' />\n");
 		output.append("<link type='text/css' href='/build/css/webform.css' media='all' rel='stylesheet' />\n");
-		//output.append("<link type='text/css' href='/build/css/webform_print_formhub.css' media='print' rel='stylesheet' />\n");
 		if(surveyClass != null && surveyClass.trim().contains("theme-grid")) {
 			output.append("<link type='text/css' href='/build/css/grid.css' media='all' rel='stylesheet' />\n");
 			output.append("<link type='text/css' href='/build/css/grid-print.css' media='print' rel='stylesheet'/>\n");	
 		} else {
-			output.append("<link type='text/css' href='/build/css/default.css' media='all' rel='stylesheet' />\n");			
+			//output.append("<link type='text/css' href='/build/css/plain.css' media='all' rel='stylesheet' />\n");	
+			//output.append("<link type='text/css' href='/build/css/plain-print.css' media='all' rel='stylesheet' />\n");
 			output.append("<link type='text/css' href='/build/css/formhub.css' media='all' rel='stylesheet' />\n");			
 			output.append("<link type='text/css' href='/build/css/formhub-print.css' media='print' rel='stylesheet'/>\n");
 		}
@@ -577,6 +569,7 @@ public class WebForm extends Application{
 	    output.append("<script type='text/javascript'>window.location = 'modern_browsers';</script>\n");
 		output.append("<![endif]-->\n");
 			
+		output.append("<script src='/js/libs/modernizr.js'></script>");
 		output.append(addData(request, formXML, instanceXML, dataToEditId, assignmentId, accessKey));
 		// Add the google API key
 		output.append("<script>");
@@ -587,10 +580,6 @@ public class WebForm extends Application{
 					output.append("\";");
 				}
 		output.append("</script>");
-		
-		// Webforms script
-		output.append("<script type='text/javascript' src='/build/js/webform-combined.min.js'></script>\n");
-		
 		output.append("</head>\n");
 		
 		return output;
@@ -696,7 +685,11 @@ public class WebForm extends Application{
 		output.append(addMain(request, formXML, dataToEditId, orgId, false, surveyClass, null, localisation));
 		output.append(getDialogs());
 		
+		// Webforms script
+		output.append("<script src='/build/js/webform-bundle.js'></script>\n");
+		
 		output.append("</body>");
+		
 		return output;
 	}
 	
@@ -948,8 +941,9 @@ public class WebForm extends Application{
 		if(surveyClass !=null && surveyClass.contains("pages")) {
 			output.append("<a class='previous-page disabled' href='#'>Back</a>\n");
 			output.append("<a class='next-page' href='#'>Next</span></a>\n");
-		}		
-		output.append("<img src=/images/enketo.png style=\"position: absolute; right: 0px; bottom: 0px; height:40px;\">");
+		}	
+		output.append("<div class=\"enketo-power\" style=\"margin-bottom: 30px;\">Powered by <a href=\"http://enketo.org\" title=\"enketo.org website\"><img src=\"/images/enketo_bare_150x56.png\" alt=\"enketo logo\" /></a> </div>");
+		//output.append("<img src=/images/enketo.png style=\"position: absolute; right: 0px; bottom: 0px; height:40px;\">");
 		output.append("</div>\n");	// main controls
 		
 		
@@ -1024,7 +1018,6 @@ public class WebForm extends Application{
 			String instanceXML = null;
 			String dataKey = "instanceid";
 			
-			System.out.println("Getting instance data");
 			xForm = new GetXForm();
 			instanceXML = xForm.getInstance(survey.id, formIdent, template, dataKey, updateid, 0, 
 					simplifyMedia,

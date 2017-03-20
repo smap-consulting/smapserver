@@ -258,6 +258,66 @@ public class Authorise {
 	}
 	
 	/*
+	 * Verify that the user is entitled to access this particular query
+	 */
+	public boolean isValidQuery(Connection conn, String user, int queryId)
+			throws ServerException, AuthorisationException, NotFoundException {
+		ResultSet resultSet = null;
+		PreparedStatement pstmt = null;
+		int count = 0;
+		boolean sqlError = false;
+		
+		/*
+		 * 1) Make sure the survey  exists 
+		 * 2) Make sure user has access to the query
+		 */
+
+		StringBuffer sql = new StringBuffer("select count(*) from custom_query q, users u "
+				+ "where u.id = q.u_id "
+				+ "and q.id = ? "
+				+ "and u.ident = ? ");
+		
+		try {		
+			
+			pstmt = conn.prepareStatement(sql.toString());
+			pstmt.setInt(1, queryId);
+			pstmt.setString(2, user);
+			
+			log.info("IsValidQuery: " + pstmt.toString());
+			
+			resultSet = pstmt.executeQuery();
+			resultSet.next();
+			
+			count = resultSet.getInt(1);
+		} catch (Exception e) {
+			log.log(Level.SEVERE,"Error in Authorisation", e);
+			sqlError = true;
+		} finally {
+			// Close the result set and prepared statement
+			try{
+				if(resultSet != null) {resultSet.close();};
+				if(pstmt != null) {pstmt.close();};
+			} catch (Exception ex) {
+				log.log(Level.SEVERE, "Unable to close resultSet or prepared statement");
+			}
+		}
+		
+ 		if(count == 0) {
+ 			log.info("Error: Query validation failed for: " + user + " query was: " + queryId);
+ 			
+ 			SDDataSource.closeConnection("isValidQuery", conn);
+			
+			if(sqlError) {
+				throw new ServerException();
+			} else {
+				throw new NotFoundException();	// Not found rather than not authorised as we could not find a resource that the user had access to
+			}
+		} 
+ 		
+		return true;
+	}
+	
+	/*
 	 * Verify that the user is entitled to access this particular role
 	 */
 	public boolean isValidRole(Connection conn, String user, int rId)

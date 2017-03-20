@@ -33,6 +33,19 @@ window.gTasks = {
 		gDirn: undefined
 	}
 
+	var gBlankChart = {
+	    	groups: [],
+			time_interval: false,
+			humanName: "",
+			name: "",
+			chart_type: "bar",
+			group: "none",
+			fn: "count",
+			tSeries: false,
+			period: undefined,
+			width: 12
+		};
+
 	var gReport = {
 			date_q: "Upload Time",
 			row: [
@@ -41,6 +54,7 @@ window.gTasks = {
 						name: "history",
 						charts: 
 							[
+							 /*
 						         {
 						        	groups: [
 						        	         {
@@ -56,7 +70,7 @@ window.gTasks = {
 									name: "periodic_count",
 									chart_type: "groupedBar",
 									group: undefined,
-									fn: "length",
+									fn: "count",
 									tSeries: true,
 									period: "day",
 									width: 12
@@ -81,8 +95,11 @@ window.gTasks = {
 									period: undefined,
 									width: 12
 								}
+								*/
 						    ]
-			      },
+			      }
+			      /*
+			      ,
 			      {
 					datatable: true,
 					name: "chartrow",
@@ -96,11 +113,14 @@ window.gTasks = {
 					},
 					charts: []
 			      }
+			      */
 			    ]
 	};
+	
 	var gReportLoaded = false,
 		gDataLoaded = false,
-		gConfigLoaded = false;
+		gConfigLoaded = false,
+		gMap;
 	 
 	 /*
 	  * Function called when the current project is changed
@@ -132,9 +152,11 @@ window.gTasks = {
 			
 			 saveCurrentProject(-1, globals.gCurrentSurvey);
 			 if(isManagedForms) {
-				 getSurveyConfig(globals.gCurrentSurvey, gTasks.cache.surveyList[globals.gCurrentProject][gTasks.gSelectedSurveyIndex].managed_id);
+				 getSurveyView(0, globals.gCurrentSurvey, 
+						 gTasks.cache.surveyList[globals.gCurrentProject][gTasks.gSelectedSurveyIndex].managed_id,
+						 0);
 			 } else {
-				 getSurveyConfig(globals.gCurrentSurvey, 0);
+				 getSurveyView(0, globals.gCurrentSurvey, 0, 0);
 			 }
 			 if(!isDuplicates) {
 				 getReport(gReport);
@@ -144,7 +166,7 @@ window.gTasks = {
 			 
 		 } else {
 			 // No managed surveys in this project
-			 $('#trackingTable').empty();
+			 $('#content').empty();
 		 }
 	 }
 	 
@@ -259,7 +281,7 @@ window.gTasks = {
 	  * Show the survey data along with the management columns
 	  * If masterRecord is specified then only show that record
 	  */
-	 function showManagedData(sId, tableElem, masterRecord) {
+	 function showManagedData(sId, content, masterRecord) {
 		 
 		 var x = 1,
 		 	columns = gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].columns,
@@ -272,7 +294,7 @@ window.gTasks = {
 		 	foot_idx = -1,
 		 	i,j,
 		 	colIdx = 0,
-		 	$table = $(tableElem),
+		 	$table = $("#trackingTable"),
 		 	doneFirst = false,
 		 	headItem,
 		 	hColSort = [],
@@ -284,6 +306,10 @@ window.gTasks = {
 			 globals.gMainTable.destroy();
 		 }
 		 
+		 // Add table
+		 h[++idx] = '<div class="table-responsive">';
+		 h[++idx] = '<table id="trackingTable" class="table table-striped">';
+	 	
 		 // Add head
 		 h[++idx] = '<thead>';
 		 h[++idx] = '<tr>';
@@ -320,6 +346,10 @@ window.gTasks = {
 		 h[++idx] = '</tr>';
 		 h[++idx] = '</tfoot>';
 	
+		 // close table
+		 h[++idx] = '</table>';
+		 h[++idx] = '</div>';
+		 
 		 $table.empty().html(h.join(''));
 
 		 /*
@@ -433,6 +463,9 @@ window.gTasks = {
 	            if(isManagedForms) {
 	            	gTasks.gSelectedRecord = rowData[0];
 	            	$('#editRecord').modal("show");
+	            } else if(isBrowseResults) {
+	            	// TODO check if the user has maintain privilege
+	            	alert(JSON.stringify( rowData ));
 	            }
 	            //alert(JSON.stringify( rowData ));
 	        } );
@@ -454,11 +487,7 @@ window.gTasks = {
 		                    last = group;
 		                }
 		            } );
-			 } else {
-				 // For browse results and managed forms, update any charts
-				 chart.refreshCharts(rows);
-			 }
-	            
+			 } 
 	            
 			 columns = gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].columns;
 	 
@@ -541,7 +570,7 @@ window.gTasks = {
 	 /*
 	  * Show duplicates data
 	  */
-	 function showDuplicateData(sId, tableElem) {
+	 function showDuplicateData(sId) {
 		 
 		 var url = '/api/v1/data/similar/' + sId + '/' + getSearchCriteria() + "?format=dt";
 		 globals.gMainTable.ajax.url( url ).load();
@@ -800,10 +829,19 @@ window.gTasks = {
 	 /*
 	  * Get the columns for a survey
 	  */
-	 function getSurveyConfig(sId, managed_id) {
+	 function getSurveyView(viewId, sId, managedId, queryId) {
 		 
+		 var url;
+		 
+		 if(viewId != 0) {
+			 url = '/surveyKPI/surveyview/' + viewId;
+		 } else {
+			 url = '/surveyKPI/surveyview/default';
+			 url += '?survey=' + sId;
+			 url += '&managed=' + managedId;
+			 url += '&query=' + queryId;		// ignore for moment, ie note caching is done only on survey index
+		 }
 		 if(!gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex]) {
-			 var url = '/surveyKPI/managed/config/' + sId + "/" + managed_id;
 			 
 			 addHourglass();
 			 $.ajax({
@@ -830,7 +868,7 @@ window.gTasks = {
 						 });
 					 }
 					 setDateChoices();
-					 showManagedData(sId, '#trackingTable', undefined);
+					 showManagedData(sId, '#content', undefined);
 				 },
 				 error: function(xhr, textStatus, err) {
 					 removeHourglass();
@@ -843,7 +881,7 @@ window.gTasks = {
 			 });
 		 } else {
 			 setDateChoices();
-			 showManagedData(sId, '#trackingTable', undefined);
+			 showManagedData(sId, '#content', undefined);
 		 }
 	 }
 	 
@@ -870,9 +908,11 @@ window.gTasks = {
 			 }
 		 }
 		 $('#date_question').html(h.join(''));
-		 $('#date_question').val(defValue);
+		 if(typeof defValue !== "undefined") {
+			 $('#date_question').val(defValue);
+		 }
 	 }
-	 
+ 
 	 /*
 	  * Get the currently selected recoord
 	  */
@@ -881,7 +921,7 @@ window.gTasks = {
 	 	var record,
 	 		idx;
 	 	
-	 	$('input[type=radio]:checked', '#trackingTable').each(function() {
+	 	$('input[type=radio]:checked', '#content table').each(function() {
 	 		idx = $(this).val();
 	 	});
 	 	
@@ -1038,6 +1078,8 @@ window.gTasks = {
 	 
 	 /*
 	  * Update the saved configuration
+	  *  This includes information on specific charts that are added to the survey whereas the report save below
+	  *  is for the base report.  
 	  */
 	 function saveConfig() {
 		 var config = {
@@ -1078,7 +1120,8 @@ window.gTasks = {
 	 }
 	 
 	 /*
-	  * Update the saved configuration
+	  * Save the report definition as opposed to saveConfig which saves the data table filter settings
+	  * TODO These should be merged?????
 	  */
 	 function saveReport(report) {
 		 
@@ -1144,7 +1187,7 @@ window.gTasks = {
 	 
 	 
 	 /*
-	  * Add html to show a form to edit a record
+	  * Add HTML to show a form to edit a record
 	  */
 	 function showEditRecordForm(record, columns, $editForm, $surveyForm) {
 		var 
@@ -1199,4 +1242,80 @@ window.gTasks = {
 		
 		// Set focus to first editable data item
 		$editForm.find('[autofocus]').focus();
+	 }
+	 
+	 function initialiseOl3Map() {
+		
+		 // Create osm layer
+		 var osm = new ol.layer.Tile({source: new ol.source.OSM()}); 
+		 
+		 // Add the map	
+		 if(!gMap) {
+			 gMap = new ol.Map({
+		        target: 'map',
+		        layers: [
+		                         new ol.layer.Group({
+		                             'title': 'Base maps',
+		                             layers: [
+		                                 new ol.layer.Group({
+		                                     title: 'Water color with labels',
+		                                     type: 'base',
+		                                     combine: true,
+		                                     visible: false,
+		                                     layers: [
+		                                         new ol.layer.Tile({
+		                                             source: new ol.source.Stamen({
+		                                                 layer: 'watercolor'
+		                                             })
+		                                         }),
+		                                         new ol.layer.Tile({
+		                                             source: new ol.source.Stamen({
+		                                                 layer: 'terrain-labels'
+		                                             })
+		                                         })
+		                                     ]
+		                                 }),
+		                                 new ol.layer.Tile({
+		                                     title: 'Water color',
+		                                     type: 'base',
+		                                     visible: false,
+		                                     source: new ol.source.Stamen({
+		                                         layer: 'watercolor'
+		                                     })
+		                                 }),
+		                                 new ol.layer.Tile({
+		                                     title: 'OSM',
+		                                     type: 'base',
+		                                     visible: true,
+		                                     source: new ol.source.OSM()
+		                                 })
+		                             ]
+		                         }),
+		                         new ol.layer.Group({
+		                             title: 'Overlays',
+		                             layers: [
+		                                 new ol.layer.Tile({
+		                                     title: 'Countries',
+		                                     source: new ol.source.TileWMS({
+		                                         url: 'http://demo.opengeo.org/geoserver/wms',
+		                                         params: {'LAYERS': 'ne:ne_10m_admin_1_states_provinces_lines_shp'},
+		                                         serverType: 'geoserver'
+		                                     })
+		                                 })
+		                             ]
+		                         })
+		                     ],
+		        view: new ol.View(
+		        		{
+		        			center: ol.proj.transform([0.0, 0.0], 'EPSG:4326', 'EPSG:3857'),
+		        			zoom: 1
+		        		}
+		        	)
+		      });
+			 
+			 var layerSwitcher = new ol.control.LayerSwitcher({
+			        tipLabel: 'Legend' // Optional label for button
+			    });
+			 gMap.addControl(layerSwitcher);
+		 }
 	 }

@@ -29,6 +29,7 @@ import java.util.logging.Logger;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.model.Form;
 import org.smap.sdal.model.Link;
+import org.smap.sdal.model.LinkedTarget;
 
 public class LinkageManager {
 	
@@ -46,8 +47,8 @@ public class LinkageManager {
 		PreparedStatement pstmt = null;
 		
 		// SQL to get linked forms
-		String sqlLinked = "select linked_survey, f_id, column_name from question "
-				+ "where linked_survey > 0 "
+		String sqlLinked = "select linked_target, f_id, column_name from question "
+				+ "where linked_target not null "
 				+ "and f_id = ? "
 				+ "and f_id in (select f_id from form where s_id = ?)";
 		PreparedStatement pstmtLinked = null;
@@ -85,13 +86,15 @@ public class LinkageManager {
 			log.info("Links:  Getting linked forms: " + pstmtLinked.toString());
 			rs = pstmtLinked.executeQuery();
 			while(rs.next()) {
-				int linkedSId = rs.getInt(1);
+				String linkedTarget = rs.getString(1);
 				int valueFId = rs.getInt(2);
 				String valueColName = rs.getString(3);
 				
+				LinkedTarget lt = GeneralUtilityMethods.getLinkTargetObject(linkedTarget);
 				String hrk = null;
 				Form valueForm = GeneralUtilityMethods.getForm(sd, sId, valueFId);
-				Form f = GeneralUtilityMethods.getTopLevelForm(sd, linkedSId);
+				
+				Form f = GeneralUtilityMethods.getFormWithQuestion(sd, lt.qId);
 	
 				// SQL to get the HRK value
 				String sqlGetHrk = "select " + valueColName + " from " + valueForm.tableName + " where prikey = ?;";
@@ -106,7 +109,8 @@ public class LinkageManager {
 				Link l = new Link();
 				l.type = "link";
 				l.fId = f.id;
-				l.sId = linkedSId;
+				l.sId = lt.sId;
+				l.qId = lt.qId;
 				l.hrk = hrk;
 				
 				links.add(l);

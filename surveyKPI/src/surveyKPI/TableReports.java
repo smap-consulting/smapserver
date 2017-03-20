@@ -35,10 +35,10 @@ import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.Utilities.UtilityMethodsEmail;
 import org.smap.sdal.managers.LogManager;
 import org.smap.sdal.managers.PDFTableManager;
-import org.smap.sdal.managers.ManagedFormsManager;
+import org.smap.sdal.managers.SurveyViewManager;
 import org.smap.sdal.model.ChartData;
 import org.smap.sdal.model.KeyValue;
-import org.smap.sdal.model.ManagedFormConfig;
+import org.smap.sdal.model.SurveyViewDefn;
 import org.smap.sdal.model.Organisation;
 
 import com.google.gson.Gson;
@@ -125,13 +125,14 @@ public class TableReports extends Application {
 			// Localisation
 			Organisation organisation = UtilityMethodsEmail.getOrganisationDefaults(sd, null, request.getRemoteUser());
 			int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser(), 0);
+			int uId = GeneralUtilityMethods.getUserId(sd, request.getRemoteUser());
 			
 			Locale locale = new Locale(organisation.locale);
 			ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
 			
 			// Get columns
-			ManagedFormsManager qm = new ManagedFormsManager();
-			ManagedFormConfig mfc = qm.getManagedFormConfig(sd, cResults, sId, managedId, request.getRemoteUser(), oId, superUser);
+			SurveyViewManager qm = new SurveyViewManager();
+			SurveyViewDefn mfc = qm.getSurveyView(sd, cResults, uId, 0, sId, managedId, request.getRemoteUser(), oId, superUser);
 			
 			// Convert data to an array
 			ArrayList<ArrayList<KeyValue>> dArray = null;

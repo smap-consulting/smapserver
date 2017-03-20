@@ -29,17 +29,18 @@ define([
 		function($, modernizr, lang, globals) {
 
 	var gGroupStacks = [];
+	var linkedQuestions = {};
 	
 	return {	
 		addOneQuestion: addOneQuestion,
 		addPanelStyle: addPanelStyle,
 		addQType: addQType,
-		addFeaturedProperty: addFeaturedProperty,
 		addQuestions: addQuestions,
 		addMedia: addMedia,
 		refresh: refresh,
 		includeQuestion: includeQuestion,
-		addQuestionSequence: addQuestionSequence
+		addQuestionSequence: addQuestionSequence,
+		getLinkedQuestions: getLinkedQuestions
 	};
 	
 	/*
@@ -101,7 +102,7 @@ define([
 					h[++idx] = 'type="text"></div>';
 
 					// Add feature property cell
-					h[++idx] = addFeaturedProperty(question, formIndex, qIndex, undefined, undefined);
+					h[++idx] = addFeaturedProperty(question, formIndex, qIndex, undefined, undefined, questionId);
 				h[++idx] = '</div></div>';		// End of name and featured property cell
 				
 				// Add buttons
@@ -404,7 +405,7 @@ define([
 	/*
 	 * One of the questions properties will be featured so that it can be edited in the header without expanding the question
 	 */
-	function addFeaturedProperty(question, fId, qIndex, list_name, qname) {
+	function addFeaturedProperty(question, fId, qIndex, list_name, qname, questionId) {
 		
 		var h = [],
 			idx = -1,
@@ -422,7 +423,7 @@ define([
 		if(list_name) {
 			type = "option";
 		}
-		h[++idx] = getFeaturedMarkup(question, type);
+		h[++idx] = getFeaturedMarkup(question, type, questionId);
 		
 		h[++idx] = '</div>';
 		return h.join("");
@@ -431,7 +432,7 @@ define([
 	/*
 	 * Get Featured Markup for the question
 	 */
-	function getFeaturedMarkup(question, type) {
+	function getFeaturedMarkup(question, type, questionId) {
 		var h = [],
 			idx = -1,
 			i,
@@ -532,8 +533,7 @@ define([
 					
 				h[++idx] = '</div>';
 				
-			} else if(selProperty === "linked_survey" && type === "question") {		// Add a select to get the linked survey
-				
+			} else if(selProperty === "linked_target" && type === "question") {		// Add selects to get the linked survey, and question				
 				h[++idx] = '<div class="row">';
 				
 				h[++idx] = '<div class="col-xs-6">';	// Start checkbox column
@@ -556,17 +556,22 @@ define([
 			    }
 			    h[++idx] = '</span></button>';
 			    h[++idx] = '</div>';
+			    
 			    /*
-			     * Add the select question for the linked survey
+			     * Add the select questions
 			     */
+			    var  linkedTarget = getLinkedTarget(question[selProperty]);
 			    h[++idx] = '<div class="col-xs-6">';	// Start select column
 			    h[++idx] = '<div';
 			    if(!question[selProperty]) {
 			    	h[++idx] = ' style="display:none;"';
 			    }
 			    h[++idx] = '>';
+			    
+			    // Linked survey
+			   
 				h[++idx] = '<div class="form-group">';
-				h[++idx] = '<select class="form-control labelSelect"';
+				h[++idx] = '<select class="form-control linkedTarget linkedSurvey"';
 				h[++idx] = ' data-prop="';
 					h[++idx] = selProperty;
 				h[++idx] = '">';
@@ -574,13 +579,23 @@ define([
 					h[++idx] = '<option value="';
 					h[++idx] = linkedSurveys[i].id;
 					h[++idx] = '"';
-					if((question[selProperty] && question[selProperty] == linkedSurveys[i].id) || 
+					if((question[selProperty] && linkedTarget && linkedTarget.sId == linkedSurveys[i].id) || 
 							(!question[selProperty] && i == 0)) {
 						h[++idx] = ' selected';
 					} 
 					h[++idx] = '>';
 					h[++idx] = linkedSurveys[i].name;
 					h[++idx] = '</option>';
+				}
+				h[++idx] = '</select>';
+				h[++idx] = '</div>';	// Form Group
+				
+			    // Linked question
+				h[++idx] = '<div class="form-group">';
+				h[++idx] = '<select class="form-control linkedTarget linkedQuestion"';
+				h[++idx] = ' data-prop="linked_target">';
+				if(question[selProperty] && linkedTarget) {
+					getLinkedQuestions(questionId, linkedTarget.sId, linkedTarget.qId);
 				}
 				h[++idx] = '</select>';
 				h[++idx] = '</div>';	// Form Group
@@ -973,6 +988,73 @@ define([
 		} else {
 			return true;
 		}
+	}
+	
+	/*
+	 * Get the questions for a linked survey
+	 */
+	function getLinkedQuestions(questionId, surveyId, qId) {
+		if(linkedQuestions[surveyId]) {
+			setTimeout(function() {
+				showLinkedQuestions(questionId, linkedQuestions[surveyId], qId);
+			}, 0);
+		} else {
+			addHourglass();
+		 	$.ajax({
+				url: "/surveyKPI/questionList/" + surveyId + "/none",	// Will use the default language
+				cache: false,
+				dataType: 'json',
+				success: function(data) {
+					linkedQuestions[surveyId] = data;
+					showLinkedQuestions(questionId, data, qId);
+					removeHourglass();
+				},
+				error: function(xhr, textStatus, err) {
+					removeHourglass();
+	  				if(xhr.readyState == 0 || xhr.status == 0) {
+			              return;  // Not an error
+					} else {
+						bootbox.alert("Error failed to get questions for survey:" + surveyId);
+						$("#" + questionId).find(".linkedQuestion").html("");
+					}
+				}
+			});
+		}
+		
+	}
+	
+	/*
+	 * Show the linked questions in the drop down
+	 */
+	function showLinkedQuestions(questionId, data, qId) {
+		
+		var idx = -1,
+			h = [],
+			i;
+		
+		qId = +qId;
+		h[++idx] = '<option value="0"';
+		if(!qId) {
+			h[++idx] = ' selected';
+		}
+		h[++idx] = '>Key</option>';
+		if(data) {
+			for(i = 0; i < data.length; i++) {
+				if(data[i].q) {
+					h[++idx] = '<option value="';
+					h[++idx] = data[i].id;
+					h[++idx] = '" ';
+					if(data[i].id == qId) {
+						h[++idx] = ' selected';
+					} 
+					h[++idx] = '>';
+					h[++idx] = data[i].q;
+					h[++idx] = '</option>';
+				}
+			}
+		}
+		
+		$("#" + questionId).find(".linkedQuestion").html(h.join(''));
 	}
 
 });

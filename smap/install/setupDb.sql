@@ -286,6 +286,7 @@ create TABLE user_project (
 	);
 ALTER TABLE user_project OWNER TO ws;
 
+
 DROP SEQUENCE IF EXISTS role_seq CASCADE;
 CREATE SEQUENCE role_seq START 1;
 ALTER TABLE role_seq OWNER TO ws;
@@ -511,7 +512,7 @@ CREATE TABLE question (
 										-- If the question hasn't been published then it can be removed from the survey
 	autoplay text,
 	accuracy text,						-- gps accuracy at which a reading is automatically accepted
-	linked_survey int default 0						-- Id of a survey whose hrk is populated here
+	linked_target text;					-- Id of a survey whose hrk is populated here
 	);
 ALTER TABLE question OWNER TO ws;
 CREATE INDEX qtext_id_sequence ON question(qtext_id);
@@ -868,3 +869,59 @@ create TABLE alert (
 	prikey integer	-- Primary key of survey for which the alert applies
 );
 ALTER TABLE alert OWNER TO ws;
+
+DROP SEQUENCE IF EXISTS custom_query_seq CASCADE;
+CREATE SEQUENCE custom_query_seq START 1;
+ALTER SEQUENCE custom_query_seq OWNER TO ws;
+
+DROP TABLE IF EXISTS custom_query CASCADE;
+create TABLE custom_query (
+	id integer DEFAULT NEXTVAL('custom_query_seq') CONSTRAINT pk_custom_query PRIMARY KEY,
+	u_id integer REFERENCES users(id) ON DELETE CASCADE,
+	name text,
+	query text
+	
+);
+ALTER TABLE custom_query OWNER TO ws;
+
+DROP SEQUENCE IF EXISTS survey_view_seq CASCADE;
+CREATE SEQUENCE survey_view_seq START 1;
+ALTER SEQUENCE survey_view_seq OWNER TO ws;
+
+DROP TABLE IF EXISTS survey_view CASCADE;
+create TABLE survey_view (
+	id integer DEFAULT NEXTVAL('survey_view_seq') CONSTRAINT pk_survey_view PRIMARY KEY,
+	s_id integer,		-- optional survey id
+	m_id integer,		-- optional managed id requires s_id to be set
+	query_id integer,	-- optional query id
+	view text
+);
+ALTER TABLE survey_view OWNER TO ws;
+
+DROP SEQUENCE IF EXISTS user_view_seq CASCADE;
+CREATE SEQUENCE user_view_seq START 1;
+ALTER SEQUENCE user_view_seq OWNER TO ws;
+
+DROP TABLE IF EXISTS user_view CASCADE;
+create TABLE user_view (
+	id INTEGER DEFAULT NEXTVAL('user_view_seq') CONSTRAINT pk_user_view PRIMARY KEY,
+	u_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+	v_id INTEGER REFERENCES survey_view(id) ON DELETE CASCADE,
+	access TEXT		-- read || write || write
+	);
+ALTER TABLE user_view OWNER TO ws;
+
+DROP SEQUENCE IF EXISTS default_user_view_seq CASCADE;
+CREATE SEQUENCE default_user_view_seq START 1;
+ALTER SEQUENCE default_user_view_seq OWNER TO ws;
+
+DROP TABLE IF EXISTS default_user_view CASCADE;
+create TABLE default_user_view (
+	id INTEGER DEFAULT NEXTVAL('default_user_view_seq') CONSTRAINT pk_default_user_view PRIMARY KEY,
+	u_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+	s_id integer,		-- survey id
+	m_id integer,		-- managed id requires s_id to be set
+	query_id integer,	-- query id
+	v_id integer REFERENCES survey_view(id) ON DELETE CASCADE		-- view id
+	);
+ALTER TABLE default_user_view OWNER TO ws;

@@ -94,6 +94,7 @@ define(['jquery', 'jquery_ui', 'rmm', 'localise', 'globals'],
 					source: meta.links[i].fromFormId,
 					target: surveys[meta.links[i].toSurveyId],
 					sourceQuestionId: meta.links[i].fromQuestionId,
+					toQuestionId: meta.links[i].toQuestionId,
 					value: 1
 			}
 			graph.links.push(link);	
@@ -173,9 +174,11 @@ define(['jquery', 'jquery_ui', 'rmm', 'localise', 'globals'],
 				// 
 				if(i < selectedPath.length - 1) {
 					form.fromQuestionId = getFromQuestionId(selectedPath[i], selectedPath[i + 1]);
+					form.toQuestionId = getToQuestionId(selectedPath[i], selectedPath[i + 1]);
 				}
 				if(!form.fromQuestionId && i > 0) {
 					form.fromQuestionId = getFromQuestionId(selectedPath[i], selectedPath[i - 1]);
+					form.toQuestionId = getToQuestionId(selectedPath[i], selectedPath[i - 1]);
 				}
 				formList.push(form);
 			}
@@ -374,6 +377,7 @@ define(['jquery', 'jquery_ui', 'rmm', 'localise', 'globals'],
 			}
 		}
 	}
+	
 	function getFromQuestionId(fSource, fTarget) {
 		var i;
 		for(i = 0; i < graph.links.length; i++) {
@@ -383,6 +387,17 @@ define(['jquery', 'jquery_ui', 'rmm', 'localise', 'globals'],
 		}
 		return 0;
 	}
+	
+	function getToQuestionId(fSource, fTarget) {
+		var i;
+		for(i = 0; i < graph.links.length; i++) {
+			if(graph.links[i].source.id == fSource && graph.links[i].target.id == fTarget) {
+				return graph.links[i].toQuestionId;
+			}
+		}
+		return 0;
+	}
+	
 	function isFormSelected(fId) {
 		var i;
 		if(selected) {

@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta charset="utf-8">
+
+	<title>Query</title>
+
+    <link href="/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/font-awesome/css/font-awesome.css" rel="stylesheet">
+
+    <link href="/css/wb/plugins/footable/footable.core.css" rel="stylesheet">
+	
+    <link href="/css/wb/animate.css" rel="stylesheet">
+    <link href="/css/wb/style.css" rel="stylesheet">
+    <link href="/css/smap-wb.css" rel="stylesheet">
+
+<script> if (!window.console) console = {log: function() {}}; </script>
+
+<script src="/js/libs/modernizr.js"></script>
+<script src="/js/app/custom.js"></script>  <!-- Override this in custom code to apply changes at run time -->
+<script data-main="js/queries" src="/js/libs/require.js"></script>
+
+</head>
+<body>
+
+<div id="wrapper">
+
+	<nav class="navbar-default navbar-static-side" role="navigation">
+		<div>
+	    	<ul class="nav metismenu" id="side-menu">
+				
+				<li>
+         			<a id="username" data-toggle="modal" data-target="#modify_me_popup" aria-label="User">
+							<i class="glyphicon glyphicon-user" aria-hidden="true"></i> <span class="lang" data-lang="m_user_profile"></span></a>
+				</li>
+		      	<li>
+		          <a href="#" id="m_modules_inspinia"><i class="fa fa-th-large"></i> <span class="lang" data-lang="m_modules">modules</span><span class="fa arrow"></span></a>
+		          <ul class="nav nav-second-level" aria-expanded="false">
+		            
+		            <li><a class="lang" data-lang="m_home" href="/?loggedin=yes">home</a></li>
+		            <li class="restrict_role admin_role analyst_role"><a href="/edit.html"><i class="glyphicon glyphicon-edit"></i> <span class="lang" data-lang="c_edit">Edit</span></a></li>
+		            <li class="restrict_role admin_role analyst_role"><a href="/fieldManager/templateManagement.html"><i class="glyphicon glyphicon-wrench"></i> <span class="lang" data-lang="m_admin">Admin</span></a></li>
+		            <li class="restrict_role enum_role"><a href="/webForm.html"><i class="glyphicon glyphicon-globe"></i> <span class="nav-label lang" data-lang="m_data_mod">web forms</span></span></a></li>
+		            <li class="restrict_role analyst_role"><a href="/fieldAnalysis/index.html"><i class="glyphicon glyphicon-stats"></i> <span class="nav-label lang" data-lang="m_analysis">Analysis</span></a></li>
+		            <li class="restrict_role admin_role analyst_role"><a href="/tasks/taskManagement.html"><i class="fa fa-tasks"></i> <span class="nav-label lang" data-lang="m_assign">assign</span></a></li>
+		          
+		          </ul>
+		        </li> 
+
+ 			<li class="restrict_role admin_role analyst_role"><a href="/fieldManager/templateManagement.html"><i class="glyphicon glyphicon-wrench"></i> <span class="lang" data-lang="m_tm">Admin</span></a></li>
+ 			<li id="m_user" class="restrict_role admin_role"><a href="/fieldManager/userManagement.html"><i class="glyphicon glyphicon-users"></i> <span class="lang" data-lang="m_user">Users</span></a></li>
+			<li id="m_help"><a href="https://drive.google.com/drive/folders/0B5_SmpWlQYxvRHZ6Z0ZYMGNJS3M?usp=sharing" target="_blank"><i class="fa fa-info-circle"></i> <span class="lang" data-lang="m_help">help</span></a></li>
+	     
+			
+	      </ul>
+		</div>
+		
+	</nav>
+
+    <div id="page-wrapper" class="gray-bg">
+    	
+    	<!-- Navbar Row -->
+    	<div class="row border-bottom">
+        	<nav class="navbar navbar-static-top" role="navigation" style="margin-bottom: 0">
+        		<div class="navbar-header">
+            		<a class="navbar-minimalize minimalize-styl-2 btn btn-primary " href="#"><i class="fa fa-bars"></i> </a>
+            		
+        		</div>
+        		
+	            <ul class="nav navbar-top-links navbar-right">
+	
+              
+            	</ul>
+
+        	</nav>
+        </div>
+        
+        <div class="queryList">
+        <!-- Header Row -->
+        <div class="row wrapper border-bottom white-bg page-heading">
+        	<div class="col-sm-6">
+            	<h2 class="lang" data-lang="m_query">queries</h2>   
+            </div>
+            <div class="col-sm-6">
+            	<div class="col-sm-5">
+	            	<div class="row querytoolbar">
+						<form role="form" class="form-horizontal heading-element" id="service_filter_form">
+							 <button id="addQuery" type="button" class="btn btn-primary lang" data-lang="d_add_q">add</button>
+						</form>	
+					</div>
+					<div class="row querytoolbar" style="display:none;">
+						<form role="form" class="form-horizontal heading-element" id="service_filter_form">
+							 <button id="saveQuery" type="button" class="btn btn-success lang" data-lang="c_save">save</button>
+							 <button id="cancelQuery" type="button" class="btn btn-default lang" data-lang="c_cancel">cancel</button>
+						</form>	
+					</div>
+	        	</div>
+        	</div>
+        </div>
+        
+        <!-- Queries -->
+        <div class="wrapper wrapper-content animated fadeInRight">
+        	<div class="row querycontent">
+                <div class="col-lg-12">
+                    <div class="ibox float-e-margins">
+                   
+                        <div class="panel_msg msg alert alert-success" role="alert" style="display:none;"></div>
+                        <div class="ibox-content">
+
+							<div class = "well">	
+							
+								<div class="table-responsive">
+									<div id ="queryListTable"></div>
+										
+								</div>
+							</div>
+											
+                        </div>
+					</div>
+				</div>
+			</div>	<!-- Query List -->
+			
+			<div class="querycontent" style="display:none;">
+				<div class="row">
+					<div class="col-lg-12">
+						<form id="queryEditForm" role="form" class="form-horizontal">
+					
+							<div class="form-group">
+								<label for="query_name" class="lang col-sm-2 control-label" data-lang="c_name">name</label>
+								<div class="col-sm-10">
+									<input type="text" id="query_name" required class="form-control">
+								</div>
+							</div>
+							
+						</form>
+					</div>
+				</div>
+				<div class="row">
+					<div class="col-lg-12">
+	                    <div class="ibox float-e-margins">
+	                   
+	                        <div class="panel_msg msg alert alert-success" role="alert"></div>
+	                        <div class="ibox-content">
+	
+								<div class = "well">	
+								
+	                       			<div class="table-responsive">
+	                       				<table class="table" id="queryTable">
+	                       					<thead>
+	                       						<tr>
+	                        						<th class="lang" data-lang="c_form">Form</th>
+	                        						<th class="lang" data-lang="c_question">question</th>
+	                        						<th class="lang" data-lang="d_from_f">link form</th>
+	                        						<th class="lang" data-lang="d_from_q">link question</th>
+	                        						<th></th>	<!-- delete icon -->
+	                        					</tr>
+	                       					</thead>
+	                       					<tbody>
+	                       					</tbody>
+	                       				</table>
+	                       			</div>
+	                       			<button type="button" class="lang btn btn-primary btn-block" data-lang="d_add_f" id="addForm">add new form</button>
+								</div>
+												
+	                        </div>
+						</div>
+					</div>
+				</div>
+			</div>	<!-- Query content -->
+			
+		</div>
+		
+	</div>
+    
+    </div>
+
+</div>
+
+
+<img class="hour_glass" src="/images/ajax-loader.gif" style="display:none;" alt="hourglass" height="60" width="60">
+
+
+<!-- Modal to add a form to the query -->
+<div id="add_form_popup" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="addFormLabel" aria-hidden="true">
+	<div class="modal-dialog">
+   		<div class="modal-content">
+   			<div class="modal-header">
+     			<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+     			<h4 class="modal-title lang" id="addFormLabel"></h4>
+     			<div class="add_form_msg msg alert alert-success" role="alert" style="display:none;"></div>
+   			</div>
+		     <div class="modal-body">
+				<form role="form" class="form-horizontal" id="add_form_form">
+				
+					<div class="form-group">
+						<div class="col-sm-offset-2 col-sm-10">
+							<div class="checkbox">
+								<label>
+									<input type="checkbox" id="add_new_survey" ><span data-lang="t_ns" class="lang">new survey</span>
+								</label>
+							</div>
+						</div>
+					</div>
+					
+					<div class="form-group">
+						<label for="new_project" class="lang col-sm-2 control-label" data-lang="c_project">Project :</label>
+						<div class="col-sm-10">
+							<select id="new_project" class="project_list form-control"></select>
+						</div>
+					</div>
+
+					<div class="form-group">
+						<label for="new_survey" class="lang col-sm-2 control-label" data-lang="c_survey">survey</label>
+						<div class="col-sm-10">
+							<select id="new_survey" class="survey_select form-control"></select>
+						</div>
+					</div>
+					
+					<div class="form-group">
+						<label for="new_form" class="lang col-sm-2 control-label" data-lang="c_form">Form</label>
+						<div class="col-sm-10">
+							<select id="new_form" class="form_select form-control"></select>
+						</div>
+					</div>
+					
+					<div class="form-group new_survey_p1_only" style="display:none;">
+						<label for="new_question" class="lang col-sm-2 control-label" data-lang="c_question">question</label>
+						<div class="col-sm-10">
+							<select id="new_question" class="form_select form-control"></select>
+						</div>
+					</div>
+					
+					<!-- Connection to an already selected question -->
+					<div class="new_survey_p1_only well" style="display:none;">
+						
+						<div class="form-group">
+							<label for="link_project" class="lang col-sm-2 control-label" data-lang="c_project">Project :</label>
+							<div class="col-sm-10">
+								<select id="link_project" class="project_list form-control"></select>
+							</div>
+						</div>
+	
+						<div class="form-group">
+							<label for="link_survey" class="lang col-sm-2 control-label" data-lang="c_survey">survey</label>
+							<div class="col-sm-10">
+								<select id="link_survey" class="survey_select form-control"></select>
+							</div>
+						</div>
+						
+						<div class="form-group">
+							<label for="link_form" class="lang col-sm-2 control-label" data-lang="c_form">Form</label>
+							<div class="col-sm-10">
+								<select id="link_form" class="form_select form-control"></select>
+							</div>
+						</div>
+						
+						<div class="form-group">
+							<label for="link_question" class="lang col-sm-2 control-label" data-lang="c_question">question</label>
+							<div class="col-sm-10">
+								<select id="link_question" class="form_select form-control"></select>
+							</div>
+						</div>
+					</div>
+						
+				</form>	
+			</div>
+
+			<div class="modal-footer">
+            	<button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_close">Close</button>
+            	<button id="addFormSave" type="button" class="btn btn-primary lang"  data-lang="c_save">Save</button>
+        	</div>
+		</div>
+	</div>
+</div>
+
+<!-- Modal to allow the user to edit their own details -->
+<div id="modify_me_popup" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="modifyMeLabel" aria-hidden="true">
+	<div class="modal-dialog">
+   		<div class="modal-content">
+   			<div class="modal-header">
+     			<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+     			<h4 class="modal-title lang" id="modifyMeLabel"></h4>
+   			</div>
+		     <div class="modal-body">
+				<form role="form" class="form-horizontal" id="me_edit_form">
+					<div class="form-group">
+						<label for="me_name" data-lang="c_name" class="lang col-sm-2 control-label">Name</label>
+						<div class="col-sm-10">
+							<input type="text" id="me_name" required class="form-control">
+						</div>
+					</div>
+					<div class="form-group">
+						<label for="me_language" data-lang="c_lang" class="lang col-sm-2 control-label">Language</label>
+						<div class="col-sm-10">
+							<select id="me_language" class="language_select form-control"></select>
+						</div>
+					</div>
+					<div class="form-group">
+						<label for="me_email" data-lang="c_email" class="lang col-sm-2 control-label">Email</label>
+						<div class="col-sm-10">
+							<input type="email" class="form-control" id="me_email" 
+									placeholder="Enter email" 
+									pattern="^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$">
+						</div>
+					</div>
+					<div id="reset_me_password_fields" style="display:none;">
+						<div class="form-group">
+							<div class="col-sm-offset-2 col-sm-10">
+								<div class="checkbox">
+									<label>
+										<input type="checkbox" id="reset_me_password"><span data-lang="c_r_p" class="lang">Reset Password</span>
+									</label>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div id="password_me_fields" style="display:none;">
+						<div class="form-group">
+							<label for="me_password" data-lang="c_password" class="lang col-sm-2 control-label">Password</label>
+							<div class="col-sm-10">
+								<input id="me_password" type="password" placeholder="Password" class="form-control">
+							</div>
+						</div>	
+						<div class="form-group">
+							<label for="me_password_confirm" data-lang="c_c_p" class="lang col-sm-2 control-label">Confirm Password</label>
+							<div class="col-sm-10">
+								<input id="me_password_confirm" type="password" placeholder="Password" class="form-control">
+							</div>
+						</div>	
+					</div>		
+				</form>	
+			</div>
+
+			<div class="modal-footer">
+            	<button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_close">Close</button>
+            	<button id="userProfileLogout"type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_logout">Logout</button>
+            	<button id="userProfileSave" type="button" class="btn btn-primary lang" data-dismiss="modal" data-lang="c_save">Save</button>
+        	</div>
+		</div>
+	</div>
+</div>
+
+<script>
+	setCustomManage();			// Apply custom javascript
+</script>
+
+
+
+</body>
+</html>

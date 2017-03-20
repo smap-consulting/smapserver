@@ -568,21 +568,21 @@ public class TaskManager {
 				+ "address,"
 				+ "schedule_at,"
 				+ "location_trigger,"
-				+ "guidance"
+				+ "guidance) "
 			+ "values ("
 				+ "?, " 
 				+ "?, " 
 				+ "'xform', "
-				+ "?, "
-				+ "?, "
-				+ "?, "
-				+ "?, "	
+				+ "?,"
+				+ "?,"
+				+ "?,"
+				+ "?,"	
 				+ "ST_GeomFromText(?, 4326), "
-				+ "?, "
-				+ "?, "
+				+ "?,"
+				+ "?,"
 				+ "?,"
 				+ "now() + interval '7 days',"  // Schedule for 1 week (TODO allow user to set)
-				+ "?. "
+				+ "?,"
 				+ "?);";	
 		
 		String assignSQL = "insert into assignments (assignee, status, task_id) values (?, ?, ?);";
@@ -656,6 +656,7 @@ public class TaskManager {
 			pstmt.setString(11, tid.locationTrigger);
 			pstmt.setString(12, tid.address);	// Write the address into guidance
 			
+			log.info("Create a new task: " + pstmt.toString());
 			pstmt.executeUpdate();
 			
 			/*

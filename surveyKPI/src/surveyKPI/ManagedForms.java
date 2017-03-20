@@ -38,13 +38,13 @@ import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.managers.ActionManager;
 import org.smap.sdal.managers.LinkageManager;
-import org.smap.sdal.managers.ManagedFormsManager;
+import org.smap.sdal.managers.SurveyViewManager;
 import org.smap.sdal.model.Action;
 import org.smap.sdal.model.ActionLink;
 import org.smap.sdal.model.Filter;
 import org.smap.sdal.model.Form;
 import org.smap.sdal.model.Link;
-import org.smap.sdal.model.ManagedFormConfig;
+import org.smap.sdal.model.SurveyViewDefn;
 import org.smap.sdal.model.ManagedFormItem;
 import org.smap.sdal.model.ManagedFormUserConfig;
 import org.smap.sdal.model.Role;
@@ -111,9 +111,10 @@ public class ManagedForms extends Application {
 		Response response = null;
 		Gson gson=  new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd").create();
 		try {
+			int uId = GeneralUtilityMethods.getUserId(sd, request.getRemoteUser());
 			int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser(), 0);
-			ManagedFormsManager qm = new ManagedFormsManager();
-			ManagedFormConfig mfc = qm.getManagedFormConfig(sd, cResults, sId, managedId, request.getRemoteUser(), oId, superUser);
+			SurveyViewManager qm = new SurveyViewManager();
+			SurveyViewDefn mfc = qm.getSurveyView(sd, cResults, uId, 0, sId, managedId, request.getRemoteUser(), oId, superUser);
 			/*
 			 * Remove data that is only used on the server
 			 */
@@ -158,7 +159,7 @@ public class ManagedForms extends Application {
 		Gson gson=  new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd").create();
 		try {
 			
-			ManagedFormsManager mf = new ManagedFormsManager();
+			SurveyViewManager mf = new SurveyViewManager();
 			ArrayList<ManagedFormItem> items = mf.getManagedForms(sd, pId);
 			response = Response.ok(gson.toJson(items)).build();
 		
@@ -289,7 +290,7 @@ public class ManagedForms extends Application {
 				
 			try {
 				ArrayList<TableColumn> managedColumns = new ArrayList<TableColumn> ();				
-				ManagedFormsManager qm = new ManagedFormsManager();
+				SurveyViewManager qm = new SurveyViewManager();
 				qm.getDataProcessingConfig(sd, managedId, managedColumns, null, oId);
 					
 				org.smap.sdal.model.Form f = GeneralUtilityMethods.getTopLevelForm(sd, sId);	// Get the table name of the top level form		
@@ -446,7 +447,7 @@ public class ManagedForms extends Application {
 			 * Get the data processing columns
 			 */
 			ArrayList<TableColumn> columns = new ArrayList<TableColumn> ();
-			ManagedFormsManager qm = new ManagedFormsManager();
+			SurveyViewManager qm = new SurveyViewManager();
 			qm.getDataProcessingConfig(sd, managedId, columns, null, oId);
 			
 			Form f = GeneralUtilityMethods.getTopLevelForm(sd, sId);	// Get the table name of the top level form
@@ -734,7 +735,7 @@ public class ManagedForms extends Application {
 	public Response updateManageConfig(
 			@Context HttpServletRequest request, 
 			@PathParam("sId") int sId,
-			@PathParam("key") String key,
+			@PathParam("key") String key,		// Type of report to be saved
 			@FormParam("settings") String settings
 			) { 
 		

@@ -370,7 +370,6 @@ public class Survey extends Application {
 			Stack<Integer> surveys = new Stack<Integer>();
 			surveys.push(new Integer(sId));
 			completedSurveys.put(new Integer(sId), new Integer(sId));
-			System.out.println("Added survey: " + sId);
 			
 			/*
 			 * Get Forms and row counts the next survey
@@ -412,8 +411,6 @@ public class Survey extends Application {
 						}	
 					}	
 				}
-				
-				System.out.println("Processing for survey: " + currentSurveyId);
 				
 				pstmtTables.setInt(1, currentSurveyId);
 				resultSet = pstmtTables.executeQuery();
@@ -522,6 +519,7 @@ public class Survey extends Application {
 					jl.put("fromSurveyId", link.fromSurveyId);
 					jl.put("fromFormId", link.fromFormId);
 					jl.put("fromQuestionId", link.fromQuestionId);
+					jl.put("toQuestionId", link.toQuestionId);
 					
 					jl.put("toSurveyId", link.toSurveyId);
 					
@@ -1044,6 +1042,17 @@ public class Survey extends Application {
 					pstmt = connectionSD.prepareStatement(sql);
 					pstmt.setInt(1, sId);
 					log.info("Delete dashboard panels: " + pstmt.toString());
+					pstmt.executeUpdate();
+					
+					
+					/*
+					 * Delete any survey views that reference this survey
+					 */
+					sql = "delete from survey_view where s_id = ?;";	
+					try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+					pstmt = connectionSD.prepareStatement(sql);
+					pstmt.setInt(1, sId);
+					log.info("Delete survey views: " + pstmt.toString());
 					pstmt.executeUpdate();
 					
 					/*

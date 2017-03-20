@@ -43,6 +43,7 @@ import org.smap.sdal.model.ChangeLog;
 import org.smap.sdal.model.ChangeResponse;
 import org.smap.sdal.model.ChangeSet;
 import org.smap.sdal.model.Form;
+import org.smap.sdal.model.Label;
 import org.smap.sdal.model.Language;
 import org.smap.sdal.model.LinkedSurvey;
 import org.smap.sdal.model.ManifestInfo;
@@ -187,6 +188,7 @@ public class SurveyManager {
 			boolean generateDummyValues,		// Set to true when getting results to fill a form with dummy values if there are no results
 			boolean getPropertyTypeQuestions,	// Set to true to get property questions such as _device
 			boolean getSoftDeleted,				// Set to true to get soft deleted questions
+			boolean getHrk,						// Set to true to get HRK as a question
 			String getExternalOptions,			// external || internal || real (get external if they exist else get internal)
 			boolean superUser,
 			int utcOffset,
@@ -262,7 +264,7 @@ public class SurveyManager {
 			
 			if(full && s != null) {
 				
-				populateSurvey(sd, s, basePath, user, getPropertyTypeQuestions, getExternalOptions);			// Add forms, questions, options
+				populateSurvey(sd, cResults, s, basePath, user, getPropertyTypeQuestions, getHrk, getExternalOptions);			// Add forms, questions, options
 				
 				if(getResults) {								// Add results
 					
@@ -586,8 +588,9 @@ public class SurveyManager {
 	/*
 	 * Get a survey's details
 	 */
-	private void populateSurvey(Connection sd, Survey s, String basePath, String user, 
+	private void populateSurvey(Connection sd, Connection cResults, Survey s, String basePath, String user, 
 			boolean getPropertyTypeQuestions,
+			boolean getHrk,
 			String getExternalOptions) throws Exception {
 		
 		/*
@@ -627,7 +630,7 @@ public class SurveyManager {
 				+ "q.soft_deleted, "
 				+ "q.autoplay,"
 				+ "q.accuracy,"
-				+ "q.linked_survey "
+				+ "q.linked_target "
 				+ "from question q "
 				+ "left outer join listname l on q.l_id = l.l_id "
 				+ "where q.f_id = ? "
@@ -690,10 +693,13 @@ public class SurveyManager {
 		// Get the surveys that can be linked to
 		ResultSet rsGetLinkable = null;
 		String sqlGetLinkable = "select s.s_id, s.display_name "
-				+ "from survey s, project p "
+				+ "from survey s, project p, user_project up, users u "
 				+ "where s.p_id = p.id "
+				+ "and not s.deleted "
 				+ "and p.o_id = ? "
-				+ "and s.hrk is not null "
+				+ "and u.id = up.u_id "
+				+ "and p.id = up.p_id "
+				+ "and u.ident = ? "
 				+ "order by s.display_name asc; ";
 		PreparedStatement pstmtGetLinkable = sd.prepareStatement(sqlGetLinkable);
 		
@@ -724,7 +730,29 @@ public class SurveyManager {
 			f.parentform =rsGetForms.getInt(3); 
 			f.parentQuestion = rsGetForms.getInt(4);
 			f.tableName = rsGetForms.getString(5);
-				
+			
+			/*
+			 * Add HRK
+			 */
+			if(getHrk && f.parentform == 0) {
+				if(s.hrk != null && s.hrk.trim().length() > 0
+						&& GeneralUtilityMethods.columnType(cResults, f.tableName, "_hrk") != null) {
+					Question q = new Question();
+					q.name = "Key";
+					q.published = true;
+					q.columnName = "_hrk";
+					q.source = "user";
+					q.type = "";
+					
+					q.labels = new ArrayList<Label> ();
+					for(int i = 0; i < s.languages.size(); i++ ) {
+						Label l = new Label();
+						l.text = "Key";
+						q.labels.add(l);
+					}
+					f.questions.add(q);
+				}
+			}
 			/*
 			 * Get the questions for this form
 			 */
@@ -764,7 +792,7 @@ public class SurveyManager {
 				q.soft_deleted = rsGetQuestions.getBoolean(24);
 				q.autoplay = rsGetQuestions.getString(25);
 				q.accuracy = rsGetQuestions.getString(26);
-				q.linked_survey = rsGetQuestions.getInt(27);
+				q.linked_target = rsGetQuestions.getString(27);
 				if(q.autoplay == null) {
 					q.autoplay = "none";
 				}
@@ -802,8 +830,10 @@ public class SurveyManager {
 				q.inMeta = inMeta;
 				
 				// If the survey was loaded from xls it will not have a list name
-				if(q.list_name == null || q.list_name.trim().length() == 0) {
-					q.list_name = q.name;
+				if(q.type.startsWith("select")) {
+					if(q.list_name == null || q.list_name.trim().length() == 0) {
+						q.list_name = q.name;
+					}
 				}
 				
 				// Get the language labels
@@ -946,6 +976,7 @@ public class SurveyManager {
 		
 		// Add the linkable surveys
 		pstmtGetLinkable.setInt(1, oId);
+		pstmtGetLinkable.setString(2, user);
 		rsGetLinkable = pstmtGetLinkable.executeQuery();
 		while(rsGetLinkable.next()) {
 			int linkedId = rsGetLinkable.getInt(1);
@@ -1676,8 +1707,6 @@ public class SurveyManager {
 						// Convert the passed in filter to a nodeset
 						String listname = GeneralUtilityMethods.getListNameForQuestion(sd, ci.property.qId);
 						ci.property.newVal = GeneralUtilityMethods.getNodesetFromChoiceFilter(ci.property.newVal, listname);
-						
-						System.out.println("write to nodeset based on listname and filter: " + ci.property.newVal);
 						
 					} else if(ci.property.type.equals("optionlist")) {
 						// Get the list id for this option list

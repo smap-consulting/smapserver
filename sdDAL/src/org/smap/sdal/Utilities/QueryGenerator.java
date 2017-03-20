@@ -32,6 +32,7 @@ import org.smap.sdal.managers.RoleManager;
 import org.smap.sdal.model.ColDesc;
 import org.smap.sdal.model.ExportForm;
 import org.smap.sdal.model.OptionDesc;
+import org.smap.sdal.model.QueryForm;
 import org.smap.sdal.model.SqlDesc;
 import org.smap.sdal.model.SqlFrag;
 import org.smap.sdal.model.TableColumn;
@@ -66,11 +67,10 @@ public class QueryGenerator {
 			Date endDate,
 			int dateId,
 			boolean superUser,
-			ArrayList<ExportForm> formList,
-			int formListIdx) throws Exception {
+			QueryForm form) throws Exception {
 		
 		SqlDesc sqlDesc = new SqlDesc();
-		
+		ArrayList<String> tables = new ArrayList<String> ();
 
 		PreparedStatement pstmtCols = null;
 		PreparedStatement pstmtGeom = null;
@@ -78,10 +78,7 @@ public class QueryGenerator {
 	
 		PreparedStatement pstmtQLabel = null;
 		PreparedStatement pstmtListLabels = null;
-		try {
-
-			ExportForm form = formList.get(formListIdx);
-			
+		try {			
 			
 			sqlDesc.target_table = form.table;
 			
@@ -147,8 +144,9 @@ public class QueryGenerator {
 					endDate,
 					dateId,
 					superUser,
-					formList,
-					formListIdx
+					form,
+					tables,
+					true
 					);
 		}  finally {
 			try {if (pstmtCols != null) {pstmtCols.close();}} catch (SQLException e) {}
@@ -172,12 +170,12 @@ public class QueryGenerator {
 		/*
 		 * Add the tables
 		 */
-		for(int i = 0; i < formList.size(); i++) {
-			ExportForm ef = formList.get(i);
+		for(int i = 0; i < tables.size(); i++) {
+			
 			if(i > 0) {
 				shpSqlBuf.append(",");
 			}
-			shpSqlBuf.append(ef.table);
+			shpSqlBuf.append(tables.get(i));
 		}
 		
 		shpSqlBuf.append(" where ");
@@ -185,12 +183,11 @@ public class QueryGenerator {
 		/*
 		 * Exclude "bad" records
 		 */
-		for(int i = 0; i < formList.size(); i++) {
-			ExportForm ef = formList.get(i);
+		for(int i = 0; i < tables.size(); i++) {
 			if(i > 0) {
 				shpSqlBuf.append(" and ");
 			}
-			shpSqlBuf.append(ef.table);
+			shpSqlBuf.append(tables.get(i));
 			shpSqlBuf.append("._bad='false'");
 		}
 		
@@ -202,28 +199,8 @@ public class QueryGenerator {
 		/*
 		 * The form list is in order of Parent to child forms
 		 */
-		if(formList.size() > 1) {
-			for(int i = 1; i < formList.size(); i++) {
-				
-				shpSqlBuf.append(" and ");
-				
-				ExportForm form = formList.get(i);
-				ExportForm prevForm = formList.get(i - 1);
-
-				shpSqlBuf.append(prevForm.table);
-				if(form.fromQuestionId > 0) {
-					shpSqlBuf.append("._hrk = ");
-				} else {
-					shpSqlBuf.append(".prikey = ");
-				}
-				shpSqlBuf.append(form.table);
-				if(form.fromQuestionId > 0) {
-					shpSqlBuf.append(".");
-					shpSqlBuf.append(GeneralUtilityMethods.getColumnNameFromId(connectionSD, form.sId, form.fromQuestionId));
-				} else {
-					shpSqlBuf.append(".parkey");
-				}
-			}
+		if(form.childForms != null && form.childForms.size() > 0) {
+			shpSqlBuf.append(getJoins(connectionSD, form.childForms, form));
 		}
 		
 		String sqlRestrictToDateRange = null;
@@ -281,6 +258,48 @@ public class QueryGenerator {
 		return sqlDesc;
 	}
 	
+	private static StringBuffer getJoins(Connection sd, ArrayList<QueryForm> forms, QueryForm prevForm) throws SQLException {
+		StringBuffer join = new StringBuffer("");
+		
+		for(int i = 0; i < forms.size(); i++) {
+			
+			QueryForm form = forms.get(i);
+			join.append(" and ");
+			
+			if(i > 0) {
+				prevForm = forms.get(i - 1);
+			}
+
+			join.append(prevForm.table);
+			if(form.fromQuestionId > 0) {
+				if(form.toQuestionId > 0) {
+					join.append(".");
+					join.append(GeneralUtilityMethods.getColumnNameFromId(sd, prevForm.survey, form.toQuestionId));
+					join.append(" = ");
+				} else {
+					join.append("._hrk = ");
+				}
+			} else {
+				join.append(".prikey = ");
+			}
+			join.append(form.table);
+			if(form.fromQuestionId > 0) {
+				join.append(".");
+				join.append(GeneralUtilityMethods.getColumnNameFromId(sd, form.survey, form.fromQuestionId));
+			} else {
+				join.append(".parkey");
+			}
+		}
+		
+		// Continue down the tree
+		for(int i = 0; i < forms.size(); i++) {
+			QueryForm form = forms.get(i);
+			if(form.childForms != null && form.childForms.size() > 0) {
+				join.append(getJoins(sd, form.childForms, form));
+			}
+		}
+		return join;
+	}
 	/*
 	 * Returns SQL to retrieve the selected form and all of its parents for inclusion in a shape file
 	 *  A geometry is only returned for the level 0 form.
@@ -312,8 +331,9 @@ public class QueryGenerator {
 			Date endDate,
 			int dateId,
 			boolean superUser,
-			ArrayList<ExportForm> formList,
-			int formListIdx
+			QueryForm form,
+			ArrayList<String> tables,
+			boolean first
 			) throws SQLException {
 		
 		int colLimit = 10000;
@@ -321,38 +341,7 @@ public class QueryGenerator {
 			colLimit = 244;
 		}
 		
-		ExportForm form = formList.get(formListIdx);
-		
-		if(formListIdx > 0) {
-			
-			getSqlDesc(
-					sqlDesc, 
-					sId, 
-					level + 1,
-					language,
-					format,
-					pstmtCols, 
-					pstmtGeom,
-					pstmtQType,
-					pstmtQLabel,
-					pstmtListLabels,
-					urlprefix,
-					wantUrl,
-					exp_ro,
-					labelListMap,
-					connectionSD,
-					connectionResults,
-					requiredColumns,
-					namedQuestions,
-					user,
-					startDate,
-					endDate,
-					dateId,
-					superUser,
-					formList,
-					formListIdx - 1
-					);
-		}
+		tables.add(form.table);
 
 		ArrayList<TableColumn> cols = GeneralUtilityMethods.getColumnsInForm(
 				connectionSD,
@@ -360,17 +349,17 @@ public class QueryGenerator {
 				sId,
 				user,
 				form.parent,
-				form.fId,
+				form.form,
 				form.table,
 				exp_ro,
 				false,				// Don't include parent key
 				false,				// Don't include "bad" columns
 				false,				// Don't include instance id
-				(formListIdx == 0),	// Include other meta data
-				(formListIdx == 0),	// Include preloads
-				(formListIdx == 0),	// Include Instance Name
+				first,				// Include other meta data
+				first,				// Include preloads
+				first,				// Include Instance Name
 				superUser,
-				false		// HXL only include with XLS exports
+				false				// HXL only include with XLS exports
 				);
 		
 		StringBuffer colBuf = new StringBuffer();
@@ -453,7 +442,7 @@ public class QueryGenerator {
 				if(!wantThisOne) {
 					continue;
 				}
-			} else if(name.equals("prikey") && (formListIdx != 0)) {	// Only return the primary key of the top level form
+			} else if(name.equals("prikey") && (!first)) {	// Only return the primary key of the top level form
 				continue;
 			}
 			
@@ -576,6 +565,40 @@ public class QueryGenerator {
 		} else {
 			if(colBuf.toString().trim().length() != 0) {	// Ignore tables with no columns
 				sqlDesc.cols += "," + colBuf.toString();
+			}
+		}
+		
+		// Get the columns for child forms
+		if(form.childForms != null && form.childForms.size() > 0) {	
+			for(int i = 0; i < form.childForms.size(); i++) {
+				getSqlDesc(
+						sqlDesc, 
+						sId, 
+						level + 1,
+						language,
+						format,
+						pstmtCols, 
+						pstmtGeom,
+						pstmtQType,
+						pstmtQLabel,
+						pstmtListLabels,
+						urlprefix,
+						wantUrl,
+						exp_ro,
+						labelListMap,
+						connectionSD,
+						connectionResults,
+						requiredColumns,
+						namedQuestions,
+						user,
+						startDate,
+						endDate,
+						dateId,
+						superUser,
+						form.childForms.get(i),
+						tables,
+						false
+						);
 			}
 		}
 		

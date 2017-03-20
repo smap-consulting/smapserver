@@ -42,7 +42,7 @@ import org.smap.sdal.model.ChartData;
 import org.smap.sdal.model.ChartRow;
 import org.smap.sdal.model.KeyValue;
 import org.smap.sdal.model.TableColumn;
-import org.smap.sdal.model.ManagedFormConfig;
+import org.smap.sdal.model.SurveyViewDefn;
 
 
 /*
@@ -100,7 +100,7 @@ public class XLSReportsManager {
 			ArrayList<ArrayList<KeyValue>> dArray, 
 			ArrayList<ChartData> chartDataArray,
 			ArrayList<KeyValue> settings,
-			ManagedFormConfig mfc,
+			SurveyViewDefn mfc,
 			ResourceBundle localisation, 
 			String tz) throws IOException {
 		
@@ -186,7 +186,7 @@ public class XLSReportsManager {
 	/*
 	 * Get the columns for the data sheet
 	 */
-	private ArrayList<Column> getColumnList(ManagedFormConfig mfc, 
+	private ArrayList<Column> getColumnList(SurveyViewDefn mfc, 
 			ArrayList<ArrayList<KeyValue>> dArray, 
 			ResourceBundle localisation) {
 		

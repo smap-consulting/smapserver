@@ -4,11 +4,12 @@
     waitSeconds: 0,
     wrapShim: false,
     baseUrl: 'js/libs',
-//    optimize: 'none',
+    optimize: 'none',
     paths: {
     	jquery: 'jquery-2.1.1',
     	jquery_ui: 'empty:',
     	app: '../app',
+    	wfapp: '../app/webform',
     	lang_location: '..',
 	bootbox: 'bootbox.min',
 	moment: 'moment-with-locales.min',
@@ -43,8 +44,11 @@
             name: '../dashboard',
         },
         {
+            name: '../queries',
+        },
+        {
             name: '../userTrail',
-	    exclude: [ 'ol3/js/ol']
+	    exclude: [ 'ol3/ol']
         }
 
     ]

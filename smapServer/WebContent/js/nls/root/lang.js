@@ -16,6 +16,7 @@ define({
 	"m_monitor": "Monitoring",
 	"m_user": "Users",
 	"m_assign": "Tasks",
+	"m_query": "Queries",
 	"m_help": "Help",
 	"m_forgot_password": "Forgot Password",
 	"m_register": "Register",
@@ -99,6 +100,7 @@ define({
 	"c_blocked": "Blocked",
 	"c_graph": "Graph",
 	"c_map": "Map",
+	"c_charts": "Charts",
 	"c_maps": "Maps",
 	"c_map_layers": "Map Layers",	
 	"c_table": "Table",
@@ -255,6 +257,7 @@ define({
 	"a_exp_merge": "Compress select multiples:",
 	"a_sel_ways": "Select ways (if any):",
 	"a_sel_forms": "Select forms to include:",
+	"a_sel_query": "There aare no queries to export.  You will need to create one using the queries menu in the dashboard module",
 	"a_sel_model": "Edit survey model",
 	"a_type": "Chart Type",
 	"a_showon": "Show on",
@@ -274,7 +277,8 @@ define({
 	"a_rd": "Report Definition",
 	"a_embed": "Embed Images in Excel File",
 	"a_hxl": "HXL",
-	"a_ext": "Show linked surveys",
+	"a_query": "Select a query",
+	"a_fn": "Function",
 	
 	
 	// Messages
@@ -309,6 +313,7 @@ define({
 	"msg_err_get_r": "Error: Get roles failed",
 	"msg_err_get_a": "Error: Get alerts failed",
 	"msg_err_get_q": "Error: Get questions failed",
+	"msg_err_get_s": "Error: Get surveys failed",
 	"msg_upd": "Update Succeeded",
 	"msg_err_nc": "Name cannot include a comma",
 	"msg_err_wait": "Either waiting for the server or there are no surveys in this project to assign to a user. If the project does have surveys then try again in a few seconds",
@@ -357,6 +362,8 @@ define({
 	"msg_leave": "You have made some changes and not saved them, are you sure you want to leave?",
 	"msg_not_f": "was not found",
 	"msg_ren": "renamed to",
+	"msg_nq": "You have no queries defined, use the 'add query' button to add one",
+	"msg_dup_f": "This form is already in the query",
 	
 	// Editor
 	"e_b_e": "Base on existing form",
@@ -601,6 +608,7 @@ define({
 	"br_cc": "Select the columns that you want to test for similarities in the data. For each column that you want to test you can select a function to broaden the range of values that will match.",
 	"br_s": "Search",
 	"br_sdx": "Soundex",
+	"br_cd": "Use the table of data for this survey view",
 	
 	// Shared Resources
 	"sr_res": "Images Video Audio and CSV Files",
@@ -664,6 +672,11 @@ define({
 	"d_c_day": "Count by day",
 	"d_c_month": "Coount by month",
 	"d_c_year": "Count by year",
+	"d_add": "Add Chart",
+	"d_add_q": "Add New Query",
+	"d_add_f": "Add New Form",
+	"d_from_f": "Link From Form",
+	"d_from_q": "Link From Question",
 	
 	// Review
 	"rev_upd_diff": "Update a different question to the source question",
@@ -684,6 +697,7 @@ define({
 	"rev_cq": "Changed Question",
 	"rev_sc": "Selcted Choice",
 	"rev_usc": "Un-Selected Choice"
+		
 		
 		
 });

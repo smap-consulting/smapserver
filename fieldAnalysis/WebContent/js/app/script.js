@@ -70,6 +70,7 @@ $(document).ready(function() {
 		        	click: function() {
 		        		
 		        		var sId = $('#export_survey option:selected').val(),
+		        			queryId = $('#export_query option:selected').val(),
 		        			language = $('#export_language option:selected').val(),
 		        			displayName = $('#export_survey option:selected').text(),
 			        		format = $('#exportformat').val(),
@@ -88,21 +89,27 @@ $(document).ready(function() {
 			        		exp_from_date = $('#exp_from_date').datepicker({ dateFormat: 'yy-mm-dd' }).val(),
 			        		exp_to_date = $('#exp_to_date').datepicker({ dateFormat: 'yy-mm-dd' }).val(),
 			        		dateQuestionId = $('#export_date_question option:selected').val(),
-			        		exportExtended = $('#exportExtended').prop("checked"),
-			        		formList;
+			        		exportQuerySel = $('#exportQuerySel').prop("checked"),
+			        		queryName = $('#export_query option:selected').text(),
+			        		filename;
 		        		
-		        		if(exportExtended) {
-		        			formList = extended_model.getPath();
-		        			
-		        			if(!formList) {
-		        				alert(localise.set["a_sel_forms"]);
+		        		// Set the filename of the exported file
+		        		if(exportQuerySel) {
+		        			if(!queryId) {
+		        				alert(localise.set["a_sel_query"]);
 		        				return(false);
 		        			}
+	        				filename = queryName;
+	        				
+		        		} else {	
+			        		if(sId == "-1") {
+			        			alert(localise.set["msg_pss"]);
+			        			return(false);
+			        		}
+		        			filename = displayName;
 		        		}
-		        			
-		        		if(sId == "-1") {
-		        			alert(localise.set["msg_pss"]);
-		        			return(false);
+		        		if(!filename) {
+		        			filename = "export";
 		        		}
 		        		
 		        		// TODO validate dates
@@ -125,9 +132,11 @@ $(document).ready(function() {
 		        				|| format === "spss"
 		        				|| format === "stata") {
 		        			
-		        			if(exportExtended) {
+		        			if(exportQuerySel) {
+			        			sId = undefined;
 		        				form = 0;
 		        			} else {
+		        				queryId = undefined;
 			        			forms = $(':radio:checked', '.shapeforms').map(function() {
 			        			      return this.value;
 			        			    }).get();
@@ -137,9 +146,9 @@ $(document).ready(function() {
 			        			}	
 			        			form = forms[0];
 		        			}
-		        			url = exportSurveyShapeURL(sId, displayName, form, 
+		        			url = exportSurveyMisc(sId, filename, form, 
 		        					format, exportReadOnly, language,
-		        					exp_from_date, exp_to_date, dateQuestionId, formList);
+		        					exp_from_date, exp_to_date, dateQuestionId, queryId);
 		        		
 		        		} else if(format === "thingsat") {
 		        			forms = $(':radio:checked', '.shapeforms').map(function() {
@@ -216,9 +225,9 @@ $(document).ready(function() {
 		exportSurveyChanged();
  	});
 	
-	// Change event on including linked surveys
-	$('#exportExtended').change(function() {
-		exportExtendedChanged();
+	// Change event on exporting a query instead of a survey
+	$('#exportQuerySel').change(function() {
+		exportQuerySelChanged();
  	});
 	
 	/*
@@ -371,22 +380,23 @@ function exportSurveyChanged() {
 			showModel();
 		}
 		
-		exportExtendedChanged();
+		exportQuerySelChanged();
 	} else {
 		$('#export_date_question').html("");
 	}
 }
 
-function exportExtendedChanged() {
+function exportQuerySelChanged() {
 	require(['app/extended_model'], function(extended_model) {
 		
-		var expExtended = $('#exportExtended').prop("checked"),
+		var expExtended = $('#exportQuerySel').prop("checked"),
 			sId = $('#export_survey option:selected').val(),
 			sMeta;
 		
 		if(expExtended) {
 			
-			$('.showextselect').show();
+			$('.selectquery').show();
+			$('.selectsurvey').hide();
 			$('.showshape').hide();
 			sMeta = globals.gSelector.getSurveyExtended(sId);
 			if(!sMeta) {
@@ -398,7 +408,6 @@ function exportExtendedChanged() {
 			
 			setExportControls();
 			$('.showextselect').hide();
-			
 		}
 	});
 
@@ -411,32 +420,32 @@ function setExportControls() {
 	$('#export').next().find("button:contains('Export')").removeClass("ui-state-disabled");
 	
 	if(format === "osm") {
-		$('.showshape,.showspreadsheet,.showxls,.showthingsat,.showtrail, .showmedia, .showlqas, .showext').hide();
-		$('.showosm,.showro,.showlang').show();
+		$('.showshape,.showspreadsheet,.showxls,.showthingsat,.showtrail, .showmedia, .showlqas, .showquery, .selectquery').hide();
+		$('.showosm,.showro,.showlang, selectsurvey').show();
 	} else if(format === "shape" || format === "kml" || format === "vrt" || format === "csv") {
 		$('.showspreadsheet,.showxls,.showosm,.showthingsat, .showmedia, .showlqas').hide();
-		$('.showshape,.showro,.showlang, .showext').show();
+		$('.showshape,.showro,.showlang, .showquery').show();
 	} else if(format === "stata" || format === "spss") {
-		$('.showxls,.showosm,.showthingsat, .showmedia, .showlqas, .showext').hide();
-		$('.showshape,.showspreadsheet,.showro,.showlang').show();
+		$('.showxls,.showosm,.showthingsat, .showmedia, .showlqas, .showquery, .selectquery').hide();
+		$('.showshape,.showspreadsheet,.showro,.showlang, .selectsurvey').show();
 	} else if(format === "thingsat") {
-		$('.showxls,.showosm, .showmedia, .showlqas, .showext').hide();
-		$('.showshape,.showspreadsheet,.showro,.showlang').show();
+		$('.showxls,.showosm, .showmedia, .showlqas, .showquery, .selectquery').hide();
+		$('.showshape,.showspreadsheet,.showro,.showlang, .selectsurvey').show();
 		showModel();			// Show the thingsat model
 	} else if(format === "trail") {
-		$('.showxls,.showosm,.showro,.showlang,.showthingsat, .showmedia, .showlqas, .showext').hide();
-		$('.showshape,.showspreadsheet').show();
+		$('.showxls,.showosm,.showro,.showlang,.showthingsat, .showmedia, .showlqas, .showquery, .selectquery').hide();
+		$('.showshape,.showspreadsheet, .selectsurvey').show();
 	} else if(format === "media") {
-		$('.showshape, .showxls,.showosm,.showro,.showlang,.showthingsat,.showmedia, .showlqas, .showext').hide();
-		$('.showspreadsheet,.showmedia, .showlang').show();
+		$('.showshape, .showxls,.showosm,.showro,.showlang,.showthingsat,.showmedia, .showlqas, .showquery, .selectsurvey').hide();
+		$('.showspreadsheet,.showmedia, .showlang, selectquery').show();
 	} else if(format === "lqas") {
-		$('.showshape, .showxls,.showosm,.showro,.showlang,.showthingsat,.showmedia, .showlqas, .showext').hide();
-		$('.showlqas').show();
+		$('.showshape, .showxls,.showosm,.showro,.showlang,.showthingsat,.showmedia, .showlqas, .showquery, .selectquery').hide();
+		$('.showlqas, .selectsurvey').show();
 		getReports(showReportList, undefined, "lqas");
 		
 	} else {
-		$('.showshape,.showspreadsheet,.showxls,.showosm,.showthingsat, .showmedia, .showlqas, .showext').hide();
-		$('.showxls,.showspreadsheet,.showro,.showlang').show();
+		$('.showshape,.showspreadsheet,.showxls,.showosm,.showthingsat, .showmedia, .showlqas, .showquery, .selectquery').hide();
+		$('.showxls,.showspreadsheet,.showro,.showlang, .selectsurvey').show();
 	}
 }
 
@@ -1156,11 +1165,11 @@ function exportSurveyOSMURL (sId, filename, forms, exp_ro,
 /*
  * Web service handler for exporting a form as a shape file
  */
-function exportSurveyShapeURL (sId, filename, form, format, exp_ro, language,
+function exportSurveyMisc (sId, filename, form, format, exp_ro, language,
 		exp_from_date,
 		exp_to_date,
 		dateQuestionId,
-		formList) {
+		queryId) {
 
 	var url = "/surveyKPI/exportSurveyMisc/";
 	
@@ -1171,7 +1180,11 @@ function exportSurveyShapeURL (sId, filename, form, format, exp_ro, language,
 	// Remove the ":false" from the form id which used by xls exports
 	//form = form.substring(0, form.lastIndexOf(":"));
 	
-	url += sId;
+	if(typeof sId !== "undefined") {
+		url += sId;
+	} else {
+		url += queryId;
+	}
 	url += "/" + filename;
 	url += "/shape";
 	url += "?form=" + form;
@@ -1189,8 +1202,8 @@ function exportSurveyShapeURL (sId, filename, form, format, exp_ro, language,
 		}
 	}
 	
-	if(formList != null) {
-		url += "&forms=" + JSON.stringify(formList);
+	if(typeof queryId != "undefined") {
+		url += "&query=true";
 	}
 	
 	return encodeURI(url);

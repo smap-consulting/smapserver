@@ -97,8 +97,7 @@ public class ExternalFileManager {
 		int linked_sId = 0;
 		String data_key = null;
 		boolean non_unique_key = false;
-		filepath = filepath + ".csv";
-		File f = new File(filepath);
+		File f = new File(filepath + ".ext");	// file path does not include the extension because getshape.sh adds it
 		ArrayList<Pulldata> pdArray = null;
 		boolean regenerate = true;
 		

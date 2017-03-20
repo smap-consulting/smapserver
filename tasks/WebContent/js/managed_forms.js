@@ -44,6 +44,7 @@ requirejs.config({
     	toggle: 'bootstrap-toggle.min',
     	lang_location: '../../../../js',
     	file_input: '../../../../js/libs/bootstrap.file-input',
+    	mapbox: '../../../../js/libs/mapbox/js/mapbox',
     	mapbox_app: '../../../../js/app/mapbox_app',
     	datetimepicker: '../../../../js/libs/bootstrap-datetimepicker.min',
        	datatables: '../../../../js/libs/DataTables/datatables',
@@ -77,7 +78,12 @@ requirejs.config({
     	'app/common_mgmt': ['jquery'],
     	'app/chart': ['jquery'],
     	'qrcode': ['jquery'],
-       	'toggle': ['bootstrap.min']
+       	'toggle': ['bootstrap.min'],
+       	
+    	'mapbox_app' : ['jquery', 'mapbox'],
+       	'mapbox': {
+            exports: 'L'
+        },
 	
     	}
     });
@@ -86,6 +92,8 @@ require([
          'jquery',
          'bootstrap',
          'common', 
+         'mapbox',
+         'mapbox_app',
          'localise', 
          'globals',
          'moment',
@@ -108,12 +116,16 @@ require([
          ], function($, 
         		 bootstrap, 
         		 common, 
+        		 mapbox,
+        		 mapbox_app,
         		 localise, 
         		 globals,
         		 moment,
         		 chart,
         		 datatables,
         		 svgsave) {
+	
+	gMapLayersShown = false;
 
 	/*
 	 * Report definition
@@ -320,12 +332,59 @@ require([
 			
 			if(typeof masterRecord != "undefined") {
 				// 1. Hide results other than this primary result
-				showManagedData(globals.gCurrentSurvey, '#trackingTable', masterRecord);
+				showManagedData(globals.gCurrentSurvey, '#content', masterRecord);
 				
 				// 2. Get related surveys and show it
 				getRelatedList(globals.gCurrentSurvey, masterRecord);
 			}
 		});
+		
+		/*
+		 * Dashboard menus
+		 */
+		$('#m_map_view').click( function () {
+			initialiseOl3Map();
+			if(gMapLayersShown) {
+				$('.main_content').removeClass("col-lg-12").addClass("col-lg-8");
+				$('.map_layers').show();
+			} else {
+				$('.main_content').removeClass("col-lg-8").addClass("col-lg-12");
+				$('.map_layers').hide();
+			}
+			$('#showlayers').show();
+			$('#table_content').hide();
+			$('#map_content').show();
+		});
+		$('#m_table_view').click( function () {
+			$('#showlayers').hide();
+			$('.main_content').removeClass("col-lg-8").addClass("col-lg-12");
+			$('.map_layers').hide();
+			$('#table_content').show();
+			$('#map_content').hide();
+		});
+		
+		// Show the layers selector
+		$('#showlayers').click( function () {
+			gMapLayersShown = !gMapLayersShown;
+			if(gMapLayersShown) {
+				$('.main_content').removeClass("col-lg-12").addClass("col-lg-8");
+				$('.map_layers').show();
+			} else {
+				$('.main_content').removeClass("col-lg-8").addClass("col-lg-12");
+				$('.map_layers').hide();
+			}
+		});
+		
+		// Add a new chart
+		$('#m_add_chart').click( function () {
+			chart.addNewChart();
+		});
+		
+		// Add a new map layer
+		$('.addlayer').click( function () {
+			$('#layerEdit').modal("show");
+		});
+		
 		
      });	 
 	 
@@ -513,7 +572,7 @@ require([
 	 // Respond to duplicate gReports menu
 	 if(isDuplicates) {
 		 $('#duplicateSearch').click(function(){
-			 showDuplicateData(globals.gCurrentSurvey, '#trackingTable');
+			 showDuplicateData(globals.gCurrentSurvey);
 		 });
 	 }
 

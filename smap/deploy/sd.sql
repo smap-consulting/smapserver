@@ -504,7 +504,7 @@ alter table tasks add column repeat_count integer default 0;
 
 -- Upgrade to 16.06 from 16.05
 alter table survey add column hrk text;
-alter table question add column linked_survey int default 0;
+--alter table question add column linked_survey int default 0;
 alter table question add column list_name text;
 
 -- Log table
@@ -663,3 +663,59 @@ alter table linked_forms add constraint lf_survey2 FOREIGN KEY (linker_s_id)
 	
 -- Upgrade to 17.02
 alter table survey add column timing_data boolean;
+alter table question add column linked_target text;
+update question set linked_target = cast(linked_survey as text) where linked_survey > 0 and linked_target is null ;
+
+-- upgrade to 17.03
+-- Create queries table
+CREATE SEQUENCE custom_query_seq START 1;
+ALTER SEQUENCE custom_query_seq OWNER TO ws;
+
+create TABLE custom_query (
+	id integer DEFAULT NEXTVAL('custom_query_seq') CONSTRAINT pk_custom_query PRIMARY KEY,
+	u_id integer REFERENCES users(id) ON DELETE CASCADE,
+	name text,
+	query text
+	
+);
+ALTER TABLE custom_query OWNER TO ws;
+
+-- Create view tables
+CREATE SEQUENCE user_view_seq START 1;
+ALTER SEQUENCE user_view_seq OWNER TO ws;
+
+create TABLE user_view (
+	id INTEGER DEFAULT NEXTVAL('user_view_seq') CONSTRAINT pk_user_view PRIMARY KEY,
+	u_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+	v_id INTEGER REFERENCES survey_view(id) ON DELETE CASCADE,
+	access text		-- read || write || write
+	);
+ALTER TABLE user_view OWNER TO ws;
+
+DROP SEQUENCE IF EXISTS survey_view_seq CASCADE;
+CREATE SEQUENCE survey_view_seq START 1;
+ALTER SEQUENCE survey_view_seq OWNER TO ws;
+
+create TABLE survey_view (
+	id integer DEFAULT NEXTVAL('survey_view_seq') CONSTRAINT pk_survey_view PRIMARY KEY,
+	s_id integer,		-- optional survey id
+	m_id integer,		-- optional managed id requires s_id to be set
+	query_id integer,	-- optional query id
+	view text
+);
+ALTER TABLE survey_view OWNER TO ws;
+
+CREATE SEQUENCE default_user_view_seq START 1;
+ALTER SEQUENCE default_user_view_seq OWNER TO ws;
+
+create TABLE default_user_view (
+	id INTEGER DEFAULT NEXTVAL('default_user_view_seq') CONSTRAINT pk_default_user_view PRIMARY KEY,
+	u_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+	s_id integer,		-- survey id
+	m_id integer,		-- managed id requires s_id to be set
+	query_id integer,	-- query id
+	v_id integer REFERENCES survey_view(id) ON DELETE CASCADE		-- view id
+	);
+ALTER TABLE default_user_view OWNER TO ws;
+
+>>>>>>> enkup

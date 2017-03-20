@@ -203,6 +203,90 @@ public class TranslationManager {
 	}
 	
 	/*
+	 * Get the manifest csv entries for csv files used by pulldata functions (required by enketo)
+	 */
+	public List<ManifestValue> getPulldataManifests(Connection sd, 
+			int surveyId
+			)	throws SQLException {
+		
+		
+		ArrayList<ManifestValue> manifests = new ArrayList<ManifestValue>();	// Results of request
+		
+		String sql = "select manifest from survey where s_id = ? and manifest is not null; ";
+		PreparedStatement pstmt = null;
+		
+		String pull = "select count(*) from question q, form f "
+				+ "where q.f_id = f.f_id "
+				+ "and f.s_id = ? "
+				+ "and q.calculate like ?";
+		PreparedStatement pstmtPull = null;
+		
+		try {
+			
+			ResultSet rs = null;
+			
+			/*
+			 * Get Survey Level manifests from survey table
+			 */
+			pstmt = sd.prepareStatement(sql);	 			
+			pstmt.setInt(1, surveyId);
+			log.info("SQL survey level manifests:" + pstmt.toString());
+			
+			pstmtPull = sd.prepareStatement(pull);
+			pstmtPull.setInt(1, surveyId);
+			
+			rs = pstmt.executeQuery();
+			if(rs.next()) {
+				String manifestString = rs.getString(1);
+				Type type = new TypeToken<ArrayList<String>>(){}.getType();
+				ArrayList<String> manifestList = new Gson().fromJson(manifestString, type);
+				
+				for(int i = 0; i < manifestList.size(); i++) {
+					
+					ManifestValue m = new ManifestValue();
+					m.fileName = manifestList.get(i);
+					m.sId = surveyId;
+					
+					m.baseName = m.fileName;
+					if(m.baseName.endsWith(".csv")) {
+						m.baseName = m.baseName.substring(0, m.baseName.length() - 4);
+						m.type = "csv";
+					} else {
+						m.type = "linked";
+					}
+					pstmtPull.setString(2, "%pulldata%" + m.baseName + "%");
+					log.info("Looking for pulldata manifests: " + pstmtPull.toString());
+					rs = pstmtPull.executeQuery();
+					if(rs.next()) {
+						if(m.type.equals("csv")) {
+							String surveyIdent = GeneralUtilityMethods.getSurveyIdent(sd, surveyId);
+							int oId = GeneralUtilityMethods.getOrganisationIdForSurvey(sd, surveyId);
+							UtilityMethodsEmail.getFileUrl(m, surveyIdent, m.fileName, "/smap", oId, surveyId);
+						} else {
+							// TODO location depends on user
+							//m.url = "/surveyKPI/file/" + m.fileName + ".csv/survey/" + surveyId + "?linked=true";
+						}
+						
+						manifests.add(m);
+					} 
+				}
+			}
+			
+			
+		} catch (SQLException e) {
+			log.log(Level.SEVERE,"Error", e);
+			throw e;
+		} finally {
+			if (pstmt != null) { try {pstmt.close();} catch (SQLException e) {}}
+			if (pstmtPull != null) { try {pstmtPull.close();} catch (SQLException e) {}}
+		}
+		
+		log.info("Linked Manifest length: " + manifests.size());
+		
+		return manifests;
+	}
+	
+	/*
 	 * Returns true if the user can access the survey and that survey has a survey level manifest
 	 */
 	public boolean hasManifest(Connection sd, 
