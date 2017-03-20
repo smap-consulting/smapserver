@@ -233,7 +233,6 @@ public class WebForm extends Application{
 		} 
 		log.info("Requesting " + type);
 		
-		System.out.println();
 		return getWebform(request, type, formIdent, datakey, datakeyvalue, assignmentId, callback, 
 				request.getRemoteUser(), 
 				false,
@@ -264,9 +263,8 @@ public class WebForm extends Application{
 			type = "json";
 			
 		} 
-		log.info("Requesting " + type);
-		
-		System.out.println("Tempuser: " + tempUser);
+		log.info("Requesting " + type);	
+		log.info("Tempuser: " + tempUser);
 		return getWebform(request, type, formIdent, datakey, datakeyvalue, assignmentId, callback, 
 				tempUser, 
 				false,
@@ -386,9 +384,7 @@ public class WebForm extends Application{
 			//template.printModel();	// debug
 			GetXForm xForm = new GetXForm();
 			String formXML = xForm.get(template, true);		
-			
-			System.out.println("xml: " + formXML);
-			
+
 			// If required get the instance data 
 			String instanceXML = null;
 			String instanceStrToEditId = null;
@@ -1027,7 +1023,6 @@ public class WebForm extends Application{
 			String instanceXML = null;
 			String dataKey = "instanceid";
 			
-			System.out.println("Getting instance data");
 			xForm = new GetXForm();
 			instanceXML = xForm.getInstance(survey.id, formIdent, template, dataKey, updateid, 0, 
 					simplifyMedia,
