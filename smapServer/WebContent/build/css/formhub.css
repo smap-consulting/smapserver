@@ -278,14 +278,11 @@ body {
   -ms-flex-wrap: nowrap;
   -moz-flex-wrap: nowrap;
   flex-wrap: nowrap;
-  /* margin: 0 auto; smap */
-  margin-left: 50px;  /* smap */
-  margin-right: 50px;  /* smap */
+  margin: 0 auto;
   padding: 100px 0 70px 0;
   position: relative;
-  /*width: 100%;*/
-  /* max-width: 720px;  smap */
-}
+  width: 100%;
+  max-width: 720px; }
 
 .paper {
   -webkit-flex: 1;
@@ -4054,8 +4051,7 @@ legend .btn-comment .icon, legend .btn-comment .enketo-geopoint-marker, legend .
     min-height: 0;
     margin-left: -45px;
     margin-right: -45px;
-    /* width: calc(100% + ( 2 * 45px)); smap */
-  }
+    width: calc(100% + ( 2 * 45px)); }
     .form-header .form-language-selector {
       padding-top: 16px;
       padding-bottom: 16px; }

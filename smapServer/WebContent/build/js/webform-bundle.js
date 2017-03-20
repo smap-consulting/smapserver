@@ -36161,10 +36161,10 @@ process.umask = function() { return 0; };
 
 },{}],27:[function(require,module,exports){
 module.exports={
-    "name": "enketo-core",
-    "description": "Extensible Enketo core containing the form logic engine and responsive form styling",
-    "homepage": "https://enketo.org",
-    "version": "4.22.1",
+    "name": "webform",
+    "description": "A fork of Enketo Smart Paper that integrates with Smap",
+    "homepage": "http://www.smap.com.au",
+    "version": "2.0.0",
     "license": "Apache-2.0",
     "os": [
         "darwin",
@@ -36175,7 +36175,8 @@ module.exports={
         "enketo",
         "OpenRosa",
         "ODK",
-        "XForms"
+        "XForms",
+        "Smap"
     ],
     "repository": {
         "type": "git",
@@ -40571,6 +40572,7 @@ define( function( require, exports, module ) {
     var Promise = require( 'lie' );
     var $ = require( 'jquery' );
     var utils = require( './utils' );
+    var store = require( '../../webform/file-storage');
 
     var supported = typeof FileReader !== 'undefined',
         notSupportedAdvisoryMsg = '';
@@ -40613,11 +40615,21 @@ define( function( require, exports, module ) {
     function getFileUrl( subject ) {
         return new Promise( function( resolve, reject ) {
             var error, reader;
-
             if ( !subject ) {
                 resolve( null );
             } else if ( typeof subject === 'string' ) {
-                // TODO obtain from storage
+                // start smap
+                var dirname = window.gLoadedInstanceID;
+                var file = {
+                    fileName: subject
+                }
+                store.retrieveFile(dirname, file);   // Attempt to get a saved file first
+                if (file.dataUrl) {
+                    resolve(file.dataUrl);
+                } else {
+                    resolve(location.origin + "/" + subject);		// URL must be from the server
+                }
+                // end smap
             } else if ( typeof subject === 'object' ) {
                 if ( _isTooLarge( subject ) ) {
                     error = new Error( 'File too large (max ' +
@@ -40695,7 +40707,7 @@ define( function( require, exports, module ) {
     };
 } );
 
-},{"./utils":38,"jquery":22,"lie":24}],35:[function(require,module,exports){
+},{"../../webform/file-storage":61,"./utils":38,"jquery":22,"lie":24}],35:[function(require,module,exports){
 if ( typeof exports === 'object' && typeof exports.nodeName !== 'string' && typeof define !== 'function' ) {
     var define = function( factory ) {
         factory( require, exports, module );
@@ -46211,6 +46223,7 @@ define( function( require, exports, module ) {
         store = options.recordStore || null;
 
         surveyData.instanceStrToEdit = surveyData.instanceStrToEdit || null;
+        surveyData.instanceStr = surveyData.instanceStrToEdit || null;
 
         // Open an existing record if we need to
         if(fileManager.isSupported()) {
@@ -46219,9 +46232,11 @@ define( function( require, exports, module ) {
 
                 var record = store.getRecord( recordName );
                 surveyData.instanceStrToEdit = record.data;
-                surveyData.instanceStrToEditId = record.instanceStrToEditId; // d1504
-                surveyData.assignmentId = record.assignmentId;				 // d1504
-                surveyData.key = record.accessKey;							 // d1504
+                surveyData.instanceStr = record.data;  // name used by enketo
+                surveyData.instanceStrToEditId = record.instanceStrToEditId;
+                surveyData.assignmentId = record.assignmentId;
+                surveyData.key = record.accessKey;
+                surveyData.submitted = false;
 
                 // Set the global instanceID of the restored form so that filePicker can find media
                 var model = new FormModel( record.data );
@@ -46235,6 +46250,8 @@ define( function( require, exports, module ) {
             }
         }
 
+
+
         // Initialise network connection
         connection.init( true, store );
 
@@ -46245,7 +46262,7 @@ define( function( require, exports, module ) {
         if ( fileManager.isSupported() ) {
             fileManager.init();
             if ( !store || store.getRecordList().length === 0 ) {
-                fileManager.deleteAll();
+                fileManager.deleteAllAttachments();
             }
         }
 
@@ -46259,7 +46276,7 @@ define( function( require, exports, module ) {
         }
 
         if ( loadErrors.length > 0 ) {
-            purpose = ( surveyData.instanceStrToEdit ) ? 'to edit data' : 'for data entry';
+            purpose = ( surveyData.instanceStr ) ? 'to edit data' : 'for data entry';
             gui.showLoadErrors( loadErrors,
                 'It is recommended <strong>not to use this form</strong> ' +
                 purpose + ' until this is resolved.' );
@@ -46640,6 +46657,9 @@ define( function( require, exports, module ) {
                 store.removeRecord( recordName );
             }
         }
+
+        // Just to be sure delete all attachments
+        fileManager.deleteAllAttachments();
 
     }
 
@@ -47322,44 +47342,6 @@ define( function( require, exports, module ) {
     }
 
     /**
-     * Obtains a url that can be used to show a preview of the file when used
-     * as a src attribute.
-     *
-     * @param  {?string|Object} subject File or filename
-     * @return {[type]}         promise url string or rejection with Error
-     */
-    function getFileUrl(subject) {
-        var error, reader,
-            deferred = Q.defer();
-
-        if (!subject) {
-            deferred.resolve(null);
-        } else if (typeof subject === 'string') {
-            deferred.resolve(location.origin + "/" + subject);		// Smap show existing URL
-        } else if (typeof subject === 'object') {
-            if (_isTooLarge(subject)) {
-                error = new Error('File too large (max ' +
-                    ( Math.round(( _getMaxSize() * 100 ) / ( 1024 * 1024 )) / 100 ) +
-                    ' Mb)');
-                console.log("Error: " + error);
-                deferred.reject(error);
-            } else {
-                reader = new FileReader();
-                reader.onload = function (e) {
-                    deferred.resolve(e.target.result);
-                };
-                reader.onerror = function (e) {
-                    deferred.reject(error);
-                };
-                reader.readAsDataURL(subject);
-            }
-        } else {
-            deferred.reject(new Error('Unknown error occurred'));
-        }
-        return deferred.promise;
-    }
-
-    /**
      * Obtain files currently stored in file input elements of open record
      * @return {[File]} array of files
      */
@@ -47404,12 +47386,11 @@ define( function( require, exports, module ) {
      * Deletes all files stored (for a subsubdomain)
      * @param {Function=} callbackComplete  function to call when complete
      */
-    function deleteAll (callbackComplete) {
+    function deleteAllAttachments () {
 
         console.log("delete all local storage");
 
         for (var key in localStorage){
-            console.log("Storage item: " + key);
             if(key.startsWith(FM_STORAGE_PREFIX)) {
                 console.log("Delete item: " + key);
                 localStorage.removeItem(key);
@@ -47470,8 +47451,7 @@ define( function( require, exports, module ) {
             console.log("delete directory: " + name);
 
             for (var key in localStorage) {
-                console.log("Storage item: " + key);
-                if (key.startsWith(FM_STORAGE_PREFIX + name)) {
+                if (key.startsWith(FM_STORAGE_PREFIX + "/" + name)) {
                     console.log("Delete item: " + key);
                     localStorage.removeItem(key);
                 }
@@ -47553,8 +47533,7 @@ define( function( require, exports, module ) {
     /**
      * Obtains specified files from a specified directory (asynchronously)
      * @param {string}                              directoryName   directory to look in for files
-     * @param {{newName: string, fileName: string}} fileO           object of file properties
-     * @param {{success:Function, error:Function}}  callbacks       callback functions (error, and success)
+     * @param {{newName: string, fileName: string}} file           object of file properties
      */
     function retrieveFile(dirname, file) {
 
@@ -47567,35 +47546,8 @@ define( function( require, exports, module ) {
             file.size = 0;
         }
         return file;
-        /*
-        var retrievedFile = {},
-            pathPrefix = _getDirPrefix(directoryName),
-            callbacksForFileEntry = {
-                success: function (fileEntry) {
-                    console.log("retrieveFile success");
-                    console.log(fileEntry);
-                    if (fileEntry) {
-                        retrieveFileFromFileEntry(fileEntry, {
-                            success: function (file) {
-                                console.debug('retrieved file! ', file);
-                                fileO.file = file;
-                                callbacks.success(fileO);
-                            },
-                            error: callbacks.error
-                        });
-                    } else {
-                        // Smap allow for the file entry not being found
-                        callbacks.success(null);
-                    }
-                },
-                error: callbacks.error
-            };
 
-        retrieveFileEntry(pathPrefix + fileO.fileName, {
-            success: callbacksForFileEntry.success,
-            error: callbacksForFileEntry.error
-        });
-        */
+
     };
 
 
@@ -47608,9 +47560,8 @@ define( function( require, exports, module ) {
         isSupported: isSupported,
         isWaitingForPermissions: isWaitingForPermissions,
         init: init,
-        getFileUrl: getFileUrl,
         getCurrentFiles: getCurrentFiles,
-        deleteAll: deleteAll,
+        deleteAllAttachments: deleteAllAttachments,
         deleteDir: deleteDir,
         getCurrentQuota: getCurrentQuota,
         getCurrentQuotaUsed: getCurrentQuotaUsed,

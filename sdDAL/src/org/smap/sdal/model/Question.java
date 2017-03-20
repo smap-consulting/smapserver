@@ -51,6 +51,7 @@ public class Question {
 												//  entry but I want to maintain compatibility with xlsform)
 	public String autoplay;
 	public String accuracy;
+	public int linked_survey;
 	public String linked_target;			//sId::qId of the target to link to
 	public ArrayList<Label> labels = new ArrayList<Label> ();
 	

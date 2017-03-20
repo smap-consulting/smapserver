@@ -7054,11 +7054,7 @@ input:not([type="radio"]):not([type="checkbox"]), textarea {
 }
 
 
+/* Prevent images in questions from being cut off */
 form fieldset.question {
   overflow:auto;
-}
-
-/* show images without cutting them off */
-fieldset.question {
-	overflow:auto;
 }
