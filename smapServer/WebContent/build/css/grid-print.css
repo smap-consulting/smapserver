@@ -208,6 +208,9 @@ label, legend, .trigger, .note {
     background: none;
     color: black; }
 
+.datalist.widget {
+  display: none; }
+
 .or-appearance-likert .option-wrapper > label .option-label {
   border-top: 1.5px solid black; }
 
@@ -320,7 +323,7 @@ h3, h4 {
   top: -20px;
   font-size: 12px; }
 
-.question.non-select::after {
+.question.non-select::after, .question.or-appearance-search:after, .question.or-appearance-autocomplete:after {
   content: ' ';
   display: block;
   height: 1px;

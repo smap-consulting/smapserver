@@ -718,4 +718,4 @@ create TABLE default_user_view (
 	);
 ALTER TABLE default_user_view OWNER TO ws;
 
->>>>>>> enkup
+

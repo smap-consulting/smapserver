@@ -564,9 +564,9 @@ button {
 .or[dir="rtl"] .question > img, .or[dir="rtl"] .question > video, .or[dir="rtl"] .question > audio {
   margin: 10px 10px 10px 0; }
 
-.note input[readonly]:not([type=radio]):not([type=checkbox]), .note textarea[readonly] {
+.note input[readonly]:not([type=radio]):not([type=checkbox]):not(.widget), .note textarea[readonly] {
   display: none; }
-  .note input[readonly]:not([type=radio]):not([type=checkbox]).has-value, .note textarea[readonly].has-value {
+  .note input[readonly]:not([type=radio]):not([type=checkbox]):not(.widget).has-value, .note textarea[readonly].has-value {
     display: block; }
 
 .note strong {
@@ -590,7 +590,7 @@ legend {
   border: none;
   width: 100%;
   padding: 0;
-  margin-bottom: 18px; }
+  margin-bottom: 12px; }
   legend > span {
     vertical-align: 12px; }
 
@@ -961,6 +961,42 @@ legend .required {
 
 .mobileselect {
   margin-left: 10px; }
+
+/*
+	 CSS-Tricks Example
+	 by Chris Coyier
+	 http://css-tricks.com
+*/
+.datalist {
+  list-style: none;
+  display: none;
+  background: white;
+  position: absolute;
+  left: 0;
+  top: 0;
+  max-height: 300px;
+  overflow-y: auto;
+  z-index: 10;
+  padding: 0;
+  border: 1px solid #555555; }
+
+.datalist:empty {
+  display: none !important; }
+
+.datalist li {
+  padding: 5px; }
+
+.datalist li.active {
+  background: #3875d7;
+  color: white; }
+
+input[type=text].autocomplete {
+  width: 277.2454px; }
+  input[type=text].autocomplete.notfound {
+    color: #999999; }
+
+.touch input[type=text].autocomplete {
+  width: 100%; }
 
 .enketo-geopoint-marker {
   margin-top: -24px;
@@ -3210,7 +3246,8 @@ table th[class*="col-"] {
   -webkit-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075);
   box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075);
   transition: border-color ease-in-out 0.15s, box-shadow ease-in-out 0.15s;
-  width: 80%; }
+  width: 80%;
+  text-align: start; }
   .file-picker .fake-file-input:focus {
     border-color: #66afe9;
     outline: 0;
@@ -3223,8 +3260,8 @@ table th[class*="col-"] {
     color: #999999; }
   .file-picker .fake-file-input::-webkit-input-placeholder {
     color: #999999; }
-  .file-picker .fake-file-input[disabled],
-  .file-picker .fake-file-input[readonly] fieldset[disabled] .file-picker .fake-file-input {
+  .file-picker .fake-file-input[disabled], .file-picker .fake-file-input[readonly],
+  fieldset[disabled] .file-picker .fake-file-input {
     cursor: not-allowed;
     background-color: #eeeeee;
     opacity: 1; }
@@ -4119,128 +4156,18 @@ input[type=text], input[type=password], input[type=url], input[type=email], inpu
     color: #999999; }
   input[type=text]::-webkit-input-placeholder, input[type=password]::-webkit-input-placeholder, input[type=url]::-webkit-input-placeholder, input[type=email]::-webkit-input-placeholder, input[type=file]::-webkit-input-placeholder, input[type=date]::-webkit-input-placeholder, input[type=time]::-webkit-input-placeholder, input[type=datetime]::-webkit-input-placeholder, input[type=number]::-webkit-input-placeholder, select::-webkit-input-placeholder, textarea::-webkit-input-placeholder {
     color: #999999; }
-  input[type=text][disabled],
-  input[type=text][readonly] fieldset[disabled] input[type=text], input[type=password][disabled],
-  input[type=password][readonly] fieldset[disabled] input[type=text], input[type=url][disabled],
-  input[type=url][readonly] fieldset[disabled] input[type=text], input[type=email][disabled],
-  input[type=email][readonly] fieldset[disabled] input[type=text], input[type=file][disabled],
-  input[type=file][readonly] fieldset[disabled] input[type=text], input[type=date][disabled],
-  input[type=date][readonly] fieldset[disabled] input[type=text], input[type=time][disabled],
-  input[type=time][readonly] fieldset[disabled] input[type=text], input[type=datetime][disabled],
-  input[type=datetime][readonly] fieldset[disabled] input[type=text], input[type=number][disabled],
-  input[type=number][readonly] fieldset[disabled] input[type=text], select[disabled],
-  select[readonly] fieldset[disabled] input[type=text], textarea[disabled],
-  textarea[readonly] fieldset[disabled] input[type=text],
-  input[type=text][readonly] fieldset[disabled] input[type=password],
-  input[type=password][readonly] fieldset[disabled] input[type=password],
-  input[type=url][readonly] fieldset[disabled] input[type=password],
-  input[type=email][readonly] fieldset[disabled] input[type=password],
-  input[type=file][readonly] fieldset[disabled] input[type=password],
-  input[type=date][readonly] fieldset[disabled] input[type=password],
-  input[type=time][readonly] fieldset[disabled] input[type=password],
-  input[type=datetime][readonly] fieldset[disabled] input[type=password],
-  input[type=number][readonly] fieldset[disabled] input[type=password],
-  select[readonly] fieldset[disabled] input[type=password],
-  textarea[readonly] fieldset[disabled] input[type=password],
-  input[type=text][readonly] fieldset[disabled] input[type=url],
-  input[type=password][readonly] fieldset[disabled] input[type=url],
-  input[type=url][readonly] fieldset[disabled] input[type=url],
-  input[type=email][readonly] fieldset[disabled] input[type=url],
-  input[type=file][readonly] fieldset[disabled] input[type=url],
-  input[type=date][readonly] fieldset[disabled] input[type=url],
-  input[type=time][readonly] fieldset[disabled] input[type=url],
-  input[type=datetime][readonly] fieldset[disabled] input[type=url],
-  input[type=number][readonly] fieldset[disabled] input[type=url],
-  select[readonly] fieldset[disabled] input[type=url],
-  textarea[readonly] fieldset[disabled] input[type=url],
-  input[type=text][readonly] fieldset[disabled] input[type=email],
-  input[type=password][readonly] fieldset[disabled] input[type=email],
-  input[type=url][readonly] fieldset[disabled] input[type=email],
-  input[type=email][readonly] fieldset[disabled] input[type=email],
-  input[type=file][readonly] fieldset[disabled] input[type=email],
-  input[type=date][readonly] fieldset[disabled] input[type=email],
-  input[type=time][readonly] fieldset[disabled] input[type=email],
-  input[type=datetime][readonly] fieldset[disabled] input[type=email],
-  input[type=number][readonly] fieldset[disabled] input[type=email],
-  select[readonly] fieldset[disabled] input[type=email],
-  textarea[readonly] fieldset[disabled] input[type=email],
-  input[type=text][readonly] fieldset[disabled] input[type=file],
-  input[type=password][readonly] fieldset[disabled] input[type=file],
-  input[type=url][readonly] fieldset[disabled] input[type=file],
-  input[type=email][readonly] fieldset[disabled] input[type=file],
-  input[type=file][readonly] fieldset[disabled] input[type=file],
-  input[type=date][readonly] fieldset[disabled] input[type=file],
-  input[type=time][readonly] fieldset[disabled] input[type=file],
-  input[type=datetime][readonly] fieldset[disabled] input[type=file],
-  input[type=number][readonly] fieldset[disabled] input[type=file],
-  select[readonly] fieldset[disabled] input[type=file],
-  textarea[readonly] fieldset[disabled] input[type=file],
-  input[type=text][readonly] fieldset[disabled] input[type=date],
-  input[type=password][readonly] fieldset[disabled] input[type=date],
-  input[type=url][readonly] fieldset[disabled] input[type=date],
-  input[type=email][readonly] fieldset[disabled] input[type=date],
-  input[type=file][readonly] fieldset[disabled] input[type=date],
-  input[type=date][readonly] fieldset[disabled] input[type=date],
-  input[type=time][readonly] fieldset[disabled] input[type=date],
-  input[type=datetime][readonly] fieldset[disabled] input[type=date],
-  input[type=number][readonly] fieldset[disabled] input[type=date],
-  select[readonly] fieldset[disabled] input[type=date],
-  textarea[readonly] fieldset[disabled] input[type=date],
-  input[type=text][readonly] fieldset[disabled] input[type=time],
-  input[type=password][readonly] fieldset[disabled] input[type=time],
-  input[type=url][readonly] fieldset[disabled] input[type=time],
-  input[type=email][readonly] fieldset[disabled] input[type=time],
-  input[type=file][readonly] fieldset[disabled] input[type=time],
-  input[type=date][readonly] fieldset[disabled] input[type=time],
-  input[type=time][readonly] fieldset[disabled] input[type=time],
-  input[type=datetime][readonly] fieldset[disabled] input[type=time],
-  input[type=number][readonly] fieldset[disabled] input[type=time],
-  select[readonly] fieldset[disabled] input[type=time],
-  textarea[readonly] fieldset[disabled] input[type=time],
-  input[type=text][readonly] fieldset[disabled] input[type=datetime],
-  input[type=password][readonly] fieldset[disabled] input[type=datetime],
-  input[type=url][readonly] fieldset[disabled] input[type=datetime],
-  input[type=email][readonly] fieldset[disabled] input[type=datetime],
-  input[type=file][readonly] fieldset[disabled] input[type=datetime],
-  input[type=date][readonly] fieldset[disabled] input[type=datetime],
-  input[type=time][readonly] fieldset[disabled] input[type=datetime],
-  input[type=datetime][readonly] fieldset[disabled] input[type=datetime],
-  input[type=number][readonly] fieldset[disabled] input[type=datetime],
-  select[readonly] fieldset[disabled] input[type=datetime],
-  textarea[readonly] fieldset[disabled] input[type=datetime],
-  input[type=text][readonly] fieldset[disabled] input[type=number],
-  input[type=password][readonly] fieldset[disabled] input[type=number],
-  input[type=url][readonly] fieldset[disabled] input[type=number],
-  input[type=email][readonly] fieldset[disabled] input[type=number],
-  input[type=file][readonly] fieldset[disabled] input[type=number],
-  input[type=date][readonly] fieldset[disabled] input[type=number],
-  input[type=time][readonly] fieldset[disabled] input[type=number],
-  input[type=datetime][readonly] fieldset[disabled] input[type=number],
-  input[type=number][readonly] fieldset[disabled] input[type=number],
-  select[readonly] fieldset[disabled] input[type=number],
-  textarea[readonly] fieldset[disabled] input[type=number],
-  input[type=text][readonly] fieldset[disabled] select,
-  input[type=password][readonly] fieldset[disabled] select,
-  input[type=url][readonly] fieldset[disabled] select,
-  input[type=email][readonly] fieldset[disabled] select,
-  input[type=file][readonly] fieldset[disabled] select,
-  input[type=date][readonly] fieldset[disabled] select,
-  input[type=time][readonly] fieldset[disabled] select,
-  input[type=datetime][readonly] fieldset[disabled] select,
-  input[type=number][readonly] fieldset[disabled] select,
-  select[readonly] fieldset[disabled] select,
-  textarea[readonly] fieldset[disabled] select,
-  input[type=text][readonly] fieldset[disabled] textarea,
-  input[type=password][readonly] fieldset[disabled] textarea,
-  input[type=url][readonly] fieldset[disabled] textarea,
-  input[type=email][readonly] fieldset[disabled] textarea,
-  input[type=file][readonly] fieldset[disabled] textarea,
-  input[type=date][readonly] fieldset[disabled] textarea,
-  input[type=time][readonly] fieldset[disabled] textarea,
-  input[type=datetime][readonly] fieldset[disabled] textarea,
-  input[type=number][readonly] fieldset[disabled] textarea,
-  select[readonly] fieldset[disabled] textarea,
-  textarea[readonly] fieldset[disabled] textarea {
+  input[type=text][disabled], input[type=text][readonly],
+  fieldset[disabled] input[type=text], input[type=password][disabled], input[type=password][readonly],
+  fieldset[disabled] input[type=password], input[type=url][disabled], input[type=url][readonly],
+  fieldset[disabled] input[type=url], input[type=email][disabled], input[type=email][readonly],
+  fieldset[disabled] input[type=email], input[type=file][disabled], input[type=file][readonly],
+  fieldset[disabled] input[type=file], input[type=date][disabled], input[type=date][readonly],
+  fieldset[disabled] input[type=date], input[type=time][disabled], input[type=time][readonly],
+  fieldset[disabled] input[type=time], input[type=datetime][disabled], input[type=datetime][readonly],
+  fieldset[disabled] input[type=datetime], input[type=number][disabled], input[type=number][readonly],
+  fieldset[disabled] input[type=number], select[disabled], select[readonly],
+  fieldset[disabled] select, textarea[disabled], textarea[readonly],
+  fieldset[disabled] textarea {
     cursor: not-allowed;
     background-color: #eeeeee;
     opacity: 1; }

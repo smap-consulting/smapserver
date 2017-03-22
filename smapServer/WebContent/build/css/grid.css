@@ -565,9 +565,9 @@ button {
 .or[dir="rtl"] .question > img, .or[dir="rtl"] .question > video, .or[dir="rtl"] .question > audio {
   margin: 10px 10px 10px 0; }
 
-.note input[readonly]:not([type=radio]):not([type=checkbox]), .note textarea[readonly] {
+.note input[readonly]:not([type=radio]):not([type=checkbox]):not(.widget), .note textarea[readonly] {
   display: none; }
-  .note input[readonly]:not([type=radio]):not([type=checkbox]).has-value, .note textarea[readonly].has-value {
+  .note input[readonly]:not([type=radio]):not([type=checkbox]):not(.widget).has-value, .note textarea[readonly].has-value {
     display: block; }
 
 .note strong {
@@ -591,7 +591,7 @@ legend {
   border: none;
   width: 100%;
   padding: 0;
-  margin-bottom: 18px; }
+  margin-bottom: 12px; }
   legend > span {
     vertical-align: 12px; }
 
@@ -962,6 +962,42 @@ legend .required {
 
 .mobileselect {
   margin-left: 10px; }
+
+/*
+	 CSS-Tricks Example
+	 by Chris Coyier
+	 http://css-tricks.com
+*/
+.datalist {
+  list-style: none;
+  display: none;
+  background: white;
+  position: absolute;
+  left: 0;
+  top: 0;
+  max-height: 300px;
+  overflow-y: auto;
+  z-index: 10;
+  padding: 0;
+  border: 1px solid #555555; }
+
+.datalist:empty {
+  display: none !important; }
+
+.datalist li {
+  padding: 5px; }
+
+.datalist li.active {
+  background: #3875d7;
+  color: white; }
+
+input[type=text].autocomplete {
+  width: 218.99632px; }
+  input[type=text].autocomplete.notfound {
+    color: #999999; }
+
+.touch input[type=text].autocomplete {
+  width: 100%; }
 
 .enketo-geopoint-marker {
   margin-top: -24px;
@@ -3201,12 +3237,13 @@ table th[class*="col-"] {
   border: none;
   box-shadow: none;
   background: transparent;
-  padding: 0;
+  padding: 5px 0;
   margin: 0;
   width: 100%;
   height: 34px;
   flex-basis: 34px;
-  width: 80%; }
+  width: 80%;
+  text-align: start; }
   .file-picker .fake-file-input:focus {
     outline: none;
     box-shadow: none; }
@@ -3221,7 +3258,9 @@ table th[class*="col-"] {
   fieldset[disabled] .file-picker .fake-file-input {
     cursor: not-allowed;
     background-color: #eeeeee;
-    opacity: 1; }
+    opacity: 1;
+    padding-left: 5px;
+    padding-right: 5px; }
 
 .file-picker .file-feedback, .file-picker .file-preview {
   font-family: Arial, sans-serif;
@@ -4239,7 +4278,7 @@ input[type=text], input[type=password], input[type=url], input[type=email], inpu
   border: none;
   box-shadow: none;
   background: transparent;
-  padding: 0;
+  padding: 5px 0;
   margin: 0;
   width: 100%;
   height: 34px;
@@ -4268,7 +4307,9 @@ input[type=text], input[type=password], input[type=url], input[type=email], inpu
   fieldset[disabled] textarea {
     cursor: not-allowed;
     background-color: #eeeeee;
-    opacity: 1; }
+    opacity: 1;
+    padding-left: 5px;
+    padding-right: 5px; }
 
 input:not([readonly]) + .widget input[type=text][readonly], input:not([readonly]) + .widget input[type=password][readonly], input:not([readonly]) + .widget input[type=url][readonly], input:not([readonly]) + .widget input[type=email][readonly], input:not([readonly]) + .widget input[type=file][readonly], input:not([readonly]) + .widget input[type=date][readonly], input:not([readonly]) + .widget input[type=time][readonly], input:not([readonly]) + .widget input[type=datetime][readonly], input:not([readonly]) + .widget input[type=number][readonly], input:not([readonly]) + .widget select[readonly], input:not([readonly]) + .widget textarea[readonly] {
   background-color: transparent;
@@ -4523,10 +4564,6 @@ h4 + .or-repeat {
   margin: 0px;
   padding: 6px 6px 13px 6px; }
 
-.note {
-  font-weight: normal;
-  font-size: 12px; }
-
 .question {
   /*IE10*/
   display: -ms-flexbox;
@@ -4543,6 +4580,8 @@ h4 + .or-repeat {
   cursor: text; }
   .question:not(.note):not(.focus):hover {
     background: #fffded; }
+  .question.note {
+    background: #eeeeee; }
   .question.focus {
     background: #fffad4; }
   .question .required {

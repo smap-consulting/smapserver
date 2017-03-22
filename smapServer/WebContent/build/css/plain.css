@@ -562,9 +562,9 @@ button {
 .or[dir="rtl"] .question > img, .or[dir="rtl"] .question > video, .or[dir="rtl"] .question > audio {
   margin: 10px 10px 10px 0; }
 
-.note input[readonly]:not([type=radio]):not([type=checkbox]), .note textarea[readonly] {
+.note input[readonly]:not([type=radio]):not([type=checkbox]):not(.widget), .note textarea[readonly] {
   display: none; }
-  .note input[readonly]:not([type=radio]):not([type=checkbox]).has-value, .note textarea[readonly].has-value {
+  .note input[readonly]:not([type=radio]):not([type=checkbox]):not(.widget).has-value, .note textarea[readonly].has-value {
     display: block; }
 
 .note strong {
@@ -588,7 +588,7 @@ legend {
   border: none;
   width: 100%;
   padding: 0;
-  margin-bottom: 18px; }
+  margin-bottom: 12px; }
   legend > span {
     vertical-align: 12px; }
 
@@ -959,6 +959,42 @@ legend .required {
 
 .mobileselect {
   margin-left: 10px; }
+
+/*
+	 CSS-Tricks Example
+	 by Chris Coyier
+	 http://css-tricks.com
+*/
+.datalist {
+  list-style: none;
+  display: none;
+  background: white;
+  position: absolute;
+  left: 0;
+  top: 0;
+  max-height: 300px;
+  overflow-y: auto;
+  z-index: 10;
+  padding: 0;
+  border: 1px solid #555555; }
+
+.datalist:empty {
+  display: none !important; }
+
+.datalist li {
+  padding: 5px; }
+
+.datalist li.active {
+  background: #3875d7;
+  color: white; }
+
+input[type=text].autocomplete {
+  width: 277.2454px; }
+  input[type=text].autocomplete.notfound {
+    color: #999999; }
+
+.touch input[type=text].autocomplete {
+  width: 100%; }
 
 .enketo-geopoint-marker {
   margin-top: -24px;
@@ -3148,7 +3184,8 @@ table th[class*="col-"] {
     max-height: 100%; }
 
 .file-picker .fake-file-input {
-  width: 80%; }
+  width: 80%;
+  text-align: start; }
 
 .file-picker .file-feedback, .file-picker .file-preview {
   font-family: 'OpenSans', Arial, sans-serif;
