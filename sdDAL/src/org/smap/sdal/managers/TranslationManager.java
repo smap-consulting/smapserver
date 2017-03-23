@@ -257,7 +257,7 @@ public class TranslationManager {
 					pstmtPull.setString(2, "%pulldata%" + m.baseName + "%");
 					log.info("Looking for pulldata manifests: " + pstmtPull.toString());
 					rs = pstmtPull.executeQuery();
-					if(rs.next()) {
+					if(rs.next() && rs.getInt(1) > 0) {
 						if(m.type.equals("csv")) {
 							String surveyIdent = GeneralUtilityMethods.getSurveyIdent(sd, surveyId);
 							int oId = GeneralUtilityMethods.getOrganisationIdForSurvey(sd, surveyId);

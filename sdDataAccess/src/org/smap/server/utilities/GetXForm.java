@@ -208,6 +208,7 @@ public class GetXForm {
 				Element rootElement = outputDoc.createElement("root");
     	    	pulldataElement.appendChild(rootElement);
 				populateCSVElements(outputDoc, rootElement, mv.filePath);
+				
 	    	}
     	}
 	    	
