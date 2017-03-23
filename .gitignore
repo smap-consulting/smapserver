@@ -6,6 +6,8 @@ fieldManager/build
 surveyMobileAPI/build/classes/.gitignore
 koboToolboxApi/.gitignore
 
+build/css.orig
+
 # Eclipse artifacts
 *.pydevproject
 .metadata
@@ -21,9 +23,13 @@ local.properties
 .settings/
 .loadpath
 
+.idea
+
 # enketo 
+smapServer/WebContent/build/css.orig
 combined.min.js
 enketo-core.min.js
+smapServer/WebContent/build/js/webform-bundle.js
 
 # External tool builders
 .externalToolBuilders/

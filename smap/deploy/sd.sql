@@ -660,8 +660,9 @@ delete from linked_forms where linker_s_id not in (select s_id from survey);
 alter table linked_forms add constraint lf_survey2 FOREIGN KEY (linker_s_id)
 	REFERENCES survey (s_id) MATCH SIMPLE
 	ON UPDATE NO ACTION ON DELETE CASCADE;
-
--- upgrade to 17.02
+	
+-- Upgrade to 17.02
+alter table survey add column timing_data boolean;
 alter table question add column linked_target text;
 update question set linked_target = cast(linked_survey as text) where linked_survey > 0 and linked_target is null ;
 
@@ -716,4 +717,5 @@ create TABLE default_user_view (
 	v_id integer REFERENCES survey_view(id) ON DELETE CASCADE		-- view id
 	);
 ALTER TABLE default_user_view OWNER TO ws;
+
 

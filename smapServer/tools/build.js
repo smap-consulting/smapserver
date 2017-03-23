@@ -9,6 +9,7 @@
     	jquery: 'jquery-2.1.1',
     	jquery_ui: 'empty:',
     	app: '../app',
+    	wfapp: '../app/webform',
     	lang_location: '..',
 	bootbox: 'bootbox.min',
 	moment: 'moment-with-locales.min',

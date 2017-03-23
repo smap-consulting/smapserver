@@ -406,10 +406,8 @@ function exportQuerySelChanged() {
 			}
 		} else {
 			
-			$('.showshape').show();
-			$('.selectquery').hide();
-			$('.selectsurvey').show();
-			
+			setExportControls();
+			$('.showextselect').hide();
 		}
 	});
 

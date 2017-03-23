@@ -19,6 +19,7 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 
 package org.smap.sdal.Utilities;
 
+import java.util.HashMap;
 import java.util.logging.Logger;
 
 /*
@@ -120,8 +121,8 @@ public class CSVFilter {
 							
 							r1.value =  criteria[i];
 							
-						} else {
-							log.info("Info dynamic filter value are not supported: ");
+						} else {	
+							log.info("Only static values can be filtered on");
 							return;
 						}	
 					}
@@ -138,7 +139,7 @@ public class CSVFilter {
 							if (criteria[i].equals(cols[j])) {
 								r2 = new Rule();
 								r2.column = j;
-								r2.function = 4;		// Excatc match is only function supported by odk
+								r2.function = 4;		// Exact match is only function supported by odk
 								break;
 							}	
 						}
@@ -173,6 +174,18 @@ public class CSVFilter {
 		
 	}
 	
+	/*
+	 * Return the cascade_filter
+	 */
+	public HashMap<String, String> GetCascadeFilter(String[] optionCols) {
+
+		HashMap<String, String> filter = new HashMap<String, String> ();
+		if(r1!= null && r1.column != -1) {
+			filter.put("_smap_cascade", optionCols[r1.column]);
+		}
+		return filter;
+		
+	}
 	/*
 	 * Return true if the row should be included
 	 */

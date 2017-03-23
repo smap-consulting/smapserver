@@ -47,6 +47,7 @@ import org.smap.sdal.model.ChangeResponse;
 import org.smap.sdal.model.ChangeSet;
 import org.smap.sdal.model.Language;
 import org.smap.sdal.model.Pulldata;
+import org.smap.sdal.model.Question;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -56,6 +57,7 @@ import java.io.File;
 import java.lang.reflect.Type;
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -462,6 +464,8 @@ public class Surveys extends Application {
 		
 		Connection cResults = ResultsDataSource.getConnection("surveyKPI-Surveys");
 		
+		// Authorise the changes
+		boolean updateExternalChoices = false;
 		for(ChangeSet cs : changes) {
 			for (ChangeItem ci : cs.items) {
 				// Check that property changes are being applied to questions in the specified survey
@@ -470,7 +474,13 @@ public class Surveys extends Application {
 							&& !ci.property.type.equals("optionlist")) {
 						log.info("Validating question for type: " + ci.property.type);
 						aUpdate.isValidQuestion(connectionSD, request.getRemoteUser(), sId, ci.property.qId);
+						
+						if(ci.property.type.equals("appearance")) {
+							updateExternalChoices = true;
+						}
 					}
+				} else if(ci.question != null && ci.question.appearance != null) {
+					updateExternalChoices = true;
 				}
 			}
 		}
@@ -482,6 +492,13 @@ public class Surveys extends Application {
 	
 			SurveyManager sm = new SurveyManager();
 			ChangeResponse resp = sm.applyChangeSetArray(connectionSD, cResults, sId, request.getRemoteUser(), changes);
+			
+			// Add any options that this survey links to in an an external file
+			if(updateExternalChoices) {
+				String basePath = GeneralUtilityMethods.getBasePath(request); 	// Get base path to files
+				sm.writeExternalChoicesForQuestions(connectionSD, 
+						cResults, basePath, request.getRemoteUser(), sId);
+			}
 			
 			// Force regeneration of any dynamic CSV files that this survey links to
 			ExternalFileManager efm = new ExternalFileManager();
@@ -626,6 +643,7 @@ public class Surveys extends Application {
 			
 			// Update the settings
 			String sql = "update survey set display_name = ?, name = ?, def_lang = ?, task_file = ?, "
+					+ "timing_data = ?, "
 					+ "p_id = ?, "
 					+ "instance_name = ?, "
 					+ "version = ?, "
@@ -641,12 +659,13 @@ public class Surveys extends Application {
 			pstmt.setString(2, newSurveyName);
 			pstmt.setString(3, survey.def_lang);
 			pstmt.setBoolean(4, survey.task_file);
-			pstmt.setInt(5, survey.p_id);
-			pstmt.setString(6, survey.instanceNameDefn);
-			pstmt.setInt(7, version);
-			pstmt.setString(8, survey.surveyClass);
-			pstmt.setString(9, survey.hrk);
-			pstmt.setInt(10, sId);
+			pstmt.setBoolean(5, survey.timing_data);
+			pstmt.setInt(6, survey.p_id);
+			pstmt.setString(7, survey.instanceNameDefn);
+			pstmt.setInt(8, version);
+			pstmt.setString(9, survey.surveyClass);
+			pstmt.setString(10, survey.hrk);
+			pstmt.setInt(11, sId);
 			
 			log.info("Saving survey: " + pstmt.toString());
 			int count = pstmt.executeUpdate();

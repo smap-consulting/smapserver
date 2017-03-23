@@ -55,6 +55,8 @@ public class Survey implements Serializable {
 	
 	private String instanceName;
 	
+	private boolean timingData;
+	
 	private String surveyClass;
 	
 	private boolean loaded_from_xls = false;
@@ -116,6 +118,10 @@ public class Survey implements Serializable {
 	
 	public String getInstanceName() {
 		return instanceName;
+	}
+	
+	public boolean getTimingData() {
+		return timingData;
 	}
 	
 	// Get the display name with any HTML reserved characters escaped
@@ -181,6 +187,10 @@ public class Survey implements Serializable {
 	
 	public void setInstanceName(String v) {
 		instanceName = v;
+	}
+	
+	public void setTimingData(boolean v) {
+		timingData = v;
 	}
 	
 	public void setHrk(String v) {

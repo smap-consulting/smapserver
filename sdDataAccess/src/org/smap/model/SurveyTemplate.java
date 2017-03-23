@@ -1164,7 +1164,7 @@ public class SurveyTemplate {
 	 * 
 	 * @param surveyIdent the ident of the survey
 	 */
-	public void readDatabase(Connection sd, String surveyIdent) throws MissingTemplateException, SQLException {
+	public void readDatabase(Connection sd, String surveyIdent, boolean embedExternalSearch) throws MissingTemplateException, SQLException {
 
 		JdbcSurveyManager sm = null;
 		
@@ -1178,7 +1178,7 @@ public class SurveyTemplate {
 			survey = sm.getByIdent(surveyIdent);
 			
 			if(survey != null) {
-				readDatabase(survey, sd);	// Get the rest of the survey
+				readDatabase(survey, sd, embedExternalSearch);	// Get the rest of the survey
 			} else {
 				System.out.println("Error: Survey Template not found: " + surveyId);
 				throw new MissingTemplateException("Error: Survey Template not found: " + surveyId);
@@ -1194,7 +1194,7 @@ public class SurveyTemplate {
 	 * 
 	 * @param surveyId the primary key of the survey
 	 */
-	public void readDatabase(int surveyId) throws MissingTemplateException, SQLException {
+	public void readDatabase(int surveyId, boolean embedExternalSearch) throws MissingTemplateException, SQLException {
 
 		Connection sd = org.smap.sdal.Utilities.SDDataSource.getConnection("SurveyTemplate-Read Database");
 		JdbcSurveyManager sm = null;
@@ -1209,7 +1209,7 @@ public class SurveyTemplate {
 			survey = sm.getById(surveyId);
 	
 			if(survey != null) {
-				readDatabase(survey, sd);	// Get the rest of the survey
+				readDatabase(survey, sd, embedExternalSearch);	// Get the rest of the survey
 			} else {
 				System.out.println("Error: Survey Template not found: " + surveyId);
 				throw new MissingTemplateException("Error: Survey Template not found: " + surveyId);
@@ -1227,7 +1227,7 @@ public class SurveyTemplate {
 	 * Method to read the remaining survey template from the database once the 
 	 *  survey to be read has been identified
 	 */
-	private void readDatabase(Survey survey, Connection sd) throws SQLException {
+	private void readDatabase(Survey survey, Connection sd, boolean embedExternalSearch) throws SQLException {
 
 		/*
 		 * Get the project name
@@ -1306,12 +1306,13 @@ public class SurveyTemplate {
 					String nodeset = null;
 					boolean isExternal = false;
 					try {
-						nodeset = q.getNodeset(false, null);
+						nodeset = q.getNodeset(false, null, false);
 						isExternal = GeneralUtilityMethods.isExternalChoices(q.getAppearance(true, getQuestionPaths()));
 					} catch (Exception e) {
 						
 					}
-					if(listName != null && label != null && !isExternal) { 
+					
+					if(listName != null && label != null && (!isExternal || embedExternalSearch)) { 
 						
 						/*
 						 * If this survey was loaded from xlsForm then the list name will not be the same as the
@@ -1351,18 +1352,34 @@ public class SurveyTemplate {
 					 * Get options for this question
 					 */
 					om = new JdbcOptionManager(sd);
-					//List <Option> oList = oPersist.getByQuestionId(q.getId());
 					List <Option> oList = om.getByListId(q.getListId());
+					
+					/*
+					 * Either internal or external(from a file) choices should be included in cascade lists
+					 */
+					boolean includeExternal = false;
+					if(embedExternalSearch) {
+						for(int j= 0; j < oList.size(); j++) {
+							if(oList.get(j).getExternalFile()) {
+								includeExternal = true;		// Include external choices if there are any external choices in the list
+								break;
+							}
+						}
+					}
+					
 					for(int j= 0; j < oList.size(); j++) {
 						Option o = oList.get(j);
 						o.setQuestionRef(qRef);
 						String oRef = qRef + "/" + o.getId();
 						if(oRef != null) {
 							if(cascade) {
-								o.setListName(cascadeName);
-								// Cascade options are shared, check that this option has not been added already by another question
-								if(!cascadeOptionLoaded(cascadeName, o.getLabelId())) {
-									cascade_options.put(oRef, o);
+
+								if((includeExternal && o.getExternalFile()) || (!includeExternal && !o.getExternalFile())) {
+									o.setListName(cascadeName);
+									// Cascade options are shared, check that this option has not been added already by another question
+									if(!cascadeOptionLoaded(cascadeName, o.getLabelId())) {
+										cascade_options.put(oRef, o);
+									}
 								}
 							} else {
 								options.put(oRef, o);
@@ -1567,7 +1584,7 @@ public class SurveyTemplate {
 		try {
 			for(Question q : questionList) {
 	
-				if(q.getType().equals("select")) {
+				if(q.getType().equals("select1")) {
 					
 					// Check to see if this appearance references a manifest file
 					String appearance = q.getAppearance(false, null);

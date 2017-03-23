@@ -1,5 +1,10 @@
 package org.smap.server.utilities;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.io.Writer;
@@ -32,9 +37,12 @@ import org.smap.model.CascadeInstance;
 import org.smap.model.SurveyTemplate;
 import org.smap.model.Results;
 import org.smap.sdal.Utilities.ApplicationException;
+import org.smap.sdal.Utilities.CSVParser;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
+import org.smap.sdal.managers.TranslationManager;
+import org.smap.sdal.model.ManifestValue;
 import org.smap.server.entities.Form;
 import org.smap.server.entities.Option;
 import org.smap.server.entities.Question;
@@ -61,7 +69,8 @@ public class GetXForm {
 	private String gInstanceId = null;
 	private String gSurveyClass = null;
 	private ArrayList<String> gFilenames;
-
+	private boolean embedExternalSearch = false;
+	
 	private static Logger log =
 			 Logger.getLogger(GetXForm.class.getName());
 	
@@ -76,6 +85,9 @@ public class GetXForm {
      	   
        	String response = null;
        	this.template = template;
+       	if(isWebForms) {
+       		embedExternalSearch = true;		// Webforms do not support search
+       	}
   	    
        	Connection sd = null;
     	try {
@@ -182,10 +194,29 @@ public class GetXForm {
     	    	populateCascadeOptions(outputDoc, rootElement, cis.get(i));
     		}
     	}
+    	
+    	// Add pulldata instances as required by enketo 	
+    	if(isWebForms) {
+	    	TranslationManager tm = new TranslationManager();
+	    	List<ManifestValue> manifests = tm.getPulldataManifests(sd, template.getSurvey().getId());
+	    	for(int i = 0; i < manifests.size(); i++) {
+	    		ManifestValue mv = manifests.get(i);
+	    		Element pulldataElement = outputDoc.createElement("instance");
+				pulldataElement.setAttribute("id", mv.baseName);
+				pulldataElement.setAttribute("src", "jr://csv/" + mv.baseName + ".csv");
+				modelElement.appendChild(pulldataElement);
+				Element rootElement = outputDoc.createElement("root");
+    	    	pulldataElement.appendChild(rootElement);
+				populateCSVElements(outputDoc, rootElement, mv.filePath);
+				
+	    	}
+    	}
+	    	
     	// Add forms to bind elements
-    	if(firstForm != null) {		
-    		populateForm(sd, outputDoc, modelElement, BIND, firstForm, isWebForms);
-    	} 	   	
+	    if(firstForm != null) {		
+	    	populateForm(sd, outputDoc, modelElement, BIND, firstForm, isWebForms);
+	    } 	 
+
     }
 
     /*
@@ -317,7 +348,12 @@ public class GetXForm {
 	    			
 	    			// If this is a choice question, add the items
 	    			if(q.getType().startsWith("select")) {
-	    			   	Collection <Option> options = q.getChoices(sd); 
+	    				Collection <Option> options = null; 
+	    				if(embedExternalSearch) {
+	    					options = q.getValidChoices(sd);
+	    				} else {
+	    					options = q.getChoices(sd); 
+	    				}
 	    		    	List <Option> optionList = new ArrayList <Option> (options);
 	    		    	
 	    		    	for(Option o : optionList) {
@@ -475,6 +511,15 @@ public class GetXForm {
     				
     				elementStack.push(currentParent);
 					currentParent = questionElement;
+					
+					// Add a timing element if we have entered the meta group
+					if(q.getName().equals("meta")) {
+						if(template.getSurvey().getTimingData()) {
+							questionElement = outputDoc.createElement("timing");
+		    				questionElement.setTextContent("timing.csv");
+							currentParent.appendChild(questionElement);	
+						}
+					}
     				
     			} else if(qType.equals("end group")) {	
     				
@@ -571,12 +616,8 @@ public class GetXForm {
             		
        				elementStack.push(currentParent);
     				currentParent = questionElement;
-    			}
-    			
-    			
+    			}	
     		}
-
-    		
     	}
     }
    
@@ -823,10 +864,11 @@ public class GetXForm {
 		}
 		
 		boolean cascade = false;
-		String nodeset = q.getNodeset(true, template.getQuestionPaths());
+		String nodeset = q.getNodeset(true, template.getQuestionPaths(), embedExternalSearch);
 		
 		// Add the itemset
-		if(nodeset != null && !GeneralUtilityMethods.isExternalChoices(q.getAppearance(true, template.getQuestionPaths()))) {
+		if(nodeset != null && 
+				(!GeneralUtilityMethods.isExternalChoices(q.getAppearance(true, template.getQuestionPaths())) || embedExternalSearch)) {
 			cascade = true;
 			Element isElement = outputXML.createElement("itemset");
 			isElement.setAttribute("nodeset", nodeset);			
@@ -960,6 +1002,10 @@ public class GetXForm {
     		itemElement.appendChild(valueElement);		
     		
     		// Add other elements that are used for selecting relevant values
+    		
+    		if(embedExternalSearch) {
+    			
+    		}
     		o.setCascadeKeyValues();	// Set the key value pairs from the filter string
     		HashMap<String, String> cvs = o.getCascadeKeyValues();
         	List<String> keyList = new ArrayList<String>(cvs.keySet());
@@ -974,7 +1020,42 @@ public class GetXForm {
     	}
     }
     
+    public void populateCSVElements(Document outputXML, Element parent, 
+    		String filepath) throws Exception {
 
+    	BufferedReader br = null;
+    	File file = new File(filepath); 	
+    	System.out.println("Getting CSV from file: " + file.getAbsolutePath());
+    	
+    	try {
+	    	FileReader reader = new FileReader(file);
+			br = new BufferedReader(reader);
+			CSVParser parser = new CSVParser();
+	       
+			// Get Header
+			String line = br.readLine();
+			String cols [] = parser.parseLine(line);
+			
+			while(line != null) {
+				line = br.readLine();
+				if(line != null) {
+					String [] values = parser.parseLine(line);
+
+					Element item = outputXML.createElement("item");
+					parent.appendChild(item);
+					Element elem = null;
+					for(int i = 0; i  < cols.length; i++) {
+						elem = outputXML.createElement(cols[i]);
+						elem.setTextContent(values[i]);
+		    	    	item.appendChild(elem);
+					}
+				}
+			}
+    	} finally {
+    		try {br.close();} catch(Exception e) {};
+    	}
+    }
+    
     /*
      * Get the instance data for an XForm as a string
      */

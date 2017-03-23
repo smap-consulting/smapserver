@@ -1455,8 +1455,8 @@ public class GeneralUtilityMethods {
 			String cols [] = parser.parseLine(line);
 	       
 			CSVFilter filter = new CSVFilter(cols, qAppearance);								// Get a filter
-			ValueLabelCols vlc = getValueLabelCols(connectionSD, qId, qName, cols);		// Identify the columns in the CSV file that have the value and label
-
+			ValueLabelCols vlc = getValueLabelCols(connectionSD, qId, qName, cols);				// Identify the columns in the CSV file that have the value and label
+			
 			while(line != null) {
 				line = br.readLine();
 				if(line != null) {
@@ -1471,6 +1471,7 @@ public class GeneralUtilityMethods {
 						c.qType = qType;
 						c.option.externalLabel = optionCols[vlc.label];
 						c.option.value = optionCols[vlc.value];
+						c.option.cascade_filters = filter.GetCascadeFilter(optionCols);
 						//c.property.type = "option";
 		    		  
 						ciList.add(c);
@@ -1514,6 +1515,7 @@ public class GeneralUtilityMethods {
 		try {
 			pstmt = connectionSD.prepareStatement(sql);
 			pstmt.setInt(1,  qId);
+			log.info("Get value/label combos: " + pstmt.toString());
 			ResultSet rs = pstmt.executeQuery();
 			if(rs.next()) {
 				String valueName = rs.getString(1);
@@ -3919,6 +3921,32 @@ public class GeneralUtilityMethods {
 		}
 		
 		return external;
+	}
+	
+	/*
+	 * Get the search question from appearance
+	 * Used when converting searches into cascading selects
+	 */
+	public static String getFirstSearchQuestionFromAppearance(String appearance) {
+		String filterQuestion = null;
+		
+		if(appearance != null && appearance.toLowerCase().trim().contains("search(")) {
+			int idx1 = appearance.indexOf('(');
+			int idx2 = appearance.indexOf(')');
+			
+			if(idx1 > 0 && idx2 > idx1) {
+				String criteriaString = appearance.substring(idx1 + 1, idx2);
+				log.info("#### criteria for csv filter: " + criteriaString);
+				String criteria [] = criteriaString.split(",");
+				if(criteria.length >= 4) {
+					// remove quotes
+					filterQuestion = criteria[3].trim();
+
+				}
+			}
+		}
+		
+		return filterQuestion;
 	}
 
 }

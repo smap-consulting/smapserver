@@ -725,9 +725,11 @@ public class UploadFiles extends Application {
 			/*
 			 * Create a changeset
 			 */
-			ChangeSet cs = qm.getCSVChangeSetForQuestion(connectionSD, csvFile, csvFileName, q);
-			if(cs.items.size() > 0) {
-				changes.add(cs);
+			if(q.type.startsWith("select")) {
+				ChangeSet cs = qm.getCSVChangeSetForQuestion(connectionSD, csvFile, csvFileName, q);
+				if(cs.items.size() > 0) {
+					changes.add(cs);
+				}
 			}
 			
 		}
