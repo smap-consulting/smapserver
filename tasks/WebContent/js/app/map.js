@@ -175,8 +175,9 @@ define([
          */
         function updateSingleLayer(index, results) {
 
-            var geoJson = getGeoJson(results, gLayers[index]);		// Get a geoson of data
-            //var styles = getStyles(gLayers[index]);					// Get the styles
+            var layer = gLayers[index];
+            var geoJson = getGeoJson(results, layer);		// Get a geoson of data
+            //var styles = getStyles(layer);					// Get the styles
             var defaultStyle = new ol.style.Style({
                 fill: new ol.style.Fill({
                     color: 'rgba(255, 100, 50, 0.3)'
@@ -206,10 +207,18 @@ define([
                     })
             });
 
-            var vectorLayer = new ol.layer.Vector({
-                source: vectorSource,
-                style: [defaultStyle]
-            });
+            var vectorLayer;
+            if(layer.clump === "heatmap") {
+                vectorLayer = new ol.layer.Heatmap({
+                    source: vectorSource,
+                    radius: 5
+                });
+            } else {
+                vectorLayer = new ol.layer.Vector({
+                    source: vectorSource,
+                    style: [defaultStyle]
+                });
+            }
 
             gMap.addLayer(vectorLayer);
         }
@@ -234,6 +243,7 @@ define([
 
             layer.title = title;
             layer.local = local;
+            layer.clump = $('input[name=clump]:checked', '#mapForm').val();
 
             gLayers.push(layer);
             $('#layerEdit').modal("hide");	// All good close the modal
