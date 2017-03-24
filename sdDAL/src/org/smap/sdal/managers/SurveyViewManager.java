@@ -63,7 +63,7 @@ public class SurveyViewManager {
 			int oId,
 			boolean superUser) throws SQLException, Exception  {
 		
-		SurveyViewDefn mfc = new SurveyViewDefn();
+		SurveyViewDefn svd = new SurveyViewDefn();
 		ManagedFormUserConfig savedConfig = null;
 		
 		// SQL to get view details
@@ -177,7 +177,7 @@ public class SurveyViewManager {
 						tc.name = "_geolocation";
 					}
 					if(tc.include) {
-						mfc.columns.add(tc);
+						svd.columns.add(tc);
 					}
 				}
 			}
@@ -186,7 +186,7 @@ public class SurveyViewManager {
 			 * Add the managed form columns and configuration
 			 */
 			if(managedId > 0) {
-				getDataProcessingConfig(sd, managedId, mfc.columns, savedConfig.columns, oId);
+				getDataProcessingConfig(sd, managedId, svd.columns, savedConfig.columns, oId);
 			}
 		
 				
@@ -198,7 +198,7 @@ public class SurveyViewManager {
 			try {if (pstmt != null) {pstmt.close();	}} catch (SQLException e) {	}
 		}
 		
-		return mfc;
+		return svd;
 
 	}
 	

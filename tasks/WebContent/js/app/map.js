@@ -249,6 +249,7 @@ define([
             $('#layerEdit').modal("hide");	// All good close the modal
 
             refreshLayer(gLayers.length - 1)
+            SaveToServer(gLayers);
 
         };
 
@@ -277,7 +278,10 @@ define([
         }
 
         /*
-         * Return a default style
+         * Save the layers to the server
          */
+        function saveToServer(layers) {
+
+        }
 
     });

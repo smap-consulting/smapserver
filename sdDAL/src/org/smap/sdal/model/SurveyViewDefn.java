@@ -9,7 +9,7 @@ public class SurveyViewDefn {
 	int sId;
 	int managedId;
 	int queryId;
-	public ArrayList<TableColumn> columns = new ArrayList<TableColumn> ();
+	public ArrayList<TableColumn> columns = new ArrayList<TableColumn> ();		// Table
+	public ArrayList<MapLayer> layers = new ArrayList<MapLayer> ();             // Map
 	// Charts
-	// Map
 }

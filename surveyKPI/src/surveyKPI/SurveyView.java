@@ -47,6 +47,7 @@ import org.smap.sdal.model.Link;
 import org.smap.sdal.model.SurveyViewDefn;
 import org.smap.sdal.model.ManagedFormItem;
 import org.smap.sdal.model.ManagedFormUserConfig;
+import org.smap.sdal.model.MapLayer;
 import org.smap.sdal.model.Role;
 import org.smap.sdal.model.TableColumn;
 import com.google.gson.Gson;
@@ -64,7 +65,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /*
- * Get the questions in the top level form for the requested survey
+ * Services to support a survey view
+ * The view is one level below a dashboard and shows, charts, maps and tables of data for a single survey or query
  */
 @Path("/surveyview")
 public class SurveyView extends Application {
@@ -171,44 +173,65 @@ public class SurveyView extends Application {
 		return response;
 	}	
 	
+
 	/*
-	 * Return the survey view
+	 * save a survey view
+	 *  Map
+	 *  or Charts
 	 */
-	@GET
-	@Path("/{viewId}")
-	@Produces("application/json")
-	public Response getReportConfig(
+	@POST
+	@Path("/{type}/{viewId}")
+	public Response saveView(
 			@Context HttpServletRequest request,
-			@PathParam("viewId") int viewId) { 
+			@PathParam("type") String type,			// map || chart
+			@PathParam("viewId") int viewId,
+			@FormParam("settings") String settings) { 
 		
 		// Authorisation - Access
 		Connection sd = SDDataSource.getConnection("surveyKPI-GetReportConfig");
-		boolean superUser = false;
-		try {
-			superUser = GeneralUtilityMethods.isSuperUser(sd, request.getRemoteUser());
-		} catch (Exception e) {
-		}
-
+		aNormal.isValidView(sd, request.getRemoteUser(), viewId, true);	// Does the user have write access to this view
 		// End Authorisation
 		
-		Connection cResults = ResultsDataSource.getConnection("surveyKPI-GetReportConfig");
+		String sqlUpdMap = "update survey_view set map_view = ? where id = ?";
+		String sqlUpdChart = "update survey_view set chart_view = ? where id = ?;";	
+		PreparedStatement pstmt = null;
+		
+	
 		Response response = null;
 		Gson gson=  new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd").create();
 		try {
-
-		
-				
+			Type dataType;
+			/*
+			 * Convert the input to java classes and then back to json to ensure it is well formed
+			 */
+			if(type.equals("map")) {
+				dataType = new TypeToken<ArrayList<MapLayer>>(){}.getType();
+				ArrayList<MapLayer> mla = gson.fromJson(settings, dataType);
+				settings = gson.toJson(mla);
+				pstmt = sd.prepareStatement(sqlUpdMap);
+			} else if(type.equals("chart")) {
+				// TODO
+				pstmt = sd.prepareStatement(sqlUpdChart);
+			}
+			
+			pstmt.setString(1, settings);
+			pstmt.setInt(2,  viewId);
+			log.info("Updating " + type + ": " + pstmt.toString());
+			pstmt.executeUpdate();
+			
 		} catch (Exception e) {
 			log.log(Level.SEVERE, "Error", e);
 		    response = Response.serverError().entity(e.getMessage()).build();
 		} finally {
+			try {if (pstmt != null) {pstmt.close();}} catch (Exception e) {}
 			SDDataSource.closeConnection("surveyKPI-GetReportConfig", sd);
-			ResultsDataSource.closeConnection("surveyKPI-GetReportConfig", cResults);
+
 		}
 
 
 		return response;
 	}	
+
 
 }
 
