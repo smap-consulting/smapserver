@@ -121,6 +121,10 @@ define([
                     addLayer();
                 });
 
+                $('#layerEdit').on('shown.bs.modal', function() {
+                    $('#ml_title').focus();
+                });
+
                 $('#addLayerSave').click(function () {
                     saveLayer();
                 });
