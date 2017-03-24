@@ -125,8 +125,6 @@ require([
              datatables,
              svgsave) {
 
-    var gMapLayersShown = false;
-
     /*
      * Report definition
      * Default Settings
@@ -344,7 +342,7 @@ require([
          */
         $('#m_map_view').click(function () {
             map.init();
-            if (gMapLayersShown) {
+            if (globals.gMapLayersShown) {
                 $('.main_content').removeClass("col-md-12").addClass("col-md-8");
                 $('.map_layers').show();
             } else {

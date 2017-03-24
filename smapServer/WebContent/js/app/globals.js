@@ -93,12 +93,12 @@ define(function() {
 		gFilterArray: undefined,
 		
 		gSaveInProgress: false,
-		
+
+		// Dashboard
 		gMainTable: undefined,			// Data tables
-		
 		gReports: undefined,			// reports
-		
 		gCharts: {},					// charts
+        gMapLayersShown: false,
 		
 		model: new Model()
 

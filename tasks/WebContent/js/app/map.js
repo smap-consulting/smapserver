@@ -127,13 +127,15 @@ define([
 			
 			// Show the layers selector
 			$('#showlayers').click( function () {
-				gMapLayersShown = !gMapLayersShown;
-				if(gMapLayersShown) {
+				globals.gMapLayersShown = !globals.gMapLayersShown;
+				if(globals.gMapLayersShown) {
 					$('.main_content').removeClass("col-md-12").addClass("col-md-8");
 					$('.map_layers').show();
+                    gMap.updateSize();
 				} else {
 					$('.main_content').removeClass("col-md-8").addClass("col-md-12");
 					$('.map_layers').hide();
+                    gMap.updateSize();
 				}
 			});
 		 }
@@ -217,7 +219,7 @@ define([
 	function saveLayer() {
 		 
 		 var title = $('#ml_title').val(),
-		 	local = $('#usecurrent_tabledata').is(':checked')
+		 	local = $('#usecurrent_tabledata').is(':checked'),
 		 	layer = {};
 		 	
 		 // Validation
