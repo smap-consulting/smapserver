@@ -24,6 +24,7 @@ local.properties
 # enketo 
 combined.min.js
 enketo-core.min.js
+WebContent/build
 
 # External tool builders
 .externalToolBuilders/
