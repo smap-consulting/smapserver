@@ -894,7 +894,10 @@ create TABLE survey_view (
 	s_id integer,		-- optional survey id
 	m_id integer,		-- optional managed id requires s_id to be set
 	query_id integer,	-- optional query id
-	view text
+	view text,			-- Table view data
+	map_view text,		-- Map view data
+	chart_view text		-- Chart view data
+	
 );
 ALTER TABLE survey_view OWNER TO ws;
 

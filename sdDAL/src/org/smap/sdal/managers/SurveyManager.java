@@ -2846,7 +2846,6 @@ public class SurveyManager {
 				+ "q.published, "
 				+ "q.column_name, "
 				+ "q.source_param, "
-				+ "q.path, "
 				+ "q.soft_deleted, "
 				+ "q.autoplay,"
 				+ "q.accuracy,"
@@ -2893,12 +2892,11 @@ public class SurveyManager {
 				q.published = rsGetQuestions.getBoolean(19);
 				q.columnName = rsGetQuestions.getString(20);
 				q.source_param = rsGetQuestions.getString(21);
-				q.path = rsGetQuestions.getString(22);
-				q.soft_deleted = rsGetQuestions.getBoolean(23);
-				q.autoplay = rsGetQuestions.getString(24);
-				q.accuracy = rsGetQuestions.getString(25);
-				q.linked_survey = rsGetQuestions.getInt(26);
-				q.l_id = rsGetQuestions.getInt(27);
+				q.soft_deleted = rsGetQuestions.getBoolean(22);
+				q.autoplay = rsGetQuestions.getString(23);
+				q.accuracy = rsGetQuestions.getString(24);
+				q.linked_survey = rsGetQuestions.getInt(25);
+				q.l_id = rsGetQuestions.getInt(26);
 				if(q.autoplay == null) {
 					q.autoplay = "none";
 				}

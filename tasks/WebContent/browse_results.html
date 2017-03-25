@@ -135,7 +135,7 @@ var isBrowseResults = true,
 	            </div>
 	            <div class="col-sm-5">
 	            	<div class="row">
-						<form role="form" class="form-horizontal heading-element" id="service_filter_form">
+						<form role="form" class="form-horizontal heading-element" id="projet_name_form">
 							<label class="lang col-sm-4 control-label" data-lang="c_project" for="project_name">project</label>
 							<div class="col-sm-8">
 								<select class="project_list form-control" id="project_name"></select>
@@ -145,7 +145,7 @@ var isBrowseResults = true,
 	        	</div>
 	        	<div class="col-sm-5">
 	            	<div class="row">
-						<form role="form" class="form-horizontal heading-element" id="service_filter_form">
+						<form role="form" class="form-horizontal heading-element" id="survey_name_form">
 							<label class="lang col-sm-4 control-label" data-lang="c_survey" for="survey_name">survey</label>
 							<div class="col-sm-8">
 								<select class="survey_select form-control" id="survey_name"></select>
@@ -436,12 +436,12 @@ var isBrowseResults = true,
 				<div class="row">
 					<div class="col-sm-12 b-r"><h3 class="m-t-none m-b lang" data-lang="mf_ld">layer details</h3>
 
-						<form id="chartForm" role="form" class="form-horizontal">
+						<form id="mapForm" role="form" class="form-horizontal">
 						
 							<div class="form-group">
 			         			<label class="lang col-sm-2 control-label" data-lang="c_title" for="ml_title">title</label>
 								<div class="col-sm-10">
-									<input type="text" class="form-control title" id="ml_title">
+									<input type="text" class="form-control title" id="ml_title" required>
 								</div>
 							</div>
 						
@@ -450,6 +450,23 @@ var isBrowseResults = true,
 									<div class="checkbox">
 										<label>
 											<input type="checkbox" id="usecurrent_tabledata" checked><span data-lang="br_cd" class="lang">current table data</span>
+										</label>
+									</div>
+								</div>
+							</div>
+
+							<div class="form-group">
+								<div class="col-sm-offset-2 col-sm-10">
+									<div class="radio">
+										<label>
+											<input type="radio" value="normal" id="clump_normal" name="clump" checked><span data-lang="c_normal" class="lang">normal</span>
+										</label>
+									</div>
+								</div>
+								<div class="col-sm-offset-2 col-sm-10">
+									<div class="radio">
+										<label>
+											<input type="radio" value="heatmap" id="clump_heatmap" name="clump"><span data-lang="c_heatmap" class="lang">heatmap</span>
 										</label>
 									</div>
 								</div>
@@ -475,7 +492,7 @@ var isBrowseResults = true,
 							-->
 						
 						</form>
-						<div id="layerInfo" style="word-wrap break-word; display:none;" class="alert" role="alert"></div>
+						<div id="layerInfo" style="word-wrap:break-word; display:none;" class="alert" role="alert"></div>
 					</div>
 					
 				</div>

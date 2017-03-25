@@ -318,6 +318,69 @@ public class Authorise {
 	}
 	
 	/*
+	 * Verify that the user is entitled to access this particular view
+	 */
+	public boolean isValidView(Connection conn, String user, int viewId, boolean update)
+			throws ServerException, AuthorisationException, NotFoundException {
+		ResultSet resultSet = null;
+		PreparedStatement pstmt = null;
+		int count = 0;
+		boolean sqlError = false;
+		
+		/*
+		 * 1) Make sure the view  exists 
+		 * 2) Make sure user has access to the view
+		 */
+
+		StringBuffer sql = new StringBuffer("select count(*) from user_view v, users u "
+				+ "where u.id = v.u_id "
+				+ "and v.v_id = ? "
+				+ "and u.ident = ? ");
+		
+		if(update) {
+			sql.append("and (v.access = 'write' or v.access = 'owner'" );
+		}
+		try {		
+			
+			pstmt = conn.prepareStatement(sql.toString());
+			pstmt.setInt(1, viewId);
+			pstmt.setString(2, user);
+			
+			log.info("IsValidView: " + pstmt.toString());
+			
+			resultSet = pstmt.executeQuery();
+			resultSet.next();
+			
+			count = resultSet.getInt(1);
+		} catch (Exception e) {
+			log.log(Level.SEVERE,"Error in Authorisation", e);
+			sqlError = true;
+		} finally {
+			// Close the result set and prepared statement
+			try{
+				if(resultSet != null) {resultSet.close();};
+				if(pstmt != null) {pstmt.close();};
+			} catch (Exception ex) {
+				log.log(Level.SEVERE, "Unable to close resultSet or prepared statement");
+			}
+		}
+		
+ 		if(count == 0) {
+ 			log.info("Error: Query validation failed for: " + user + " query was: " + viewId);
+ 			
+ 			SDDataSource.closeConnection("isValidView", conn);
+			
+			if(sqlError) {
+				throw new ServerException();
+			} else {
+				throw new NotFoundException();	// Not found rather than not authorised as we could not find a resource that the user had access to
+			}
+		} 
+ 		
+		return true;
+	}
+	
+	/*
 	 * Verify that the user is entitled to access this particular role
 	 */
 	public boolean isValidRole(Connection conn, String user, int rId)

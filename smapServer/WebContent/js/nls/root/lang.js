@@ -220,6 +220,8 @@ define({
 	"c_in": "in",
 	"c_rev": "Reverse",
 	"c_for": "For",
+	"c_normal": "Normal",
+    "c_heatmap": "Heatmap",
 	
 	// File Types
 	"ft": "File Type",
