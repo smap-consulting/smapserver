@@ -870,7 +870,9 @@ window.gTasks = {
 			 }
 		 }
 		 $('#date_question').html(h.join(''));
-		 $('#date_question').val(defValue);
+		 if(typeof defValue !== "undefined") {
+             $('#date_question').val(defValue);
+		 }
 	 }
 	 
 	 /*
