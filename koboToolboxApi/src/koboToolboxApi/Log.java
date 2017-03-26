@@ -152,7 +152,7 @@ public class Log extends Application {
 			
 			sqlSelect += "and l.o_id = ? ";
 			
-			String sqlOrder = "order by l." + sort + " " + dirn;
+			String sqlOrder = "order by l." + sort + " " + dirn +" limit 10000";
 			
 			pstmt = sd.prepareStatement(sql + sqlSelect + sqlOrder);
 			int paramCount = 1;

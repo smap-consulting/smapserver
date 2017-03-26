@@ -24,18 +24,28 @@
             <state relative-caret-position="898">
               <caret line="554" column="12" lean-forward="false" selection-start-line="554" selection-start-column="12" selection-end-line="554" selection-end-column="12" />
               <folding>
-                <marker date="1490389083000" expanded="true" signature="0:3" ph="/*...*/" />
-                <marker date="1490389083000" expanded="true" signature="15352:15354" ph="{...}" />
+                <marker date="1490479591000" expanded="true" signature="0:3" ph="/*...*/" />
+                <marker date="1490479591000" expanded="true" signature="15352:15354" ph="{...}" />
               </folding>
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="common_mgmt.js" pinned="false" current-in-tab="true">
+      <file leaf-file-name="common_mgmt.js" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/WebContent/js/app/common_mgmt.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="376">
-              <caret line="872" column="43" lean-forward="false" selection-start-line="872" selection-start-column="43" selection-end-line="872" selection-end-column="43" />
+            <state relative-caret-position="106">
+              <caret line="854" column="14" lean-forward="false" selection-start-line="854" selection-start-column="14" selection-end-line="854" selection-end-column="14" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="log.js" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/WebContent/js/log.js">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="-1">
+              <caret line="122" column="24" lean-forward="false" selection-start-line="122" selection-start-column="24" selection-end-line="122" selection-end-column="24" />
               <folding />
             </state>
           </provider>
@@ -55,6 +65,7 @@
       <find>save</find>
       <find>gMapLayersShown</find>
       <find>setDateChoices</find>
+      <find>/v1/log/dt</find>
     </findStrings>
     <replaceStrings>
       <replace />
@@ -184,12 +195,12 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1490318141958</updated>
-      <workItem from="1490318143521" duration="6922000" />
+      <workItem from="1490318143521" duration="7187000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="6922000" />
+    <option name="totallyTimeSpent" value="7187000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="20" y="33" width="1260" height="691" extended-state="0" />
@@ -203,7 +214,7 @@
       <window_info id="Execute Anonymous" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="-1" side_tool="false" content_ui="tabs" />
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="-1" side_tool="false" content_ui="tabs" />
       <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.21190476" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
-      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.16398714" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
+      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.4533762" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="-1" side_tool="true" content_ui="tabs" />
       <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
@@ -248,16 +259,24 @@
         <state relative-caret-position="898">
           <caret line="554" column="12" lean-forward="false" selection-start-line="554" selection-start-column="12" selection-end-line="554" selection-end-column="12" />
           <folding>
-            <marker date="1490389083000" expanded="true" signature="0:3" ph="/*...*/" />
-            <marker date="1490389083000" expanded="true" signature="15352:15354" ph="{...}" />
+            <marker date="1490479591000" expanded="true" signature="0:3" ph="/*...*/" />
+            <marker date="1490479591000" expanded="true" signature="15352:15354" ph="{...}" />
           </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/WebContent/js/app/common_mgmt.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="376">
-          <caret line="872" column="43" lean-forward="false" selection-start-line="872" selection-start-column="43" selection-end-line="872" selection-end-column="43" />
+        <state relative-caret-position="106">
+          <caret line="854" column="14" lean-forward="false" selection-start-line="854" selection-start-column="14" selection-end-line="854" selection-end-column="14" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/WebContent/js/log.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-1">
+          <caret line="122" column="24" lean-forward="false" selection-start-line="122" selection-start-column="24" selection-end-line="122" selection-end-column="24" />
           <folding />
         </state>
       </provider>
