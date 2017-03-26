@@ -293,17 +293,18 @@ public class Question {
 		
 		if(embedExternalSearch) {
 			// Potentially add a filter using the appearance value to the nodeset
-			System.out.println("Add filter from: " + appearance + " to: " + nodeset);
-			if(v != null) {
-				// First remove any filter added through setting of choice_filter this is incompatible with the use of search()
-				int idx = v.indexOf('[');
-				if (idx >= 0) {
-					v = v.substring(0, idx);
-				}
+			String filterQuestion = GeneralUtilityMethods.getFirstSearchQuestionFromAppearance(appearance);
+			System.out.println("Filter question: " + filterQuestion );
+			
+			if(filterQuestion != null) {
+				System.out.println("Add filter from: " + appearance + " to: " + nodeset);
+				if(v != null) {
+					// First remove any filter added through setting of choice_filter this is incompatible with the use of search()
+					int idx = v.indexOf('[');
+					if (idx >= 0) {
+						v = v.substring(0, idx);
+					}
 				
-				String filterQuestion = GeneralUtilityMethods.getFirstSearchQuestionFromAppearance(appearance);
-				System.out.println("Filter question: " + filterQuestion );
-				if(filterQuestion != null) {
 					v += "[ _smap_cascade = " + filterQuestion + " ]";
 				}
 			}

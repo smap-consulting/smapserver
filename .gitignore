@@ -29,7 +29,7 @@ local.properties
 smapServer/WebContent/build/css.orig
 combined.min.js
 enketo-core.min.js
-smapServer/WebContent/build/js/webform-bundle.js
+WebContent/build
 
 # External tool builders
 .externalToolBuilders/
