@@ -24,6 +24,7 @@ local.properties
 .loadpath
 
 .idea
+workspace.xml
 
 # enketo 
 smapServer/WebContent/build/css.orig

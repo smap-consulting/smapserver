@@ -146,7 +146,8 @@ define([
 			date_col = getCol(gCurrentReport.date_q, gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].columns),
 			filtered = gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].filtered,
 			index = 0,
-			dataLength = results.count();
+			j,
+			dataLength = results.count(),
 			xlsResponse = [];
 		
 		for(i = 0; i < gCurrentReport.row.length; i++) {
@@ -890,8 +891,11 @@ define([
 		/*
 		 * Add the chart type select list
 		 */
-		h = [];
-		idx = -1;
+		var h = [];
+		var idx = -1;
+		var key;
+		var keylangid;
+
 		for (key in avCharts) {
 			
 		    if (avCharts.hasOwnProperty(key)) {

@@ -21,12 +21,22 @@
       <file leaf-file-name="managed_forms.js" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/WebContent/js/managed_forms.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="898">
-              <caret line="554" column="12" lean-forward="false" selection-start-line="554" selection-start-column="12" selection-end-line="554" selection-end-column="12" />
+            <state relative-caret-position="-1806">
+              <caret line="144" column="0" lean-forward="false" selection-start-line="144" selection-start-column="0" selection-end-line="144" selection-end-column="0" />
               <folding>
-                <marker date="1490479591000" expanded="true" signature="0:3" ph="/*...*/" />
-                <marker date="1490479591000" expanded="true" signature="15352:15354" ph="{...}" />
+                <marker date="1490496621000" expanded="false" signature="0:3" ph="/*...*/" />
+                <marker date="1490496621000" expanded="true" signature="19655:19657" ph="{...}" />
               </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="chart.js" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/WebContent/js/app/chart.js">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="39">
+              <caret line="148" column="14" lean-forward="false" selection-start-line="148" selection-start-column="14" selection-end-line="148" selection-end-column="14" />
+              <folding />
             </state>
           </provider>
         </entry>
@@ -34,18 +44,18 @@
       <file leaf-file-name="common_mgmt.js" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/WebContent/js/app/common_mgmt.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="106">
-              <caret line="854" column="14" lean-forward="false" selection-start-line="854" selection-start-column="14" selection-end-line="854" selection-end-column="14" />
+            <state relative-caret-position="661">
+              <caret line="891" column="14" lean-forward="false" selection-start-line="891" selection-start-column="14" selection-end-line="891" selection-end-column="14" />
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="log.js" pinned="false" current-in-tab="true">
+      <file leaf-file-name="log.js" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/WebContent/js/log.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-1">
-              <caret line="122" column="24" lean-forward="false" selection-start-line="122" selection-start-column="24" selection-end-line="122" selection-end-column="24" />
+            <state relative-caret-position="119">
+              <caret line="130" column="23" lean-forward="false" selection-start-line="130" selection-start-column="23" selection-end-line="130" selection-end-column="23" />
               <folding />
             </state>
           </provider>
@@ -66,6 +76,7 @@
       <find>gMapLayersShown</find>
       <find>setDateChoices</find>
       <find>/v1/log/dt</find>
+      <find>setChartList</find>
     </findStrings>
     <replaceStrings>
       <replace />
@@ -78,6 +89,7 @@
         <option value="$PROJECT_DIR$/WebContent/js/app/map.js" />
         <option value="$PROJECT_DIR$/WebContent/js/managed_forms.js" />
         <option value="$PROJECT_DIR$/WebContent/js/app/common_mgmt.js" />
+        <option value="$PROJECT_DIR$/WebContent/js/app/chart.js" />
       </list>
     </option>
   </component>
@@ -195,12 +207,12 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1490318141958</updated>
-      <workItem from="1490318143521" duration="7187000" />
+      <workItem from="1490318143521" duration="8046000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="7187000" />
+    <option name="totallyTimeSpent" value="8046000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="20" y="33" width="1260" height="691" extended-state="0" />
@@ -214,7 +226,7 @@
       <window_info id="Execute Anonymous" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="-1" side_tool="false" content_ui="tabs" />
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="-1" side_tool="false" content_ui="tabs" />
       <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.21190476" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
-      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.4533762" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
+      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.09163987" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="-1" side_tool="true" content_ui="tabs" />
       <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
@@ -254,29 +266,37 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/WebContent/js/managed_forms.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="898">
-          <caret line="554" column="12" lean-forward="false" selection-start-line="554" selection-start-column="12" selection-end-line="554" selection-end-column="12" />
-          <folding>
-            <marker date="1490479591000" expanded="true" signature="0:3" ph="/*...*/" />
-            <marker date="1490479591000" expanded="true" signature="15352:15354" ph="{...}" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/WebContent/js/app/common_mgmt.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="106">
-          <caret line="854" column="14" lean-forward="false" selection-start-line="854" selection-start-column="14" selection-end-line="854" selection-end-column="14" />
+        <state relative-caret-position="661">
+          <caret line="891" column="14" lean-forward="false" selection-start-line="891" selection-start-column="14" selection-end-line="891" selection-end-column="14" />
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/WebContent/js/log.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-1">
-          <caret line="122" column="24" lean-forward="false" selection-start-line="122" selection-start-column="24" selection-end-line="122" selection-end-column="24" />
+        <state relative-caret-position="119">
+          <caret line="130" column="23" lean-forward="false" selection-start-line="130" selection-start-column="23" selection-end-line="130" selection-end-column="23" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/WebContent/js/managed_forms.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-1806">
+          <caret line="144" column="0" lean-forward="false" selection-start-line="144" selection-start-column="0" selection-end-line="144" selection-end-column="0" />
+          <folding>
+            <marker date="1490496621000" expanded="false" signature="0:3" ph="/*...*/" />
+            <marker date="1490496621000" expanded="true" signature="19655:19657" ph="{...}" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/WebContent/js/app/chart.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="39">
+          <caret line="148" column="14" lean-forward="false" selection-start-line="148" selection-start-column="14" selection-end-line="148" selection-end-column="14" />
           <folding />
         </state>
       </provider>
