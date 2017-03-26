@@ -840,7 +840,7 @@ window.gTasks = {
 			 url += '&managed=' + managedId;
 			 url += '&query=' + queryId;		// ignore for moment, ie note caching is done only on survey index
 		 }
-		 if(!gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex]) {
+		 if(!gTasks.cache.surveyConfig[globals.gViewId]) {
 			 
 			 addHourglass();
 			 $.ajax({
@@ -850,7 +850,8 @@ window.gTasks = {
 				 success: function(data) {
 					 removeHourglass();
 					 gConfigLoaded = true;
-					 gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex] = data;
+					 globals.gViewId = data.viewId;
+					 gTasks.cache.surveyConfig[data.viewId] = data;
 					 console.log("Config loaded: " + gDataLoaded + " : " + gReportLoaded + " : " + gConfigLoaded)
 					 if(gReportLoaded && gDataLoaded) {
 						 chart.setChartList();	// Enable charts based on this survey config

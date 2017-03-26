@@ -249,7 +249,7 @@ define([
             $('#layerEdit').modal("hide");	// All good close the modal
 
             refreshLayer(gLayers.length - 1)
-            SaveToServer(gLayers);
+            saveToServer(gLayers);
 
         };
 
@@ -281,7 +281,23 @@ define([
          * Save the layers to the server
          */
         function saveToServer(layers) {
-
+            var saveString = JSON.stringify(layers);
+            addHourglass();
+            $.ajax({
+                type: "POST",
+                dataType: 'text',
+                contentType: "application/json",
+                cache: false,
+                url: "/surveyKPI/surveyview/map/" + globals.gViewId,
+                data: { settings: saveString },
+                success: function(data, status) {
+                    removeHourglass();
+                    updateActionStatus(localise.set["msg_upd"]);
+                }, error: function(data, status) {
+                    removeHourglass();
+                    alert(localise.set["msg_err_save"] + " " + data.responseText);
+                }
+            });
         }
 
     });

@@ -99,6 +99,7 @@ define(function() {
 		gReports: undefined,			// reports
 		gCharts: {},					// charts
         gMapLayersShown: false,
+		gViewId: 0,						// Current survey view
 		
 		model: new Model()
 

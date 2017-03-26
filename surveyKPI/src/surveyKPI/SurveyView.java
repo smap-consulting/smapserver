@@ -175,7 +175,7 @@ public class SurveyView extends Application {
 	
 
 	/*
-	 * save a survey view
+	 * save the map layers or charts for a survey view
 	 *  Map
 	 *  or Charts
 	 */

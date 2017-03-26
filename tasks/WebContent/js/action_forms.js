@@ -162,7 +162,7 @@ require([
 	}
 
 	function saveUpdate() {
-		 saveString = JSON.stringify(gTasks.gUpdate);
+		 var saveString = JSON.stringify(gTasks.gUpdate);
 		 addHourglass();
 		 $.ajax({
 			 type: "POST",

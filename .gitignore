@@ -23,7 +23,7 @@ local.properties
 .settings/
 .loadpath
 
-.idea
+.idea/
 workspace.xml
 
 # enketo 
