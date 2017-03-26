@@ -338,7 +338,7 @@ public class Authorise {
 				+ "and u.ident = ? ");
 		
 		if(update) {
-			sql.append("and (v.access = 'write' or v.access = 'owner'" );
+			sql.append("and (v.access = 'write' or v.access = 'owner')" );
 		}
 		try {		
 			
