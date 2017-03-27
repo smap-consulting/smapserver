@@ -133,7 +133,7 @@ require([
 		enableUserProfileBS();	
 		
 		$('#saveRecord').click(function(){
-			 saveString = JSON.stringify(gUpdate);
+			 var saveString = JSON.stringify(gUpdate);
 			 addHourglass();
 			 $.ajax({
 				 type: "POST",
@@ -334,7 +334,7 @@ require([
 		 // Add body
 		 h[++idx] = '<tbody>';
 		 for(j = 0; j < managed.length; j++) {
-			 record = managed[j];
+			 var record = managed[j];
 			 h[++idx] = '<tr>';
 			 for(i = 0; i < columns.length; i++) {
 				 headItem = columns[i];
@@ -410,7 +410,7 @@ require([
 	 		//$elemNonTracking = $('.nonTrackingSurveys'),
 	 		$elemTracking = $('#surveyTable');
 
-		gIsManageId = undefined;
+		globals.gIsManageId = undefined;
 	 	if(typeof projectId !== "undefined" && projectId != -1 && projectId != 0) {
 	 		
 	 		addHourglass();
@@ -574,7 +574,7 @@ require([
 				 manageId: manageId
 		 }
 		 
-		 saveString = JSON.stringify(saveObj);
+		 var saveString = JSON.stringify(saveObj);
 		 addHourglass();
 		 $.ajax({
 			 type: "POST",

@@ -221,7 +221,7 @@ public class SurveyView extends Application {
 			viewId = svm.save(sd, uId, viewId, sId, managedId, queryId, view, mapView, chartView);
 
 			// return the view id
-			String msg = "{viewId: " + viewId + "}";
+			String msg = "{\"viewId\": \"" + viewId + "\"}";
 			response = Response.ok(msg).build();
 				
 		} catch (Exception e) {

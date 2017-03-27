@@ -201,8 +201,10 @@ public class SurveyViewManager {
 			String mapView, 
 			String chartView) throws Exception {
 		
-		String sqlUpdate = "update survey_view set view = ? "
-				+ "where id = ? "
+		String sqlUpdateView = "update survey_view set view = ? ";
+		String sqlUpdateMap = "update survey_view set map_view = ? ";
+		String sqlUpdateChart = "update survey_view set chart_view = ? ";
+		String sqlUpdate = "where id = ? "
 				+ "and s_id = ? "
 				+ "and m_id = ? "
 				+ "and query_id = ?;";
@@ -241,19 +243,33 @@ public class SurveyViewManager {
 			ArrayList<TableColumnConfig> objView = gson.fromJson(view, viewType);
 			view = gson.toJson(objView);
 		}
-		// TODO Map View
+		// Map View
+		if(mapView != null) {
+			Type viewType = new TypeToken<ArrayList<MapLayer>>(){}.getType();	
+			ArrayList<MapLayer> objView = gson.fromJson(mapView, viewType);
+			mapView = gson.toJson(objView);
+		}
 		// TODO Chart View
 
 		try {
 		
 			int count = 0;
 			if(viewId > 0) {
-				pstmtUpdateView = sd.prepareStatement(sqlUpdate);
-				pstmtUpdateView.setInt(1, viewId);
-				pstmtUpdateView.setInt(2, sId);
-				pstmtUpdateView.setInt(3, managedId);
-				pstmtUpdateView.setInt(4, queryId);
-				pstmtUpdateView.setString(5, view);
+				if(view != null) {
+					pstmtUpdateView = sd.prepareStatement(sqlUpdateView + sqlUpdate);
+					pstmtUpdateView.setString(1, view);
+				} else if(mapView != null) {
+					pstmtUpdateView = sd.prepareStatement(sqlUpdateMap + sqlUpdate);
+					pstmtUpdateView.setString(1, mapView);
+				} else if(chartView != null) {
+					pstmtUpdateView = sd.prepareStatement(sqlUpdateChart + sqlUpdate);
+					pstmtUpdateView.setString(1, chartView);
+				}
+				
+				pstmtUpdateView.setInt(2, viewId);
+				pstmtUpdateView.setInt(3, sId);
+				pstmtUpdateView.setInt(4, managedId);
+				pstmtUpdateView.setInt(5, queryId);
 				log.info("Updating survey view: " + pstmtUpdateView.toString());
 				count = pstmtUpdateView.executeUpdate();
 			}

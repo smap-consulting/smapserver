@@ -1098,7 +1098,7 @@ function saveConfig() {
     }
 
     var saveView = JSON.stringify(configColumns);
-    var viewId = globals.gVIewId || 0;
+    var viewId = globals.gViewId || 0;
     var url = "/surveyKPI/surveyview/" + viewId;
     url += '?survey=' + globals.gCurrentSurvey;
     url += '&managed=' + 0;						// TODO
@@ -1107,13 +1107,14 @@ function saveConfig() {
     addHourglass();
     $.ajax({
         type: "POST",
-        dataType: 'text',
+        dataType: 'json',
         cache: false,
         contentType: "application/json",
         url: url,
         data: {view: saveView},
         success: function (data, status) {
             removeHourglass();
+            globals.gViewId = data.viewId;
             $('#right-sidebar').removeClass("sidebar-open");
         }, error: function (data, status) {
             removeHourglass();

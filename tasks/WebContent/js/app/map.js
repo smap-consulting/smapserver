@@ -281,17 +281,25 @@ define([
          * Save the layers to the server
          */
         function saveToServer(layers) {
+
             var saveString = JSON.stringify(layers);
+            var viewId = globals.gViewId || 0;
+            var url = "/surveyKPI/surveyview/" + viewId;
+            url += '?survey=' + globals.gCurrentSurvey;
+            url += '&managed=' + 0;
+            url += '&query=' + 0;
+
             addHourglass();
             $.ajax({
                 type: "POST",
-                dataType: 'text',
+                dataType: 'json',
                 contentType: "application/json",
                 cache: false,
-                url: "/surveyKPI/surveyview/map/" + globals.gViewId,
-                data: {settings: saveString},
+                url: url,
+                data: {mapView: saveString},
                 success: function (data, status) {
                     removeHourglass();
+                    globals.gViewId = data.viewId;
                     updateActionStatus(localise.set["msg_upd"]);
                 }, error: function (data, status) {
                     removeHourglass();
