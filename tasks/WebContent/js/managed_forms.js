@@ -198,7 +198,7 @@ require([
         $('#editRecord').on('show.bs.modal', function (event) {
             var
                 record = gTasks.gSelectedRecord,
-                columns = gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].columns,
+                columns = gTasks.cache.surveyConfig[globals.gViewId].columns,
                 $editForm = $('#editRecordForm'),
                 $surveyForm = $('#surveyForm');
 
@@ -288,7 +288,7 @@ require([
         $('#applyColumns').click(function () {
 
             var
-                config = gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex],
+                config = gTasks.cache.surveyConfig[globals.gViewId],
                 $this;
 
             $('input', '#tab-columns-content').each(function (index) {
@@ -308,7 +308,7 @@ require([
         $('#applyBarcodes').click(function () {
 
             var
-                config = gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex],
+                config = gTasks.cache.surveyConfig[globals.gViewId],
                 $this;
 
             $('input', '#tab-barcode-content').each(function (index) {
@@ -488,7 +488,7 @@ require([
 
 
         data = getTableData(globals.gMainTable,
-            gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].columns);
+            gTasks.cache.surveyConfig[globals.gViewId].columns);
 
         if ($this.hasClass("xls")) {
             filename = title + ".xlsx"

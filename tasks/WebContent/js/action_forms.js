@@ -113,7 +113,6 @@ require([
             surveyList: {}					// keep
         },
         gSelectedRecord: undefined,			// keep
-        gSelectedSurveyIndex: undefined,	// Keep
         gUpdate: [],
         gCurrentIndex: undefined,
         gPriKey: undefined,
@@ -140,9 +139,9 @@ require([
          * Set up the global data.  The structure of the caching approach used by managed_forms is used
          *  as the code is shared.  However there not really a need for caching in this module.
          */
-        gTasks.gSelectedSurveyIndex = 0;
-        gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex] = {};
-        gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].columns = gSurveyConfig.columns;
+        globals.gViewId = 0;
+        gTasks.cache.surveyConfig[globals.gViewId] = {};
+        gTasks.cache.surveyConfig[globals.gViewId].columns = gSurveyConfig.columns;
         gTasks.gSelectedRecord = gRecord[0];
 
         // Show the dialog

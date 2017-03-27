@@ -225,7 +225,7 @@ function dataChanged($this) {
         itemIndex = $this.data("item"),
         value = $this.val(),
         record = gTasks.gSelectedRecord,
-        columns = gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].columns,
+        columns = gTasks.cache.surveyConfig[globals.gViewId].columns,
         currentValue,
         name = columns[itemIndex].name,
         i,
@@ -282,7 +282,7 @@ function dataChanged($this) {
 function showManagedData(sId, content, masterRecord) {
 
     var x = 1,
-        columns = gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].columns,
+        columns = gTasks.cache.surveyConfig[globals.gViewId].columns,
         shownColumns = [],
         hiddenColumns = [],
         visibleColumns = [],
@@ -386,7 +386,7 @@ function showManagedData(sId, content, masterRecord) {
                 chart.setChartList();	// Enable charts based on this survey config
                 chart.refreshCharts();
             }
-            columns = gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].columns;
+            columns = gTasks.cache.surveyConfig[globals.gViewId].columns;
             globals.gMainTable.columns().flatten().each(function (colIdx) {
                 if (columns[colIdx].filter || columns[colIdx].type === "select1") {
                     var select = $('<select class="form-control"/>')
@@ -487,7 +487,7 @@ function showManagedData(sId, content, masterRecord) {
             });
         }
 
-        columns = gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].columns;
+        columns = gTasks.cache.surveyConfig[globals.gViewId].columns;
 
         for (i = 0; i < columns.length; i++) {
             headItem = columns[i];
@@ -890,11 +890,13 @@ function getSurveyView(viewId, sId, managedId, queryId) {
  * Set the available dates for filtering
  */
 function setDateChoices() {
-    var columns = gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].columns,
+    var columns,
         i,
         h = [],
         idx = -1,
         devValue;
+
+    columns = gTasks.cache.surveyConfig[globals.gViewId].columns;
 
     for (i = 0; i < columns.length; i++) {
         if (columns[i].type === "dateTime" || columns[i].type === "date") {
@@ -1059,7 +1061,7 @@ function updateVisibleColumns(cols) {
 function saveFilter(column, value) {
 
     var
-        config = gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex],
+        config = gTasks.cache.surveyConfig[globals.gViewId],
         i;
 
     if (value == '') {
@@ -1083,7 +1085,7 @@ function saveFilter(column, value) {
  */
 function saveConfig() {
     var configColumns = [],
-        columns = gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].columns,
+        columns = gTasks.cache.surveyConfig[globals.gViewId].columns,
         i;
 
     for (i = 0; i < columns.length; i++) {

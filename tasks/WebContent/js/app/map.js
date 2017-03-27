@@ -143,8 +143,35 @@ define([
                     }
                 });
             }
+            showLayerSelections();
 
 
+        }
+
+        /*
+         * Show layer selections on the screen
+         */
+        function showLayerSelections() {
+            var h = [],
+                idx = -1,
+                i;
+
+            for (i = 0; i < gLayers.length; i++) {
+                h[++idx] = '<tr>';
+
+                h[++idx] = '<td>';      // Select
+                h[++idx] = '</td>';
+                h[++idx] = '<td>';      // Name
+                h[++idx] = gLayers[i].title;
+                h[++idx] = '</td>';
+                h[++idx] = '<td>';      // Delete
+                h[++idx] = '</td>';
+
+                h[++idx] = '</tr>';
+            }
+
+
+            $('#layerSelect tbody').empty().html(h.join(''));
         }
 
         /*
@@ -223,12 +250,18 @@ define([
             gMap.addLayer(vectorLayer);
         }
 
+        /*
+         * Add a new layer to the map
+         */
         function addLayer() {
             $('#layerInfo').show();
             $('#ml_title').val("");
             $('#layerEdit').modal("show");
         }
 
+        /*
+         * Save a layer after the user presses save on the layer dialog
+         */
         function saveLayer() {
 
             var title = $('#ml_title').val(),
@@ -250,11 +283,12 @@ define([
 
             refreshLayer(gLayers.length - 1)
             saveToServer(gLayers);
+            showLayerSelections();
 
         };
 
         /*
-         * Process the data according to the layer specification
+         * Process the map data according to the layer specification
          */
         function getGeoJson(results, layer) {
 
@@ -300,7 +334,6 @@ define([
                 success: function (data, status) {
                     removeHourglass();
                     globals.gViewId = data.viewId;
-                    updateActionStatus(localise.set["msg_upd"]);
                 }, error: function (data, status) {
                     removeHourglass();
                     alert(localise.set["msg_err_save"] + " " + data.responseText);

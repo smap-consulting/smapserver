@@ -73,7 +73,7 @@ define([
 
                 var width = $('#ew_width').val(),
                     reset = false,
-                    filtered = gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].filtered;
+                    filtered = gTasks.cache.surveyConfig[globals.gViewId].filtered;
 
                 //if(width != gEdChart.width) {
                 //	reset = true;
@@ -142,8 +142,8 @@ define([
             var i,
                 data,
                 chart,
-                date_col = getCol(gCurrentReport.date_q, gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].columns),
-                filtered = gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].filtered,
+                date_col = getCol(gCurrentReport.date_q, gTasks.cache.surveyConfig[globals.gViewId].columns),
+                filtered = gTasks.cache.surveyConfig[globals.gViewId].filtered,
                 index = 0,
                 j,
                 dataLength = results.count(),
@@ -550,7 +550,7 @@ define([
              * Get the list of visible columns
              */
 
-            var columns = gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].columns,
+            var columns = gTasks.cache.surveyConfig[globals.gViewId].columns,
                 h = [],
                 idx = -1,
                 hGrp = [],
@@ -679,7 +679,7 @@ define([
                     filtered[i].cDom = "c_" + filtered[i].name;
                 }
             }
-            gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].filtered = filtered;	// cache
+            gTasks.cache.surveyConfig[globals.gViewId].filtered = filtered;	// cache
 
             /*
              * Add question select options
@@ -771,7 +771,7 @@ define([
 
                 var $this = $(this),
                     chart = d3.select($this.closest('.aChart')),
-                    filtered = gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].filtered,
+                    filtered = gTasks.cache.surveyConfig[globals.gViewId].filtered,
                     chart_type = $this.data("ctype");
 
                 gChartId = "#" + $this.closest('.aChart').find(".svg-container").attr("id");
@@ -780,7 +780,7 @@ define([
 
                 if (gEdConfig.fromDT) {
                     var fullIndex = getFullIndex(filtered[gEdConfig.index].name);
-                    gEdChart = gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].columns[fullIndex];
+                    gEdChart = gTasks.cache.surveyConfig[globals.gViewId].columns[fullIndex];
                     gEdFilteredChart = filtered[gEdConfig.index];
                 } else {
                     // Custom report
@@ -801,7 +801,7 @@ define([
 
             $('.chart-type').off().click(function () {
                 var $this = $(this),
-                    filtered = gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].filtered,
+                    filtered = gTasks.cache.surveyConfig[globals.gViewId].filtered,
                     chart_type = $this.data("ctype"),
                     chartId = "#" + $this.closest('.aChart').find(".svg-container").attr("id"),
                     ibox = chart + "_ibox",
@@ -812,7 +812,7 @@ define([
 
                 // Set the new value in the full index then save it
                 if (fullIndex >= 0) {
-                    gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].columns[fullIndex].chart_type = chart_type;
+                    gTasks.cache.surveyConfig[globals.gViewId].columns[fullIndex].chart_type = chart_type;
                     saveConfig();
                 }
                 // Set the new value in the current list of charts
@@ -870,7 +870,7 @@ define([
          */
         function getFullIndex(name) {
             var i = 0,
-                columns = gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].columns,
+                columns = gTasks.cache.surveyConfig[globals.gViewId].columns,
                 index = -1;
 
             for (i = 0; i < columns.length; i++) {
