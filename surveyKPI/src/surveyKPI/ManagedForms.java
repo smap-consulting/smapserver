@@ -85,7 +85,7 @@ public class ManagedForms extends Application {
 	
 	/*
 	 * Return the management configuration
-	 */
+	 *
 	@GET
 	@Path("/config/{sId}/{dpId}")
 	@Produces("application/json")
@@ -115,9 +115,8 @@ public class ManagedForms extends Application {
 			int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser(), 0);
 			SurveyViewManager qm = new SurveyViewManager();
 			SurveyViewDefn mfc = qm.getSurveyView(sd, cResults, uId, 0, sId, managedId, request.getRemoteUser(), oId, superUser);
-			/*
-			 * Remove data that is only used on the server
-			 */
+
+			// Remove data that is only used on the server
 			for(TableColumn tc : mfc.columns) {
 				tc.actions = null;
 				tc.calculation = null;
@@ -139,6 +138,7 @@ public class ManagedForms extends Application {
 
 		return response;
 	}
+	*/
 
 	/*
 	 * Return the surveys in the project along with their management information
@@ -720,96 +720,6 @@ public class ManagedForms extends Application {
 			
 			SDDataSource.closeConnection("surveyKPI-managedForms", sd);
 		
-		}
-		
-		return response;
-	}
-	
-	/*
-	 * Update the configuration settings
-	 */
-	@POST
-	@Produces("text/html")
-	@Consumes("application/json")
-	@Path("/config/{sId}/{key}")
-	public Response updateManageConfig(
-			@Context HttpServletRequest request, 
-			@PathParam("sId") int sId,
-			@PathParam("key") String key,		// Type of report to be saved
-			@FormParam("settings") String settings
-			) { 
-		
-		Response response = null;
-
-		try {
-		    Class.forName("org.postgresql.Driver");	 
-		} catch (ClassNotFoundException e) {
-			log.log(Level.SEVERE,"Error: Can't find PostgreSQL JDBC Driver", e);
-			response = Response.serverError().build();
-		    return response;
-		}
-		
-		String sqlUpdate = "update general_settings set settings = ? where u_id = ? and s_id = ? and key = ?;";
-		PreparedStatement pstmtUpdate = null;
-		
-		String sqlInsert = "insert into general_settings (settings, u_id, s_id, key) values(?, ?, ?, ?);";
-		PreparedStatement pstmtInsert = null;
-		
-		// Authorisation - Access
-		Connection sd = SDDataSource.getConnection("surveyKPI-managedForms");
-		boolean superUser = false;
-		try {
-			superUser = GeneralUtilityMethods.isSuperUser(sd, request.getRemoteUser());
-		} catch (Exception e) {
-		}
-		a.isAuthorised(sd, request.getRemoteUser());
-		a.isValidSurvey(sd, request.getRemoteUser(), sId, false, superUser);
-		// End Authorisation
-		
-		try {
-
-			if(key.equals("mf")) {
-				/*
-				 * Convert the input to java classes and then back to json to ensure it is well formed
-				 */
-				Gson gson=  new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
-				Type type = new TypeToken<ManagedFormUserConfig>(){}.getType();	
-				ManagedFormUserConfig uc = gson.fromJson(settings, type);
-				settings = gson.toJson(uc);
-			}
-			
-			int uId = GeneralUtilityMethods.getUserId(sd, request.getRemoteUser());	// Get user id
-			
-			pstmtUpdate = sd.prepareStatement(sqlUpdate);
-			pstmtUpdate.setString(1, settings);
-			pstmtUpdate.setInt(2, uId);
-			pstmtUpdate.setInt(3, sId);
-			pstmtUpdate.setString(4, key);
-			log.info("Updating managed form settings: " + pstmtUpdate.toString());
-			int count = pstmtUpdate.executeUpdate();
-			
-			if(count == 0) {
-				pstmtInsert = sd.prepareStatement(sqlInsert);
-				pstmtInsert.setString(1, settings);
-				pstmtInsert.setInt(2, uId);
-				pstmtInsert.setInt(3, sId);
-				pstmtInsert.setString(4, key);
-				log.info("Inserting managed form settings: " + pstmtInsert.toString());
-				pstmtInsert.executeUpdate();
-			}
-
-			response = Response.ok().build();
-				
-		} catch (Exception e) {
-			response = Response.serverError().entity(e.getMessage()).build();
-			log.log(Level.SEVERE,"Error", e);
-		} finally {
-			
-			
-			try {if (pstmtUpdate != null) {pstmtUpdate.close();}} catch (Exception e) {}
-			try {if (pstmtInsert != null) {pstmtInsert.close();}} catch (Exception e) {}
-	
-			SDDataSource.closeConnection("surveyKPI-managedForms", sd);
 		}
 		
 		return response;

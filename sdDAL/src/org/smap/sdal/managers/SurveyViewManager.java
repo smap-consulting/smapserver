@@ -5,6 +5,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -71,7 +72,7 @@ public class SurveyViewManager {
 				+ "from survey_view sv, user_view uv "
 				+ "where sv.id = uv.v_id "
 				+ "and sv.id = ? "
-				+ "and uv. u_id = ? ";
+				+ "and uv.u_id = ? ";
 		PreparedStatement pstmt = null;
 		
 		ResultSet rs = null;
@@ -99,8 +100,6 @@ public class SurveyViewManager {
 				
 			}
 			
-			
-			
 			Form f = GeneralUtilityMethods.getTopLevelForm(sd, sId); // Get formId of top level form and its table name
 			ArrayList<TableColumn> columnList = GeneralUtilityMethods.getColumnsInForm(
 					sd,
@@ -120,33 +119,6 @@ public class SurveyViewManager {
 					superUser,
 					false		// HXL only include with XLS exports
 					);		
-			
-			/*
-			 * Get the users custom configuration that has been stored for this survey
-			 */
-			try{pstmt.close();}catch(Exception e) {}
-			pstmt = sd.prepareStatement(sql);	 
-			pstmt.setInt(1,  uId);
-			pstmt.setInt(2,  sId);
-
-			rs = pstmt.executeQuery();
-			if(rs.next()) {
-				String config = rs.getString("settings");
-			
-				if(config != null) {
-					Type type = new TypeToken<ManagedFormUserConfig>(){}.getType();	
-					try {
-						savedConfig = gson.fromJson(config, type);
-					} catch (Exception e) {
-						log.log(Level.SEVERE,"Error: ", e);
-						savedConfig = new ManagedFormUserConfig ();		// If there is an error its likely that the structure of the config file has been changed and we should start from scratch
-					}
-				} else {
-					savedConfig = new ManagedFormUserConfig ();
-				}
-			} else {
-				savedConfig = new ManagedFormUserConfig ();
-			}
 			
 			
 			/*
@@ -202,6 +174,140 @@ public class SurveyViewManager {
 
 	}
 	
+	/*
+	 * Save a survey view
+	 */
+	public int save(Connection sd, 
+			int uId,
+			int viewId,
+			int sId, 
+			int managedId, 
+			int queryId, 
+			String view, 
+			String mapView, 
+			String chartView) throws Exception {
+		
+		String sqlUpdate = "update survey_view set view = ? "
+				+ "where id = ? "
+				+ "and s_id = ? "
+				+ "and m_id = ? "
+				+ "and query_id = ?;";
+		PreparedStatement pstmtUpdateView = null;
+		
+		String sqlInsert = "insert into survey_view "
+				+ "(s_id, m_id, query_id, view, map_view, chart_view) "
+				+ "values(?, ?, ?, ?, ?, ?);";
+		PreparedStatement pstmtInsert = null;
+		
+		String sqlUserView = "insert into user_view "
+				+ "(u_id, v_id, access) "
+				+ "values(?, ?, 'owner');";
+		PreparedStatement pstmtUserView = null;
+		
+		String sqlDefaultView = "insert into default_user_view "
+				+ "(u_id, s_id, m_id, query_id, v_id) "
+				+ "values(?, ?, ?, ?, ?);";
+		PreparedStatement pstmtDefaultView = null;
+		
+		String sqlDeleteDefault = "delete from default_user_view "
+				+ "where u_id = ? "
+				+ "and s_id = ? "
+				+ "and m_id = ? "
+				+ "and query_id = ?";
+		PreparedStatement pstmtDeleteDefault = null;
+		
+		/*
+		 * Convert the input to java classes and then back to json to ensure it is well formed
+		 */
+		Gson gson=  new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
+		
+		// Table configuration
+		if(view != null) {
+			Type viewType = new TypeToken<ManagedFormUserConfig>(){}.getType();	
+			ManagedFormUserConfig uc = gson.fromJson(view, viewType);
+			view = gson.toJson(uc);
+		}
+		// TODO Map View
+		// TODO Chart View
+
+		try {
+		
+			int count = 0;
+			if(viewId > 0) {
+				pstmtUpdateView = sd.prepareStatement(sqlUpdate);
+				pstmtUpdateView.setInt(1, viewId);
+				pstmtUpdateView.setInt(2, sId);
+				pstmtUpdateView.setInt(3, managedId);
+				pstmtUpdateView.setInt(4, queryId);
+				pstmtUpdateView.setString(5, view);
+				log.info("Updating survey view: " + pstmtUpdateView.toString());
+				count = pstmtUpdateView.executeUpdate();
+			}
+			
+			if(viewId == 0 || count == 0) {
+				
+				sd.setAutoCommit(false);
+				
+				pstmtInsert = sd.prepareStatement(sqlInsert, Statement.RETURN_GENERATED_KEYS);
+				pstmtInsert.setInt(1, sId);
+				pstmtInsert.setInt(2, managedId);
+				pstmtInsert.setInt(3, queryId);
+				pstmtInsert.setString(4, view);
+				pstmtInsert.setString(5, mapView);
+				pstmtInsert.setString(6, chartView);
+				log.info("Inserting survey view: " + pstmtInsert.toString());
+				pstmtInsert.executeUpdate();
+				
+				ResultSet rs = pstmtInsert.getGeneratedKeys();
+				if(rs.next()) {
+					viewId = rs.getInt(1);
+				} else {
+					throw new Exception("Failed to insert view into survey_view table");
+				}
+				
+				pstmtUserView = sd.prepareStatement(sqlUserView);
+				pstmtUserView.setInt(1,uId);
+				pstmtUserView.setInt(2,viewId);
+				log.info("adding view to user view table: " + pstmtUserView.toString());
+				pstmtUserView.executeUpdate();
+				
+				// Delete the old default view setting
+				pstmtDeleteDefault = sd.prepareStatement(sqlDeleteDefault);
+				pstmtDeleteDefault.setInt(1, uId);
+				pstmtDeleteDefault.setInt(2, sId);
+				pstmtDeleteDefault.setInt(3, managedId);
+				pstmtDeleteDefault.setInt(4, queryId);
+				log.info("adding view to default view table: " + pstmtDeleteDefault.toString());
+				pstmtDeleteDefault.executeUpdate();
+				
+				// Set the view as the user's default
+				pstmtDefaultView = sd.prepareStatement(sqlDefaultView);
+				pstmtDefaultView.setInt(1, uId);
+				pstmtDefaultView.setInt(2, sId);
+				pstmtDefaultView.setInt(3, managedId);
+				pstmtDefaultView.setInt(4, queryId);
+				pstmtDefaultView.setInt(5, viewId);
+				log.info("adding view to default view table: " + pstmtDefaultView.toString());
+				pstmtDefaultView.executeUpdate();
+				
+				sd.commit();
+				
+				
+			}
+		} catch (Exception e) {
+			try {sd.rollback();} catch (Exception ex) {}
+			log.log(Level.SEVERE,"Error", e);
+			throw new Exception(e.getMessage());
+		} finally {
+			try {sd.setAutoCommit(true);} catch (Exception e) {}
+			try {if (pstmtUpdateView != null) {pstmtUpdateView.close();}} catch (Exception e) {}
+			try {if (pstmtInsert != null) {pstmtInsert.close();}} catch (Exception e) {}
+			try {if (pstmtUserView != null) {pstmtUserView.close();}} catch (Exception e) {}
+			try {if (pstmtDefaultView != null) {pstmtDefaultView.close();}} catch (Exception e) {}
+			try {if (pstmtDeleteDefault != null) {pstmtDeleteDefault.close();}} catch (Exception e) {}
+		}
+		return viewId;
+	}
 	/*
 	 * Get the managed columns
 	 */

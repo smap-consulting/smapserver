@@ -831,15 +831,12 @@ window.gTasks = {
 	 function getSurveyView(viewId, sId, managedId, queryId) {
 		 
 		 var url;
-		 
-		 if(viewId != 0) {
-			 url = '/surveyKPI/surveyview/' + viewId;
-		 } else {
-			 url = '/surveyKPI/surveyview/default';
-			 url += '?survey=' + sId;
-			 url += '&managed=' + managedId;
-			 url += '&query=' + queryId;		// ignore for moment, ie note caching is done only on survey index
-		 }
+
+		 url = '/surveyKPI/surveyview/' + viewId;
+		 url += '?survey=' + sId;
+		 url += '&managed=' + managedId;
+		 url += '&query=' + queryId;		// ignore for moment, ie note caching is done only on survey index
+
 		 if(!gTasks.cache.surveyConfig[globals.gViewId]) {
 			 
 			 addHourglass();
@@ -1099,16 +1096,21 @@ window.gTasks = {
 			});
 		}
 		
-		saveString = JSON.stringify(config);
-		 
+		var saveView = JSON.stringify(config);
+		var viewId = globals.gVIewId || 0;
+		var url = "/surveyKPI/surveyview/" + viewId;
+         url += '?survey=' + globals.gCurrentSurvey;
+         url += '&managed=' + 0;						// TODO
+         url += '&query=' + 0;							// TODO
+
 		 addHourglass();
 		 $.ajax({
 			 type: "POST",
 			 dataType: 'text',
 			 cache: false,
 				  contentType: "application/json",
-				  url: "/surveyKPI/managed/config/" + globals.gCurrentSurvey + "/mf",
-				  data: { settings: saveString },
+				  url: url,
+				  data: { view: saveView },
 				  success: function(data, status) {
 					  removeHourglass();
 					  $('#right-sidebar').removeClass("sidebar-open");

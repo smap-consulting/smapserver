@@ -101,13 +101,14 @@ public class SurveyView extends Application {
 	}
 	
 	/*
-	 * Get the default survey view for the provided survey, managedId or query
+	 * Get the survey view for the provided survey, managedId or query
 	 */
 	@GET
-	@Path("/default")
+	@Path("/{viewId}")
 	@Produces("application/json")
 	public Response getDefaultSurveyView(
 			@Context HttpServletRequest request,
+			@PathParam("viewId") int viewId,
 			@QueryParam("survey") int sId,
 			@QueryParam("managed") int managedId,
 			@QueryParam("query") int queryId) throws Exception {
@@ -127,6 +128,9 @@ public class SurveyView extends Application {
 			superUser = GeneralUtilityMethods.isSuperUser(sd, request.getRemoteUser());
 		} catch (Exception e) {
 		}
+		if(viewId > 0) {
+			aNormal.isValidView(sd, request.getRemoteUser(), viewId, false);
+		}
 		if(sId > 0) {
 			aNormal.isValidSurvey(sd, request.getRemoteUser(), sId, false, superUser);
 			if(managedId > 0) {
@@ -143,11 +147,13 @@ public class SurveyView extends Application {
 		try {
 
 			int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser(), 0);
+			int uId = GeneralUtilityMethods.getUserId(sd, request.getRemoteUser());
 			SurveyViewManager svm = new SurveyViewManager();
 			
 			// Get the default view
-			int uId = GeneralUtilityMethods.getUserId(sd, request.getRemoteUser());
-			int viewId = svm.getDefaultView(sd, uId, sId, managedId, queryId);
+			if(viewId == 0) {	
+				viewId = svm.getDefaultView(sd, uId, sId, managedId, queryId);
+			}
 			
 			SurveyViewDefn sv = svm.getSurveyView(sd, cResults, uId, viewId, sId, managedId, request.getRemoteUser(), oId, superUser);
 			
@@ -172,6 +178,77 @@ public class SurveyView extends Application {
 
 		return response;
 	}	
+	
+	/*
+	 * Save the survey view configuration settings
+	 */
+	@POST
+	@Produces("text/html")
+	@Consumes("application/json")
+	@Path("/{viewId}")
+	public Response updateSurveyView(
+			@Context HttpServletRequest request, 
+			@PathParam("viewId") int viewId,
+			@QueryParam("survey") int sId,
+			@QueryParam("managed") int managedId,
+			@QueryParam("query") int queryId,		
+			@FormParam("view") String view,
+			@FormParam("mapView") String mapView,
+			@FormParam("chartView") String chartView
+			) { 
+		
+		Response response = null;
+
+		try {
+		    Class.forName("org.postgresql.Driver");	 
+		} catch (ClassNotFoundException e) {
+			log.log(Level.SEVERE,"Error: Can't find PostgreSQL JDBC Driver", e);
+			response = Response.serverError().build();
+		    return response;
+		}
+		
+		// Authorisation - Access
+		Connection sd = SDDataSource.getConnection("surveyKPI-managedForms");
+		boolean superUser = false;
+		try {
+			superUser = GeneralUtilityMethods.isSuperUser(sd, request.getRemoteUser());
+		} catch (Exception e) {
+		}
+		aNormal.isAuthorised(sd, request.getRemoteUser());
+		if(viewId > 0) {
+			aNormal.isValidView(sd, request.getRemoteUser(), viewId, false);
+		}
+		if(sId > 0) {
+			aNormal.isValidSurvey(sd, request.getRemoteUser(), sId, false, superUser);
+			if(managedId > 0) {
+				aManage.isValidManagedForm(sd, request.getRemoteUser(), managedId);
+			}
+		} else if(queryId > 0) {
+			aNormal.isValidQuery(sd, request.getRemoteUser(), queryId);
+		}
+		// End Authorisation
+		
+		try {
+			
+			int uId = GeneralUtilityMethods.getUserId(sd, request.getRemoteUser());	// Get user id
+			
+			SurveyViewManager svm = new SurveyViewManager();
+			viewId = svm.save(sd, uId, viewId, sId, managedId, queryId, view, mapView, chartView);
+
+			// return the view id
+			String msg = "{viewId: " + viewId + "}";
+			response = Response.ok(msg).build();
+				
+		} catch (Exception e) {
+			response = Response.serverError().entity(e.getMessage()).build();
+			log.log(Level.SEVERE,"Error", e);
+		} finally {
+	
+			SDDataSource.closeConnection("surveyKPI-managedForms", sd);
+		}
+		
+		return response;
+	}
 	
 
 	/*
