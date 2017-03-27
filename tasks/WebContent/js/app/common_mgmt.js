@@ -1079,14 +1079,12 @@ window.gTasks = {
 	  *  is for the base report.  
 	  */
 	 function saveConfig() {
-		 var config = {
-				 columns: []
-		 },
+		 var configColumns = [],
 		 columns = gTasks.cache.surveyConfig[gTasks.gSelectedSurveyIndex].columns,
 		 i;
 		 
 		for(i = 0; i < columns.length; i++) {
-			config.columns.push({
+			configColumns.push({
 				name: columns[i].name,
 				hide: columns[i].hide,
 				barcode: columns[i].barcode,
@@ -1096,7 +1094,7 @@ window.gTasks = {
 			});
 		}
 		
-		var saveView = JSON.stringify(config);
+		var saveView = JSON.stringify(configColumns);
 		var viewId = globals.gVIewId || 0;
 		var url = "/surveyKPI/surveyview/" + viewId;
          url += '?survey=' + globals.gCurrentSurvey;

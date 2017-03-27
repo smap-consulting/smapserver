@@ -211,6 +211,9 @@ require([
 
         });
 
+        /*
+         * Save a record of data in managed forms
+         */
         $('#saveRecord').click(function () {
             var saveString = JSON.stringify(gTasks.gUpdate);
             addHourglass();
@@ -279,7 +282,9 @@ require([
             });
         });
 
-        // Save changes to the table columns that are shown
+        /*
+         * Save changes to the table columns that are shown
+         */
         $('#applyColumns').click(function () {
 
             var

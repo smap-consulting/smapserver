@@ -31,24 +31,13 @@ import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 
-import org.smap.model.TableManager;
 import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
-import org.smap.sdal.managers.ActionManager;
-import org.smap.sdal.managers.LinkageManager;
 import org.smap.sdal.managers.SurveyViewManager;
-import org.smap.sdal.model.Action;
-import org.smap.sdal.model.ActionLink;
-import org.smap.sdal.model.Filter;
-import org.smap.sdal.model.Form;
-import org.smap.sdal.model.Link;
 import org.smap.sdal.model.SurveyViewDefn;
-import org.smap.sdal.model.ManagedFormItem;
-import org.smap.sdal.model.ManagedFormUserConfig;
 import org.smap.sdal.model.MapLayer;
-import org.smap.sdal.model.Role;
 import org.smap.sdal.model.TableColumn;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -56,11 +45,7 @@ import com.google.gson.reflect.TypeToken;
 
 import java.lang.reflect.Type;
 import java.sql.*;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Locale;
-import java.util.ResourceBundle;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 

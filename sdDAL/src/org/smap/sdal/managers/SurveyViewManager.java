@@ -15,7 +15,7 @@ import org.smap.sdal.model.Form;
 import org.smap.sdal.model.KeyValue;
 import org.smap.sdal.model.SurveyViewDefn;
 import org.smap.sdal.model.ManagedFormItem;
-import org.smap.sdal.model.ManagedFormUserConfig;
+import org.smap.sdal.model.MapLayer;
 import org.smap.sdal.model.TableColumn;
 import org.smap.sdal.model.TableColumnConfig;
 
@@ -65,10 +65,10 @@ public class SurveyViewManager {
 			boolean superUser) throws SQLException, Exception  {
 		
 		SurveyViewDefn svd = new SurveyViewDefn();
-		ManagedFormUserConfig savedConfig = null;
+		ArrayList<TableColumnConfig> configColumns = new ArrayList<TableColumnConfig> ();
 		
 		// SQL to get view details
-		String sql = "select view "
+		String sql = "select view, map_view, chart_view "
 				+ "from survey_view sv, user_view uv "
 				+ "where sv.id = uv.v_id "
 				+ "and sv.id = ? "
@@ -88,14 +88,28 @@ public class SurveyViewManager {
 			rs = pstmt.executeQuery();
 			if(rs.next()) {
 				String sView = rs.getString(1);
+				String sMapView = rs.getString(2);
+				// TODO get chart view
+				
 				if(sView != null) {
-					Type type = new TypeToken<ManagedFormUserConfig>(){}.getType();	
+					Type type = new TypeToken<ArrayList<TableColumnConfig>>(){}.getType();	
 					try {
-						savedConfig = gson.fromJson(sView, type);
+						configColumns = gson.fromJson(sView, type);
 					} catch (Exception e) {
 						log.log(Level.SEVERE,"Error: ", e);
-						savedConfig = new ManagedFormUserConfig ();		// If there is an error its likely that the structure of the config file has been changed and we should start from scratch
 					}
+				} 
+				
+				if(sMapView != null) {
+					Type type = new TypeToken<ArrayList<MapLayer>>(){}.getType();	
+					try {
+						svd.layers = gson.fromJson(sMapView, type);
+					} catch (Exception e) {
+						log.log(Level.SEVERE,"Error: ", e);
+						svd.layers = new ArrayList<MapLayer> ();		// If there is an error its likely that the structure of the config file has been changed and we should start from scratch
+					}
+				} else {
+					svd.layers = new ArrayList<MapLayer> ();
 				}
 				
 			}
@@ -133,8 +147,8 @@ public class SurveyViewManager {
 					tc.hide = hideDefault(c.humanName);
 					tc.filter = c.filter;
 					tc.type = c.type;
-					for(int j = 0; j < savedConfig.columns.size(); j++) {
-						TableColumnConfig tcConfig = savedConfig.columns.get(j);
+					for(int j = 0; j < configColumns.size(); j++) {
+						TableColumnConfig tcConfig = configColumns.get(j);
 						if(tcConfig.name.equals(tc.name)) {
 							tc.hide = tcConfig.hide;
 							tc.barcode = tcConfig.barcode;
@@ -158,7 +172,7 @@ public class SurveyViewManager {
 			 * Add the managed form columns and configuration
 			 */
 			if(managedId > 0) {
-				getDataProcessingConfig(sd, managedId, svd.columns, savedConfig.columns, oId);
+				getDataProcessingConfig(sd, managedId, svd.columns, configColumns, oId);
 			}
 		
 				
@@ -223,9 +237,9 @@ public class SurveyViewManager {
 		
 		// Table configuration
 		if(view != null) {
-			Type viewType = new TypeToken<ManagedFormUserConfig>(){}.getType();	
-			ManagedFormUserConfig uc = gson.fromJson(view, viewType);
-			view = gson.toJson(uc);
+			Type viewType = new TypeToken<ArrayList<TableColumnConfig>>(){}.getType();	
+			ArrayList<TableColumnConfig> objView = gson.fromJson(view, viewType);
+			view = gson.toJson(objView);
 		}
 		// TODO Map View
 		// TODO Chart View
