@@ -1207,7 +1207,7 @@ public class SurveyManager {
 			pstmtGetOptionTextId = connectionSD.prepareStatement(sqlGetOptionTextId);
 			
 			// Get the text id for a question update
-			String sqlGetQuestionTextId = "select qtext_id from question where q_id = ?; ";
+			String sqlGetQuestionTextId = "select qtext_id, infotext_id from question where q_id = ?; ";
 			pstmtGetQuestionTextId = connectionSD.prepareStatement(sqlGetQuestionTextId);
 			
 			// Create prepared statements, one for the case where an existing value is being updated
@@ -1260,7 +1260,14 @@ public class SurveyManager {
 					pstmtGetQuestionTextId.setInt(1, ci.property.qId);
 					ResultSet rs = pstmtGetQuestionTextId.executeQuery();
 					if(rs.next()) {
-						text_id = rs.getString(1);
+						if(ci.property.propType.equals("text")) {
+							text_id = rs.getString(1);
+						} else {
+							text_id = rs.getString(2);
+						}
+						if(text_id == null || text_id.trim().length() == 0) {
+							text_id = ci.property.key;
+						}
 					} else {
 						text_id = ci.property.key;		// For question we can rely on the key?
 					}
