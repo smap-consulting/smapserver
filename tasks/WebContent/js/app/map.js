@@ -121,7 +121,7 @@ define([
                     addLayer();
                 });
 
-                $('#layerEdit').on('shown.bs.modal', function() {
+                $('#layerEdit').on('shown.bs.modal', function () {
                     $('#ml_title').focus();
                 });
 
@@ -208,7 +208,7 @@ define([
             });
 
             var vectorLayer;
-            if(layer.clump === "heatmap") {
+            if (layer.clump === "heatmap") {
                 vectorLayer = new ol.layer.Heatmap({
                     source: vectorSource,
                     radius: 5
@@ -289,11 +289,11 @@ define([
                 contentType: "application/json",
                 cache: false,
                 url: "/surveyKPI/surveyview/map/" + globals.gViewId,
-                data: { settings: saveString },
-                success: function(data, status) {
+                data: {settings: saveString},
+                success: function (data, status) {
                     removeHourglass();
                     updateActionStatus(localise.set["msg_upd"]);
-                }, error: function(data, status) {
+                }, error: function (data, status) {
                     removeHourglass();
                     alert(localise.set["msg_err_save"] + " " + data.responseText);
                 }
