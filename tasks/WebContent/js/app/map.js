@@ -38,7 +38,9 @@ define([
             init: init,
             setLayers: setLayers,
             refreshLayer: refreshLayer,
-            refreshAllLayers: refreshAllLayers
+            refreshAllLayers: refreshAllLayers,
+            addLayer: addLayer,
+            saveLayer: saveLayer
         };
 
         function setLayers(layers) {
@@ -89,17 +91,8 @@ define([
                 });
                 gMap.addControl(layerSwitcher);
 
-                // Add a new map layer
-                $('.addlayer').click(function () {
-                    addLayer();
-                });
-
                 $('#layerEdit').on('shown.bs.modal', function () {
                     $('#ml_title').focus();
-                });
-
-                $('#addLayerSave').click(function () {
-                    saveLayer();
                 });
 
                 // Show the layers selector

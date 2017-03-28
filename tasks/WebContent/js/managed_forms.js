@@ -151,19 +151,6 @@ require([
         gDirn: undefined
     }
 
-    var gBlankChart = {
-        groups: [],
-        time_interval: false,
-        humanName: "",
-        name: "",
-        chart_type: "bar",
-        group: "none",
-        fn: "count",
-        tSeries: false,
-        period: undefined,
-        width: 12
-    };
-
     var gReport = {
         date_q: "Upload Time",
         row: [
@@ -401,8 +388,8 @@ require([
 
             updateVisibleColumns(config.columns);
             saveConfig(config);
-            chart.setChartList();
-            chart.refreshCharts();
+            //chart.setChartList();
+            //chart.refreshCharts();
 
         });
 
@@ -447,6 +434,15 @@ require([
         // Add a new chart
         $('#m_add_chart').click(function () {
             chart.addNewChart();
+        });
+
+        // Add a new map layer
+        $('#m_add_layer').click(function () {
+            map.addLayer();
+        });
+
+        $('#addLayerSave').click(function () {
+            map.saveLayer();
         });
 
         /*
@@ -731,6 +727,7 @@ require([
                     map.setLayers(data.layers);
                     if (gDataLoaded) {
                         map.refreshAllLayers(gMapView);
+                        initialise();
                         //chart.setChartList();	// Enable charts based on this survey config
                         //chart.refreshCharts();
                     }
@@ -1023,6 +1020,7 @@ require([
                 console.log("initComplete");
                 gDataLoaded = true;
                 if (gConfigLoaded) {
+                    initialise();
                     map.refreshAllLayers(gMapView);
                     //chart.setChartList();	// Enable charts based on this survey config
                     //chart.refreshCharts();
@@ -1838,6 +1836,78 @@ require([
 
         // Set focus to first editable data item
         $editForm.find('[autofocus]').focus();
+    }
+
+    /*
+     * Perform initialisation after the data and the survey view configuration have been loaded
+     */
+    function initialise() {
+
+        var filtered = [],
+            i;
+
+        var columns = gTasks.cache.surveyConfig[globals.gViewId].columns,
+            h = [],
+            idx = -1,
+            hGrp = [],
+            idxGrp = -1,
+            hQ = [],
+            idxQ = -1;
+
+        /*
+         * Filter the questions that the user is allowed to select
+         */
+        var filtered_prelim = columns.filter(function (d) {
+            return d.include && !d.hide &&
+                d.name !== "prikey" &&
+                d.name !== "_upload_time" &&
+                d.name !== "_start" &&
+                d.name !== "_end" &&
+                d.name !== "instancename" &&
+                d.type !== "dateTime" &&
+                d.type !== "time" &&
+                d.type !== "date" &&
+                d.type !== "image" && d.type !== "video" && d.type !== "audio";
+        });
+
+        // Merge choices from select multiple questions
+        var select_questions = {};
+        for (i = 0; i < filtered_prelim.length; i++) {
+            if (filtered_prelim[i].type === "select") {
+                var n = filtered_prelim[i].humanName.split(" - ");
+                if (n.length > 1) {
+
+                    if (!select_questions[n[0]]) {		// New choice
+
+                        filtered_prelim[i].select_name = n[0];
+                        filtered_prelim[i].choices = [];
+                        filtered_prelim[i].choices.push(filtered_prelim[i].humanName);
+
+                        select_questions[n[0]] = filtered_prelim[i];
+                        filtered.push(filtered_prelim[i]);
+                    } else {
+                        var f = select_questions[n[0]];
+                        f.choices.push(filtered_prelim[i].humanName);
+                    }
+                }
+
+
+            } else {
+                filtered.push(filtered_prelim[i]);
+            }
+        }
+        
+        /*
+         * Add question select options
+         */
+        for (i = 0; i < filtered.length; i++) {
+            hQ[++idxQ] = '<option value="';
+            hQ[++idxQ] = i;
+            hQ[++idxQ] = '">';
+            hQ[++idxQ] = filtered[i].humanName;
+            hQ[++idxQ] = '</option>';
+        }
+        $('.question').empty().append(hQ.join(''));
     }
 
 });

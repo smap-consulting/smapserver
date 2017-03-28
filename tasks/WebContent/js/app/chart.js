@@ -50,6 +50,19 @@ define([
             map: map
         };
 
+        var gBlankChart = {
+            groups: [],
+            time_interval: false,
+            humanName: "",
+            name: "",
+            chart_type: "bar",
+            group: "none",
+            fn: "count",
+            tSeries: false,
+            period: undefined,
+            width: 12
+        };
+
         //var gCurrentReport = undefined;
         var gEdConfig,			// Temporary objects used when editing a chart
             gEdChart,
@@ -68,7 +81,9 @@ define([
         };
 
         function init() {
+
             localise.setlang();
+
             $('#editWidgetSave').off().click(function () {
 
                 var width = $('#ew_width').val(),
@@ -720,7 +735,7 @@ define([
         }
 
         /*
-         * Add the controls to an chart ibox
+         * Add the controls to a chart ibox
          */
         function addChartTools(title) {
 

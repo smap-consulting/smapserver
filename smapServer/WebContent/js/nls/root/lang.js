@@ -677,6 +677,7 @@ define({
     "d_c_month": "Coount by month",
     "d_c_year": "Count by year",
     "d_add": "Add Chart",
+    "d_add_l": "Add Map Layer",
     "d_add_q": "Add New Query",
     "d_add_f": "Add New Form",
     "d_from_f": "Link From Form",
