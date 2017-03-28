@@ -30,7 +30,9 @@ define([
     function ($, modernizr, lang, globals) {
 
         var gMap,
-            gLayers = [];
+            gLayers = [],
+            gVectorSources = [],
+            gMapUpdatePending = true;
 
         return {
             init: init,
@@ -57,24 +59,6 @@ define([
                         new ol.layer.Group({
                             'title': 'Base maps',
                             layers: [
-                                new ol.layer.Group({
-                                    title: 'Water color with labels',
-                                    type: 'base',
-                                    combine: true,
-                                    visible: false,
-                                    layers: [
-                                        new ol.layer.Tile({
-                                            source: new ol.source.Stamen({
-                                                layer: 'watercolor'
-                                            })
-                                        }),
-                                        new ol.layer.Tile({
-                                            source: new ol.source.Stamen({
-                                                layer: 'terrain-labels'
-                                            })
-                                        })
-                                    ]
-                                }),
                                 new ol.layer.Tile({
                                     title: 'Water color',
                                     type: 'base',
@@ -88,19 +72,6 @@ define([
                                     type: 'base',
                                     visible: true,
                                     source: new ol.source.OSM()
-                                })
-                            ]
-                        }),
-                        new ol.layer.Group({
-                            title: 'Overlays',
-                            layers: [
-                                new ol.layer.Tile({
-                                    title: 'Countries',
-                                    source: new ol.source.TileWMS({
-                                        url: 'http://demo.opengeo.org/geoserver/wms',
-                                        params: {'LAYERS': 'ne:ne_10m_admin_1_states_provinces_lines_shp'},
-                                        serverType: 'geoserver'
-                                    })
                                 })
                             ]
                         })
@@ -145,7 +116,10 @@ define([
                     }
                 });
             }
-            refreshAllLayers();
+
+            if(gMapUpdatePending) {
+                refreshAllLayers(true);
+            }
             showLayerSelections();
 
 
@@ -207,18 +181,23 @@ define([
         /*
          * Redisplay all layers
          */
-        function refreshAllLayers() {
-            if(gMap) {
-                var i;
-                var results = globals.gMainTable.rows({
-                    order: 'current',  // 'current', 'applied', 'index',  'original'
-                    page: 'all',      // 'all',     'current'
-                    search: 'applied',     // 'none',    'applied', 'removed'
-                }).data();
+        function refreshAllLayers(mapView) {
+            if (mapView) {
+                if (gMap) {
+                    var i;
+                    var results = globals.gMainTable.rows({
+                        order: 'current',  // 'current', 'applied', 'index',  'original'
+                        page: 'all',      // 'all',     'current'
+                        search: 'applied',     // 'none',    'applied', 'removed'
+                    }).data();
 
-                for (i = 0; gLayers.length; i++) {
-                    updateSingleLayer(i, results);
+                    for (i = 0; i < gLayers.length; i++) {
+                        updateSingleLayer(i, results);
+                    }
                 }
+                gMapUpdatePending = false;
+            } else {
+                gMapUpdatePending = true;
             }
         }
 
@@ -252,7 +231,20 @@ define([
                 }),
             });
 
+            if(!gVectorSources[index]) {
+                gVectorSources[index] = new ol.source.Vector();
+            } else {
+                gVectorSources[index].clear();
+            }
+            gVectorSources[index].addFeatures((new ol.format.GeoJSON()).readFeatures(geoJson,
+                {
+                    dataProjection: 'EPSG:4326',
+                    featureProjection: 'EPSG:3857'
+                }));
+
+
             // Add the layer if it does not exist, else up date it
+            /*
             var vectorSource = new ol.source.Vector({
                 features: (new ol.format.GeoJSON()).readFeatures(geoJson,
                     {
@@ -260,16 +252,18 @@ define([
                         featureProjection: 'EPSG:3857'
                     })
             });
+            */
+
 
             var vectorLayer;
             if (layer.clump === "heatmap") {
                 vectorLayer = new ol.layer.Heatmap({
-                    source: vectorSource,
+                    source: gVectorSources[index],
                     radius: 5
                 });
             } else {
                 vectorLayer = new ol.layer.Vector({
-                    source: vectorSource,
+                    source: gVectorSources[index],
                     style: [defaultStyle]
                 });
             }
@@ -278,7 +272,8 @@ define([
         }
 
         /*
-         * Add a new layer to the map
+         * User wants to add a new layer
+         * Show the layer editor dialog
          */
         function addLayer() {
             $('#layerInfo').show();

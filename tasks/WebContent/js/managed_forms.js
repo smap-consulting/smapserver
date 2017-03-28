@@ -132,7 +132,8 @@ require([
      */
 
     var gDataLoaded = false,
-        gConfigLoaded = false;
+        gConfigLoaded = false,
+        gMapView = false;           // Set true when the map tab is shown
 
     window.gTasks = {
         cache: {
@@ -455,12 +456,13 @@ require([
         $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
             var target = $(e.target).attr("href") // activated tab
             $('#showlayers').hide();
+            gMapView = false;
             if (target === '#map-view') {
                 map.init();
                 $('#showlayers').show();
+                gMapView = true;
             }
         });
-
 
 
     });
@@ -728,7 +730,7 @@ require([
 
                     map.setLayers(data.layers);
                     if (gDataLoaded) {
-                        map.refreshAllLayers;
+                        map.refreshAllLayers(gMapView);
                         //chart.setChartList();	// Enable charts based on this survey config
                         //chart.refreshCharts();
                     }
@@ -1021,7 +1023,7 @@ require([
                 console.log("initComplete");
                 gDataLoaded = true;
                 if (gConfigLoaded) {
-                    map.refreshAllLayers();
+                    map.refreshAllLayers(gMapView);
                     //chart.setChartList();	// Enable charts based on this survey config
                     //chart.refreshCharts();
                 }
@@ -1124,6 +1126,9 @@ require([
                         last = group;
                     }
                 });
+            } else {
+                //refreshCharts();
+                map.refreshAllLayers(gMapView);
             }
 
             columns = gTasks.cache.surveyConfig[globals.gViewId].columns;
