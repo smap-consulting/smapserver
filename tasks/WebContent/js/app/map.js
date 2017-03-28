@@ -135,11 +135,11 @@ define([
                 $('#showlayers').click(function () {
                     globals.gMapLayersShown = !globals.gMapLayersShown;
                     if (globals.gMapLayersShown) {
-                        $('.main_content').removeClass("col-md-12").addClass("col-md-8");
+                        $('#map_content').removeClass("col-md-12").addClass("col-md-8");
                         $('.map_layers').show();
                         gMap.updateSize();
                     } else {
-                        $('.main_content').removeClass("col-md-8").addClass("col-md-12");
+                        $('#map_content').removeClass("col-md-8").addClass("col-md-12");
                         $('.map_layers').hide();
                         gMap.updateSize();
                     }

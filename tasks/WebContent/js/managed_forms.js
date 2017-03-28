@@ -380,6 +380,7 @@ require([
                     }
                 }
             });
+
         });
 
         /*
@@ -442,34 +443,24 @@ require([
             }
         });
 
-        /*
-         * Dashboard menus
-         */
-        $('#m_map_view').click(function () {
-            map.init();
-            if (globals.gMapLayersShown) {
-                $('.main_content').removeClass("col-md-12").addClass("col-md-8");
-                $('.map_layers').show();
-            } else {
-                $('.main_content').removeClass("col-md-8").addClass("col-md-12");
-                $('.map_layers').hide();
-            }
-            $('#showlayers').show();
-            $('#table_content').hide();
-            $('#map_content').show();
-        });
-        $('#m_table_view').click(function () {
-            $('#showlayers').hide();
-            $('.main_content').removeClass("col-md-8").addClass("col-md-12");
-            $('.map_layers').hide();
-            $('#table_content').show();
-            $('#map_content').hide();
-        });
-
         // Add a new chart
         $('#m_add_chart').click(function () {
             chart.addNewChart();
         });
+
+        /*
+         * Take action on tab change to initialise tab contents
+         * Refer: http://stackoverflow.com/questions/20705905/bootstrap-3-jquery-event-for-active-tab-change
+         */
+        $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+            var target = $(e.target).attr("href") // activated tab
+            $('#showlayers').hide();
+            if (target === '#map-view') {
+                map.init();
+                $('#showlayers').show();
+            }
+        });
+
 
 
     });
@@ -797,7 +788,7 @@ require([
             $('#content').empty();
         }
     }
-    
+
     /*
      * Refresh the data used in this page
      */
