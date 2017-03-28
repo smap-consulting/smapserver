@@ -40,6 +40,7 @@ define([
 
         function setLayers(layers) {
             gLayers = layers;
+            showLayerSelections();
         }
 
         function init() {

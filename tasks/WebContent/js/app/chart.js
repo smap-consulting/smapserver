@@ -50,7 +50,7 @@ define([
             map: map
         };
 
-        var gCurrentReport = undefined;
+        //var gCurrentReport = undefined;
         var gEdConfig,			// Temporary objects used when editing a chart
             gEdChart,
             gIsNewChart,
@@ -59,7 +59,7 @@ define([
 
         return {
             init: init,
-            setReport: setReport,
+            //setReport: setReport,
             setChartList: setChartList,
             refreshCharts: refreshCharts,
             addChartTypeSelect: addChartTypeSelect,
@@ -106,26 +106,26 @@ define([
                 //	gEdFilteredChart.width = gEdChart.width;
                 //	saveConfig();
                 //} else {
-                if (gIsNewChart) {
-                    gCurrentReport.row[0].charts.push(gEdChart);
-                }
-                saveReport(gCurrentReport);
+                //if (gIsNewChart) {
+                //    gCurrentReport.row[0].charts.push(gEdChart);
+                //}
+                //saveReport(gCurrentReport);
                 //}
 
                 //gEdConfig.svg.remove();
 
                 //if(reset) {
-                setChartList();
-                refreshCharts();
+                //setChartList();
+                //refreshCharts();
                 //} else {
                 //	refreshCharts();
                 //}
             });
         }
 
-        function setReport(r) {
-            gCurrentReport = r;
-        }
+        //function setReport(r) {
+        //    gCurrentReport = r;
+        //}
 
 
         /*
@@ -142,7 +142,7 @@ define([
             var i,
                 data,
                 chart,
-                date_col = getCol(gCurrentReport.date_q, gTasks.cache.surveyConfig[globals.gViewId].columns),
+                //date_col = getCol(gCurrentReport.date_q, gTasks.cache.surveyConfig[globals.gViewId].columns),
                 filtered = gTasks.cache.surveyConfig[globals.gViewId].filtered,
                 index = 0,
                 j,
@@ -760,8 +760,8 @@ define([
                 gEdConfig = globals.gCharts[gChartId];
 
                 gCurrentReport.row[gEdConfig.rowIndex].charts.splice(gEdConfig.index, 1);
-                saveReport(gCurrentReport);
-                setChartList();
+                //saveReport(gCurrentReport);
+                //setChartList();
                 refreshCharts();
                 console.log("delete");
 
