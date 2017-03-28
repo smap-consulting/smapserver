@@ -145,6 +145,7 @@ define([
                     }
                 });
             }
+            refreshAllLayers();
             showLayerSelections();
 
 
@@ -192,20 +193,33 @@ define([
          */
         function refreshLayer(index) {
 
-            var results = globals.gMainTable.rows({
-                order: 'current',  // 'current', 'applied', 'index',  'original'
-                page: 'all',      // 'all',     'current'
-                search: 'applied',     // 'none',    'applied', 'removed'
-            }).data();
+            if(gMap) {
+                var results = globals.gMainTable.rows({
+                    order: 'current',  // 'current', 'applied', 'index',  'original'
+                    page: 'all',      // 'all',     'current'
+                    search: 'applied',     // 'none',    'applied', 'removed'
+                }).data();
 
-            updateSingleLayer(index, results);
+                updateSingleLayer(index, results);
+            }
         }
 
         /*
          * Redisplay all layers
          */
         function refreshAllLayers() {
+            if(gMap) {
+                var i;
+                var results = globals.gMainTable.rows({
+                    order: 'current',  // 'current', 'applied', 'index',  'original'
+                    page: 'all',      // 'all',     'current'
+                    search: 'applied',     // 'none',    'applied', 'removed'
+                }).data();
 
+                for (i = 0; gLayers.length; i++) {
+                    updateSingleLayer(i, results);
+                }
+            }
         }
 
         /*
@@ -294,7 +308,7 @@ define([
             gLayers.push(layer);
             $('#layerEdit').modal("hide");	// All good close the modal
 
-            refreshLayer(gLayers.length - 1)
+            refreshLayer(gLayers.length - 1);
             saveToServer(gLayers);
             showLayerSelections();
 

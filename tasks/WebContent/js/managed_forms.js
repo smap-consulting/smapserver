@@ -702,7 +702,7 @@ require([
     }
 
     /*
-     * Get the columns for a survey
+     * Get the survey view (mini dashboard for a single survey)
      */
     function getSurveyView(viewId, sId, managedId, queryId) {
 
@@ -728,6 +728,7 @@ require([
 
                     map.setLayers(data.layers);
                     if (gDataLoaded) {
+                        map.refreshAllLayers;
                         //chart.setChartList();	// Enable charts based on this survey config
                         //chart.refreshCharts();
                     }
@@ -1020,6 +1021,7 @@ require([
                 console.log("initComplete");
                 gDataLoaded = true;
                 if (gConfigLoaded) {
+                    map.refreshAllLayers();
                     //chart.setChartList();	// Enable charts based on this survey config
                     //chart.refreshCharts();
                 }
