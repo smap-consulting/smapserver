@@ -73,7 +73,6 @@ requirejs.config({
         'slimscroll': ['jquery'],
         'crf': ['jquery'],
         'datatables': ['jquery', 'bootstrap'],
-        'app/common_mgmt': ['jquery'],
         'qrcode': ['jquery'],
         'toggle': ['bootstrap.min'],
         'sweetalert': ['jquery', 'bootstrap']
@@ -94,7 +93,6 @@ require([
     'datetimepicker',
     'icheck',
     'crf',
-    'app/common_mgmt',
     'qrcode',
     'toggle',
     'sweetalert'

@@ -25,7 +25,8 @@ define([
         'jquery',
         'modernizr',
         'localise',
-        'globals'],
+        'globals',
+        'icheck'],
     function ($, modernizr, lang, globals) {
 
         var gMap,
@@ -161,6 +162,13 @@ define([
                 h[++idx] = '<tr>';
 
                 h[++idx] = '<td>';      // Select
+                    h[++idx] = '<div class="switch">';
+                    h[++idx] = '<input type="checkbox" name="columnSelect"';
+                    h[++idx] = ' class="layerSelect" value="';
+                    h[++idx] = i;
+                    h[++idx] = '"';
+                    h[++idx] = '>';
+                    h[++idx] = '</div>';
                 h[++idx] = '</td>';
                 h[++idx] = '<td>';      // Name
                 h[++idx] = gLayers[i].title;
@@ -173,6 +181,10 @@ define([
 
 
             $('#layerSelect tbody').empty().html(h.join(''));
+            $('input', '#layerSelect tbody').iCheck({
+                checkboxClass: 'icheckbox_square-green',
+                radioClass: 'iradio_square-green'
+            });
         }
 
         /*
