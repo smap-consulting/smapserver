@@ -41,7 +41,7 @@ define([
 	/*
 	 * Add
 	 */
-	function add(chartId, chart, config, data, widthContainer, heightContainer) {
+	function add(chart, config, data, widthContainer, heightContainer) {
 
 		var barWidth,
 			width,

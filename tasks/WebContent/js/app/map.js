@@ -39,7 +39,6 @@ define([
             setLayers: setLayers,
             refreshLayer: refreshLayer,
             refreshAllLayers: refreshAllLayers,
-            addLayer: addLayer,
             saveLayer: saveLayer
         };
 
@@ -264,18 +263,9 @@ define([
             gMap.addLayer(vectorLayer);
         }
 
-        /*
-         * User wants to add a new layer
-         * Show the layer editor dialog
-         */
-        function addLayer() {
-            $('#layerInfo').show();
-            $('#ml_title').val("");
-            $('#layerEdit').modal("show");
-        }
 
         /*
-         * Save a layer after the user presses save on the layer dialog
+         * Save a layer after the user specifies it in the layer dialog
          */
         function saveLayer() {
 

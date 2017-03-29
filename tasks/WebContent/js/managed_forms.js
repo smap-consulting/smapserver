@@ -44,8 +44,6 @@ requirejs.config({
         toggle: 'bootstrap-toggle.min',
         lang_location: '../../../../js',
         file_input: '../../../../js/libs/bootstrap.file-input',
-        mapbox: '../../../../js/libs/mapbox/js/mapbox',
-        mapbox_app: '../../../../js/app/mapbox_app',
         datetimepicker: '../../../../js/libs/bootstrap-datetimepicker.min',
         datatables: '../../../../js/libs/DataTables/datatables',
         'datatables.net': '../../../../js/libs/DataTables/DataTables/js/datatables.net',
@@ -75,13 +73,7 @@ requirejs.config({
         'datatables': ['jquery', 'bootstrap'],
         'app/chart': ['jquery'],
         'qrcode': ['jquery'],
-        'toggle': ['bootstrap.min'],
-
-        'mapbox_app': ['jquery', 'mapbox'],
-        'mapbox': {
-            exports: 'L'
-        },
-
+        'toggle': ['bootstrap.min']
     }
 });
 
@@ -89,8 +81,6 @@ require([
     'jquery',
     'bootstrap',
     'common',
-    'mapbox',
-    'mapbox_app',
     'localise',
     'globals',
     'moment',
@@ -113,8 +103,6 @@ require([
 ], function ($,
              bootstrap,
              common,
-             mapbox,
-             mapbox_app,
              localise,
              globals,
              moment,
@@ -438,9 +426,12 @@ require([
 
         // Add a new map layer
         $('#m_add_layer').click(function () {
-            map.addLayer();
+            $('#layerInfo').show();
+            $('#ml_title').val("");
+            $('#layerEdit').modal("show");
         });
 
+        // Respond to save on a layer edit dialog
         $('#addLayerSave').click(function () {
             map.saveLayer();
         });
@@ -601,7 +592,7 @@ require([
             }
 
             if (format === "xlsx") {
-                chartData = chart.refreshCharts(true);
+                chartData = chart.getXLSData();
             }
 
             generateFile(url, filename, format, mime, data, globals.gCurrentSurvey, managedId, title, project, charts, chartData, settings);
@@ -725,6 +716,7 @@ require([
                     gTasks.cache.surveyConfig[data.viewId] = data;
 
                     map.setLayers(data.layers);
+                    chart.setCharts(data.charts);
                     if (gDataLoaded) {
                         map.refreshAllLayers(gMapView);
                         initialise();

@@ -32,9 +32,8 @@ define([
         'app/charts/line',
         'app/charts/wordcloud',
         'app/charts/groupedBar',
-        'app/charts/map',
         'svgsave'],
-    function ($, modernizr, lang, globals, d3, bar, pie, line, wordcloud, groupedBar, map, svgsave) {
+    function ($, modernizr, lang, globals, d3, bar, pie, line, wordcloud, groupedBar, svgsave) {
 
 
         /*
@@ -53,8 +52,7 @@ define([
         var gBlankChart = {
             groups: [],
             time_interval: false,
-            humanName: "",
-            name: "",
+            title: "",
             chart_type: "bar",
             group: "none",
             fn: "count",
@@ -68,13 +66,15 @@ define([
             gEdChart,
             gIsNewChart,
             gEdFilteredChart,
-            gChartId;
+            gChartId,
+            gCharts = [],
+            gChartsConfig = {};
 
         return {
             init: init,
-            //setReport: setReport,
+            setCharts: setCharts,           // Set the list of charts to display
             setChartList: setChartList,
-            refreshCharts: refreshCharts,
+            refreshAllCharts: refreshAllCharts,
             addChartTypeSelect: addChartTypeSelect,
             addNewChart: addNewChart
 
@@ -84,69 +84,19 @@ define([
 
             localise.setlang();
 
-            $('#editWidgetSave').off().click(function () {
-
-                var width = $('#ew_width').val(),
-                    reset = false,
-                    filtered = gTasks.cache.surveyConfig[globals.gViewId].filtered;
-
-                //if(width != gEdChart.width) {
-                //	reset = true;
-                //}
-                gEdChart.qIdx = $('#ew_question').val();
-                if (typeof gEdChart.qIdx !== "undefined" && filtered) {		// Question specified
-                    gEdChart.name = filtered[gEdChart.qIdx].name;
-                    gEdChart.type = filtered[gEdChart.qIdx].type;
-                }
-                gEdChart.fn = $('#ew_fn').val();
-                gEdChart.humanName = $('#ew_title').val();
-                gEdChart.chart_type = $('#ew_chart_type').val();
-                gEdChart.width = $('#ew_width').val();
-                gEdChart.group = $('#ew_group').val();
-                if (gEdChart.time_interval) {
-                    gEdChart.groups[0].q = $("#ew_date1").val();
-                    gEdChart.groups[0].label = $("#ew_date1 option[value='" + gEdChart.groups[0].q + "']").text();
-
-                    gEdChart.groups[1].q = $("#ew_date2").val();
-                    gEdChart.groups[1].label = $("#ew_date2 option[value='" + gEdChart.groups[1].q + "']").text();
-                }
-                if (gEdChart.tSeries) {
-                    var period = $('#ew_period').val();
-                    if (period != gEdChart.period) {
-                        reset = true;
-                    }
-                    gEdChart.period = $('#ew_period').val();
-                }
-                // if(gEdConfig.fromDT) {
-                //	gEdFilteredChart.width = gEdChart.width;
-                //	saveConfig();
-                //} else {
-                //if (gIsNewChart) {
-                //    gCurrentReport.row[0].charts.push(gEdChart);
-                //}
-                //saveReport(gCurrentReport);
-                //}
-
-                //gEdConfig.svg.remove();
-
-                //if(reset) {
-                //setChartList();
-                //refreshCharts();
-                //} else {
-                //	refreshCharts();
-                //}
+            $('#editChartSave').off().click(function () {
+                saveChart();
             });
         }
 
-        //function setReport(r) {
-        //    gCurrentReport = r;
-        //}
-
+        function setCharts(charts) {
+            gCharts = charts || [];
+        }
 
         /*
-         * Show a report
+         * Get XLS Data from charts
          */
-        function refreshCharts(toXLS) {
+        function getXLSData() {
 
             var results = globals.gMainTable.rows({
                 order: 'current',  // 'current', 'applied', 'index',  'original'
@@ -157,38 +107,87 @@ define([
             var i,
                 data,
                 chart,
-                //date_col = getCol(gCurrentReport.date_q, gTasks.cache.surveyConfig[globals.gViewId].columns),
-                filtered = gTasks.cache.surveyConfig[globals.gViewId].filtered,
-                index = 0,
-                j,
                 dataLength = results.count(),
                 xlsResponse = [];
 
-            for (i = 0; i < gCurrentReport.row.length; i++) {
+            for (i = 0; i < gCharts.length; i++) {
 
-                for (j = 0; j < gCurrentReport.row[i].charts.length; j++) {
+                chart = gCharts[i];
+                data = processData(results, chart, dataLength);
+                getXlsResponseObject(xlsResponse, chart, data);
 
-                    chart = gCurrentReport.row[i].charts[j];
-                    if (chart.groups) {
-                        chart.groupLabels = chart.groups.map(function (e) {
-                            return e.label;
-                        });
-                    }
-                    data = processData(results, chart, dataLength);
-                    if (toXLS) {
-                        getXlsResponseObject(xlsResponse, chart, data);
-                    } else {
-                        addChart("#c_" + chart.name, data, chart, i, index++, true);
-                    }
-
-                }
             }
 
-            if (toXLS) {
-                return xlsResponse;
+            return xlsResponse;
+
+        }
+
+        /*
+         * Refresh all charts
+         */
+        function refreshAllCharts() {
+
+            var results = globals.gMainTable.rows({
+                order: 'current',  // 'current', 'applied', 'index',  'original'
+                page: 'all',      // 'all',     'current'
+                search: 'applied',     // 'none',    'applied', 'removed'
+            }).data();
+
+            var i;
+
+            for (i = 0; i < gCharts.length; i++) {
+                updateSingleChart(results, gCharts[i]);
+            }
+
+            return;
+
+        }
+
+        /*
+         * Refresh a single chart
+         */
+        function refreshChart(chart) {
+
+            var results = globals.gMainTable.rows({
+                order: 'current',  // 'current', 'applied', 'index',  'original'
+                page: 'all',      // 'all',     'current'
+                search: 'applied',     // 'none',    'applied', 'removed'
+            }).data();
+
+            updateSingleChart(results, chart);
+
+        }
+
+        /*
+         * Update a single chart
+         * Note this is a separate function to refreshChart() as refreshChart() and refreshAllCharts()
+         *  both need to do similar initialisation
+         */
+        function updateSingleChart(results, chart) {
+
+            if (chart.groups) {
+                chart.groupLabels = chart.groups.map(function (e) {
+                    return e.label;
+                });
+            }
+
+            var dataLength = results.count();
+            var data = processData(results, chart, dataLength);
+
+            var existingChart = false;
+            var $chart;
+            if (chart.id) {
+                $chart = $('#c_' + chart.id);
+                existingChart = $chart.length;
+            }
+            if (existingChart) {
+                // TODO clear
             } else {
-                return;
+                chart.id = appendNewChart(chart);
+                $chart = $('#c_' + chart.id);
             }
+
+            fillChart($chart, data, chart, true);
         }
 
         /*
@@ -198,7 +197,7 @@ define([
             var newData,
                 i,
                 add = false,
-                name = chart.humanName;
+                name = chart.title;
 
             if (chart.chart_type === "groupedBar") {
                 newData = data;
@@ -237,7 +236,7 @@ define([
             if (add) {
                 xlsResponse.push({
                     chart_type: chart.chart_type,
-                    name: chart.humanName,
+                    name: chart.title,
                     data: newData
                 });
             }
@@ -504,54 +503,93 @@ define([
         }
 
         /*
-         * Add a chart
+         * Fill a chart container with the chart details
          */
-        function addChart(chartId, data, chart, rowIndex, index, fromDT) {
+        function fillChart($chart, data, chart, fromDT) {
 
             // Get dynamic widths of container
-            var widthContainer = $(chartId).width();
-            var heightContainer = $(chartId).height();
+            var widthContainer = $chart.width();
+            var heightContainer = $chart.height();
             var view = "0 0 " + widthContainer + " " + heightContainer;
 
             if (widthContainer > 0 && heightContainer > 0) {
-                var config = globals.gCharts[chartId],
+                var config = gChartsConfig[chart.id],
                     init = false;
 
                 if (typeof config === "undefined") {
-                    globals.gCharts[chartId] = {};
-                    globals.gCharts[chartId].rowIndex = rowIndex;
-                    globals.gCharts[chartId].index = index;
-                    config = globals.gCharts[chartId];
+                    gChartsConfig[chart.id] = {};
+                    config = gChartsConfig[chart.id];
                     init = true;
                 }
 
                 if (avCharts[chart.chart_type]) {
+
+                    // Remove the svg if we cannot update gracefully
                     if (init || chart.chart_type === "pie" || chart.chart_type === "wordcloud") {	// Pie charts tricky to update, wordcloud not implemented update yet
-                        if (chart.chart_type === "map") {
-                            d3.select(chartId).append("div")
-                                .attr("id", chartId + '_map')
-                                .classed("dashboard_map", true);
-                        } else {
-                            if (config.svg) {
-                                config.svg.remove();
-                            }
-                            config.svg = d3.select(chartId).append("svg")
-                                .attr("preserveAspectRatio", "xMinYMin meet")
-                                .attr("viewBox", view)
-                                .classed("svg-content", true);
+
+                        if (config.svg) {
+                            config.svg.remove();
                         }
-                        avCharts[chart.chart_type].add(chartId, chart, config, data, widthContainer, heightContainer);
-                    }
-                    if (chart.chart_type !== "pie" && chart.chart_type !== "wordcloud") {
-                        avCharts[chart.chart_type].redraw(chartId, chart, config, data, widthContainer, heightContainer);
+                        config.svg = d3.select('#svg_' + chart.id).append("svg")
+                            .attr("preserveAspectRatio", "xMinYMin meet")
+                            .attr("viewBox", view)
+                            .classed("svg-content", true);
+
+                        avCharts[chart.chart_type].add(chart, config, data, widthContainer, heightContainer);
+                    } else {
+                        if (chart.chart_type !== "pie" && chart.chart_type !== "wordcloud") {
+                            avCharts[chart.chart_type].redraw(chart, config, data, widthContainer, heightContainer);
+                        }
                     }
                 } else {
                     console.log("unknown chart type: " + chart.chart_type);
                 }
             } else {
-                alert("Could not find html for " + chart.humanName);
+                alert("Could not find html for " + chart.title);
             }
 
+        }
+
+        /*
+         * Append a new chart to the chart content area
+         */
+        function appendNewChart(chart) {
+            // Create a unique element id for the chart
+            var uniqueString = new Date().valueOf() + "_" + performance.now(),
+                id;
+
+            id = uniqueString.replace('\.', '_');
+
+            var h = [],
+                idx = -1;
+
+            h[++idx] = '<div class="aChart col-sm-';            // Chart id
+            h[++idx] = (chart.width ? chart.width : '6');
+            h[++idx] = '" id="c_';
+            h[++idx] = id;
+            h[++idx] = '">';
+
+            h[++idx] = '<div class="ibox float-e-margins">';    // ibox title
+            h[++idx] = '<div class="ibox-title">';
+            h[++idx] = '<div><h5>';
+            h[++idx] = chart.title;
+            h[++idx] = '</h5></div>';
+            h[++idx] = '<div class="ibox-tools"><a class="widget-edit" href="#"><i class="fa fa-edit fa-widget-edit"></i></a><a class="close-link widget-close"><i class="fa fa-close fa-widget-close"></i></a></div>';
+            h[++idx] = '</div>';
+            h[++idx] = '</div>';                                // ibox title end
+
+            h[++idx] = '<div class="ibox-content">';            // ibox content
+            h[++idx] = '<div class="svg-container" id="svg_';
+            h[++idx] = id;
+            h[++idx] = '">';
+            h[++idx] = '</div>';
+            h[++idx] = '</div>';                                // ibox content end
+
+
+            h[++idx] = '</div>';                                // Chart id end
+
+            $('#chartrow').append(h.join(''));
+            return id;
         }
 
         /*
@@ -777,7 +815,7 @@ define([
                 gCurrentReport.row[gEdConfig.rowIndex].charts.splice(gEdConfig.index, 1);
                 //saveReport(gCurrentReport);
                 //setChartList();
-                refreshCharts();
+                refreshAllCharts();
                 console.log("delete");
 
             });
@@ -811,7 +849,7 @@ define([
 
                 initialiseWidgetDialog();
 
-                $('#editWidget').modal("show");
+                $('#editChart').modal("show");
             });
 
             $('.chart-type').off().click(function () {
@@ -834,7 +872,7 @@ define([
                 filtered[config.index].chart_type = chart_type;
                 config.svg.remove();
 
-                refreshCharts();
+                refreshAllCharts();
             })
         }
 
@@ -913,14 +951,73 @@ define([
             return col;
         }
 
+        function saveChart() {
+            var width = $('#ew_width').val(),
+                reset = false,
+                filtered = gTasks.cache.surveyConfig[globals.gViewId].filtered;
+
+            //if(width != gEdChart.width) {
+            //	reset = true;
+            //}
+            gEdChart.qIdx = $('#ew_question').val();
+            if (typeof gEdChart.qIdx !== "undefined" && filtered) {		// Question specific
+                gEdChart.type = filtered[gEdChart.qIdx].type;
+            }
+            gEdChart.fn = $('#ew_fn').val();
+            gEdChart.title = $('#ew_title').val();
+            gEdChart.chart_type = $('#ew_chart_type').val();
+            gEdChart.width = $('#ew_width').val();
+            gEdChart.group = $('#ew_group').val();
+            if (gEdChart.time_interval) {
+                gEdChart.groups[0].q = $("#ew_date1").val();
+                gEdChart.groups[0].label = $("#ew_date1 option[value='" + gEdChart.groups[0].q + "']").text();
+
+                gEdChart.groups[1].q = $("#ew_date2").val();
+                gEdChart.groups[1].label = $("#ew_date2 option[value='" + gEdChart.groups[1].q + "']").text();
+            }
+            if (gEdChart.tSeries) {
+                var period = $('#ew_period').val();
+                if (period != gEdChart.period) {
+                    reset = true;
+                }
+                gEdChart.period = $('#ew_period').val();
+            }
+
+            // Todo if chart is being edited, ie index id set then replace
+            gCharts.push(gEdChart);
+            $('#editChart').modal("hide");	// All good close the modal
+
+            refreshChart(gEdChart);
+            saveToServer(gCharts);
+
+            // if(gEdConfig.fromDT) {
+            //	gEdFilteredChart.width = gEdChart.width;
+            //	saveConfig();
+            //} else {
+            //if (gIsNewChart) {
+            //    gCurrentReport.row[0].charts.push(gEdChart);
+            //}
+            //saveReport(gCurrentReport);
+            //}
+
+            //gEdConfig.svg.remove();
+
+            //if(reset) {
+            //setChartList();
+            //refreshCharts();
+            //} else {
+            //	refreshCharts();
+            //}
+        }
+
         /*
-         * Add a new chart
+         * Open a dialog to add a new chart
          */
         function addNewChart() {
             gEdChart = $.extend(true, {}, gBlankChart);
             gIsNewChart = true;
             initialiseWidgetDialog();
-            $('#editWidget').modal("show");
+            $('#editChart').modal("show");
         }
 
         /*
