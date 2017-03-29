@@ -71,7 +71,7 @@ public class MiscPDFManager {
 		int pagenumber = 0;
 		public void onStartPage(PdfWriter writer, Document document) {
 			pagenumber++;
-			System.out.println("Page number: " + pagenumber);
+			log.info("Page number: " + pagenumber);
 
 			document.setMargins(marginLeft, marginRight, marginTop_2, marginBottom_2);
 			
@@ -266,7 +266,7 @@ public class MiscPDFManager {
 				AcroFields pdfForm = s_stamper.getAcroFields();
 				Set<String> fields = pdfForm.getFields().keySet();
 				for(String key: fields) {
-					System.out.println("Field: " + key);
+					log.info("Field: " + key);
 				}
 					
 				pdfForm.setField("billing_period", period);
