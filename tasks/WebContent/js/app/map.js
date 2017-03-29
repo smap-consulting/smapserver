@@ -109,7 +109,7 @@ define([
                 });
             }
 
-            if(gMapUpdatePending) {
+            if (gMapUpdatePending) {
                 refreshAllLayers(true);
             }
             showLayerSelections();
@@ -129,13 +129,13 @@ define([
                 h[++idx] = '<tr>';
 
                 h[++idx] = '<td>';      // Select
-                    h[++idx] = '<div class="switch">';
-                    h[++idx] = '<input type="checkbox" name="columnSelect"';
-                    h[++idx] = ' class="layerSelect" value="';
-                    h[++idx] = i;
-                    h[++idx] = '"';
-                    h[++idx] = '>';
-                    h[++idx] = '</div>';
+                h[++idx] = '<div class="switch">';
+                h[++idx] = '<input type="checkbox" name="columnSelect"';
+                h[++idx] = ' class="layerSelect" value="';
+                h[++idx] = i;
+                h[++idx] = '"';
+                h[++idx] = '>';
+                h[++idx] = '</div>';
                 h[++idx] = '</td>';
                 h[++idx] = '<td>';      // Name
                 h[++idx] = gLayers[i].title;
@@ -159,7 +159,7 @@ define([
          */
         function refreshLayer(index) {
 
-            if(gMap) {
+            if (gMap) {
                 var results = globals.gMainTable.rows({
                     order: 'current',  // 'current', 'applied', 'index',  'original'
                     page: 'all',      // 'all',     'current'
@@ -223,7 +223,7 @@ define([
                 }),
             });
 
-            if(!gVectorSources[index]) {
+            if (!gVectorSources[index]) {
                 gVectorSources[index] = new ol.source.Vector();
             } else {
                 gVectorSources[index].clear();
@@ -237,14 +237,14 @@ define([
 
             // Add the layer if it does not exist, else up date it
             /*
-            var vectorSource = new ol.source.Vector({
-                features: (new ol.format.GeoJSON()).readFeatures(geoJson,
-                    {
-                        dataProjection: 'EPSG:4326',
-                        featureProjection: 'EPSG:3857'
-                    })
-            });
-            */
+             var vectorSource = new ol.source.Vector({
+             features: (new ol.format.GeoJSON()).readFeatures(geoJson,
+             {
+             dataProjection: 'EPSG:4326',
+             featureProjection: 'EPSG:3857'
+             })
+             });
+             */
 
 
             var vectorLayer;
