@@ -508,8 +508,8 @@ define([
         function fillChart($chart, data, chart, fromDT) {
 
             // Get dynamic widths of container
-            var widthContainer = $chart.width();
-            var heightContainer = $chart.height();
+            var widthContainer = $('.ibox-content', $chart).width();
+            var heightContainer = $('.ibox-content', $chart).height();
             var view = "0 0 " + widthContainer + " " + heightContainer;
 
             if (widthContainer > 0 && heightContainer > 0) {
@@ -536,10 +536,9 @@ define([
                             .classed("svg-content", true);
 
                         avCharts[chart.chart_type].add(chart, config, data, widthContainer, heightContainer);
-                    } else {
-                        if (chart.chart_type !== "pie" && chart.chart_type !== "wordcloud") {
-                            avCharts[chart.chart_type].redraw(chart, config, data, widthContainer, heightContainer);
-                        }
+                    }
+                    if (chart.chart_type !== "pie" && chart.chart_type !== "wordcloud") {
+                        avCharts[chart.chart_type].redraw(chart, config, data, widthContainer, heightContainer);
                     }
                 } else {
                     console.log("unknown chart type: " + chart.chart_type);
@@ -732,7 +731,7 @@ define([
                     filtered[i].cDom = "c_" + filtered[i].name;
                 }
             }
-            gTasks.cache.surveyConfig[globals.gViewId].filtered = filtered;	// cache
+            gTasks.cache.surveyConfig[globals.gViewId].questions = filtered;	// cache the questions
 
             /*
              * Add question select options
@@ -955,8 +954,10 @@ define([
             var width = $('#ew_width').val(),
                 validated = true,
                 reset = false,
-                filtered = gTasks.cache.surveyConfig[globals.gViewId].filtered,
+                questions,
                 errMsg;
+
+            var questions = gTasks.cache.surveyConfig[globals.gViewId].questions;
 
             var title = $('#ew_title').val();
             if (!title || title.trim().length === 0) {
@@ -969,8 +970,9 @@ define([
             //}
             if (validated) {
                 gEdChart.qIdx = $('#ew_question').val();
-                if (typeof gEdChart.qIdx !== "undefined" && filtered) {		// Question specific
-                    gEdChart.type = filtered[gEdChart.qIdx].type;
+                if (typeof gEdChart.qIdx !== "undefined" && questions) {		// Question specific
+                    gEdChart.type = questions[gEdChart.qIdx].type;
+                    gEdChart.name = questions[gEdChart.qIdx].name;
                 }
                 gEdChart.fn = $('#ew_fn').val();
                 gEdChart.title = title;

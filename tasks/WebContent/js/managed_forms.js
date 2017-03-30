@@ -1847,60 +1847,71 @@ require([
             hQ = [],
             idxQ = -1;
 
-        /*
-         * Filter the questions that the user is allowed to select
-         */
-        var filtered_prelim = columns.filter(function (d) {
-            return d.include && !d.hide &&
-                d.name !== "prikey" &&
-                d.name !== "_upload_time" &&
-                d.name !== "_start" &&
-                d.name !== "_end" &&
-                d.name !== "instancename" &&
-                d.type !== "dateTime" &&
-                d.type !== "time" &&
-                d.type !== "date" &&
-                d.type !== "image" && d.type !== "video" && d.type !== "audio";
-        });
+        if(!gTasks.cache.surveyConfig[globals.gViewId].questions) {
+            /*
+             * Filter the questions that the user is allowed to select
+             */
+            var filtered_prelim = columns.filter(function (d) {
+                return d.include && !d.hide &&
+                    d.name !== "prikey" &&
+                    d.name !== "_upload_time" &&
+                    d.name !== "_start" &&
+                    d.name !== "_end" &&
+                    d.name !== "instancename" &&
+                    d.type !== "dateTime" &&
+                    d.type !== "time" &&
+                    d.type !== "date" &&
+                    d.type !== "image" && d.type !== "video" && d.type !== "audio";
+            });
 
-        // Merge choices from select multiple questions
-        var select_questions = {};
-        for (i = 0; i < filtered_prelim.length; i++) {
-            if (filtered_prelim[i].type === "select") {
-                var n = filtered_prelim[i].humanName.split(" - ");
-                if (n.length > 1) {
+            // Merge choices from select multiple questions
+            var select_questions = {};
+            for (i = 0; i < filtered_prelim.length; i++) {
+                if (filtered_prelim[i].type === "select") {
+                    var n = filtered_prelim[i].humanName.split(" - ");
+                    if (n.length > 1) {
 
-                    if (!select_questions[n[0]]) {		// New choice
+                        if (!select_questions[n[0]]) {		// New choice
 
-                        filtered_prelim[i].select_name = n[0];
-                        filtered_prelim[i].choices = [];
-                        filtered_prelim[i].choices.push(filtered_prelim[i].humanName);
+                            filtered_prelim[i].select_name = n[0];
+                            filtered_prelim[i].choices = [];
+                            filtered_prelim[i].choices.push(filtered_prelim[i].humanName);
 
-                        select_questions[n[0]] = filtered_prelim[i];
-                        filtered.push(filtered_prelim[i]);
-                    } else {
-                        var f = select_questions[n[0]];
-                        f.choices.push(filtered_prelim[i].humanName);
+                            select_questions[n[0]] = filtered_prelim[i];
+                            filtered.push(filtered_prelim[i]);
+                        } else {
+                            var f = select_questions[n[0]];
+                            f.choices.push(filtered_prelim[i].humanName);
+                        }
                     }
+
+
+                } else {
+                    filtered.push(filtered_prelim[i]);
                 }
-
-
-            } else {
-                filtered.push(filtered_prelim[i]);
             }
+
+            /*
+             * Cache the question data
+             */
+            gTasks.cache.surveyConfig[globals.gViewId].questions = filtered;	// cache the questions
         }
+
+        var questions = gTasks.cache.surveyConfig[globals.gViewId].questions;
 
         /*
          * Add question select options
          */
-        for (i = 0; i < filtered.length; i++) {
+        for (i = 0; i < questions.length; i++) {
             hQ[++idxQ] = '<option value="';
             hQ[++idxQ] = i;
             hQ[++idxQ] = '">';
-            hQ[++idxQ] = filtered[i].humanName;
+            hQ[++idxQ] = questions[i].humanName;
             hQ[++idxQ] = '</option>';
         }
         $('.question').empty().append(hQ.join(''));
+
+
     }
 
 });
