@@ -297,7 +297,7 @@ define([
          */
         function getGeoJson(results, layer) {
 
-            var i;
+            var i, j;
 
             var geoJson = {
                 type: "FeatureCollection",
@@ -306,13 +306,32 @@ define([
             };
 
             for (i = 0; i < results.length; i++) {
-                geoJson.features.push(
-                    {
-                        "type": "Feature",
-                        "geometry": {"type": "Point", "coordinates": results[i]._geolocation},
-                        "properties": {}
-                    });
+
+                var keep = false;   // default
+
+                if (!results[i]._geolocation) {                      // Invalid Geometry
+                    keep = false;
+                } else if (results[i]._geolocation.length < 2) {     // Invalid Geometry
+                    keep = false;
+                } else {
+                    for (j = 1; j < results[i]._geolocation.length; j++) {
+                        if (results[i]._geolocation[j] != 0) {
+                            keep = true;                            // At least one non zero geometry
+                            break;
+                        }
+                    }
+                }
+
+                if (keep) {
+                    geoJson.features.push(
+                        {
+                            "type": "Feature",
+                            "geometry": {"type": "Point", "coordinates": results[i]._geolocation},
+                            "properties": {}
+                        });
+                }
             }
+
             return geoJson;
         }
 
@@ -346,4 +365,5 @@ define([
             });
         }
 
-    });
+    })
+;
