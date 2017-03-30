@@ -194,6 +194,7 @@ var isBrowseResults = true,
                             </div>
                         </div>
                         <div class="ibox-content">
+							<div id="dashboardInfo" class="alert alert-success" style="display:none;"></div>
                         	<div class="row">
 
 								<div class="tabs-container">
@@ -242,7 +243,6 @@ var isBrowseResults = true,
 													</div>
 													<div id="map_content" class="col-md-12 dash_views">
 														<div id="map" class="map"></div>
-														<div id="info" class="alert alert-success"></div>
 													</div>
 												</div>
 											</div>
@@ -449,13 +449,14 @@ var isBrowseResults = true,
 								</div>
 							</div>
 						</form>
+						<div id="chartInfo" style="word-wrap:break-word; display:none;" class="alert" role="alert"></div>
 					</div>
 					
 				</div>
 			</div>
 			<div class="modal-footer">
             	<button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_close">Close</button>
-            	<button id="editChartSave" type="button" class="btn btn-primary lang" data-dismiss="modal" data-lang="c_save">Save</button>
+            	<button id="editChartSave" type="button" class="btn btn-primary lang" data-lang="c_save">Save</button>
         	</div>
 		</div>
 	</div>

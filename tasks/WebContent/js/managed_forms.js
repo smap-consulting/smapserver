@@ -421,12 +421,13 @@ require([
 
         // Add a new chart
         $('#m_add_chart').click(function () {
+            $('#chartInfo').hide();
             chart.addNewChart();
         });
 
         // Add a new map layer
         $('#m_add_layer').click(function () {
-            $('#layerInfo').show();
+            $('#layerInfo').hide();
             $('#ml_title').val("");
             $('#layerEdit').modal("show");
         });

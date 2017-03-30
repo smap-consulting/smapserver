@@ -953,42 +953,54 @@ define([
 
         function saveChart() {
             var width = $('#ew_width').val(),
+                validated = true,
                 reset = false,
-                filtered = gTasks.cache.surveyConfig[globals.gViewId].filtered;
+                filtered = gTasks.cache.surveyConfig[globals.gViewId].filtered,
+                errMsg;
+
+            var title = $('#ew_title').val();
+            if (!title || title.trim().length === 0) {
+                validated = false;
+                errMsg = localise.set["mf_tr"];
+            }
 
             //if(width != gEdChart.width) {
             //	reset = true;
             //}
-            gEdChart.qIdx = $('#ew_question').val();
-            if (typeof gEdChart.qIdx !== "undefined" && filtered) {		// Question specific
-                gEdChart.type = filtered[gEdChart.qIdx].type;
-            }
-            gEdChart.fn = $('#ew_fn').val();
-            gEdChart.title = $('#ew_title').val();
-            gEdChart.chart_type = $('#ew_chart_type').val();
-            gEdChart.width = $('#ew_width').val();
-            gEdChart.group = $('#ew_group').val();
-            if (gEdChart.time_interval) {
-                gEdChart.groups[0].q = $("#ew_date1").val();
-                gEdChart.groups[0].label = $("#ew_date1 option[value='" + gEdChart.groups[0].q + "']").text();
-
-                gEdChart.groups[1].q = $("#ew_date2").val();
-                gEdChart.groups[1].label = $("#ew_date2 option[value='" + gEdChart.groups[1].q + "']").text();
-            }
-            if (gEdChart.tSeries) {
-                var period = $('#ew_period').val();
-                if (period != gEdChart.period) {
-                    reset = true;
+            if (validated) {
+                gEdChart.qIdx = $('#ew_question').val();
+                if (typeof gEdChart.qIdx !== "undefined" && filtered) {		// Question specific
+                    gEdChart.type = filtered[gEdChart.qIdx].type;
                 }
-                gEdChart.period = $('#ew_period').val();
+                gEdChart.fn = $('#ew_fn').val();
+                gEdChart.title = title;
+                gEdChart.chart_type = $('#ew_chart_type').val();
+                gEdChart.width = $('#ew_width').val();
+                gEdChart.group = $('#ew_group').val();
+                if (gEdChart.time_interval) {
+                    gEdChart.groups[0].q = $("#ew_date1").val();
+                    gEdChart.groups[0].label = $("#ew_date1 option[value='" + gEdChart.groups[0].q + "']").text();
+
+                    gEdChart.groups[1].q = $("#ew_date2").val();
+                    gEdChart.groups[1].label = $("#ew_date2 option[value='" + gEdChart.groups[1].q + "']").text();
+                }
+                if (gEdChart.tSeries) {
+                    var period = $('#ew_period').val();
+                    if (period != gEdChart.period) {
+                        reset = true;
+                    }
+                    gEdChart.period = $('#ew_period').val();
+                }
+
+                // Todo if chart is being edited, ie index id set then replace
+                gCharts.push(gEdChart);
+                $('#editChart').modal("hide");	// All good close the modal
+
+                refreshChart(gEdChart);
+                saveToServer(gCharts);
+            } else {
+                $('#chartInfo').show().removeClass('alert-success').addClass('alert-danger').html(errMsg);
             }
-
-            // Todo if chart is being edited, ie index id set then replace
-            gCharts.push(gEdChart);
-            $('#editChart').modal("hide");	// All good close the modal
-
-            refreshChart(gEdChart);
-            saveToServer(gCharts);
 
             // if(gEdConfig.fromDT) {
             //	gEdFilteredChart.width = gEdChart.width;
@@ -1053,6 +1065,36 @@ define([
                 }
             }
             $('.chart_type').empty().append(h.join(''));
+        }
+
+        /*
+         * Save the layers to the server
+         */
+        function saveToServer(charts) {
+
+            var saveString = JSON.stringify(charts);
+            var viewId = globals.gViewId || 0;
+            var url = "/surveyKPI/surveyview/" + viewId;
+            url += '?survey=' + globals.gCurrentSurvey;
+            url += '&managed=' + 0;
+            url += '&query=' + 0;
+
+            addHourglass();
+            $.ajax({
+                type: "POST",
+                dataType: 'json',
+                contentType: "application/json",
+                cache: false,
+                url: url,
+                data: {chartView: saveString},
+                success: function (data, status) {
+                    removeHourglass();
+                    globals.gViewId = data.viewId;
+                }, error: function (data, status) {
+                    removeHourglass();
+                    alert(localise.set["msg_err_save"] + " " + data.responseText);
+                }
+            });
         }
 
     });
