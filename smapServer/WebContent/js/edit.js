@@ -1591,16 +1591,18 @@ function respondToEvents($context) {
 			$questionElement = $this.closest('li'),
 			published,
 			survey = globals.model.survey,
-			name;
+			name,
+			formIndex,
+			itemIndex;
 		
 		if(globals.gSaveInProgress) {
 			return;
 		}
 		
-		globals.gFormIndex = $questionElement.data("fid");
-		globals.gItemIndex = $questionElement.data("id");
+		formIndex = $questionElement.data("fid");
+		itemIndex = $questionElement.data("id");
 		
-		published = survey.forms[gFormIndex].questions[gItemIndex].published;
+		published = survey.forms[formIndex].questions[itemIndex].published;
 		if(published) {
 			alert("You cannot change the type or name of a question that has already been published");
 		} else if($this.hasClass("disabled")) {
@@ -1609,13 +1611,13 @@ function respondToEvents($context) {
 			$('.question_type_sel', '#dialog_types').off().click(function(){
 				var type = $(this).val();
 				
-				updateLabel("question", gFormIndex, gItemIndex, undefined, "text", type, undefined, "type");
+				updateLabel("question", formIndex, itemIndex, undefined, "text", type, undefined, "type");
 				$('#typeModal').modal('hide');
 				
 				// Add an end group question if a new group has been created
 				if(type === "begin group") {
-					name = survey.forms[gFormIndex].questions[gItemIndex].name + "_groupEnd" ;
-					$context = question.add(gFormIndex, 
+					name = survey.forms[formIndex].questions[itemIndex].name + "_groupEnd" ;
+					$context = question.add(formIndex,
 							$questionElement.attr("id"), 
 							"after", 
 							"end group",
