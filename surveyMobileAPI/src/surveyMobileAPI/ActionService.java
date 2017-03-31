@@ -144,7 +144,10 @@ public class ActionService extends Application{
 		StringBuffer output = new StringBuffer();
 		
 	    SurveyManager sm = new SurveyManager();
-	    Survey s = sm.getById(sd, cResults, uIdent, a.sId, false, null, null, false, false, false, false, false, null, false, 0, null);
+	    Survey s = sm.getById(
+	    		sd, 
+	    		cResults, uIdent, a.sId, false, null, null, false, false, false, false, false,
+	    		null, false, 0, null);
 	    if(s == null) {
 	    	throw new Exception(localisation.getString("mf_snf"));
 	    }

@@ -32,6 +32,9 @@ combined.min.js
 enketo-core.min.js
 smapServer/WebContent/build
 
+smapServer/.idea/
+tasks/.idea/
+
 # External tool builders
 .externalToolBuilders/
 

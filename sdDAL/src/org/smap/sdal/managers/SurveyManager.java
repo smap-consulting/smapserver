@@ -188,7 +188,7 @@ public class SurveyManager {
 			boolean generateDummyValues,		// Set to true when getting results to fill a form with dummy values if there are no results
 			boolean getPropertyTypeQuestions,	// Set to true to get property questions such as _device
 			boolean getSoftDeleted,				// Set to true to get soft deleted questions
-			boolean getHrk,						// Set to true to get HRK as a question
+			boolean getHrk,						// Set to true to return HRK as a question if it exists in the survey
 			String getExternalOptions,			// external || internal || real (get external if they exist else get internal)
 			boolean superUser,
 			int utcOffset,
@@ -264,7 +264,7 @@ public class SurveyManager {
 			
 			if(full && s != null) {
 				
-				populateSurvey(sd, cResults, s, basePath, user, getPropertyTypeQuestions, getHrk, getExternalOptions);			// Add forms, questions, options
+				populateSurvey(sd, cResults, s, basePath, user, getPropertyTypeQuestions, getExternalOptions, getHrk);			// Add forms, questions, options
 				
 				if(getResults) {								// Add results
 					
@@ -590,8 +590,8 @@ public class SurveyManager {
 	 */
 	private void populateSurvey(Connection sd, Connection cResults, Survey s, String basePath, String user, 
 			boolean getPropertyTypeQuestions,
-			boolean getHrk,
-			String getExternalOptions) throws Exception {
+			String getExternalOptions,
+			boolean getHrk) throws Exception {
 		
 		/*
 		 * Prepared Statements
@@ -840,6 +840,18 @@ public class SurveyManager {
 				UtilityMethodsEmail.getLabels(sd, s, q.text_id, q.hint_id, q.labels, basePath, oId);
 				//q.labels_orig = q.labels;		// Set the original label values
 							
+				f.questions.add(q);
+			}
+			
+			if(getHrk) {
+				// add the hrk column if it exists
+
+				Question q = new Question();
+				q.name="_hrk";
+				q.columnName="_hrk";
+				q.type = "string";
+				q.published = GeneralUtilityMethods.hasColumn(cResults, f.tableName, "_hrk");
+				q.source = "system";
 				f.questions.add(q);
 			}
 			
@@ -1238,7 +1250,7 @@ public class SurveyManager {
 			pstmtGetOptionTextId = connectionSD.prepareStatement(sqlGetOptionTextId);
 			
 			// Get the text id for a question update
-			String sqlGetQuestionTextId = "select qtext_id from question where q_id = ?; ";
+			String sqlGetQuestionTextId = "select qtext_id, infotext_id from question where q_id = ?; ";
 			pstmtGetQuestionTextId = connectionSD.prepareStatement(sqlGetQuestionTextId);
 			
 			// Create prepared statements, one for the case where an existing value is being updated
@@ -1291,7 +1303,14 @@ public class SurveyManager {
 					pstmtGetQuestionTextId.setInt(1, ci.property.qId);
 					ResultSet rs = pstmtGetQuestionTextId.executeQuery();
 					if(rs.next()) {
-						text_id = rs.getString(1);
+						if(ci.property.propType.equals("text")) {
+							text_id = rs.getString(1);
+						} else {
+							text_id = rs.getString(2);
+						}
+						if(text_id == null || text_id.trim().length() == 0) {
+							text_id = ci.property.key;
+						}
 					} else {
 						text_id = ci.property.key;		// For question we can rely on the key?
 					}

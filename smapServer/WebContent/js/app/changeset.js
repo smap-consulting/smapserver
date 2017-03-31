@@ -908,7 +908,8 @@ define([
 			itemIndex,
 			i,j,
 			change,
-			item;
+			item,
+			length;
 		
 		// 1. Add the question in the new location
 		length = survey.forms[targetForm].questions.push(newQuestion);			// Add the new question to the end of the array of questions
@@ -985,7 +986,8 @@ define([
 		var newMarkup,
 			survey = globals.model.survey,
 			$changedRow,
-			i;
+			i,
+            collapsedPanels = [];
 		
 		if(change.changeType === "label") {
 			if(change.property.propType === "image") {	
@@ -1138,17 +1140,16 @@ define([
 			if($changedRow) {
 				
 				// Get the current list of collapsed panels
-				gCollapsedPanels = [];
 				$('.collapse.in', $changedRow).each(function(){
-					gCollapsedPanels.push($(this).closest('li').attr("id"));
+					collapsedPanels.push($(this).closest('li').attr("id"));
 				});
 				
 				// Update the content view
 				$changedRow.replaceWith(newMarkup);
 				
 				// Restore collapsed panels
-				for(i = 0; i < gCollapsedPanels.length; i++) {
-					$('#' + gCollapsedPanels[i]).find('.collapse').addClass("in");
+				for(i = 0; i < collapsedPanels.length; i++) {
+					$('#' + collapsedPanels[i]).find('.collapse').addClass("in");
 				}
 				
 				// Since we replaced the row we had better get the replaced row so that actions can be reapplied
@@ -1198,7 +1199,8 @@ define([
 	function _getUrl(newVal, thumbs, type, isSurveyLevel, sId) {
 		var url = "/surveyKPI/file/",
 			filebase,
-			ext;
+			ext,
+			index;
 		
 		if(newVal) {
 			
@@ -1314,7 +1316,7 @@ define([
 					if(item.type === "geopoint" || item.type === "geoshape" || item.type === "geotrace") {
 						form = survey.forms[container];
 						for(j = 0; j < form.questions.length; j++) {		
-							otherQuestion = form.questions[j];
+							var otherQuestion = form.questions[j];
 							if(j != itemIndex) {
 								if(!otherQuestion.soft_deleted && !otherQuestion.deleted && 
 										(otherQuestion.type === "geopoint" || otherQuestion.type === "geotrace" ||
@@ -1454,7 +1456,7 @@ define([
 				valid = false;
 			}
 			if(valid) {
-				list = globals.model.survey.optionLists[item.list_name].options;
+				var list = globals.model.survey.optionLists[item.list_name].options;
 				valid = false;
 				for(i = 0; i < list.length; i++) {
 					if(!list[i].deleted) {
@@ -1490,7 +1492,8 @@ define([
 			depth = 0,
 			lastOpen,
 			errorText,
-			isValid = true;
+			isValid = true,
+			locn;
 		
 		if(elem) {
 			for(i = 0; i < elem.length; i++) {
@@ -1535,7 +1538,8 @@ define([
 		var refQuestions = {},
 			survey = globals.model.survey,
 			form,
-			i, j;
+			i, j,
+			name;
 		
 		// Get a list of references to other questions
 		if(itemType  === "question") {
@@ -1555,8 +1559,8 @@ define([
 		for(i = 0; i < survey.forms.length; i++) {
 			form = survey.forms[i];
 			for(j = 0; j < form.questions.length; j++) {	
-				otherItem = form.questions[j];
-				questionType = otherItem.type;
+				var otherItem = form.questions[j];
+				var questionType = otherItem.type;
 				if(!otherItem.deleted && !otherItem.soft_deleted && questionType !== "end group") {
 					if(!(i === container && j === itemIndex)) {	// Don't test the question against itself!
 						otherItem = form.questions[j];

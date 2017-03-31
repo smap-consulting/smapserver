@@ -633,11 +633,11 @@ define([
 
 		} else {
 			h[++idx] = '<textarea class="labelProp has_tt';
-			if(question.type === 'calculate') {
+			if(question.type === 'calculate' && selProperty !== "appearance") {
 				h[++idx] = ' calculate';
 			}
 			h[++idx] = '" title="';
-			if(question.type === 'calculate') {
+			if(question.type === 'calculate' && selProperty !== "appearance") {
 				h[++idx] = 'Add calculation here';
 			} else {
 				h[++idx] = type === "option" ? "Choice Label" : selLabel;
@@ -658,7 +658,7 @@ define([
 				h[++idx] = ' not required';
 			} else {
 				h[++idx] = '>';
-				if(question.type === 'calculate') {
+				if(question.type === 'calculate' && selProperty !== "appearance") {
 					h[++idx] = question.calculation;
 				} else {
 					if(selProperty === "label") { 
@@ -873,7 +873,8 @@ define([
 	function refresh() {
 		
 		var content,
-			i;
+			i,
+        	collapsedPanels = [];
 		
 		globals.gElementIndex = 0;
 		globals.gHasItems = false;
@@ -887,17 +888,16 @@ define([
 		}
 		
 		// Get the current list of collapsed panels
-		gCollapsedPanels = [];
 		$('.collapse.in', '#formList').each(function(){
-			gCollapsedPanels.push($(this).closest('li').attr("id"));
+			collapsedPanels.push($(this).closest('li').attr("id"));
 		});
 		
 		// Update the content view
 		$('#formList').html(content);
 		
 		// Restore collapsed panels
-		for(i = 0; i < gCollapsedPanels.length; i++) {
-			var $collapsedPanel = $('#' + gCollapsedPanels[i]);
+		for(i = 0; i < collapsedPanels.length; i++) {
+			var $collapsedPanel = $('#' + collapsedPanels[i]);
 			$collapsedPanel.find('.collapse').first().addClass("in");
 			$collapsedPanel.find('.edit_icon.glyphicon-chevron-down').removeClass('glyphicon-chevron-down').addClass('glyphicon-chevron-up');
 			
