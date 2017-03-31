@@ -12,5 +12,12 @@ public class SurveyViewDefn {
 	public int queryId;
 	public ArrayList<TableColumn> columns = new ArrayList<TableColumn> ();		// Table
 	public ArrayList<MapLayer> layers = new ArrayList<MapLayer> ();             // Map
-	// Charts
+	public ArrayList<ChartDefn> charts = new ArrayList<ChartDefn> ();           // Charts
+	
+	public SurveyViewDefn(int v, int s, int m, int q) {
+		viewId = v;
+		sId = s;
+		managedId = m;
+		queryId = q;
+	}
 }

@@ -37,6 +37,7 @@ import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.managers.SurveyViewManager;
 import org.smap.sdal.model.SurveyViewDefn;
+import org.smap.sdal.model.ChartDefn;
 import org.smap.sdal.model.MapLayer;
 import org.smap.sdal.model.TableColumn;
 import com.google.gson.Gson;
@@ -272,7 +273,9 @@ public class SurveyView extends Application {
 				settings = gson.toJson(mla);
 				pstmt = sd.prepareStatement(sqlUpdMap);
 			} else if(type.equals("chart")) {
-				// TODO
+				dataType = new TypeToken<ArrayList<ChartDefn>>(){}.getType();
+				ArrayList<ChartDefn> cdo = gson.fromJson(settings, dataType);
+				settings = gson.toJson(cdo);
 				pstmt = sd.prepareStatement(sqlUpdChart);
 			}
 			

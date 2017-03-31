@@ -703,7 +703,7 @@ require([
         url += '&managed=' + managedId;
         url += '&query=' + queryId;		// ignore for moment, ie note caching is done only on survey index
 
-        if (!gTasks.cache.surveyConfig[globals.gViewId]) {
+        if (!globals.gViewId && !gTasks.cache.surveyConfig[globals.gViewId]) {
 
             addHourglass();
             $.ajax({
@@ -714,12 +714,13 @@ require([
                     removeHourglass();
                     gConfigLoaded = true;
                     globals.gViewId = data.viewId;
-                    gTasks.cache.surveyConfig[data.viewId] = data;
+                    gTasks.cache.surveyConfig[globals.gViewId] = data;
 
                     map.setLayers(data.layers);
                     chart.setCharts(data.charts);
                     if (gDataLoaded) {
                         map.refreshAllLayers(gMapView);
+                        chart.refreshAllCharts();
                         initialise();
                         //chart.setChartList();	// Enable charts based on this survey config
                         //chart.refreshCharts();
@@ -1015,8 +1016,7 @@ require([
                 if (gConfigLoaded) {
                     initialise();
                     map.refreshAllLayers(gMapView);
-                    //chart.setChartList();	// Enable charts based on this survey config
-                    //chart.refreshCharts();
+                    chart.refreshAllCharts();
                 }
                 columns = gTasks.cache.surveyConfig[globals.gViewId].columns;
                 globals.gMainTable.columns().flatten().each(function (colIdx) {

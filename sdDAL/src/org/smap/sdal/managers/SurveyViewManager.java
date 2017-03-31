@@ -11,6 +11,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
+import org.smap.sdal.model.ChartDefn;
 import org.smap.sdal.model.Form;
 import org.smap.sdal.model.KeyValue;
 import org.smap.sdal.model.SurveyViewDefn;
@@ -64,7 +65,8 @@ public class SurveyViewManager {
 			int oId,
 			boolean superUser) throws SQLException, Exception  {
 		
-		SurveyViewDefn svd = new SurveyViewDefn();
+		SurveyViewDefn svd = new SurveyViewDefn(viewId, sId, managedId, 0);		// Todo Query id
+		
 		ArrayList<TableColumnConfig> configColumns = new ArrayList<TableColumnConfig> ();
 		
 		// SQL to get view details
@@ -89,6 +91,7 @@ public class SurveyViewManager {
 			if(rs.next()) {
 				String sView = rs.getString(1);
 				String sMapView = rs.getString(2);
+				String sChartView = rs.getString(3);
 				// TODO get chart view
 				
 				if(sView != null) {
@@ -110,6 +113,18 @@ public class SurveyViewManager {
 					}
 				} else {
 					svd.layers = new ArrayList<MapLayer> ();
+				}
+				
+				if(sChartView != null) {
+					Type type = new TypeToken<ArrayList<ChartDefn>>(){}.getType();	
+					try {
+						svd.charts = gson.fromJson(sChartView, type);
+					} catch (Exception e) {
+						log.log(Level.SEVERE,"Error: ", e);
+						svd.charts = new ArrayList<ChartDefn> ();		// If there is an error its likely that the structure of the config file has been changed and we should start from scratch
+					}
+				} else {
+					svd.charts = new ArrayList<ChartDefn> ();
 				}
 				
 			}

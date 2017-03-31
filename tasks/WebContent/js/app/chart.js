@@ -127,19 +127,18 @@ define([
          */
         function refreshAllCharts() {
 
-            var results = globals.gMainTable.rows({
-                order: 'current',  // 'current', 'applied', 'index',  'original'
-                page: 'all',      // 'all',     'current'
-                search: 'applied',     // 'none',    'applied', 'removed'
-            }).data();
-
             var i;
+            if (globals.gMainTable) {
+                var results = globals.gMainTable.rows({
+                    order: 'current',  // 'current', 'applied', 'index',  'original'
+                    page: 'all',      // 'all',     'current'
+                    search: 'applied',     // 'none',    'applied', 'removed'
+                }).data();
 
-            for (i = 0; i < gCharts.length; i++) {
-                updateSingleChart(results, gCharts[i]);
+                for (i = 0; i < gCharts.length; i++) {
+                    updateSingleChart(results, gCharts[i]);
+                }
             }
-
-            return;
 
         }
 
