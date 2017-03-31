@@ -85,7 +85,6 @@ require([
 var	gMode = "survey",
 	gTempQuestions = [],
 	$gCurrentRow,			// Currently selected row
-	gCollapsedPanels = [],
 	gTempLanguages = [],
 	gTempPulldata = [],
 	gDragCounter,
@@ -566,6 +565,7 @@ $(document).ready(function() {
      * Save a selected media file
      */
 	$('#mediaSelectSave').click(function() {
+		var type;
 		if(gNewVal) {
 			if(globals.gOptionList) {
 				type = "option";
@@ -577,7 +577,7 @@ $(document).ready(function() {
 	});
 	
 	$('#removeMedia').click(function() {
-
+		var type;
 		if(globals.gOptionList) {
 			type = "option";
 		} else {
@@ -1004,7 +1004,7 @@ function respondToEventsChoices($context) {
 	$context.find('.oname').keyup(function(){
 
 		var $this = $(this),
-			$elem = $this.closest('tr');
+			$elem = $this.closest('tr'),
 			formIndex = $elem.data("fid"),
 			itemIndex = $elem.data("id"),
 			listName = $elem.data("list_name"),
@@ -1224,7 +1224,7 @@ function addNewOption($elem, locn) {
 		list_name = $elem.data("list_name");
 
 
-	$context = question.addOption(oId, locn, list_name, fId, qname);
+	var $context = question.addOption(oId, locn, list_name, fId, qname);
 	
 	respondToEventsChoices($context);				// Add events on to the altered html
 	
@@ -1489,8 +1489,8 @@ function respondToEvents($context) {
 		respondToEvents($context);
 		
 		// Set focus to the new option list
-		justAddedID = '#ol_' + globals.gLatestOptionList;
-		$input = $('input', justAddedID);
+		var justAddedID = '#ol_' + globals.gLatestOptionList;
+		var $input = $('input', justAddedID);
 		val = $input.val();
 		$input.val("").focus().val(val);		// Set text entry to end of text field	
 
@@ -1582,8 +1582,8 @@ function respondToEvents($context) {
 			return;
 		}
 		
-		gFormIndex = $questionElement.data("fid");
-		gItemIndex = $questionElement.data("id");
+		globals.gFormIndex = $questionElement.data("fid");
+		globals.gItemIndex = $questionElement.data("id");
 		
 		published = survey.forms[gFormIndex].questions[gItemIndex].published;
 		if(published) {
@@ -1841,7 +1841,7 @@ function mediaPropSelected($this) {
 	});
 	
 	// Set the status of the remove button
-	$empty = $immedParent.find('.emptyMedia');
+	var $empty = $immedParent.find('.emptyMedia');
 	if($empty.length > 0) {
 		$('#removeMedia').addClass("disabled");
 	} else {
@@ -1919,7 +1919,7 @@ function addQuestion($this, type) {
 		}
 		
 		// Set focus to the new question
-		justAddedQuestionID = '#question' + formIndex +  '_' + (forms[formIndex].questions.length - 1);
+		var justAddedQuestionID = '#question' + formIndex +  '_' + (forms[formIndex].questions.length - 1);
 		$textArea = $('textarea', justAddedQuestionID);
 		textAreaVal = $textArea.val();
 		$textArea.val("").focus().val(textAreaVal);		// Should set text entry to end of text field	
@@ -1927,7 +1927,7 @@ function addQuestion($this, type) {
 		// Add an end group question if a new group has been created
 		if(type === "begin group") {
 			itemIndex = forms[formIndex].questions.length - 1;
-			name = survey.forms[formIndex].questions[itemIndex].name + "_groupEnd" ;
+			var name = survey.forms[formIndex].questions[itemIndex].name + "_groupEnd" ;
 			$context = question.add(formIndex, "question" + formIndex + "_" + itemIndex, 
 					"after", 
 					"end group",
@@ -2181,7 +2181,8 @@ function updateLabel(type, formIndex, itemIndex, optionList, element, newVal, qn
 	 */
 	if(typeof questionType !== "undefined" && questionType === "calculate" 
 			&& prop !== "name"
-			&& prop !== "linked_survey") {	// Whatever the property for a calculation type the label field contains the calculation expression 
+			&& prop !== "linked_survey"
+			&& prop !== "appearance") {	// Whatever the property for a calculation type the label field contains the calculation expression
 		changeType = "property";
 		prop = "calculation";
 	} else {
