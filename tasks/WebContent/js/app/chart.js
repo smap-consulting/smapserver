@@ -587,6 +587,7 @@ define([
             h[++idx] = '</div>';                                // Chart id end
 
             $('#chartrow').append(h.join(''));
+            setupIbox("#c_" + id);		// Add event listeners
             return id;
         }
 
@@ -800,7 +801,7 @@ define([
 
             // Close ibox function
             $('.close-link', element).click(function () {
-                var content = $(this).closest('div.ibox');
+                var content = $(this).closest('.aChart');
                 content.remove();
             });
 
