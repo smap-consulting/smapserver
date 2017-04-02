@@ -263,7 +263,9 @@ public class SurveyManager {
 			
 			if(full && s != null) {
 				
-				populateSurvey(sd, cResults, s, basePath, user, getPropertyTypeQuestions, getExternalOptions, getHrk);			// Add forms, questions, options
+				populateSurvey(sd, cResults, s, basePath, user, getPropertyTypeQuestions, getExternalOptions, 
+						getSoftDeleted,
+						getHrk);			// Add forms, questions, options
 				
 				if(getResults) {								// Add results
 					
@@ -590,6 +592,7 @@ public class SurveyManager {
 	private void populateSurvey(Connection sd, Connection cResults, Survey s, String basePath, String user, 
 			boolean getPropertyTypeQuestions,
 			String getExternalOptions,
+			boolean getSoftDeleted,
 			boolean getHrk) throws Exception {
 		
 		/*
@@ -632,9 +635,15 @@ public class SurveyManager {
 				+ "q.linked_survey "
 				+ "from question q "
 				+ "left outer join listname l on q.l_id = l.l_id "
-				+ "where q.f_id = ? "
-				+ "order by q.seq asc;";
-		PreparedStatement pstmtGetQuestions = sd.prepareStatement(sqlGetQuestions);
+				+ "where q.f_id = ? ";
+		String sqlGetQuestions2 = "and q.soft_deleted = 'false' ";
+		String sqlGetQuestions3 =  "order by q.seq asc;";
+		PreparedStatement pstmtGetQuestions = null;
+		if(getSoftDeleted) {
+			pstmtGetQuestions = sd.prepareStatement(sqlGetQuestions + sqlGetQuestions3);
+		} else {
+			pstmtGetQuestions = sd.prepareStatement(sqlGetQuestions + sqlGetQuestions2 + sqlGetQuestions3);
+		}
 
 		// SQL to get the sub forms in this survey
 		ResultSet rsGetRepeatValue = null;
