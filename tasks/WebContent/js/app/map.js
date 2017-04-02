@@ -32,6 +32,7 @@ define([
         var gMap,
             gLayers = [],
             gVectorSources = [],
+            gVectorLayers = [],
             gMapUpdatePending = true;
 
         return {
@@ -141,6 +142,10 @@ define([
                 h[++idx] = gLayers[i].title;
                 h[++idx] = '</td>';
                 h[++idx] = '<td>';      // Delete
+                h[++idx] = '<button type="button" data-idx="';
+                h[++idx] = i;
+                h[++idx] = '" class="btn btn-default btn-sm rm_layer danger">';
+                h[++idx] = '<span class="glyphicon glyphicon-trash" aria-hidden="true"></span></button>';
                 h[++idx] = '</td>';
 
                 h[++idx] = '</tr>';
@@ -151,6 +156,15 @@ define([
             $('input', '#layerSelect tbody').iCheck({
                 checkboxClass: 'icheckbox_square-green',
                 radioClass: 'iradio_square-green'
+            });
+            $('.rm_layer', '#layerSelect tbody').click(function() {
+                var idx = $(this).data("idx");
+                deleteLayer(idx);
+                gLayers.splice(idx, 1);
+                saveToServer(gLayers);
+                showLayerSelections();
+
+
             });
         }
 
@@ -246,23 +260,31 @@ define([
              });
              */
 
-
-            var vectorLayer;
             if (layer.clump === "heatmap") {
-                vectorLayer = new ol.layer.Heatmap({
+                gVectorLayers[index] = new ol.layer.Heatmap({
                     source: gVectorSources[index],
                     radius: 5
                 });
             } else {
-                vectorLayer = new ol.layer.Vector({
+                gVectorLayers[index] = new ol.layer.Vector({
                     source: gVectorSources[index],
                     style: [defaultStyle]
                 });
             }
 
-            gMap.addLayer(vectorLayer);
+            gMap.addLayer(gVectorLayers[index]);
         }
 
+        function deleteLayer(index) {
+
+            if (gVectorLayers[index]) {
+                gMap.removeLayer(gVectorLayers[index]);
+                gVectorSources.splice(index, 1);
+                gVectorLayers.splice(index, 1);
+            }
+
+
+        }
 
         /*
          * Save a layer after the user specifies it in the layer dialog
