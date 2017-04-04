@@ -1684,7 +1684,7 @@ public class SurveyManager {
 							ci.property.setVisible = true;
 							ci.property.visibleValue = false;
 						}
-						onlyIfNotPublished = true;
+						//onlyIfNotPublished = true;	allow type changes
 					} else if(ci.property.prop.equals("name") && !ci.property.type.equals("optionlist")) {
 						onlyIfNotPublished = true;
 					} else if(ci.property.prop.equals("list_name")) {

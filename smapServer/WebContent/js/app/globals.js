@@ -332,7 +332,8 @@ define(function() {
 				glyphicon: "font",
 				canSelect: true,
 				visible: true,
-				source: "user"
+				source: "user",
+                compatTypes: ["select1"]
 			},
 			{
 				name: "Note",
@@ -348,7 +349,8 @@ define(function() {
 				image: "/images/select1_64.png",
 				canSelect: true,
 				visible: true,
-				source: "user"
+				source: "user",
+                compatTypes: ["string"]
 			},
 			{
 				name: "Select Multiple",

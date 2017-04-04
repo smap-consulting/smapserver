@@ -587,8 +587,8 @@ $(document).ready(function() {
 		
 	});
 	
-	setupQuestionTypes($('#dialog_types'), 2, false);		// Double column, not draggable for change type dialog
-	setupQuestionTypes($('#toolbar_types'), 1, true);		// Single column, draggable for toolbar
+	setupQuestionTypes($('#dialog_types'), 2, false, undefined);		// Double column, not draggable for change type dialog
+	setupQuestionTypes($('#toolbar_types'), 1, true, undefined);		// Single column, draggable for toolbar
 	
 	// Set focus on survey name when create form modal is opened
 	$('#openFormModal').on('shown.bs.modal', function () {
@@ -662,7 +662,7 @@ function setAllRequired(required) {
 }
 
 //Set up question type dialog
-function setupQuestionTypes($elem, columns, draggable) {
+function setupQuestionTypes($elem, columns, draggable, currentType) {
 	var i,
 		types = globals.model.qTypes,
 		h = [],
@@ -672,7 +672,7 @@ function setupQuestionTypes($elem, columns, draggable) {
 	h[++idx] = '<div class="row margin-bottom">';
 	for(i = 0; i < types.length; i++) {
 		
-		if(types[i].canSelect) {
+		if(types[i].canSelect && isCompatible(types[i].compatTypes, currentType) ) {
 			
 			h[++idx] = '<div class="col-xs-12 ';
 			h[++idx] = columns === 1 ? '" ' : 'col-md-6" ';
@@ -710,6 +710,21 @@ function setupQuestionTypes($elem, columns, draggable) {
 	
 	$elem.html(h.join(''));
 	
+}
+
+/*
+ * return true if the current published type can be converted to the new type
+ */
+function isCompatible(compatTypes, currentType) {
+	var compatible = false;
+	if(!currentType) {
+		compatible = true;
+	} else {
+		if(compatTypes && compatTypes.indexOf(currentType) >= 0) {
+			compatible = true;
+		}
+	}
+	return compatible;
 }
 
 function getSurveyList() {
@@ -1588,11 +1603,14 @@ function respondToEvents($context) {
 		itemIndex = $questionElement.data("id");
 		
 		published = survey.forms[formIndex].questions[itemIndex].published;
-		if(published) {
-			alert("You cannot change the type or name of a question that has already been published");
-		} else if($this.hasClass("disabled")) {
+		if($this.hasClass("disabled")) {
 			alert("You cannot change the type of a question that has an invalid name");
 		} else {
+			if(published) {
+                setupQuestionTypes($('#dialog_types'), 1, false, survey.forms[formIndex].questions[itemIndex].type);
+			} else {
+                setupQuestionTypes($('#dialog_types'), 2, false, undefined);
+			}
 			$('.question_type_sel', '#dialog_types').off().click(function(){
 				var type = $(this).val();
 				
