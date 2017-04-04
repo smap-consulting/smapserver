@@ -631,6 +631,7 @@ public class XLSResultsManager {
 				            	anchor.setRow1(rowIndex - 1);
 				            	anchor.setCol2(i + 1);
 				            	anchor.setRow2(rowIndex);
+				            	anchor.setAnchorType(ClientAnchor.MOVE_AND_RESIZE); 
 				            	//sheet.setColumnWidth(i, 20 * 256);
 				            	Drawing drawing = sheet.createDrawingPatriarch();
 				            	Picture pict = drawing.createPicture(anchor, pictureureIdx);
