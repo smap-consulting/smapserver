@@ -313,7 +313,6 @@ public class SurveyManager {
 			int projectId,
 			boolean existing,
 			int existingSurveyId,
-			int existingFormId,
 			boolean sharedResults
 			) throws SQLException, Exception {
 		
@@ -322,7 +321,7 @@ public class SurveyManager {
 		String ident = null;
 		String tablename = null;
 		String existingSurvey = null;
-		String existingForm = null;
+		int existingFormId = 0;
 		
 		String sql1 = "insert into survey ( s_id, display_name, deleted, p_id, version, last_updated_time, based_on, shared_table, created)" +
 				" values (nextval('s_seq'), ?, 'false', ?, 1, now(), ?, ?, now());";
@@ -337,10 +336,10 @@ public class SurveyManager {
 		
 		PreparedStatement pstmt = null;
 		
-		String sqlGetSource = "select s.display_name, f.name from survey s, form f "
-				+ "where f.s_id = s.s_id "
+		String sqlGetSource = "select s.display_name, f.f_id from survey s, form f "
+				+ "where s.s_id = f.s_id "
 				+ "and s.s_id = ? "
-				+ "and f.f_id = ?";
+				+ "and f.parentform = 0";
 		PreparedStatement pstmtGetSource = null;
 		
 		try {
@@ -348,11 +347,10 @@ public class SurveyManager {
 			if(existing) {
 				pstmtGetSource = sd.prepareStatement(sqlGetSource);
 				pstmtGetSource.setInt(1, existingSurveyId);
-				pstmtGetSource.setInt(2, existingFormId);
 				ResultSet rsGetSource = pstmtGetSource.executeQuery();
 				if(rsGetSource.next()) {
 					existingSurvey = rsGetSource.getString(1);
-					existingForm = rsGetSource.getString(2);
+					existingFormId = rsGetSource.getInt(2);
 				}
 			}
 			sd.setAutoCommit(false);
@@ -362,7 +360,7 @@ public class SurveyManager {
 			pstmt.setString(1, name);
 			pstmt.setInt(2, projectId);
 			if(existing) {
-				pstmt.setString(3, existingSurvey + " :: " + existingForm);
+				pstmt.setString(3, existingSurvey);
 			} else {
 				pstmt.setString(3, null);
 			}

@@ -1400,14 +1400,13 @@ function setLanguages(languages, languageCallback) {
 /*
  * Get a survey details - depends on globals being set
  */
-function createNewSurvey(name, existing, existing_survey, existing_form, shared_results, callback) {
+function createNewSurvey(name, existing, existing_survey, shared_results, callback) {
 
-	console.log("create new: " + existing + " : " + existing_survey + " : " + existing_form + " : " + shared_results);
+	console.log("create new: " + existing + " : " + existing_survey + " : " + shared_results);
 	
 	var url="/surveyKPI/surveys/new/" + globals.gCurrentProject + "/" + name;
 	if(!existing) {
 		existing_survey = 0;
-		existing_form = 0;
 	} 
 	
 	addHourglass();
@@ -1419,7 +1418,7 @@ function createNewSurvey(name, existing, existing_survey, existing_form, shared_
 		data: { 
 			existing: existing,
 			existing_survey: existing_survey,
-			existing_form: existing_form,
+			existing_form: 0,
 			shared_results: shared_results
 		},
 		cache: false,

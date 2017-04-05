@@ -532,7 +532,8 @@ $(document).ready(function() {
 		var name,
 			existing,
 			existing_survey,
-			existing_form,
+			existing_project,
+			//existing_form,
 			shared_results;
 		
 		if(globals.gCurrentProject > 0) {
@@ -549,16 +550,26 @@ $(document).ready(function() {
 					return false;
 				}
 				existing = $('#base_on_existing').prop('checked');
+				existing_project = $('#existing_project').val();
 				existing_survey = $('#survey_name').val();
-				existing_form = $('#form_name').val();
+				//existing_form = $('#form_name').val();
 				shared_results = $('#shared_results').prop('checked');
-				createNewSurvey(name, existing, existing_survey, existing_form, shared_results, surveyDetailsDone);
+				createNewSurvey(name, existing, existing_survey, shared_results, surveyDetailsDone);
 			}
 		} else {
 			alert(localise.set["msg_val_p"]);
 			return false;
 		}
 	 });
+
+	/*
+	 * If the survey is being based on another survey then the user can select the project for the
+	 * other existing survey
+	 */
+    $('#existing_project').change(function() {
+        var existingProject = $('#existing_project option:selected').val();
+        loadSurveys(existingProject, "#survey_name", false, false, undefined);			// Get surveys
+    });
 	
 	
     /*

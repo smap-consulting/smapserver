@@ -278,7 +278,7 @@ public class Surveys extends Application {
 		Connection cResults = ResultsDataSource.getConnection("surveyKPI-Surveys");
 		SurveyManager sm = new SurveyManager();
 		try {
-			int sId = sm.createNewSurvey(connectionSD, name, projectId, existing, existingSurveyId, existingFormId, sharedResults);
+			int sId = sm.createNewSurvey(connectionSD, name, projectId, existing, existingSurveyId, sharedResults);
 			// Get the survey details.  superUser set to true as this user just created the survey so they are effectively a super user for this survey and we can save a database call
 			survey = sm.getById(connectionSD, 
 					cResults,  request.getRemoteUser(), sId, true, 

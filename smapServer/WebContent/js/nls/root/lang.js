@@ -491,6 +491,8 @@ define({
 
     // Editor
     "ed_in": "Instance Name",
+    "ed_ep": "Existing Project",
+    "ed_es": "Existing Survey",
     "e_b_e": "Base on existing form",
     "e_s_r": "Store results in shared table",
     "ed_qt": "Question Text",
