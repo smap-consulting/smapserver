@@ -1377,8 +1377,32 @@ public class SurveyTemplate {
 								if((includeExternal && o.getExternalFile()) || (!includeExternal && !o.getExternalFile())) {
 									o.setListName(cascadeName);
 									// Cascade options are shared, check that this option has not been added already by another question
-									if(!cascadeOptionLoaded(cascadeName, o.getLabelId())) {
+									String existingRef = cascadeOptionLoaded(cascadeName, o.getLabelId(), o.getValue());
+									if(existingRef == null) {
 										cascade_options.put(oRef, o);
+									} else {
+										/*
+										 * Replace existing if the new option has more cascading filters
+										 * All this complexity is required because pyxform puts a list in two places
+										 *  in the xform output depending on whether or not it has cascades
+										 *  We want to give preference to options that have a cascade
+										 */
+										// 
+										if(o.getCascadeFilters() != null) {
+											boolean replace = false;
+											Option oldOption = cascade_options.get(existingRef);
+											if(oldOption.getCascadeFilters() == null) {
+												replace = true;
+											} else {
+												if(o.getCascadeFilters().length() > oldOption.getCascadeFilters().length()) {
+													replace = true;
+												}
+											}
+											if(replace) {
+												cascade_options.remove(existingRef);
+												cascade_options.put(oRef, o);
+											}
+										}
 									}
 								}
 							} else {
@@ -1423,23 +1447,21 @@ public class SurveyTemplate {
 	
 	/*
 	 * Method to check to see whether the cascade option has already been loaded
+	 * Compare against the value as pyxform can create two sets of options one
+	 *  in an instance and the other not which differ in label id's but are otherwise duplicates
 	 */
-	public boolean cascadeOptionLoaded(String listName, String value) {
-		boolean loaded = false;
+	public String cascadeOptionLoaded(String listName, String labelId, String value) {
+		String existingRef = null;
 		
-		Collection<Option> c = null;
-		Iterator<Option> itr = null;
-		
-		c = cascade_options.values();
-		itr = c.iterator();
-		while (itr.hasNext()) {
-			Option o = itr.next();
-			if(o.getListName().equals(listName) && o.getLabelId().equals(value)) {
-				loaded = true;
+		Set<String> keys = cascade_options.keySet();
+		for (String ref : keys) {
+			Option o = cascade_options.get(ref);
+			if(o.getListName().equals(listName) && o.getValue().equals(value)) {
+				existingRef = ref;
 				break;
 			}
 		}
-		return loaded;
+		return existingRef;
 	}
 	
 	/*

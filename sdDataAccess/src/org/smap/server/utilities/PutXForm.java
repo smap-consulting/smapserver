@@ -679,8 +679,7 @@ public class PutXForm {
     		} else {
     			q.setInfo(c.direct);
     		}
-
-    		
+		
     	} else if(q != null && question && n.getNodeName().equals("itemset")) {
 			question = false; // from now all labels will be for the itemset
 			option = false;
