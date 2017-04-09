@@ -386,7 +386,7 @@ public class TableManager {
 		if(columns.size() > 0) {
 			sql = "CREATE TABLE " + tableName + " (" +
 				"prikey SERIAL PRIMARY KEY, " +
-				"parkey int ";
+				"parkey int default 0";
 	
 			/*
 			 * Create default columns

@@ -678,7 +678,6 @@ public class ExchangeManager {
 							pstmtInsert.executeUpdate();
 							ResultSet rs = pstmtInsert.getGeneratedKeys();
 							if(rs.next()) {
-								System.out.println("New key:  " + rs.getInt(1) + " for prikey: " + prikey);
 								form.keyMap.put(prikey, rs.getInt(1));
 							}
 							recordsWritten++;
