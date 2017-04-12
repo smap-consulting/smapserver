@@ -865,7 +865,13 @@ public class PDFSurveyManager {
 			
 			Form form = survey.forms.get(r.fIdx);
 			org.smap.sdal.model.Question question = form.questions.get(r.qIdx);
-			Label label = question.labels.get(languageIdx);
+			Label label = null;
+			if(question.labels.size() > 0) {
+				label = question.labels.get(languageIdx);
+			} else {
+				label = new Label();
+				log.info("Error: No label found for question: " + question.name);
+			}
 			
 			boolean isNewPage = question.isNewPage();
 			

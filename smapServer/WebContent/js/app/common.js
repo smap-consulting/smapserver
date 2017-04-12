@@ -1719,6 +1719,18 @@ function getChangeDescription(change) {
 			h[++idx] = '</span>';
 			h[++idx] = ' using the online editor';
 		}
+	} else if(change.action === "set_required")  {
+        h[++idx] = 'All questions set ';
+        if(change.msg.indexOf('not') < 0) {
+            h[++idx] = '<span style="color:blue;">';
+            h[++idx] = 'required';
+            h[++idx] = '</span>';
+        } else {
+            h[++idx] = '<span style="color:red;">';
+            h[++idx] = 'not required';
+            h[++idx] = '</span>';
+		}
+
 	} else {
 		h[++idx] = change.type;
 		h[++idx] = ' ';
