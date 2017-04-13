@@ -701,11 +701,9 @@ public class PDFSurveyManager {
 				
 				Form form = survey.forms.get(r.fIdx);
 				org.smap.sdal.model.Question question = form.questions.get(r.qIdx);
-				//Label label = question.labels.get(languageIdx);
 			
 				if(includeResult(r, question, appendix, gv)) {
 					if(question.type.equals("begin group")) {
-						//groupWidth = processGroup(parser, document, question, label);
 						if(question.isNewPage()) {
 							document.newPage();
 						}
@@ -818,8 +816,8 @@ public class PDFSurveyManager {
 		int numberItems = row.items.size();
 		for(DisplayItem di : row.items) {
 
-			PdfPCell cell = new PdfPCell();
-			cell.addElement(addDisplayItem(parser, di, basePath, generateBlank, gv));
+			PdfPCell cell = new PdfPCell(addDisplayItem(parser, di, basePath, generateBlank, gv));
+			//cell.addElement(addDisplayItem(parser, di, basePath, generateBlank, gv));
 			cell.setBorderColor(BaseColor.LIGHT_GRAY);
 			
 			// Make sure the last cell extends to the end of the table
