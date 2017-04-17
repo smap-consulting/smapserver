@@ -1766,6 +1766,18 @@ function getChangeDescription(change) {
 			h[++idx] = '</span>';
 			h[++idx] = ' using the online editor';
 		}
+	} else if(change.action === "set_required")  {
+        h[++idx] = 'All questions set ';
+        if(change.msg.indexOf('not') < 0) {
+            h[++idx] = '<span style="color:blue;">';
+            h[++idx] = 'required';
+            h[++idx] = '</span>';
+        } else {
+            h[++idx] = '<span style="color:red;">';
+            h[++idx] = 'not required';
+            h[++idx] = '</span>';
+		}
+
 	} else {
 		h[++idx] = change.type;
 		h[++idx] = ' ';
@@ -2187,9 +2199,13 @@ function getGoogleMapApi(callback, map) {
  * Add google layers to a map
  */
 function addGoogleMapLayers(map) {
-	map.addLayer(new OpenLayers.Layer.Google("Google Satellite",{type: google.maps.MapTypeId.SATELLITE, 'sphericalMercator': true, numZoomLevels: 22}));
-	map.addLayer(new OpenLayers.Layer.Google("Google Maps",{type: google.maps.MapTypeId.ROADMAP, 'sphericalMercator': true, numZoomLevels: 22}));
-	map.addLayer(new OpenLayers.Layer.Google("Google Hybrid",{type: google.maps.MapTypeId.HYBRID, 'sphericalMercator': true, numZoomLevels: 22}));
+	try {
+		map.addLayer(new OpenLayers.Layer.Google("Google Satellite",{type: google.maps.MapTypeId.SATELLITE, 'sphericalMercator': true, numZoomLevels: 22}));
+		map.addLayer(new OpenLayers.Layer.Google("Google Maps",{type: google.maps.MapTypeId.ROADMAP, 'sphericalMercator': true, numZoomLevels: 22}));
+		map.addLayer(new OpenLayers.Layer.Google("Google Hybrid",{type: google.maps.MapTypeId.HYBRID, 'sphericalMercator': true, numZoomLevels: 22}));
+	} catch (err) {
+		// Fail silently, the user may not want google maps - this is probably caused by a missing maps api key
+	}
 }
 
 function remoteSurveyChanged() {
