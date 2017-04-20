@@ -815,11 +815,12 @@ function openUserDialog(existing, userIndex) {
 		}
 		$('#send_email_fields').show();
 		$('#reset_password_fields').hide();
+		$('#user_ident').prop('disabled', false);
 	} else {
 		$('#reset_password_fields').show();
 		$('#send_email_fields').hide();
 		$('#password_fields').hide();
-		$('#user_ident').val(gUsers[userIndex].ident);
+		$('#user_ident').val(gUsers[userIndex].ident).prop('disabled', true);
 		$('#user_name').val(gUsers[userIndex].name);
 		$('#user_email').val(gUsers[userIndex].email);
 	}
