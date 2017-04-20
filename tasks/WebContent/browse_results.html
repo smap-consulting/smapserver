@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="utf-8">
 
-	<title>Browse Results</title>
+    <title>Browse Results</title>
 
     <link href="/css/bootstrap.min.css" rel="stylesheet">
     <link href="/font-awesome/css/font-awesome.css" rel="stylesheet">
@@ -13,299 +13,340 @@
 
     <link href="/css/wb/animate.css" rel="stylesheet">
     <link href="/css/wb/style.css" rel="stylesheet">
-    
+
     <link rel="stylesheet" type="text/css" href="/js/libs/DataTables/datatables.min.css"/>
-    <link rel="stylesheet" href="/css/bootstrap-toggle.min.css" /> 
-    <link href="/css/dataTables.fontAwesome.css" rel="stylesheet" >
+    <link rel="stylesheet" href="/css/bootstrap-toggle.min.css"/>
+    <link href="/css/dataTables.fontAwesome.css" rel="stylesheet">
     <link href="/css/smap-wb.css" rel="stylesheet">
     <link href="/css/charts.css" rel="stylesheet">
-    
+
     <link href="/js/libs/ol3/ol.css" rel="stylesheet">
     <link href="/js/libs/ol3/ol3-layerswitcher.css" rel="stylesheet">
 
-	<style>
-      .map {
-        height: 400px;
-        width: 100%;
-      }
+    <style>
+        .map {
+            height: 400px;
+            width: 100%;
+        }
     </style>
-    
-	<!-- Style for charts -->
-	<!-- refer https://chartio.com/resources/tutorials/how-to-resize-an-svg-when-the-window-is-resized-in-d3-js -->
 
-<script> if (!window.console) console = {log: function() {}}; </script>
+    <!-- Style for charts -->
+    <!-- refer https://chartio.com/resources/tutorials/how-to-resize-an-svg-when-the-window-is-resized-in-d3-js -->
 
-<script src="/js/libs/modernizr.js"></script>
-<script src="/js/libs/ol3/ol-debug.js"></script>
-<script src ="/js/libs/ol3/ol3-layerswitcher.js"></script>
-<script src="/js/app/custom.js"></script>  <!-- Override this in custom code to apply changes at run time -->
+    <script> if (!window.console) console = {
+        log: function () {
+        }
+    }; </script>
 
-<script>
-var isBrowseResults = true,
-	isManagedForms = false,
-	isDuplicates = false;
-</script>
-<script data-main="js/managed_forms" src="/js/libs/require.js"></script>
+    <script src="/js/libs/modernizr.js"></script>
+    <script src="/js/libs/ol3/ol-debug.js"></script>
+    <script src="/js/libs/ol3/ol3-layerswitcher.js"></script>
+
+    <script src="/js/app/custom.js"></script>  <!-- Override this in custom code to apply changes at run time -->
+
+    <script>
+        var isBrowseResults = true,
+            isManagedForms = false,
+            isDuplicates = false;
+    </script>
+    <script data-main="js/managed_forms" src="/js/libs/require.js"></script>
 
 </head>
 <body>
 
 <audio id="chime">
-	<source src="/images/chime.mp3"></source>
+    <source src="/images/chime.mp3"></source>
 </audio>
 
 <div id="wrapper">
 
-	<nav class="navbar-default navbar-static-side" role="navigation">
-		<div>
-	    	<ul class="nav metismenu" id="side-menu">
-				
-		      	<li>
-		          <a href="#" id="m_modules_inspinia"><i class="fa fa-th-large"></i> <span class="lang" data-lang="m_modules">modules</span><span class="fa arrow"></span></a>
-		          <ul class="nav nav-second-level animated fadeInRight m-t-xs">
-		            
-		            <li><a class="lang" data-lang="m_home" href="/?loggedin=yes">home</a></li>
-		            <li class="restrict_role admin_role analyst_role"><a href="/edit.html"><i class="glyphicon glyphicon-edit"></i> <span class="lang" data-lang="c_edit">Edit</span></a></li>
-		            <li class="restrict_role admin_role analyst_role"><a href="/fieldManager/templateManagement.html"><i class="glyphicon glyphicon-wrench"></i> <span class="lang" data-lang="m_admin">Admin</span></a></li>
-		            <li class="restrict_role enum_role"><a href="/webForm.html"><i class="glyphicon glyphicon-globe"></i> <span class="nav-label lang" data-lang="m_data_mod">web forms</span></span></a></li>
-		            <li class="restrict_role analyst_role"><a href="/fieldAnalysis/index.html"><i class="glyphicon glyphicon-stats"></i> <span class="nav-label lang" data-lang="m_analysis">Analysis</span></a></li>
-		            <li class="restrict_role admin_role analyst_role"><a href="/tasks/taskManagement.html"><i class="fa fa-tasks"></i> <span class="nav-label lang" data-lang="m_assign">assign</span></a></li>
-		          
-		          </ul>
-		        </li> 
+    <nav class="navbar-default navbar-static-side" role="navigation">
+        <div>
+            <ul class="nav metismenu" id="side-menu">
 
-			<li id="m_duplicates" class="restrict_role admin_role"><a href="/tasks/duplicates.html"><i class="fa fa-filter"></i> <span class="lang" data-lang="mon_dup">dups</span></a></li>
-			<li id="m_mf" class="restrict_role admin_role manage_role"><a href="/tasks/managed_forms.html"><i class="fa fa-wpforms"></i> <span class="lang" data-lang="m_mf">manage</span></a></li>
-			<li id="m_web_forms" class="restrict_role enum_role"><a href="/webForm.html"><i class="fa fa-globe" aria-hidden="true"></i> <span class="lang" data-lang="m_web_forms">web forms</span></a></li>
-			<li id="m_query" class="restrict_role analyst_role"><a href="/queries.html"><i class="fa fa-filter" aria-hidden="true"></i> <span class="lang" data-lang="m_queries">queries</span></a></li>
-			<li id="m_help"><a href="https://docs.google.com/folderview?id=0B5_SmpWlQYxvNExwSFV5X051Yjg&usp=docslist_api#" target="_blank"><i class="fa fa-info-circle"></i> <span class="lang" data-lang="m_help">help</span></a></li>
-	        
-	        <li class="nav-divider"></li>
-	        
+                <li>
+                    <a href="#" id="m_modules_inspinia"><i class="fa fa-th-large"></i> <span class="lang"
+                                                                                             data-lang="m_modules">modules</span><span
+                            class="fa arrow"></span></a>
+                    <ul class="nav nav-second-level animated fadeInRight m-t-xs">
 
-	        <li><a id="m_add_chart"><i class="fa fa-bar-chart-o"></i> <span class="nav-label lang" data-lang="d_add">add</span></a></li>
-			<li><a id="m_add_layer"><i class="fa fa-map-o"></i> <span class="nav-label lang" data-lang="d_add_l">add</span></a></li>
-	      
-	      </ul>
-		</div>
-		
-	</nav>
+                        <li><a class="lang" data-lang="m_home" href="/?loggedin=yes">home</a></li>
+                        <li class="restrict_role admin_role analyst_role"><a href="/edit.html"><i
+                                class="glyphicon glyphicon-edit"></i> <span class="lang" data-lang="c_edit">Edit</span></a>
+                        </li>
+                        <li class="restrict_role admin_role analyst_role"><a
+                                href="/fieldManager/templateManagement.html"><i class="glyphicon glyphicon-wrench"></i>
+                            <span class="lang" data-lang="m_admin">Admin</span></a></li>
+                        <li class="restrict_role enum_role"><a href="/webForm.html"><i
+                                class="glyphicon glyphicon-globe"></i> <span class="nav-label lang"
+                                                                             data-lang="m_data_mod">web forms</span></span>
+                        </a></li>
+                        <li class="restrict_role analyst_role"><a href="/fieldAnalysis/index.html"><i
+                                class="glyphicon glyphicon-stats"></i> <span class="nav-label lang"
+                                                                             data-lang="m_analysis">Analysis</span></a>
+                        </li>
+                        <li class="restrict_role admin_role analyst_role"><a href="/tasks/taskManagement.html"><i
+                                class="fa fa-tasks"></i> <span class="nav-label lang" data-lang="m_assign">assign</span></a>
+                        </li>
+
+                    </ul>
+                </li>
+
+                <li id="m_duplicates" class="restrict_role admin_role"><a href="/tasks/duplicates.html"><i
+                        class="fa fa-filter"></i> <span class="lang" data-lang="mon_dup">dups</span></a></li>
+                <li id="m_mf" class="restrict_role admin_role manage_role"><a href="/tasks/managed_forms.html"><i
+                        class="fa fa-wpforms"></i> <span class="lang" data-lang="m_mf">manage</span></a></li>
+                <li id="m_web_forms" class="restrict_role enum_role"><a href="/webForm.html"><i class="fa fa-globe"
+                                                                                                aria-hidden="true"></i>
+                    <span class="lang" data-lang="m_web_forms">web forms</span></a></li>
+                <li id="m_query" class="restrict_role analyst_role"><a href="/queries.html"><i class="fa fa-filter"
+                                                                                               aria-hidden="true"></i>
+                    <span class="lang" data-lang="m_queries">queries</span></a></li>
+                <li id="m_help"><a
+                        href="https://docs.google.com/folderview?id=0B5_SmpWlQYxvNExwSFV5X051Yjg&usp=docslist_api#"
+                        target="_blank"><i class="fa fa-info-circle"></i> <span class="lang"
+                                                                                data-lang="m_help">help</span></a></li>
+
+                <li class="nav-divider"></li>
+
+
+                <li><a id="m_add_chart"><i class="fa fa-bar-chart-o"></i> <span class="nav-label lang"
+                                                                                data-lang="d_add">add</span></a></li>
+                <li><a id="m_add_layer"><i class="fa fa-map-o"></i> <span class="nav-label lang"
+                                                                          data-lang="d_add_l">add</span></a></li>
+
+            </ul>
+        </div>
+
+    </nav>
 
     <div id="page-wrapper" class="gray-bg">
-    	
-    	<!-- Navbar Row -->
-    	<div class="row border-bottom">
-        	<nav class="navbar navbar-static-top" role="navigation" style="margin-bottom: 0">
-        		<div class="navbar-header">
-            		<a class="navbar-minimalize minimalize-styl-2 btn btn-primary " href="#"><i class="fa fa-bars"></i> </a>
-            		
-        		</div>
-        		
-	            <ul class="nav navbar-top-links navbar-right">
-	            
-	          		<li>
-                    	<a href="#" id="m_refresh"><span class="lang" data-lang="m_refresh">refresh</span></a>
-                	</li>
-                	<li class="dropdown">
-                    	<a class="dropdown-toggle count-info" id="show_alerts" data-toggle="dropdown" href="#">
-                        	<i class="fa fa-bell alert_icon"></i>  <span class="label label-primary alert_count"></span>
-                    	</a>
-                    	<ul class="dropdown-menu dropdown-messages">
-                        	
-                       	</ul>
-                   </li>
-                	<li>
-                    	<a class="right-sidebar-toggle">
-                        	<i class="fa fa-cog"></i>
-                    	</a>
-                	</li>
-                	
-	            </ul>
 
-        	</nav>
+        <!-- Navbar Row -->
+        <div class="row border-bottom">
+            <nav class="navbar navbar-static-top" role="navigation" style="margin-bottom: 0">
+                <div class="navbar-header">
+                    <a class="navbar-minimalize minimalize-styl-2 btn btn-primary " href="#"><i class="fa fa-bars"></i>
+                    </a>
+
+                </div>
+
+                <ul class="nav navbar-top-links navbar-right">
+
+                    <li>
+                        <a href="#" id="m_refresh"><span class="lang" data-lang="m_refresh">refresh</span></a>
+                    </li>
+                    <li class="dropdown">
+                        <a class="dropdown-toggle count-info" id="show_alerts" data-toggle="dropdown" href="#">
+                            <i class="fa fa-bell alert_icon"></i> <span class="label label-primary alert_count"></span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-messages">
+
+                        </ul>
+                    </li>
+                    <li>
+                        <a class="right-sidebar-toggle">
+                            <i class="fa fa-cog"></i>
+                        </a>
+                    </li>
+
+                </ul>
+
+            </nav>
         </div>
-        
+
         <!-- Header Row -->
         <div class="row wrapper border-bottom white-bg page-heading">
-        	<div class="row">
-	        	<div class="col-sm-2">
-	            	<h2 class="lang" data-lang="m_br">browse</h2>   
-	            </div>
-	            <div class="col-sm-5">
-	            	<div class="row">
-						<form role="form" class="form-horizontal heading-element" id="projet_name_form">
-							<label class="lang col-sm-4 control-label" data-lang="c_project" for="project_name">project</label>
-							<div class="col-sm-8">
-								<select class="project_list form-control" id="project_name"></select>
-							</div>
-						</form>	
-					</div>
-	        	</div>
-	        	<div class="col-sm-5">
-	            	<div class="row">
-						<form role="form" class="form-horizontal heading-element" id="survey_name_form">
-							<label class="lang col-sm-4 control-label" data-lang="c_survey" for="survey_name">survey</label>
-							<div class="col-sm-8">
-								<select class="survey_select form-control" id="survey_name"></select>
-							</div>
-						</form>	
-					</div>
-	        	</div>
-	        </div>
-	        <div class="row">
-	        	<div class="col-sm-4">
-						<form role="form" class="form-horizontal heading-element">
-							<label class="lang col-sm-4 control-label" data-lang="c_dateq" for="filter_from">date</label>
-							<div class="col-sm-8">
-								<select class="form-control chart_type" id="date_question"></select>
-							</div>
-						</form>	
-	        	</div>
-	        	<div class="col-sm-4">
-						<form role="form" class="form-horizontal heading-element">
-							<label class="lang col-sm-4 control-label" data-lang="a_from_date" for="filter_from">from</label>
-							<div class="col-sm-8">
-								<input type="date" class="hasDatepicker survey_select form-control" id="filter_from">
-							</div>
-						</form>	
-	        	</div>
-	        	<div class="col-sm-4">
-						<form role="form" class="form-horizontal heading-element">
-							<label class="lang col-sm-4 control-label" data-lang="a_to_date" for="filter_to">to</label>
-							<div class="col-sm-8">
-								<input type="date" class="hasDatepicker survey_select form-control" id="filter_to">
-							</div>
-						</form>	
-	        	</div>
-	        </div>
+            <div class="row">
+                <div class="col-sm-2">
+                    <h2 class="lang" data-lang="m_br">browse</h2>
+                </div>
+                <div class="col-sm-5">
+                    <div class="row">
+                        <form role="form" class="form-horizontal heading-element" id="projet_name_form">
+                            <label class="lang col-sm-4 control-label" data-lang="c_project"
+                                   for="project_name">project</label>
+                            <div class="col-sm-8">
+                                <select class="project_list form-control" id="project_name"></select>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                <div class="col-sm-5">
+                    <div class="row">
+                        <form role="form" class="form-horizontal heading-element" id="survey_name_form">
+                            <label class="lang col-sm-4 control-label" data-lang="c_survey"
+                                   for="survey_name">survey</label>
+                            <div class="col-sm-8">
+                                <select class="survey_select form-control" id="survey_name"></select>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-4">
+                    <form role="form" class="form-horizontal heading-element">
+                        <label class="lang col-sm-4 control-label" data-lang="c_dateq" for="filter_from">date</label>
+                        <div class="col-sm-8">
+                            <select class="form-control chart_type" id="date_question"></select>
+                        </div>
+                    </form>
+                </div>
+                <div class="col-sm-4">
+                    <form role="form" class="form-horizontal heading-element">
+                        <label class="lang col-sm-4 control-label" data-lang="a_from_date"
+                               for="filter_from">from</label>
+                        <div class="col-sm-8">
+                            <input type="date" class="hasDatepicker survey_select form-control" id="filter_from">
+                        </div>
+                    </form>
+                </div>
+                <div class="col-sm-4">
+                    <form role="form" class="form-horizontal heading-element">
+                        <label class="lang col-sm-4 control-label" data-lang="a_to_date" for="filter_to">to</label>
+                        <div class="col-sm-8">
+                            <input type="date" class="hasDatepicker survey_select form-control" id="filter_to">
+                        </div>
+                    </form>
+                </div>
+            </div>
         </div>
-        
+
 
         <div class="wrapper wrapper-content animated fadeInRight">
-        	<div class="row">
+            <div class="row">
                 <div class="col-md-12 main_content">
                     <div class="ibox float-e-margins">
-                    	<div class="ibox-title">
+                        <div class="ibox-title">
                             <div class="ibox-tools">
-                             	<a id="showlayers" style="display:none;"><i class="btn btn-info fa fa-align-justify fa-lg"></i></a>
+                                <a id="showlayers" style="display:none;"><i
+                                        class="btn btn-info fa fa-align-justify fa-lg"></i></a>
                                 <a class="genfile pdf"><i class="btn btn-danger fa fa-file-pdf-o fa-lg"></i></a>
-                                <a class="genfile xls"><i class="btn btn-success fa fa-file-excel-o fa-lg"></i></a>  
-                                <a class="genfile image"><i class="btn btn-warning fa fa-file-image-o fa-lg"></i></a> 
+                                <a class="genfile xls"><i class="btn btn-success fa fa-file-excel-o fa-lg"></i></a>
+                                <a class="genfile image"><i class="btn btn-warning fa fa-file-image-o fa-lg"></i></a>
                             </div>
                         </div>
                         <div class="ibox-content">
-							<div id="dashboardInfo" class="alert alert-success" style="display:none;"></div>
-                        	<div class="row">
+                            <div id="dashboardInfo" class="alert alert-success" style="display:none;"></div>
+                            <div class="row">
 
-								<div class="tabs-container">
-									<ul class="nav nav-tabs">
-										<li class="active"><a data-toggle="tab" href="#table-view"> <i class="fa fa-list"></i></a></li>
-										<li class=""><a data-toggle="tab" href="#map-view"><i class="fa fa-globe"></i></a></li>
-										<li class=""><a data-toggle="tab" href="#chart-view"><i class="fa fa-bar-chart"></i></a></li>
-										<li class=""><a data-toggle="tab" href="#timing-view"><i class="fa fa-clock-o"></i></a></li>
-									</ul>
-									<div class="tab-content">
-										<div id="table-view" class="tab-pane active">
-											<div class="panel-body">
-												<div id="table_content" class="col-md-12 dash_views">
-													<div class="table-responsive">
-														<table id="trackingTable" class="table table-striped">
-														</table>
-													</div>
-												</div>
-											</div>
-										</div>
-										<div id="map-view" class="tab-pane">
-											<div class="panel-body">
-												<div class="row">
-													<div class="col-md-4 map_layers" style="display:none;">
-														<div class="ibox float-e-margins">
-															<div class="ibox-title">
-																<h5 class="lang" data-lang="c_map_layers">layers</h5>
-															</div>
-														</div>
-														<div id="layerSelect">
-															<div class="table-responsive">
-																<table class="table">
-																	<thead>
-																	<tr>
-																		<th></th>	<!-- switch on -->
-																		<th class="lang" data-lang="c_name">name</th>
-																		<th class="lang" data-lang="c_del">delete</th>
-																	</tr>
-																	</thead>
-																	<tbody>
+                                <div class="tabs-container">
+                                    <ul class="nav nav-tabs">
+                                        <li class="active"><a data-toggle="tab" href="#table-view"> <i
+                                                class="fa fa-list"></i></a></li>
+                                        <li class=""><a data-toggle="tab" href="#map-view"><i
+                                                class="fa fa-globe"></i></a></li>
+                                        <li class=""><a data-toggle="tab" href="#chart-view"><i
+                                                class="fa fa-bar-chart"></i></a></li>
+                                        <li class=""><a data-toggle="tab" href="#timing-view"><i
+                                                class="fa fa-clock-o"></i></a></li>
+                                    </ul>
+                                    <div class="tab-content">
+                                        <div id="table-view" class="tab-pane active">
+                                            <div class="panel-body">
+                                                <div id="table_content" class="col-md-12 dash_views">
+                                                    <div class="table-responsive">
+                                                        <table id="trackingTable" class="table table-striped">
+                                                        </table>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div id="map-view" class="tab-pane">
+                                            <div class="panel-body">
+                                                <div class="row">
+                                                    <div class="col-md-4 map_layers" style="display:none;">
+                                                        <div class="ibox float-e-margins">
+                                                            <div class="ibox-title">
+                                                                <h5 class="lang" data-lang="c_map_layers">layers</h5>
+                                                            </div>
+                                                        </div>
+                                                        <div id="layerSelect">
+                                                            <div class="table-responsive">
+                                                                <table class="table">
+                                                                    <thead>
+                                                                    <tr>
+                                                                        <th></th>    <!-- switch on -->
+                                                                        <th class="lang" data-lang="c_name">name</th>
+                                                                        <th class="lang" data-lang="c_del">delete</th>
+                                                                    </tr>
+                                                                    </thead>
+                                                                    <tbody>
 
-																	</tbody>
-																</table>
-															</div>
-														</div>
-													</div>
-													<div id="map_content" class="col-md-12 dash_views">
-														<div id="map" class="map"></div>
-													</div>
-												</div>
-											</div>
-										</div>
-										<div id="chart-view" class="tab-pane active">
-											<div class="panel-body">
-												<div id = "chartcontent">
-													<div class="row" id="chartrow"></div>
-												</div>
-											</div>
-										</div>
-									</div>
-								</div>
+                                                                    </tbody>
+                                                                </table>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div id="map_content" class="col-md-12 dash_views">
+                                                        <div id="map" class="map"></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div id="chart-view" class="tab-pane active">
+                                            <div class="panel-body">
+                                                <div id="chartcontent">
+                                                    <div class="row" id="chartrow"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                	</div>
-             	</div>
-        	</div>
-
-       </div>
-    </div>
-
-       <div id="right-sidebar">
-            <div class="sidebar-container">
-
-                <ul class="nav nav-tabs navs-2">
-
-                    <li class="active"><a data-toggle="tab" href="#tab-1"><i class="fa fa-sort-amount-desc"></i></a></li>
-                    <li><a data-toggle="tab" href="#tab-2"><i class="fa fa-qrcode"></i></a></li>
-                 
-                </ul>
-
-                <div class="tab-content">
-                    <div id="tab-1" class="tab-pane active">
-                        <div class="sidebar-title">
-                            <h3> <span class="lang" data-lang="mf_sc">sort</span></h3>
-                            <small><i class="fa fa-tim"></i> <span class="lang" data-lang="mf_sc_i"></span></small>
-                        </div>
-
-						<div id="tab-columns-content"></div>
-
-                        <div class="sidebar-content">
-                           <button id="applyColumns" type="button" class="btn btn-primary lang" data-lang="c_apply">apply</button>
-  
-                        </div>
-                    </div>
-              
-                    <div id="tab-2" class="tab-pane">
-                        <div class="sidebar-title">
-                            <h3> <span class="lang" data-lang="mf_qr">qr</span></h3>
-                            <small><i class="fa fa-tim"></i> <span class="lang" data-lang="mf_bc_i"></span></small>
-                        </div>
-
-						<div id="tab-barcode-content"></div>
-
-                        <div class="sidebar-content">
-                           <button id="applyBarcodes" type="button" class="btn btn-primary lang" data-lang="c_apply">apply</button>
-  
                         </div>
                     </div>
                 </div>
             </div>
+
         </div>
+    </div>
+
+    <div id="right-sidebar">
+        <div class="sidebar-container">
+
+            <ul class="nav nav-tabs navs-2">
+
+                <li class="active"><a data-toggle="tab" href="#tab-1"><i class="fa fa-sort-amount-desc"></i></a></li>
+                <li><a data-toggle="tab" href="#tab-2"><i class="fa fa-qrcode"></i></a></li>
+
+            </ul>
+
+            <div class="tab-content">
+                <div id="tab-1" class="tab-pane active">
+                    <div class="sidebar-title">
+                        <h3><span class="lang" data-lang="mf_sc">sort</span></h3>
+                        <small><i class="fa fa-tim"></i> <span class="lang" data-lang="mf_sc_i"></span></small>
+                    </div>
+
+                    <div id="tab-columns-content"></div>
+
+                    <div class="sidebar-content">
+                        <button id="applyColumns" type="button" class="btn btn-primary lang" data-lang="c_apply">apply
+                        </button>
+
+                    </div>
+                </div>
+
+                <div id="tab-2" class="tab-pane">
+                    <div class="sidebar-title">
+                        <h3><span class="lang" data-lang="mf_qr">qr</span></h3>
+                        <small><i class="fa fa-tim"></i> <span class="lang" data-lang="mf_bc_i"></span></small>
+                    </div>
+
+                    <div id="tab-barcode-content"></div>
+
+                    <div class="sidebar-content">
+                        <button id="applyBarcodes" type="button" class="btn btn-primary lang" data-lang="c_apply">
+                            apply
+                        </button>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
 </div>
 
@@ -314,306 +355,339 @@ var isBrowseResults = true,
 
 <!-- Modal to edit a record -->
 <div id="editRecord" class="modal fade" aria-hidden="true">
-	<div class="modal-dialog custom-modal-width">
-		<div class="modal-content">
-			<div class="modal-header">
-     			<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-   			</div>
-			<div class="modal-body">
-				<div class="row">
-					<div class="col-sm-6 b-r"><h3 class="m-t-none m-b lang" data-lang="mf_fd">form data</h3>
+    <div class="modal-dialog custom-modal-width">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span
+                        class="sr-only">Close</span></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-sm-6 b-r"><h3 class="m-t-none m-b lang" data-lang="mf_fd">form data</h3>
 
-						<form id="surveyForm" role="form" class="form-horizontal">
-					
-						</form>
-					</div>
-					<div class="col-sm-6 b-r"><h3 class="m-t-none m-b lang" data-lang="mf_md">mgmt data</h3>
+                        <form id="surveyForm" role="form" class="form-horizontal">
 
-						<form id="editRecordForm" role="form" class="form-horizontal">
-					
-						</form>
-						<button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_close">Close</button>
-						<button id="saveRecord" type="button" class="btn btn-primary lang" data-dismiss="modal" data-lang="c_save">Save</button>
-					</div>
-				</div>
-			</div>
-				
-		</div>
-	</div>
+                        </form>
+                    </div>
+                    <div class="col-sm-6 b-r"><h3 class="m-t-none m-b lang" data-lang="mf_md">mgmt data</h3>
+
+                        <form id="editRecordForm" role="form" class="form-horizontal">
+
+                        </form>
+                        <button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_close">
+                            Close
+                        </button>
+                        <button id="saveRecord" type="button" class="btn btn-primary lang" data-dismiss="modal"
+                                data-lang="c_save">Save
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
 </div>
 
 <!-- Modal to edit a chart widget -->
 <div id="editChart" class="modal fade" aria-hidden="true">
-	<div class="modal-dialog custom-modal-width">
-		<div class="modal-content">
-			<div class="modal-header">
-				<!--  <button id="shareRecord" type="button" class="btn btn-info"><i class="fa fa-share-alt"></i> <span class="lang" data-lang="n_share">get link</span></button> -->
-     			<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-   			</div>
-			<div class="modal-body">
-				<div class="row">
-					<div class="col-sm-12 b-r"><h3 class="m-t-none m-b lang" data-lang="mf_fd">form data</h3>
+    <div class="modal-dialog custom-modal-width">
+        <div class="modal-content">
+            <div class="modal-header">
+                <!--  <button id="shareRecord" type="button" class="btn btn-info"><i class="fa fa-share-alt"></i> <span class="lang" data-lang="n_share">get link</span></button> -->
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span
+                        class="sr-only">Close</span></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-sm-12 b-r"><h3 class="m-t-none m-b lang" data-lang="mf_fd">form data</h3>
 
-						<form id="chartForm" role="form" class="form-horizontal">
-						
-							<div>
-								<div class="form-group">
-				         			<label class="lang col-sm-2 control-label" data-lang="c_title" for="ew_title">title</label>
-									<div class="col-sm-10">
-										<input type="text" class="form-control title" id="ew_title">
+                        <form id="chartForm" role="form" class="form-horizontal">
 
-									</div>
-								</div>
-							</div>
-							
-							<div>
-								<div class="form-group">
-				         			<label class="lang col-sm-2 control-label" data-lang="a_type" for="ew_chart_type">chart_type</label>
-									<div class="col-sm-10">
-										<select class="form-control chart_type" id="ew_chart_type">
-										</select>
-									</div>
-								</div>
-							</div>
-							
-							<div>
-								<div class="form-group">
-				         			<label class="lang col-sm-2 control-label" data-lang="c_question" for="ew_question">question</label>
-									<div class="col-sm-10">
-										<select class="form-control question" id="ew_question">
-										</select>
-									</div>
-								</div>
-							</div>
-							
-							
-							<div class="numeric_only">
-								<div class="form-group">
-				         			<label class="lang col-sm-2 control-label" data-lang="a_fn" for="ew_fn">function</label>
-									<div class="col-sm-10">
-										<select class="form-control" id="ew_fn">
-											<option class="lang" value="count" data-lang="count">count</option>
-											<option class="lang" value="percent" data-lang="percent">percent</option>
-										</select>
-									</div>
-								</div>
-							</div>
-							
-							<div class="group_only">
-								<div class="form-group">
-				         			<label class="lang col-sm-2 control-label" data-lang="a_gb" for="ew_group">group</label>
-									<div class="col-sm-10">
-										<select class="form-control group_question" id="ew_group">
-										</select>
-									</div>
-								</div>
-							</div>
-							
-							<div class="date_range_only">
-								<div class="form-group">
-				         			<label class="col-sm-2 control-label" for="ew_date1"><span class="lang" data-lang="c_dateq" >date</span> 1</label>
-									<div class="col-sm-10">
-										<select class="form-control date_question" id="ew_date1">
-										</select>
-									</div>
-								</div>
-								<div class="form-group">
-				         			<label class="col-sm-2 control-label" for="ew_date2"><span class="lang" data-lang="c_dateq" >date</span> 2</label>
-									<div class="col-sm-10">
-										<select class="form-control date_question" id="ew_date2">
-										</select>
-									</div>
-								</div>
-							</div>
-							<div class="period_only">
-								<div class="form-group">
-				         			<label class="lang col-sm-2 control-label" data-lang="c_period" for="ew_period">period</label>
-									<div class="col-sm-10">
-										<select class="form-control" id="ew_period">
-											<option class="lang" value="day" data-lang="c_day">day</option>
-											<option class="lang" value="month" data-lang="c_month">month</option>
-											<option class="lang" value="year" data-lang="c_year">year</option>
-										</select>
-									</div>
-								</div>
-							</div>
-							<div class="form-group">
-			         			<label class="lang col-sm-2 control-label" data-lang="c_width" for="ew_width">width</label>
-								<div class="col-sm-10">
-									<select class="form-control" id="ew_width">
-										<option class="lang" value="3" data-lang="d_qtr">25</option>
-										<option class="lang" value="6" data-lang="d_half">50</option>
-										<option class="lang" value="9" data-lang="d_3qtr">75</option>
-										<option class="lang" value="12" data-lang="d_full">100</option>
-									</select>
-								</div>
-							</div>
-						</form>
-						<div id="chartInfo" style="word-wrap:break-word; display:none;" class="alert" role="alert"></div>
-					</div>
-					
-				</div>
-			</div>
-			<div class="modal-footer">
-            	<button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_close">Close</button>
-            	<button id="editChartSave" type="button" class="btn btn-primary lang" data-lang="c_save">Save</button>
-        	</div>
-		</div>
-	</div>
+                            <div>
+                                <div class="form-group">
+                                    <label class="lang col-sm-2 control-label" data-lang="c_title"
+                                           for="ew_title">title</label>
+                                    <div class="col-sm-10">
+                                        <input type="text" class="form-control title" id="ew_title">
+
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <div class="form-group">
+                                    <label class="lang col-sm-2 control-label" data-lang="a_type" for="ew_chart_type">chart_type</label>
+                                    <div class="col-sm-10">
+                                        <select class="form-control chart_type" id="ew_chart_type">
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <div class="form-group">
+                                    <label class="lang col-sm-2 control-label" data-lang="c_question" for="ew_question">question</label>
+                                    <div class="col-sm-10">
+                                        <select class="form-control question" id="ew_question">
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+
+                            <div class="numeric_only">
+                                <div class="form-group">
+                                    <label class="lang col-sm-2 control-label" data-lang="a_fn"
+                                           for="ew_fn">function</label>
+                                    <div class="col-sm-10">
+                                        <select class="form-control" id="ew_fn">
+                                            <option class="lang" value="count" data-lang="count">count</option>
+                                            <option class="lang" value="percent" data-lang="percent">percent</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="group_only">
+                                <div class="form-group">
+                                    <label class="lang col-sm-2 control-label" data-lang="a_gb"
+                                           for="ew_group">group</label>
+                                    <div class="col-sm-10">
+                                        <select class="form-control group_question" id="ew_group">
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="date_range_only">
+                                <div class="form-group">
+                                    <label class="col-sm-2 control-label" for="ew_date1"><span class="lang"
+                                                                                               data-lang="c_dateq">date</span>
+                                        1</label>
+                                    <div class="col-sm-10">
+                                        <select class="form-control date_question" id="ew_date1">
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="col-sm-2 control-label" for="ew_date2"><span class="lang"
+                                                                                               data-lang="c_dateq">date</span>
+                                        2</label>
+                                    <div class="col-sm-10">
+                                        <select class="form-control date_question" id="ew_date2">
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="period_only">
+                                <div class="form-group">
+                                    <label class="lang col-sm-2 control-label" data-lang="c_period" for="ew_period">period</label>
+                                    <div class="col-sm-10">
+                                        <select class="form-control" id="ew_period">
+                                            <option class="lang" value="day" data-lang="c_day">day</option>
+                                            <option class="lang" value="month" data-lang="c_month">month</option>
+                                            <option class="lang" value="year" data-lang="c_year">year</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="lang col-sm-2 control-label" data-lang="c_width"
+                                       for="ew_width">width</label>
+                                <div class="col-sm-10">
+                                    <select class="form-control" id="ew_width">
+                                        <option class="lang" value="3" data-lang="d_qtr">25</option>
+                                        <option class="lang" value="6" data-lang="d_half">50</option>
+                                        <option class="lang" value="9" data-lang="d_3qtr">75</option>
+                                        <option class="lang" value="12" data-lang="d_full">100</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </form>
+                        <div id="chartInfo" style="word-wrap:break-word; display:none;" class="alert"
+                             role="alert"></div>
+                    </div>
+
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_close">Close
+                </button>
+                <button id="editChartSave" type="button" class="btn btn-primary lang" data-lang="c_save">Save</button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- Modal to edit a map layer -->
 <div id="layerEdit" class="modal fade" aria-hidden="true">
-	<div class="modal-dialog custom-modal-width">
-		<div class="modal-content">
-			<div class="modal-header">
-				<!--  <button id="shareRecord" type="button" class="btn btn-info"><i class="fa fa-share-alt"></i> <span class="lang" data-lang="n_share">get link</span></button> -->
-     			<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-   			</div>
-			<div class="modal-body">
-				<div class="row">
-					<div class="col-sm-12 b-r"><h3 class="m-t-none m-b lang" data-lang="mf_ld">layer details</h3>
+    <div class="modal-dialog custom-modal-width">
+        <div class="modal-content">
+            <div class="modal-header">
+                <!--  <button id="shareRecord" type="button" class="btn btn-info"><i class="fa fa-share-alt"></i> <span class="lang" data-lang="n_share">get link</span></button> -->
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span
+                        class="sr-only">Close</span></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-sm-12 b-r"><h3 class="m-t-none m-b lang" data-lang="mf_ld">layer details</h3>
 
-						<form id="mapForm" role="form" class="form-horizontal">
-						
-							<div class="form-group">
-			         			<label class="lang col-sm-2 control-label" data-lang="c_title" for="ml_title">title</label>
-								<div class="col-sm-10">
-									<input type="text" class="form-control title" id="ml_title" required>
-								</div>
-							</div>
-						
-							<div class="form-group">
-								<div class="col-sm-offset-2 col-sm-10">
-									<div class="checkbox">
-										<label>
-											<input type="checkbox" id="usecurrent_tabledata" checked><span data-lang="br_cd" class="lang">current table data</span>
-										</label>
-									</div>
-								</div>
-							</div>
+                        <form id="mapForm" role="form" class="form-horizontal">
 
-							<div class="form-group">
-								<div class="col-sm-offset-2 col-sm-10">
-									<div class="radio">
-										<label>
-											<input type="radio" value="normal" id="clump_normal" name="clump" checked><span data-lang="c_normal" class="lang">normal</span>
-										</label>
-									</div>
-								</div>
-								<div class="col-sm-offset-2 col-sm-10">
-									<div class="radio">
-										<label>
-											<input type="radio" value="heatmap" id="clump_heatmap" name="clump"><span data-lang="c_heatmap" class="lang">heatmap</span>
-										</label>
-									</div>
-								</div>
-							</div>
-							
-						
-							<!--  
-							<div class="form-group">
-			         			<label class="lang col-sm-2 control-label" data-lang="c_survey" for="ml_survey">survey</label>
-								<div class="col-sm-10">
-									<select class="form-control" id="ml_survey">
-									</select>
-								</div>
-							</div>
-							
-							<div class="form-group">
-			         			<label class="lang col-sm-2 control-label" data-lang="c_survey" for="ml_survey">survey</label>
-								<div class="col-sm-10">
-									<select class="form-control" id="ml_survey">
-									</select>
-								</div>
-							</div>
-							-->
-						
-						</form>
-						<div id="layerInfo" style="word-wrap:break-word; display:none;" class="alert" role="alert"></div>
-					</div>
-					
-				</div>
-			</div>
-			<div class="modal-footer">
-            	<button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_close">Close</button>
-            	<button id="addLayerSave" type="button" class="btn btn-primary lang" data-lang="c_save">Save</button>
-        	</div>
-		</div>
-	</div>
+                            <div class="form-group">
+                                <label class="lang col-sm-2 control-label" data-lang="c_title"
+                                       for="ml_title">title</label>
+                                <div class="col-sm-10">
+                                    <input type="text" class="form-control title" id="ml_title" required>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <div class="col-sm-offset-2 col-sm-10">
+                                    <div class="checkbox">
+                                        <label>
+                                            <input type="checkbox" id="usecurrent_tabledata" checked><span
+                                                data-lang="br_cd" class="lang">current table data</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <div class="col-sm-offset-2 col-sm-10">
+                                    <div class="radio">
+                                        <label>
+                                            <input type="radio" value="normal" id="clump_normal" name="clump"
+                                                   checked><span data-lang="c_normal" class="lang">normal</span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-sm-offset-2 col-sm-10">
+                                    <div class="radio">
+                                        <label>
+                                            <input type="radio" value="heatmap" id="clump_heatmap" name="clump"><span
+                                                data-lang="c_heatmap" class="lang">heatmap</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+
+                            <!--
+                            <div class="form-group">
+                                 <label class="lang col-sm-2 control-label" data-lang="c_survey" for="ml_survey">survey</label>
+                                <div class="col-sm-10">
+                                    <select class="form-control" id="ml_survey">
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                 <label class="lang col-sm-2 control-label" data-lang="c_survey" for="ml_survey">survey</label>
+                                <div class="col-sm-10">
+                                    <select class="form-control" id="ml_survey">
+                                    </select>
+                                </div>
+                            </div>
+                            -->
+
+                        </form>
+                        <div id="layerInfo" style="word-wrap:break-word; display:none;" class="alert"
+                             role="alert"></div>
+                    </div>
+
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_close">Close
+                </button>
+                <button id="addLayerSave" type="button" class="btn btn-primary lang" data-lang="c_save">Save</button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- Modal to allow the user to edit their own details -->
-<div id="modify_me_popup" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="modifyMeLabel" aria-hidden="true">
-	<div class="modal-dialog">
-   		<div class="modal-content">
-   			<div class="modal-header">
-     			<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-     			<h4 class="modal-title lang" id="modifyMeLabel"></h4>
-   			</div>
-		     <div class="modal-body">
-				<form role="form" class="form-horizontal" id="me_edit_form">
-					<div class="form-group">
-						<label for="me_name" data-lang="c_name" class="lang col-sm-2 control-label">Name</label>
-						<div class="col-sm-10">
-							<input type="text" id="me_name" required class="form-control">
-						</div>
-					</div>
-					<div class="form-group">
-						<label for="me_language" data-lang="c_lang" class="lang col-sm-2 control-label">Language</label>
-						<div class="col-sm-10">
-							<select id="me_language" class="language_select form-control"></select>
-						</div>
-					</div>
-					<div class="form-group">
-						<label for="me_email" data-lang="c_email" class="lang col-sm-2 control-label">Email</label>
-						<div class="col-sm-10">
-							<input type="email" class="form-control" id="me_email" 
-									placeholder="Enter email" 
-									pattern="^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$">
-						</div>
-					</div>
-					<div id="reset_me_password_fields" style="display:none;">
-						<div class="form-group">
-							<div class="col-sm-offset-2 col-sm-10">
-								<div class="checkbox">
-									<label>
-										<input type="checkbox" id="reset_me_password"><span data-lang="c_r_p" class="lang">Reset Password</span>
-									</label>
-								</div>
-							</div>
-						</div>
-					</div>
-					<div id="password_me_fields" style="display:none;">
-						<div class="form-group">
-							<label for="me_password" data-lang="c_password" class="lang col-sm-2 control-label">Password</label>
-							<div class="col-sm-10">
-								<input id="me_password" type="password" placeholder="Password" class="form-control">
-							</div>
-						</div>	
-						<div class="form-group">
-							<label for="me_password_confirm" data-lang="c_c_p" class="lang col-sm-2 control-label">Confirm Password</label>
-							<div class="col-sm-10">
-								<input id="me_password_confirm" type="password" placeholder="Password" class="form-control">
-							</div>
-						</div>	
-					</div>		
-				</form>	
-			</div>
+<div id="modify_me_popup" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="modifyMeLabel"
+     aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span
+                        class="sr-only">Close</span></button>
+                <h4 class="modal-title lang" id="modifyMeLabel"></h4>
+            </div>
+            <div class="modal-body">
+                <form role="form" class="form-horizontal" id="me_edit_form">
+                    <div class="form-group">
+                        <label for="me_name" data-lang="c_name" class="lang col-sm-2 control-label">Name</label>
+                        <div class="col-sm-10">
+                            <input type="text" id="me_name" required class="form-control">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="me_language" data-lang="c_lang" class="lang col-sm-2 control-label">Language</label>
+                        <div class="col-sm-10">
+                            <select id="me_language" class="language_select form-control"></select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="me_email" data-lang="c_email" class="lang col-sm-2 control-label">Email</label>
+                        <div class="col-sm-10">
+                            <input type="email" class="form-control" id="me_email"
+                                   placeholder="Enter email"
+                                   pattern="^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$">
+                        </div>
+                    </div>
+                    <div id="reset_me_password_fields" style="display:none;">
+                        <div class="form-group">
+                            <div class="col-sm-offset-2 col-sm-10">
+                                <div class="checkbox">
+                                    <label>
+                                        <input type="checkbox" id="reset_me_password"><span data-lang="c_r_p"
+                                                                                            class="lang">Reset Password</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="password_me_fields" style="display:none;">
+                        <div class="form-group">
+                            <label for="me_password" data-lang="c_password"
+                                   class="lang col-sm-2 control-label">Password</label>
+                            <div class="col-sm-10">
+                                <input id="me_password" type="password" placeholder="Password" class="form-control">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="me_password_confirm" data-lang="c_c_p" class="lang col-sm-2 control-label">Confirm
+                                Password</label>
+                            <div class="col-sm-10">
+                                <input id="me_password_confirm" type="password" placeholder="Password"
+                                       class="form-control">
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
 
-			<div class="modal-footer">
-            	<button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_close">Close</button>
-            	<button id="userProfileLogout"type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_logout">Logout</button>
-            	<button id="userProfileSave" type="button" class="btn btn-primary lang" data-dismiss="modal" data-lang="c_save">Save</button>
-        	</div>
-		</div>
-	</div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_close">Close
+                </button>
+                <button id="userProfileLogout" type="button" class="btn btn-default lang" data-dismiss="modal"
+                        data-lang="c_logout">Logout
+                </button>
+                <button id="userProfileSave" type="button" class="btn btn-primary lang" data-dismiss="modal"
+                        data-lang="c_save">Save
+                </button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>
-	setCustomManage();
+    setCustomManage();
 </script>
-
 
 
 </body>
