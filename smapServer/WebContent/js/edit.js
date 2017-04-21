@@ -187,7 +187,7 @@ $(document).ready(function() {
 		$('#propSelected').html($(this).html());
 		globals.gSelLabel = $(this).html();
 		globals.gSelProperty = $(this).data("prop")
-		refreshForm();
+		refreshFeaturedProperties();
 		
  	 });
 	
@@ -385,7 +385,7 @@ $(document).ready(function() {
 					$('#editLanguageModal').modal("hide");
 					globals.model.setSurveyData(data);
 					setLanguages(data.languages, refreshForm);
-					//refreshForm();
+					refreshForm();
 				},
 				error: function(xhr, textStatus, err) {
 					removeHourglass();
@@ -844,6 +844,30 @@ function refreshForm() {
 	}
 
 }
+
+			/*
+			 * Refresh the featured properties part of the form
+			 */
+            function refreshFeaturedProperties() {
+
+                var $context,
+                    survey,
+                    question;
+
+                if(globals.gShowingChoices) {
+                    survey = globals.model.survey;
+                    if(typeof globals.gFormIndex !== "undefined") {
+                        question = survey.forms[globals.gFormIndex].questions[globals.gItemIndex];
+                    }
+                    option.addOptionTable(question, globals.gFormIndex, globals.gListName);
+                    option.setupChoiceView($('#filterType').val());
+                    respondToEventsChoices($('#optionTable'));
+                } else {
+                    $context = markup.refreshFeaturedProperties();
+                    respondToEvents($context);
+                }
+
+            }
 
 /*
  * The passed in context is for a list of choices

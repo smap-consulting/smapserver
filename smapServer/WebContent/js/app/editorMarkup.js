@@ -40,7 +40,8 @@ define([
 		refresh: refresh,
 		includeQuestion: includeQuestion,
 		addQuestionSequence: addQuestionSequence,
-		getLinkedQuestions: getLinkedQuestions
+		getLinkedQuestions: getLinkedQuestions,
+		refreshFeaturedProperties: refreshFeaturedProperties
 	};
 	
 	/*
@@ -903,13 +904,32 @@ define([
 			
 		}
 		
-		
 		if(!globals.gHasItems) {
 			// If there were no items then set focus to the add new item button
 			$('.add_final_button').focus();
 		} 
 		
 		return $('#formList');		// Return the context of the updated HTML so that events can be applied
+	}
+
+	/*
+	 * Refresh the featured properties
+	 */
+	function refreshFeaturedProperties() {
+
+        var survey = globals.model.survey;
+
+		$('li.panel.question').each(function() {
+			var $this = $(this);
+			var fId = $this.data("fid");
+			var id = $this.data("id");
+			var question = survey.forms[fId].questions[id];
+
+			$this.find('.question').html(getFeaturedMarkup(question, "question"));
+
+		});
+
+        return $('#formList');
 	}
 	
 	/*
@@ -972,10 +992,12 @@ define([
 				}
 			}
 		}
-		
+
+
 		gGroupStacks = [];		// save some memory
 		
 		return h.join("");
+
 
 	}
 	

@@ -142,7 +142,7 @@ function refreshView() {
 /*
  * Convert change log JSON to html
  */
-function setChangesHtml($element, survey, survey) {
+function setChangesHtml($element, survey) {
 	var h =[],
 		idx = -1,
 		i,

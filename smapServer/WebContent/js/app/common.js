@@ -1371,7 +1371,7 @@ function setLanguages(languages, languageCallback) {
 		h[++idx] = '<li>';
 		h[++idx] = '<a data-lang="';
 		h[++idx] = i;
-		h[++idx] = '" href="#">';
+		h[++idx] = '" href="javascript:void(0)">';
 		h[++idx] = languages[i].name;
 		h[++idx] = '</a>';
 		h[++idx] = '</li>';

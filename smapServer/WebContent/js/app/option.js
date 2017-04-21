@@ -104,7 +104,8 @@ define([
 	}
 	
 	function setupChoiceView(filterType) {
-		var survey = globals.model.survey;
+		var survey = globals.model.survey,
+			i;
 		/*
 		 * show custom filter columns that should be visible
 		 */
@@ -178,13 +179,13 @@ define([
 						h[++idx] = '<button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span class="edit_icon glyphicon glyphicon-option-vertical"></span> <span class="caret"></span>';
 						h[++idx] = '</button>';
 							h[++idx] = '<ul class="dropdown-menu">';
-								h[++idx] = '<li><a href="#" class="delete_option">';
+								h[++idx] = '<li><a href="javascript:void(0)" class="delete_option">';
 								h[++idx] = localise.set["c_del"];
 								h[++idx] = '</a></li>';
-								h[++idx] = '<li><a href="#" class="add_option_before">';
+								h[++idx] = '<li><a href="javascript:void(0)" class="add_option_before">';
 								h[++idx] = localise.set["ed_ab"];
 								h[++idx] = '</a></li>';
-								h[++idx] = '<li><a href="#" class="add_option_after">';
+								h[++idx] = '<li><a href="javascript:void(0)" class="add_option_after">';
 								h[++idx] = localise.set["ed_aa"];
 								h[++idx] = '</a></li>';
 							h[++idx] = '</ul>';
@@ -410,7 +411,8 @@ define([
 	function addFilterSelectList(filters) {
 		var h = [],
 			idx = -1,
-			survey = globals.model.survey;
+			survey = globals.model.survey,
+			filter;
 		
 		globals.gFilterArray = [];
 		for(filter in filters) {
@@ -607,7 +609,7 @@ define([
 	 */
 	function getOptionLists() {
 		
-		var lists = survey = globals.model.survey.optionLists,
+		var lists = globals.model.survey.optionLists,
 			name,
 			nameArray = [],
 			h = [],
