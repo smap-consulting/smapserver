@@ -33,9 +33,8 @@ define([
         'jquery',
         'modernizr',
         'localise',
-        'globals',
-        'd3'],
-    function ($, modernizr, lang, globals, d3) {
+        'globals'],
+    function ($, modernizr, lang, globals) {
 
         return {
             add: add,

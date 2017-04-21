@@ -28,10 +28,7 @@ requirejs.config({
     paths: {
         app: '../app'
     },
-    shim: {
 
-        'd3cloud2': ['d3v3'],
-    }
 });
 
 define([
@@ -39,9 +36,8 @@ define([
         'modernizr',
         'localise',
         'globals',
-        'd3v3',
         'd3cloud2'],
-    function ($, modernizr, lang, globals, d3) {
+    function ($, modernizr, lang, globals) {
 
 
         return {
@@ -133,8 +129,6 @@ define([
                 })
                 ])
                 .range([6, 40]);
-
-            svg = config.svg;
 
             d3.layout.cloud().stop().words(word_entries).start();
 

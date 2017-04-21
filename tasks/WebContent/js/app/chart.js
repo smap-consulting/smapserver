@@ -26,14 +26,13 @@ define([
         'modernizr',
         'localise',
         'globals',
-        'd3',
-        'app/charts/bar',
+        'app/charts/bar_p',
         'app/charts/pie',
         'app/charts/line',
         'app/charts/wordcloud',
         'app/charts/groupedBar',
         'svgsave'],
-    function ($, modernizr, lang, globals, d3, bar, pie, line, wordcloud, groupedBar, svgsave) {
+    function ($, modernizr, lang, globals, bar_p, pie, line, wordcloud, groupedBar, svgsave) {
 
 
         /*
@@ -41,7 +40,7 @@ define([
          * The system knows how to show these
          */
         var avCharts = {
-            bar: bar,
+            bar: bar_p,
             pie: pie,
             // line: line,
             wordcloud: wordcloud,
@@ -53,7 +52,7 @@ define([
             groups: [],
             time_interval: false,
             title: "",
-            chart_type: "bar",
+            chart_type: "bar_p",
             group: "none",
             fn: "count",
             tSeries: false,
@@ -526,13 +525,16 @@ define([
                     // Remove the svg if we cannot update gracefully
                     if (init || chart.chart_type === "pie" || chart.chart_type === "wordcloud") {	// Pie charts tricky to update, wordcloud not implemented update yet
 
-                        if (config.svg) {
-                            config.svg.remove();
+                        if (config.plot) {
+                            config.plot.remove();
                         }
+                        config.domElement = '#svg_' + chart.id;
+                        /*
                         config.svg = d3.select('#svg_' + chart.id).append("svg")
                             .attr("preserveAspectRatio", "xMinYMin meet")
                             .attr("viewBox", view)
                             .classed("svg-content", true);
+                        */
 
                         avCharts[chart.chart_type].add(chart, config, data, widthContainer, heightContainer);
                     }

@@ -97,7 +97,6 @@ require([
     'icheck',
     'crf',
     'qrcode',
-    'd3',
     'toggle'
 
 ], function ($,
@@ -139,75 +138,6 @@ require([
         gDirn: undefined
     }
 
-    var gReport = {
-        date_q: "Upload Time",
-        row: [
-            {
-                datatable: false,
-                name: "history",
-                charts: [
-                    /*
-                     {
-                     groups: [
-                     {
-                     q: "_start",
-                     label: "Upload Time"
-                     },
-                     {
-                     q: "Action Date",
-                     label: "Date Closed"
-                     }],
-                     time_interval: true,
-                     humanName: "",
-                     name: "periodic_count",
-                     chart_type: "groupedBar",
-                     group: undefined,
-                     fn: "count",
-                     tSeries: true,
-                     period: "day",
-                     width: 12
-                     },
-                     {
-                     groups: [
-                     {
-                     q: "_start",
-                     label: "Start Time"
-                     },
-                     {
-                     q: "_end",
-                     label: "Finish Time"
-                     }],
-                     time_interval: true,
-                     humanName: "Average survey completion time",
-                     name: "completion_time",
-                     chart_type: "bar",
-                     group: "_user",
-                     fn: "avgdurn",
-                     tSeries: false,
-                     period: undefined,
-                     width: 12
-                     }
-                     */
-                ]
-            }
-            /*
-             ,
-             {
-             datatable: true,
-             name: "chartrow",
-             def: {
-             chart_type: "bar",
-             groups: undefined,
-             group: undefined,
-             fn: "length",
-             tSeries: false,
-             period: undefined
-             },
-             charts: []
-             }
-             */
-        ]
-    };
 
     $(document).ready(function () {
 

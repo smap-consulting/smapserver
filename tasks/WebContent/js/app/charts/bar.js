@@ -26,9 +26,8 @@ define([
         'modernizr',
         'localise',
         'globals',
-        'd3',
         'localise'],
-    function ($, modernizr, lang, globals, d3, localise) {
+    function ($, modernizr, lang, globals, localise) {
 
 
         return {
