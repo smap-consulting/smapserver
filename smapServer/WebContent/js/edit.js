@@ -385,7 +385,7 @@ $(document).ready(function() {
 					$('#editLanguageModal').modal("hide");
 					globals.model.survey = data;
 					setLanguages(data.languages, refreshForm);
-					//refreshForm();
+					refreshForm();
 				},
 				error: function(xhr, textStatus, err) {
 					removeHourglass();
