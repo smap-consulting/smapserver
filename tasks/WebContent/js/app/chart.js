@@ -68,6 +68,7 @@ define([
             gChartId,
             gCharts = [],
             gChartsConfig = {};
+        var gChartUpdatePending = true;
 
         return {
             init: init,
@@ -86,6 +87,10 @@ define([
             $('#editChartSave').off().click(function () {
                 saveChart();
             });
+
+            if (gChartUpdatePending) {
+                refreshAllCharts(true, true);
+            }
         }
 
         function setCharts(charts) {
@@ -124,19 +129,29 @@ define([
         /*
          * Refresh all charts
          */
-        function refreshAllCharts() {
+        function refreshAllCharts(chartView, clearExisting) {
 
             var i;
-            if (globals.gMainTable) {
-                var results = globals.gMainTable.rows({
-                    order: 'current',  // 'current', 'applied', 'index',  'original'
-                    page: 'all',      // 'all',     'current'
-                    search: 'applied',     // 'none',    'applied', 'removed'
-                }).data();
+            if(chartView) {
+                if (globals.gMainTable) {
+                    var results = globals.gMainTable.rows({
+                        order: 'current',  // 'current', 'applied', 'index',  'original'
+                        page: 'all',      // 'all',     'current'
+                        search: 'applied',     // 'none',    'applied', 'removed'
+                    }).data();
 
-                for (i = 0; i < gCharts.length; i++) {
-                    updateSingleChart(results, gCharts[i]);
+                    if(clearExisting) {
+                        $('.aChart').remove();
+                    }
+
+                    // Add charts
+                    for (i = 0; i < gCharts.length; i++) {
+                        updateSingleChart(results, gCharts[i]);
+                    }
                 }
+                gChartUpdatePending = false;
+            } else {
+                gChartUpdatePending = true;
             }
 
         }
@@ -807,16 +822,25 @@ define([
                 content.remove();
             });
 
-            $('.widget-delete').off().click(function () {
+            $('.widget-close').off().click(function () {
                 var $this = $(this);
+                var i;
+                var containerId;
+                var id;
 
-                gChartId = "#" + $this.closest('.aChart').find(".svg-container").attr("id");
-                gEdConfig = globals.gCharts[gChartId];
 
-                gCurrentReport.row[gEdConfig.rowIndex].charts.splice(gEdConfig.index, 1);
-                //saveReport(gCurrentReport);
-                //setChartList();
-                refreshAllCharts();
+                containerId = $this.closest('.aChart').attr("id");
+                id = containerId.substr(2);   // jump over "c_"
+                $('#' + containerId).remove();
+
+                for(i = 0; i < gCharts.length; i++) {
+                    if(gCharts[i].id === id) {
+                        gCharts.splice(i, 1);
+                        saveToServer(gCharts);
+                        break;
+                    }
+                }
+
                 console.log("delete");
 
             });
@@ -853,28 +877,6 @@ define([
                 $('#editChart').modal("show");
             });
 
-            $('.chart-type').off().click(function () {
-                var $this = $(this),
-                    filtered = gTasks.cache.surveyConfig[globals.gViewId].filtered,
-                    chart_type = $this.data("ctype"),
-                    chartId = "#" + $this.closest('.aChart').find(".svg-container").attr("id"),
-                    ibox = chart + "_ibox",
-                    name;
-
-                var config = globals.gCharts[chartId];
-                var fullIndex = getFullIndex(filtered[config.index].name);
-
-                // Set the new value in the full index then save it
-                if (fullIndex >= 0) {
-                    gTasks.cache.surveyConfig[globals.gViewId].columns[fullIndex].chart_type = chart_type;
-                    saveConfig();
-                }
-                // Set the new value in the current list of charts
-                filtered[config.index].chart_type = chart_type;
-                config.svg.remove();
-
-                refreshAllCharts();
-            })
         }
 
         /*

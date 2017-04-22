@@ -121,6 +121,7 @@ require([
     var gDataLoaded = false,
         gConfigLoaded = false,
         gMapView = false;           // Set true when the map tab is shown
+    var gChartView = false;         // Set true when the chart view is shown
 
     window.gTasks = {
         cache: {
@@ -150,7 +151,6 @@ require([
             bs = isBusinessServer();
 
         window.chart = chart;
-        chart.init();
         window.moment = moment;
         localise.setlang();		// Localise HTML
 
@@ -375,10 +375,14 @@ require([
             var target = $(e.target).attr("href") // activated tab
             $('#showlayers').hide();
             gMapView = false;
+            gChartView = false;
             if (target === '#map-view') {
                 map.init();
                 $('#showlayers').show();
                 gMapView = true;
+            } else if(target === '#chart-view') {
+                chart.init();
+                gChartView = true;
             }
         });
 
@@ -633,7 +637,7 @@ require([
         url += '&managed=' + managedId;
         url += '&query=' + queryId;		// ignore for moment, ie note caching is done only on survey index
 
-        if (!globals.gViewId && !gTasks.cache.surveyConfig[globals.gViewId]) {
+        if (!globals.gViewId || !gTasks.cache.surveyConfig[globals.gViewId]) {
 
             addHourglass();
             $.ajax({
@@ -650,7 +654,7 @@ require([
                     chart.setCharts(data.charts);
                     if (gDataLoaded) {
                         map.refreshAllLayers(gMapView);
-                        chart.refreshAllCharts();
+                        chart.refreshAllCharts(gChartView, true);
                         initialise();
                         //chart.setChartList();	// Enable charts based on this survey config
                         //chart.refreshCharts();
@@ -690,6 +694,8 @@ require([
 
         gDataLoaded = false;
         gConfigLoaded = false;
+
+        globals.gViewId = 0;        // TODO remember views set for each survey and restore
 
         if (globals.gCurrentSurvey > 0) {
 
@@ -946,7 +952,7 @@ require([
                 if (gConfigLoaded) {
                     initialise();
                     map.refreshAllLayers(gMapView);
-                    chart.refreshAllCharts();
+                    chart.refreshAllCharts(gChartView, true);
                 }
                 columns = gTasks.cache.surveyConfig[globals.gViewId].columns;
                 globals.gMainTable.columns().flatten().each(function (colIdx) {
