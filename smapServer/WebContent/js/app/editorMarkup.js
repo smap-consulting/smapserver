@@ -910,7 +910,7 @@ define([
 			var id = $this.data("id");
 			var question = survey.forms[fId].questions[id];
 
-			$this.find('.question').html(getFeaturedMarkup(question, "question"));
+			$this.find('.panel-heading .row .question').html(getFeaturedMarkup(question, "question"));
 
 		});
 
