@@ -533,9 +533,10 @@ define([
 			$('.m_save_survey').find('.badge').html(numberChanges);
 			$('.m_languages,#m_required,#m_not_required').closest('li').addClass("disabled").prop("disabled", true);
 			$('.m_validate').removeClass("disabled").prop("disabled", false);
-			if(numberIssues("error") === 0) {
-				$('.m_save_survey').removeClass("disabled").prop("disabled", false);
-			}
+            $('.m_save_survey').removeClass("disabled").prop("disabled", false);
+			//if(numberIssues("error") === 0) {
+			//	$('.m_save_survey').removeClass("disabled").prop("disabled", false);
+			//}
 		}
 
 	}
@@ -857,7 +858,7 @@ define([
 						var existingChange = globals.changes[i];
 						if(existingChange.changeType === "option") {
 							for(j = 0; j < existingChange.items.length; j++) {
-								existingItem = existingChange.items[j];
+								var existingItem = existingChange.items[j];
 								if(existingItem.option.optionList === theOption.optionList && 
 										existingItem.option.itemIndex === theOption.itemIndex) {
 									// We moved an option thats in the change queue
@@ -1390,9 +1391,10 @@ define([
 		$('.error-count').html(numberErrors);
 		$('.warning-count').html(numberWarnings);
 		
-		if(numberErrors > 0) {
-			$('.m_save_survey').addClass("disabled").prop("disabled", true);
-		} else if(changes.length > 0) {
+		//if(numberErrors > 0) {
+		//	$('.m_save_survey').addClass("disabled").prop("disabled", true);
+		//} else
+		if(changes.length > 0) {
 			$('.m_save_survey').removeClass("disabled").prop("disabled", false);
 		}
 		
@@ -2030,7 +2032,7 @@ define([
 			itemId,
 			$textarea,
 			$item,
-			$parent;
+			$parents;
 		
 		if(error.itemType === "question") {
 			

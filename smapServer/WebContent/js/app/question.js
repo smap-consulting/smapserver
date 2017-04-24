@@ -94,7 +94,7 @@ define([
 		}
 
 		// Create changeset to be applied on save		
-		change = {
+		var change = {
 				changeType: "question",		// survey | form | language | question | option | (property | label) last two are types of property change
 				action: "add",
 				question: {
@@ -133,7 +133,7 @@ define([
 			}
 		}
 		
-		$context = changeset.add(change);
+		var $context = changeset.add(change);
 		return $context;				// Add events on to the altered html
 		
 	}
@@ -252,7 +252,7 @@ define([
 					}
 			};
 
-		$context = changeset.add(change);
+		var $context = changeset.add(change);
 		return $context;	
 		
 	}
@@ -274,6 +274,7 @@ define([
 			sourceFormIndex = $sourceElement.data("fid"),
 			sourceItemIndex = $sourceElement.data("id"),
 			sourceSeq,
+			sourceFormId,
 			
 			survey = globals.model.survey,
 			question,
@@ -321,7 +322,7 @@ define([
 
 		
 		
-		$context = changeset.add(change);
+		var $context = changeset.add(change);
 		return $context;				// Add events on to the altered html
 		
 	}
@@ -365,7 +366,7 @@ define([
 				
 		};
 		
-		$context = changeset.add(change);
+		var $context = changeset.add(change);
 		return $context;				// Add events on to the altered html
 		
 	}
@@ -436,7 +437,8 @@ define([
 		
 		var seq = 0,
 			survey = globals.model.survey,
-			value;
+			value,
+			i;
 
 		option.addOptionSequence(survey.optionLists[list_name]);
 		seq = getSequenceOption(oId, survey.optionLists[list_name]); 
@@ -444,7 +446,7 @@ define([
 		value = getDefaultOptionValue(list_name, seq);
 
 		// Create changeset to be applied on save
-		change = {
+		var change = {
 				changeType: "option",		// survey | form | language | question | option | (property | label) last two are types of property change
 				action: "add",				// add | update | delete
 				source: "editor",
@@ -468,7 +470,7 @@ define([
 		for(i = 0; i < survey.languages.length; i++) {
 			change.option.labels.push({text:""});
 		}
-		$context = changeset.add(change);
+		var $context = changeset.add(change);
 		return $context;				// Add events on to the altered HTML
 		
 	}
