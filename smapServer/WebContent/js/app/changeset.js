@@ -102,7 +102,7 @@ define([
 			change.question.$deletedElement.remove();
 		} else {
 			if(refresh) {
-				if(change.question || (change.property && change.property.type === "question")) {
+				if(change.question || change.changeType === "optionlist" || (change.property && change.property.type === "question")) {
 					$context = markup.refresh();
 				} else {
 					$context = option.createChoiceView();
@@ -241,10 +241,12 @@ define([
 		if(change.changeType === "label" || change.changeType === "property") {
 			if(change.property.type === "question") {
 				item = survey.forms[change.property.formIndex].questions[change.property.itemIndex];
-				forms_orig = survey.forms_orig[change.property.formIndex];
-				if(forms_orig) {
-					item_orig = forms_orig.questions[change.property.itemIndex];
-				}
+				if(survey.forms_orig) {
+                    forms_orig = survey.forms_orig[change.property.formIndex];
+                    if (forms_orig) {
+                        item_orig = forms_orig.questions[change.property.itemIndex];
+                    }
+                }
 				change.property.name = item.name;
 				change.property.qId = item.id;
 				if(change.changeType === "property") {
