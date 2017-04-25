@@ -129,6 +129,9 @@ public class Question {
 	Collection<Option> choices = null;
 	
 	public int oSeq = 0;				// A sequence counter for options	
+	
+	public boolean isTableList = false;
+	
 	/*
 	 * Constructor Establish Database Connection using JNDI
 	 */
@@ -294,7 +297,6 @@ public class Question {
 		if(embedExternalSearch) {
 			// Potentially add a filter using the appearance value to the nodeset
 			String filterQuestion = GeneralUtilityMethods.getFirstSearchQuestionFromAppearance(appearance);
-			System.out.println("Filter question: " + filterQuestion );
 			
 			if(filterQuestion != null) {
 				System.out.println("Add filter from: " + appearance + " to: " + nodeset);
@@ -308,10 +310,8 @@ public class Question {
 					v += "[ _smap_cascade = " + filterQuestion + " ]";
 				}
 			}
-			System.out.println("New nodeset: " + v);
 	
-		}
-		
+		}		
 		
 		if(convertToXPath) {
 			v = UtilityMethods.convertAllxlsNames(v, false, questionPaths, f_id);
