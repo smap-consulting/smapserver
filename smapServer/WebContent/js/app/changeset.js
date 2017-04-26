@@ -102,7 +102,7 @@ define([
 			change.question.$deletedElement.remove();
 		} else {
 			if(refresh) {
-				if(change.question || (change.property && change.property.type === "question")) {
+				if(change.question || change.changeType === "optionlist" || (change.property && change.property.type === "question")) {
 					$context = markup.refresh();
 				} else {
 					$context = option.createChoiceView();
@@ -241,10 +241,12 @@ define([
 		if(change.changeType === "label" || change.changeType === "property") {
 			if(change.property.type === "question") {
 				item = survey.forms[change.property.formIndex].questions[change.property.itemIndex];
-				forms_orig = survey.forms_orig[change.property.formIndex];
-				if(forms_orig) {
-					item_orig = forms_orig.questions[change.property.itemIndex];
-				}
+				if(survey.forms_orig) {
+                    forms_orig = survey.forms_orig[change.property.formIndex];
+                    if (forms_orig) {
+                        item_orig = forms_orig.questions[change.property.itemIndex];
+                    }
+                }
 				change.property.name = item.name;
 				change.property.qId = item.id;
 				if(change.changeType === "property") {
@@ -916,7 +918,13 @@ define([
 		length = survey.forms[targetForm].questions.push(newQuestion);			// Add the new question to the end of the array of questions
 		itemIndex = length - 1;
 		survey.forms[targetForm].qSeq.splice(newLocation, 0, length - 1);	// Update the question sequence array
-	
+
+		// 1.5 Update the sequences stored in the question objects
+		//for(i = 0; i < survey.forms[targetForm].qSeq.length; i++) {
+		//	var idx = survey.forms[targetForm].qSeq[i];
+        //    survey.forms[targetForm].questions[idx].seq = i;
+		//}
+
 		// 2. Remove the question from the old location	
 		// The old location may have changed if the new location was inserted before it
 		if(newLocation < oldLocation && sourceForm === targetForm) {
@@ -1098,8 +1106,6 @@ define([
 			// Apply any markup changes that result from a property change
 				
 
-			
-			
 			// 1. Update the question / option
 			if(change.property.type === "option") {
 				/*

@@ -823,7 +823,7 @@ public class SurveyManager {
 						q.calculation = GeneralUtilityMethods.convertAllXpathNames(rsGetRepeatValue.getString(1), true);
 					}
 					
-				}
+				} 
 				
 				// Translate type name to "note" if it is a read only string
 				q.type = GeneralUtilityMethods.translateTypeFromDB(q.type, q.readonly, q.visible);
@@ -1654,6 +1654,7 @@ public class SurveyManager {
 		PreparedStatement pstmtUpdateTranslations = null;
 		PreparedStatement pstmtUpdateQuestion = null;
 		PreparedStatement pstmtUpdateNodeset = null;
+		PreparedStatement pstmtUpdateQuestionNodeset = null;
 		PreparedStatement pstmtAddNodeset = null;
 		
 		try {
@@ -1729,6 +1730,15 @@ public class SurveyManager {
 							ci.property.newVal = "0";
 						}
 						
+						// Get the original list id
+						pstmtGetListId.setString(2, ci.property.oldVal);
+						rs = pstmtGetListId.executeQuery();
+						if(rs.next()) {
+							ci.property.oldVal = rs.getString(1);
+						} else {
+							ci.property.oldVal = "0";
+						}
+						
 					} else if(ci.property.prop.equals("choice_filter")) {
 						// Convert the passed in filter to a nodeset
 						String listname = GeneralUtilityMethods.getListNameForQuestion(sd, ci.property.qId);
@@ -1791,7 +1801,12 @@ public class SurveyManager {
 						String sqlUpdateNodeset = "update question set nodeset = replace(nodeset, '(''' || ? || ''')', '(''' || ? || ''')') "
 								+ "where l_id = ? "
 								+ "and f_id in (select f_id from form where s_id = ?)";
-						pstmtUpdateNodeset = sd.prepareStatement(sqlUpdateNodeset);		
+						pstmtUpdateNodeset = sd.prepareStatement(sqlUpdateNodeset);	
+						
+						// Update nodeset for a single question
+						String sqlUpdateQuestionNodeset = "update question set nodeset = replace(nodeset, '(''' || ? || ''')', '(''' || ? || ''')') "
+								+ "where q_id = ? ";
+						pstmtUpdateQuestionNodeset = sd.prepareStatement(sqlUpdateQuestionNodeset);		
 						
 						// Add nodeset values if question type is being converted to a select question
 						// Note we can use the question name as the itemset name and assume no filters as this change of type has to happen first
@@ -1823,11 +1838,39 @@ public class SurveyManager {
 						 */
 						
 						if(ci.property.prop.equals("list_name")) {
-							pstmtProperty3.setInt(1, Integer.parseInt(ci.property.newVal));
-							pstmtProperty3.setInt(2, ci.property.qId);
+
+							// Get the existing list name
+							String originalListname = null;
+							pstmtGetListname.setInt(1, Integer.parseInt(ci.property.oldVal));
+							pstmtGetListname.setInt(2, sId);
+							ResultSet rs = pstmtGetListname.executeQuery();
+							if(rs.next()) {
+								originalListname = rs.getString(1);
+							}
 							
+							// Get the new list name
+							String newListname = null;
+							pstmtGetListname.setInt(1, Integer.parseInt(ci.property.newVal));
+							pstmtGetListname.setInt(2, sId);
+							rs = pstmtGetListname.executeQuery();
+							if(rs.next()) {
+								newListname = rs.getString(1);
+							}
+							
+							// Update the list id property of the question
+							pstmtProperty3.setInt(1, Integer.parseInt(ci.property.newVal));
+							pstmtProperty3.setInt(2, ci.property.qId);				
 							log.info("Update list name property: " + pstmtProperty3.toString());
 							count = pstmtProperty3.executeUpdate();
+							
+							 // Update the nodeset for the question
+							if(originalListname != null && originalListname.trim().length() > 0) {
+								pstmtUpdateQuestionNodeset.setString(1, originalListname);
+								pstmtUpdateQuestionNodeset.setString(2, newListname);
+								pstmtUpdateQuestionNodeset.setInt(3, ci.property.qId);
+								log.info("Update nodeset for question: " + pstmtUpdateQuestionNodeset.toString());
+								pstmtUpdateQuestionNodeset.executeUpdate();
+							}
 							
 						} else if (ci.property.type.equals("optionlist")) {
 							if( ci.property.l_id > 0) {
@@ -2094,6 +2137,7 @@ public class SurveyManager {
 			try {if (pstmtUpdateEndGroup != null) {pstmtUpdateEndGroup.close();}} catch (SQLException e) {}
 			try {if (pstmtGetListname != null) {pstmtGetListname.close();}} catch (SQLException e) {}
 			try {if (pstmtUpdateNodeset != null) {pstmtUpdateNodeset.close();}} catch (SQLException e) {}
+			try {if (pstmtUpdateQuestionNodeset != null) {pstmtUpdateQuestionNodeset.close();}} catch (SQLException e) {}
 			try {if (pstmtAddNodeset != null) {pstmtAddNodeset.close();}} catch (SQLException e) {}
 		
 		}

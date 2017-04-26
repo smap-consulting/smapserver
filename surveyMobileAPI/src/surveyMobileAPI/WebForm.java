@@ -258,8 +258,6 @@ public class WebForm extends Application{
 			type = "json";
 			
 		} 
-		log.info("Requesting " + type);	
-		log.info("Tempuser: " + tempUser);
 		return getWebform(request, type, formIdent, datakey, datakeyvalue, assignmentId, callback, 
 				tempUser, 
 				false,
@@ -378,7 +376,7 @@ public class WebForm extends Application{
 			
 			//template.printModel();	// debug
 			GetXForm xForm = new GetXForm();
-			String formXML = xForm.get(template, true);		
+			String formXML = xForm.get(template, true);	
 
 			// If required get the instance data 
 			String instanceXML = null;

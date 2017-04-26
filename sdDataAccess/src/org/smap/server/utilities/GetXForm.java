@@ -70,6 +70,7 @@ public class GetXForm {
 	private String gSurveyClass = null;
 	private ArrayList<String> gFilenames;
 	private boolean embedExternalSearch = false;
+	private boolean gInTableList = false;
 	
 	private static Logger log =
 			 Logger.getLogger(GetXForm.class.getName());
@@ -486,7 +487,22 @@ public class GetXForm {
     		
         	Element questionElement = null;
         	String qType = q.getType();
-        	  
+        	
+        	// Add a marker if this is a table list group
+        	if(qType.equals("begin group")) {
+        		if(q.isTableList) {
+        			gInTableList = true;
+        		} else {
+					String appearance = q.getAppearance(false, null);
+					if(appearance != null && appearance.contains("table-list")) {
+						q.isTableList = true;
+						q.setAppearance(appearance.replace("table-list", "field-list"));
+					}
+        		}
+        	} else if(qType.equals("end group")) {	
+				gInTableList = false;
+        	}
+        	
     		if(location == INSTANCE) {    			
     			if(qType.equals("begin repeat") || qType.equals("geolinestring") || qType.equals("geopolygon")) {
     				
@@ -519,10 +535,11 @@ public class GetXForm {
 							currentParent.appendChild(questionElement);	
 						}
 					}
+					
     				
     			} else if(qType.equals("end group")) {	
     				
-    				currentParent = elementStack.pop();
+    				currentParent = elementStack.pop();	
 
     			} else {
     					
@@ -615,6 +632,12 @@ public class GetXForm {
             		
        				elementStack.push(currentParent);
     				currentParent = questionElement;
+    				
+  					// Add table list labels
+					if(q.isTableList) {
+						Element labelsElement = populateTableListLabels(sd, outputDoc, f, q, f.getPath(null));
+						currentParent.appendChild(labelsElement);
+					}
     			}	
     		}
     	}
@@ -804,6 +827,19 @@ public class GetXForm {
 		// Add the appearance
 		if(questionElement != null) {
 			String appearance = q.getAppearance(true, template.getQuestionPaths());
+			
+			if(gInTableList && type.startsWith("select")) {
+				if(appearance == null) {
+					appearance = "";
+				}
+				if(!appearance.contains("field-list")) {
+					appearance = appearance.trim();
+					if(appearance.length() > 0) {
+						appearance += " ";
+					}
+					appearance += "list-nolabel";
+				}
+			}
 			if(appearance != null) {
 				questionElement.setAttribute("appearance", appearance);
 			}
@@ -888,6 +924,43 @@ public class GetXForm {
 			populateOptions(sd, outputXML, questionElement, q);
 		}
 		return questionElement;
+    }
+    
+    /*
+     * Create a labels element for table list groups
+     */
+    public Element populateTableListLabels(Connection sd, Document outputXML, Form f, Question q, String parentXPath) throws Exception {
+
+		Element labelsElement = outputXML.createElement("select1");
+		
+		// Add the reference attribute
+		String path = getQuestionReference(template.getQuestionPaths(), f.getId(), q.getName());
+		labelsElement.setAttribute("ref", path + "_table_list_labels");
+		
+		// Add the appearance
+		labelsElement.setAttribute("appearance", "label");
+		
+    	List <Question> questions = f.getQuestions(sd, f.getPath(null));
+    	boolean inGroup = false;
+    	for(Question qx : questions) {
+    		if(qx.getType().equals("begin group") && qx.getName().equals(q.getName())) {
+    			inGroup = true;
+    			continue;
+    		}
+    		if(inGroup && qx.getType().equals("end group")) {
+    			inGroup = false;
+    		}
+    		
+    		if(inGroup) {    			
+    			if(qx.getType().startsWith("select")) {
+    				populateOptions(sd, outputXML, labelsElement, qx);
+    				break;		// Only need labels from one of the select questions
+    			}
+    			
+    		}
+    	}
+		
+		return labelsElement;
     }
     
     /*
