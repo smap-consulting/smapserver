@@ -26,13 +26,14 @@ define([
         'modernizr',
         'localise',
         'globals',
-        'app/charts/bar_p',
+        'app/charts/bar_h',
+        'app/charts/bar_v',
         'app/charts/pie',
         'app/charts/line',
         'app/charts/wordcloud',
         'app/charts/groupedBar',
         'svgsave'],
-    function ($, modernizr, lang, globals, bar_p, pie, line, wordcloud, groupedBar, svgsave) {
+    function ($, modernizr, lang, globals, bar_h, bar_v,  pie, line, wordcloud, groupedBar, svgsave) {
 
 
         /*
@@ -40,7 +41,8 @@ define([
          * The system knows how to show these
          */
         var avCharts = {
-            bar: bar_p,
+            bar_h: bar_h,
+            bar_v: bar_v,
             pie: pie,
             // line: line,
             wordcloud: wordcloud,
@@ -52,7 +54,7 @@ define([
             groups: [],
             time_interval: false,
             title: "",
-            chart_type: "bar_p",
+            chart_type: "bar_h",
             group: "none",
             fn: "count",
             tSeries: false,
@@ -64,7 +66,6 @@ define([
         var gEdConfig,			// Temporary objects used when editing a chart
             gEdChart,
             gIsNewChart,
-            gEdFilteredChart,
             gChartId,
             gCharts = [],
             gChartsConfig = {};
@@ -538,7 +539,7 @@ define([
                 if (avCharts[chart.chart_type]) {
 
                     // Remove the svg if we cannot update gracefully
-                    if (init || chart.chart_type === "pie" || chart.chart_type === "wordcloud") {	// Pie charts tricky to update, wordcloud not implemented update yet
+                    if (true || init || chart.chart_type === "pie" || chart.chart_type === "wordcloud") {	// Pie charts tricky to update, wordcloud not implemented update yet
 
                         if (config.plot) {
                             config.plot.remove();
@@ -553,9 +554,9 @@ define([
 
                         avCharts[chart.chart_type].add(chart, config, data, widthContainer, heightContainer);
                     }
-                    if (chart.chart_type !== "pie" && chart.chart_type !== "wordcloud") {
-                        avCharts[chart.chart_type].redraw(chart, config, data, widthContainer, heightContainer);
-                    }
+                    //if (chart.chart_type !== "pie" && chart.chart_type !== "wordcloud") {
+                    //    avCharts[chart.chart_type].redraw(chart, config, data, widthContainer, heightContainer);
+                    //}
                 } else {
                     console.log("unknown chart type: " + chart.chart_type);
                 }
@@ -644,7 +645,7 @@ define([
                 });
 
 
-            globals.gCharts = {};		// Force reinitialise of charts
+            gChartsConfig = {};		// Force reinitialise of charts
 
             /*
              * Create the charts for each row
@@ -828,7 +829,6 @@ define([
                 var containerId;
                 var id;
 
-
                 containerId = $this.closest('.aChart').attr("id");
                 id = containerId.substr(2);   // jump over "c_"
                 $('#' + containerId).remove();
@@ -850,19 +850,22 @@ define([
                 var $this = $(this),
                     chart = d3.select($this.closest('.aChart')),
                     filtered = gTasks.cache.surveyConfig[globals.gViewId].filtered,
-                    chart_type = $this.data("ctype");
+                    chart_type = $this.data("ctype"),
+                    i,
+                    containerId,
+                    id;
 
-                gChartId = "#" + $this.closest('.aChart').find(".svg-container").attr("id");
-                gEdConfig = globals.gCharts[gChartId];
+                containerId = $this.closest('.aChart').attr("id");
+                id = containerId.substr(2);   // jump over "c_"
+
+                gEdConfig = gChartsConfig[id];
                 gIsNewChart = false;
 
-                if (gEdConfig.fromDT) {
-                    var fullIndex = getFullIndex(filtered[gEdConfig.index].name);
-                    gEdChart = gTasks.cache.surveyConfig[globals.gViewId].columns[fullIndex];
-                    gEdFilteredChart = filtered[gEdConfig.index];
-                } else {
-                    // Custom report
-                    gEdChart = gCurrentReport.row[gEdConfig.rowIndex].charts[gEdConfig.index];
+                for(i = 0; i < gCharts.length; i++) {
+                    if (gCharts[i].id === id) {
+                        gEdChart = gCharts[i];
+                        break;
+                    }
                 }
 
                 /*
@@ -888,7 +891,7 @@ define([
 
             addChartTypeSelect(gEdChart);
             $('#ew_chart_type').val(gEdChart.chart_type);
-            $("#ew_title").val(gEdChart.humanName);
+            $("#ew_title").val(gEdChart.title);
             $('#ew_width').val(gEdChart.width);
             $('#ew_fn').val(gEdChart.fn);
             $('#ew_question').val(gEdChart.qIdx);
@@ -977,6 +980,7 @@ define([
                 if (typeof gEdChart.qIdx !== "undefined" && questions) {		// Question specific
                     gEdChart.type = questions[gEdChart.qIdx].type;
                     gEdChart.name = questions[gEdChart.qIdx].name;
+                    gEdChart.dataLabel = questions[gEdChart.qIdx].humanName;
                 }
                 gEdChart.fn = $('#ew_fn').val();
                 gEdChart.title = title;
@@ -1008,24 +1012,6 @@ define([
                 $('#chartInfo').show().removeClass('alert-success').addClass('alert-danger').html(errMsg);
             }
 
-            // if(gEdConfig.fromDT) {
-            //	gEdFilteredChart.width = gEdChart.width;
-            //	saveConfig();
-            //} else {
-            //if (gIsNewChart) {
-            //    gCurrentReport.row[0].charts.push(gEdChart);
-            //}
-            //saveReport(gCurrentReport);
-            //}
-
-            //gEdConfig.svg.remove();
-
-            //if(reset) {
-            //setChartList();
-            //refreshCharts();
-            //} else {
-            //	refreshCharts();
-            //}
         }
 
         /*

@@ -481,7 +481,7 @@ define({
     "Upload Time": "Upload",
     "_start": "Start Time",
     "_end": "End Time",
-    "percent": "Percent",
+    "percent": "Percentage",
     "count": "Count",
     "none": "None",
     "average": "Average",
@@ -663,7 +663,8 @@ define({
     // Dashboard
     "d_sound": "Play sound on new alert",
     "d_rep_def_freq": "Frequency Report",
-    "bar": "Bar Chart",
+    "bar_h": "Horizontal Bar Chart",
+    "bar_v": "Vertical Bar Chart",
     "pie": "Pie Chart",
     "line": "Line Chart",
     "wordcloud": "Word Cloud",

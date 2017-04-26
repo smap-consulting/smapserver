@@ -46,16 +46,21 @@ define([
                 height,
                 format,
                 margin;
+            var $elem = $(config.domElement);
 
             if (chart.fn === "percent") {
                 format = "%";
             }
 
-            var svg = dimple.newSvg(config.domElement, 903, 300);
+            width = $elem.width();
+            height = $elem.height();
+            var svg = dimple.newSvg(config.domElement, width, height);
             var myChart = new dimple.chart(svg, data);
-            myChart.setBounds(75, 30, 480, 270)
-            myChart.addMeasureAxis("x", "value");
+            myChart.setMargins(80, 50, 20, 80);
+            var x = myChart.addMeasureAxis("x", "value");
             var y = myChart.addCategoryAxis("y", "key");
+            x.title = localise.set[chart.fn];
+            y.title = chart.dataLabel;
             myChart.addSeries(null, dimple.plot.bar);
             myChart.draw();
         }
