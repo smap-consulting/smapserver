@@ -918,7 +918,13 @@ define([
 		length = survey.forms[targetForm].questions.push(newQuestion);			// Add the new question to the end of the array of questions
 		itemIndex = length - 1;
 		survey.forms[targetForm].qSeq.splice(newLocation, 0, length - 1);	// Update the question sequence array
-	
+
+		// 1.5 Update the sequences stored in the question objects
+		//for(i = 0; i < survey.forms[targetForm].qSeq.length; i++) {
+		//	var idx = survey.forms[targetForm].qSeq[i];
+        //    survey.forms[targetForm].questions[idx].seq = i;
+		//}
+
 		// 2. Remove the question from the old location	
 		// The old location may have changed if the new location was inserted before it
 		if(newLocation < oldLocation && sourceForm === targetForm) {
@@ -1100,8 +1106,6 @@ define([
 			// Apply any markup changes that result from a property change
 				
 
-			
-			
 			// 1. Update the question / option
 			if(change.property.type === "option") {
 				/*

@@ -799,7 +799,7 @@ public class SurveyManager {
 						q.calculation = GeneralUtilityMethods.convertAllXpathNames(rsGetRepeatValue.getString(1), true);
 					}
 					
-				}
+				} 
 				
 				// Translate type name to "note" if it is a read only string
 				q.type = GeneralUtilityMethods.translateTypeFromDB(q.type, q.readonly, q.visible);

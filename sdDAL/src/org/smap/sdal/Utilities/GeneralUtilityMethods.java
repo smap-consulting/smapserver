@@ -2644,10 +2644,10 @@ public class GeneralUtilityMethods {
 		
 		String out = in;
 		
-		if(in.equals("string") && readonly) {
-			out = "note";
-		} else if(in.equals("string") && !visible) {
+		if(in.equals("string") && !visible) {
 			out = "calculate";
+		} else if(in.equals("string") && readonly) {
+			out = "note";
 		}
 		
 		return out;

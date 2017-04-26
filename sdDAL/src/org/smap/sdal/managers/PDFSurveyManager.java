@@ -219,8 +219,7 @@ public class PDFSurveyManager {
 			if(userName != null) {
 				user = um.getByIdent(connectionSD, userName);
 			}
-			
-			
+				
 			// If a filename was not specified then get one from the survey data
 			// This filename is returned to the calling program so that it can be used as a permanent name for the temporary file created here
 			// If the PDF is to be returned in an http response then the header is set now before writing to the output stream
@@ -267,7 +266,7 @@ public class PDFSurveyManager {
 				PdfStamper stamper = new PdfStamper(reader, outputStream);
 				int languageIdx = GeneralUtilityMethods.getLanguageIdx(survey, language);
 				for(int i = 0; i < survey.instance.results.size(); i++) {
-					fillTemplate(stamper.getAcroFields(), survey.instance.results.get(i), basePath, null, i, survey, languageIdx);
+					fillTemplate(gv, stamper.getAcroFields(), survey.instance.results.get(i), basePath, null, i, survey, languageIdx);
 				}
 				if(user != null) {
 					fillTemplateUserDetails(stamper.getAcroFields(), user, basePath);
@@ -418,6 +417,7 @@ public class PDFSurveyManager {
 	 * Fill the template with data from the survey
 	 */
 	private void fillTemplate(
+			GlobalVariables gv,
 			AcroFields pdfForm, 
 			ArrayList<Result> record, 
 			String basePath,
@@ -439,7 +439,7 @@ public class PDFSurveyManager {
 				 */
 				if(r.type.equals("form")) {
 					for(int k = 0; k < r.subForm.size(); k++) {
-						fillTemplate(pdfForm, r.subForm.get(k), basePath, fieldName, k, survey, languageIdx);
+						fillTemplate(gv, pdfForm, r.subForm.get(k), basePath, fieldName, k, survey, languageIdx);
 					} 
 				} else if(r.type.equals("select1")) {
 					for(Result c : r.choices) {
@@ -486,6 +486,10 @@ public class PDFSurveyManager {
 					} catch (Exception e) {
 						log.info("Error removing field: " + fieldName + ": " + e.getMessage());
 					}
+				} else if(r.type.equals("geopoint") || r.type.equals("geoshape") || r.type.equals("geotrace") || r.type.startsWith("geopolygon_") || r.type.startsWith("geolinestring_")) {
+					
+					Image img = PdfUtilities.getMapImage(null, r.value, null, gv.mapbox_key);
+					PdfUtilities.addImageTemplate(pdfForm, fieldName, basePath, value);
 				} else if(r.type.equals("image")) {
 					PdfUtilities.addImageTemplate(pdfForm, fieldName, basePath, value);
 				} else {				
@@ -714,7 +718,6 @@ public class PDFSurveyManager {
 						PdfPTable newTable = processRow(parser, row, basePath, generateBlank, depth, repIndexes, gv);
 						
 						newTable.setWidthPercentage(100);
-
 				        
 						// Add a gap if this is the first question of the record
 						// or the previous row was at a different depth
@@ -1348,44 +1351,11 @@ public class PDFSurveyManager {
 		
 		} else if(di.type.equals("geopoint") || di.type.equals("geoshape") || di.type.equals("geotrace") || di.type.startsWith("geopolygon_") || di.type.startsWith("geolinestring_")) {
 			
-			StringBuffer url = new StringBuffer();
-			boolean getMap = false;
-			url.append("https://api.mapbox.com/v4/");
-			if(di.map != null) {
-				url.append(di.map);
-			} else {
-				url.append("mapbox.streets");	// default map
-			}
-			url.append("/");
+			Image img = PdfUtilities.getMapImage(di.map, di.value, di.location, gv.mapbox_key);
 			
-			if(di.value != null && di.value.trim().length() > 0) {
-				// GeoJson data
-				url.append("geojson(");
-
-				String jsonValue = di.value;
-				url.append(URLEncoder.encode(jsonValue, "UTF-8"));
-				url.append(")/auto/");
-				getMap = true;
-			} else {
-				// Attempt to get default map boundary from appearance
-				if(di.location != null) {
-					url.append(di.location);
-					url.append("/");
-					getMap = true;
-				}					
-			}
-			
-			if(getMap && gv.mapbox_key == null) {
-				log.info("Mapbox key not specified.  PDF Map not created");
-			}
-			
-			if(getMap) {
-				url.append("500x300.png?access_token=");
-				url.append(gv.mapbox_key);
-				Image img = Image.getInstance(url.toString());
+			if(img != null) {
 				valueCell.addElement(img);
 			} else {
-				// No map
 				valueCell.addElement(getPara(" ", di, gv, deps));
 			}
 		} else {
