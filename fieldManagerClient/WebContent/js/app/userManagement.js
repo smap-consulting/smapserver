@@ -932,6 +932,8 @@ function openOrganisationDialog(existing, organisationIndex) {
 		gOrgId = org.id;
 		setBannerLogo(org.id);
 
+	} else {
+        addLanguageOptions($('#o_language'), undefined);
 	}
 	$('#create_organisation_popup').modal("show");
 }
