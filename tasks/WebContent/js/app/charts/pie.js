@@ -21,14 +21,6 @@
 
 "use strict";
 
-var arcs = {},
-    arc,
-    enterAntiClockwise = {
-        startAngle: Math.PI * 2,
-        endAngle: Math.PI * 2
-    },
-    color;
-
 define([
         'jquery',
         'modernizr',
@@ -44,124 +36,23 @@ define([
         /*
          * Add
          */
-        function add(chartId, chart, config, data, widthContainer, heightContainer) {
+        function add(chart, config) {
 
-            console.log("Show pie chart");
-
-            var radius,
-                margin,
-                width,
-                height;
-
-
-            margin = {top: 10, right: 10, bottom: 10, left: 10};
-            width = +widthContainer - margin.left - margin.right;
-            height = +heightContainer - margin.top - margin.bottom;
-
-            radius = Math.min(width, height) / 2;
-            arc = d3.arc()
-                .outerRadius(radius)
-                .innerRadius(0);
-            arcs[chartId] = arc;
-
-            color = d3.scaleOrdinal()
-                .range(d3.schemeCategory20);
-
-            var labelArc = d3.arc()
-                .outerRadius(radius - 40)
-                .innerRadius(radius - 40);
-
-            config.pie = d3.pie()
-                .sort(null)
-                .value(function (d) {
-                    return d.value;
-                });
-
-            config.g = config.svg.append("g")
-                .attr("id", "pieChart")
-                .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
-
-            config.gLabel = config.svg.append("g")
-                .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
-
-            config.path = config.g.selectAll("path")
-                .data(config.pie(data))
-                .enter()
-                .append("path")
-                .attr("fill", function (d, i) {
-                    return color(d.data.key);
-                })
-                .attr("d", arc)
-                .each(function (d) {
-                    this._current = d;
-                }); // store the initial angles
-
-            config.gLabel.selectAll("text")
-                .data(config.pie(data))
-                .enter()
-                .append("text")
-                .attr("transform", function (d) {
-                    return "translate(" + labelArc.centroid(d) + ")";
-                })
-                .attr("dy", ".35em")
-                .text(function (d) {
-                    return d.data.key;
-                });
+            config.graph.setMargins(80, 50, 20, 80);
+            var p = config.graph.addMeasureAxis("p", "value");
+            config.graph.addSeries("key", dimple.plot.pie);
+            p.title = chart.dataLabel;
+            config.graph.addLegend(500, 20, 90, 300, "left");
 
         }
 
         /*
          * Redraw
          */
-        function redraw(chartId, chart, config, data, widthContainer, heightContainer) {
+        function redraw(config, data) {
 
-            console.log("Redraw pie chart");
+            config.graph.data = data;
 
-            config.path = config.path.data(config.pie(data));
-            arc = arcs[chartId];
-
-            config.path.enter().append("path")
-                .merge(config.path)
-                .attr("fill", function (d, i) {
-                    return color(d.data.key);
-                })
-                .attr("d", arc(enterAntiClockwise))
-                .each(function (d) {
-                    this._current = {
-                        data: d.key,
-                        value: d.value,
-                        startAngle: enterAntiClockwise.startAngle,
-                        endAngle: enterAntiClockwise.endAngle
-                    };
-                }); // store the initial values
-
-            config.path.exit()
-                .attrTween('d', arcTweenOut)
-                .remove(); // now remove the exiting arcs
-
-            config.path.transition().duration(750).attrTween("d", arcTween);
-
-        }
-
-        // Store the displayed angles in _current.
-        // Then, interpolate from _current to the new angles.
-        // During the transition, _current is updated in-place by d3.interpolate.
-        function arcTween(a) {
-            var i = d3.interpolate(this._current, a);
-            this._current = i(0);
-            return function (t) {
-                return arc(i(t));
-            };
-        }
-
-        // Interpolate exiting arcs start and end angles to Math.PI * 2
-        // so that they 'exit' at the end of the data
-        function arcTweenOut(a) {
-            var i = d3.interpolate(this._current, {startAngle: Math.PI * 2, endAngle: Math.PI * 2, value: 0});
-            this._current = i(0);
-            return function (t) {
-                return arc(i(t));
-            };
         }
 
     });

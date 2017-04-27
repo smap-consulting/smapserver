@@ -44,10 +44,9 @@ define([
             bar_h: bar_h,
             bar_v: bar_v,
             pie: pie,
-            // line: line,
+            line: line,
             wordcloud: wordcloud,
-            groupedBar: groupedBar,
-            map: map
+            groupedBar: groupedBar
         };
 
         var gBlankChart = {
@@ -147,7 +146,7 @@ define([
 
                     // Add charts
                     for (i = 0; i < gCharts.length; i++) {
-                        updateSingleChart(results, gCharts[i]);
+                        updateSingleChart(results, gCharts[i], false);
                     }
                 }
                 gChartUpdatePending = false;
@@ -160,7 +159,7 @@ define([
         /*
          * Refresh a single chart
          */
-        function refreshChart(chart) {
+        function refreshChart(chart, clean) {
 
             var results = globals.gMainTable.rows({
                 order: 'current',  // 'current', 'applied', 'index',  'original'
@@ -168,7 +167,7 @@ define([
                 search: 'applied',     // 'none',    'applied', 'removed'
             }).data();
 
-            updateSingleChart(results, chart);
+            updateSingleChart(results, chart, clean);
 
         }
 
@@ -177,7 +176,7 @@ define([
          * Note this is a separate function to refreshChart() as refreshChart() and refreshAllCharts()
          *  both need to do similar initialisation
          */
-        function updateSingleChart(results, chart) {
+        function updateSingleChart(results, chart, clean) {
 
             if (chart.groups) {
                 chart.groupLabels = chart.groups.map(function (e) {
@@ -194,9 +193,13 @@ define([
                 $chart = $('#c_' + chart.id);
                 existingChart = $chart.length;
             }
-            if (existingChart) {
-                // TODO clear
-            } else {
+
+            if(existingChart && clean) {
+                $chart.remove();
+                existingChart = false;
+            }
+
+            if (!existingChart) {
                 chart.id = appendNewChart(chart);
                 $chart = $('#c_' + chart.id);
             }
@@ -519,12 +522,11 @@ define([
         /*
          * Fill a chart container with the chart details
          */
-        function fillChart($chart, data, chart, fromDT) {
+        function fillChart($chart, data, chart) {
 
             // Get dynamic widths of container
             var widthContainer = $('.ibox-content', $chart).width();
             var heightContainer = $('.ibox-content', $chart).height();
-            var view = "0 0 " + widthContainer + " " + heightContainer;
 
             if (widthContainer > 0 && heightContainer > 0) {
                 var config = gChartsConfig[chart.id],
@@ -538,21 +540,23 @@ define([
 
                 if (avCharts[chart.chart_type]) {
 
-                    // Remove the svg if we cannot update gracefully
+
                     if (true || init || chart.chart_type === "pie" || chart.chart_type === "wordcloud") {	// Pie charts tricky to update, wordcloud not implemented update yet
 
-                        if (config.plot) {
-                            config.plot.remove();
-                        }
                         config.domElement = '#svg_' + chart.id;
-                        /*
-                        config.svg = d3.select('#svg_' + chart.id).append("svg")
-                            .attr("preserveAspectRatio", "xMinYMin meet")
-                            .attr("viewBox", view)
-                            .classed("svg-content", true);
-                        */
 
-                        avCharts[chart.chart_type].add(chart, config, data, widthContainer, heightContainer);
+                        // Remove the existing plot if we cannot update gracefully
+                        if ($(config.domElement).length > 0) {
+                            $(config.domElement).empty();
+                        }
+
+                        var $elem = $(config.domElement);
+                        var width = $elem.width();
+                        var height = $elem.height();
+                        var svg = dimple.newSvg(config.domElement, width, height);
+                        config.graph = new dimple.chart(svg, data);
+                        avCharts[chart.chart_type].add(chart, config);
+                        config.graph.draw();
                     }
                     //if (chart.chart_type !== "pie" && chart.chart_type !== "wordcloud") {
                     //    avCharts[chart.chart_type].redraw(chart, config, data, widthContainer, heightContainer);
@@ -962,7 +966,8 @@ define([
                 validated = true,
                 reset = false,
                 questions,
-                errMsg;
+                errMsg,
+                i;
 
             var questions = gTasks.cache.surveyConfig[globals.gViewId].questions;
 
@@ -972,9 +977,6 @@ define([
                 errMsg = localise.set["mf_tr"];
             }
 
-            //if(width != gEdChart.width) {
-            //	reset = true;
-            //}
             if (validated) {
                 gEdChart.qIdx = $('#ew_question').val();
                 if (typeof gEdChart.qIdx !== "undefined" && questions) {		// Question specific
@@ -1003,11 +1005,22 @@ define([
                 }
 
                 // Todo if chart is being edited, ie index id set then replace
-                gCharts.push(gEdChart);
-                $('#editChart').modal("hide");	// All good close the modal
-
-                refreshChart(gEdChart);
+                var replaced = false;
+                for(i = 0; i < gCharts.length; i++) {
+                    if(gCharts[i].id === gEdChart.id) {
+                        gCharts.splice(i, 1, gEdChart);
+                        replaced = true;
+                        break;
+                    }
+                }
+                if(!replaced) {
+                    gCharts.push(gEdChart);
+                }
                 saveToServer(gCharts);
+
+                $('#editChart').modal("hide");	// All good close the modal
+                refreshChart(gEdChart, true);
+
             } else {
                 $('#chartInfo').show().removeClass('alert-success').addClass('alert-danger').html(errMsg);
             }

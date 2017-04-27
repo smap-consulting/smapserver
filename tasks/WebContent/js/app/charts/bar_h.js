@@ -39,49 +39,23 @@ define([
         /*
          * Add
          */
-        function add(chart, config, data, widthContainer, heightContainer) {
+        function add(chart, config) {
 
-            var barWidth,
-                width,
-                height,
-                format,
-                margin;
-            var $elem = $(config.domElement);
-
-            if (chart.fn === "percent") {
-                format = "%";
-            }
-
-            width = $elem.width();
-            height = $elem.height();
-            var svg = dimple.newSvg(config.domElement, width, height);
-            var myChart = new dimple.chart(svg, data);
-            myChart.setMargins(80, 50, 20, 80);
-            var x = myChart.addMeasureAxis("x", "value");
-            var y = myChart.addCategoryAxis("y", "key");
+            config.graph.setMargins(80, 50, 20, 80);
+            var x = config.graph.addMeasureAxis("x", "value");
+            var y = config.graph.addCategoryAxis("y", "key");
             x.title = localise.set[chart.fn];
             y.title = chart.dataLabel;
-            myChart.addSeries(null, dimple.plot.bar);
-            myChart.draw();
+            config.graph.addSeries(null, dimple.plot.bar);
+
         }
 
         /*
          * Update a bar chart
          */
-        function redraw(chart, config, data, widthContainer, heightContainer) {
+        function redraw(config, data) {
 
-            var barWidth,
-                width,
-                height,
-                margin,
-                labelId,
-                format = "";
-
-            if (chart.fn === "percent") {
-                format = "%";
-            }
-
-
+            config.graph.data = data;
 
         }
 
