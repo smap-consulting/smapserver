@@ -387,6 +387,7 @@ public class ExportSurveyMisc extends Application {
 								language,
 								targetId);
 						
+						w.print('\ufeff');		// Write the UTF-8 BOM
 						w.print(sps);
 						w.close();	
 

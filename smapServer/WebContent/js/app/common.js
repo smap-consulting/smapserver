@@ -376,7 +376,11 @@ function addLanguageOptions($elem, current) {
 		h[++idx] = '</option>';
 	}
 	$elem.html(h.join(''));
-	$elem.val(current);
+	if(current) {
+        $elem.val(current);
+    } else {
+        $elem.val("en");
+	}
 }
 
 /*
