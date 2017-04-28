@@ -47,6 +47,7 @@ import com.itextpdf.text.ListItem;
 import com.itextpdf.text.PageSize;
 import com.itextpdf.text.Paragraph;
 import com.itextpdf.text.pdf.AcroFields;
+import com.itextpdf.text.pdf.BarcodeQRCode;
 import com.itextpdf.text.pdf.BaseFont;
 import com.itextpdf.text.pdf.PdfPCell;
 import com.itextpdf.text.pdf.PdfPTable;
@@ -433,6 +434,11 @@ public class PDFSurveyManager {
 				boolean hideLabel = false;
 				String fieldName = getFieldName(formName, repeatIndex, r.name);
 				
+				Form form = survey.forms.get(r.fIdx);
+				org.smap.sdal.model.Question question = form.questions.get(r.qIdx);
+				DisplayItem di = new DisplayItem();
+				setQuestionFormats(question.appearance, di);
+				
 				/*
 				 * Set the value based on the result
 				 * Process subforms if this is a repeating group
@@ -500,7 +506,16 @@ public class PDFSurveyManager {
 							log.info("Error removing field: " + fieldName + ": " + e.getMessage());
 						}
 					} else {
-						pdfForm.setField(fieldName, value);	
+						if(di.isBarcode) {
+							BarcodeQRCode qrcode = new BarcodeQRCode(value.trim(), 1, 1, null);
+					        Image qrcodeImage = qrcode.getImage();
+					        qrcodeImage.setAbsolutePosition(10,500);
+					        qrcodeImage.scalePercent(200);
+					        PdfUtilities.addImageTemplate(pdfForm, fieldName, qrcodeImage);
+					        //valueCell.addElement((qrcodeImage));
+						} else {
+							pdfForm.setField(fieldName, value);
+						}
 					}	
 				} 
 				
@@ -939,8 +954,12 @@ public class PDFSurveyManager {
 		
 		int [] cols = gv.cols;
 		DisplayItem di = new DisplayItem();
-		di.width = cols[colIdx-offset];
-		di.text = label.text == null ? "" : label.text;
+		di.width = cols[colIdx-offset];		
+		if(question.type != null && question.type.equals("calculate")) {
+			di.text = "";		// Hack to remove labels from calculate questions
+		} else {
+			di.text = label.text == null ? "" : label.text;
+		}
 		di.text = lookupReferenceValue(di.text, record, parentRecords);
 		
 		di.hint = label.hint ==  null ? "" : label.hint;
@@ -1098,6 +1117,8 @@ public class PDFSurveyManager {
 						di.map = getAppValue(appValues[i]);
 					} else if(appValues[i].startsWith("pdflocation")) {
 						di.location = getAppValue(appValues[i]);			// lon,lat,zoom
+					} else if(appValues[i].startsWith("pdfbarcode")) {
+						di.isBarcode = true;		
 					}
 				}
 			}
@@ -1358,6 +1379,13 @@ public class PDFSurveyManager {
 			} else {
 				valueCell.addElement(getPara(" ", di, gv, deps));
 			}
+		} else if(di.isBarcode) { 
+			BarcodeQRCode qrcode = new BarcodeQRCode(di.value.trim(), 1, 1, null);
+	        Image qrcodeImage = qrcode.getImage();
+	        qrcodeImage.setAbsolutePosition(10,500);
+	        qrcodeImage.scalePercent(200);
+	   
+	        valueCell.addElement((qrcodeImage));
 		} else {
 			// Todo process other question types
 			if(di.value == null || di.value.trim().length() == 0) {
