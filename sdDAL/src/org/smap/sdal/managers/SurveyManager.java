@@ -200,7 +200,7 @@ public class SurveyManager {
 		StringBuffer sql = new StringBuffer();
 		sql.append("select s.s_id, s.name, s.ident, s.display_name, s.deleted, s.blocked, p.name, p.id,"
 				+ "s.def_lang, s.task_file, s.timing_data, u.o_id, s.class,"
-				+ "s.instance_name, s.hrk, s.based_on, s.shared_table, s.created, loaded_from_xls,"
+				+ "s.instance_name, s.hrk, s.based_on, s.shared_table, s.created, s.loaded_from_xls,"
 				+ "s.pulldata, s.version "
 				+ "from survey s, users u, user_project up, project p "
 				+ "where u.id = up.u_id "
@@ -631,7 +631,7 @@ public class SurveyManager {
 				+ "q.soft_deleted, "
 				+ "q.autoplay,"
 				+ "q.accuracy,"
-				+ "q.linked_target "
+				+ "q.linked_target,"
 				+ "q.display_name "
 				+ "from question q "
 				+ "left outer join listname l on q.l_id = l.l_id "
