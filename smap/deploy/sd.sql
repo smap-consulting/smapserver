@@ -663,6 +663,9 @@ alter table linked_forms add constraint lf_survey2 FOREIGN KEY (linker_s_id)
 	
 -- Upgrade to 17.02
 alter table survey add column timing_data boolean;
+alter table question add column display_name text;
+
+-- Upgrade to 17.03
 alter table question add column linked_target text;
 update question set linked_target = cast(linked_survey as text) where linked_survey > 0 and linked_target is null ;
 
@@ -716,7 +719,7 @@ create TABLE default_user_view (
 	);
 ALTER TABLE default_user_view OWNER TO ws;
 
--- Upgrade to 1703
 alter TABLE survey_view add column map_view text;
 alter TABLE survey_view add column chart_view text;
+
 

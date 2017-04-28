@@ -2116,7 +2116,13 @@ public class GeneralUtilityMethods {
 		}
 		
 		// SQL to get the questions
-		String sqlQuestion1 = "select qname, qtype, column_name, q_id, readonly, source_param, appearance "
+		String sqlQuestion1 = "select qname, qtype, "
+				+ "column_name, "
+				+ "q_id, "
+				+ "readonly, "
+				+ "source_param, "
+				+ "appearance, "
+				+ "display_name "
 				+ "from question where f_id = ? "
 				+ "and source is not null "
 				+ "and published = 'true' "
@@ -2264,6 +2270,10 @@ public class GeneralUtilityMethods {
 				boolean ro = rsQuestions.getBoolean(5);
 				String source_param = rsQuestions.getString(6);
 				String appearance = rsQuestions.getString(7);
+				String display_name = rsQuestions.getString(8);
+				if(display_name != null && display_name.trim().length() > 0) {
+					question_human_name = display_name;
+				}
 				String hxlCode = getHxlCode(appearance, question_human_name);
 				
 				String cName = question_column_name.trim().toLowerCase();

@@ -478,8 +478,9 @@ CREATE TABLE question (
 	f_id INTEGER REFERENCES form ON DELETE CASCADE,
 	l_id integer default 0,
 	seq INTEGER,
-	qName text NOT NULL,
-	column_name text,							-- Name of column in results table
+	qName text NOT NULL,						-- Name that conforms to ODK restrictions
+	column_name text,							-- Name of column in results table, qname with postgres constraints
+	display_name text,							-- Name displayed to user
 	column_name_applied boolean default false,	-- If set true column name has been added to results
 	qType text,
 	question text,

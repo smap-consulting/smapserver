@@ -38,7 +38,7 @@ public class PdfUtilities {
 	}
 	
 	public static void addImageTemplate(AcroFields pdfForm, String fieldName, Image img) throws IOException, DocumentException {
-		log.info("xxxxxxx: Add map image to: " + fieldName);
+		
 		PushbuttonField ad = pdfForm.getNewPushbuttonFromField(fieldName);
 		if(ad != null) {
 			ad.setLayout(PushbuttonField.LAYOUT_ICON_ONLY);

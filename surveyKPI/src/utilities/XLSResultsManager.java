@@ -358,7 +358,7 @@ public class XLSResultsManager {
 							
 							boolean isAttachment = false;
 							boolean isSelectMultiple = false;
-							String selectMultipleQuestionName = null;
+							String selectMultipleQuestionDisplayName = null;
 							String optionName = null;
 								
 							if(!exp_ro && ro) {
@@ -371,12 +371,12 @@ public class XLSResultsManager {
 
 							if(qType.equals("select")) {
 								isSelectMultiple = true;
-								selectMultipleQuestionName = c.question_name;
+								selectMultipleQuestionDisplayName = c.humanName;
 								optionName = c.option_name;
 							}
 											
 							if(isSelectMultiple && merge_select_multiple) {
-								humanName = selectMultipleQuestionName;
+								humanName = selectMultipleQuestionDisplayName;
 								
 								// Add the name of sql column to a look up table for the get data stage
 								selMultChoiceNames.put(name, optionName);

@@ -632,6 +632,7 @@ public class SurveyManager {
 				+ "q.autoplay,"
 				+ "q.accuracy,"
 				+ "q.linked_target "
+				+ "q.display_name "
 				+ "from question q "
 				+ "left outer join listname l on q.l_id = l.l_id "
 				+ "where q.f_id = ? ";
@@ -800,6 +801,8 @@ public class SurveyManager {
 				q.autoplay = rsGetQuestions.getString(25);
 				q.accuracy = rsGetQuestions.getString(26);
 				q.linked_target = rsGetQuestions.getString(27);
+				q.display_name = rsGetQuestions.getString(28);
+
 				if(q.autoplay == null) {
 					q.autoplay = "none";
 				}
