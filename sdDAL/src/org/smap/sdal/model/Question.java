@@ -18,6 +18,7 @@ public class Question {
 	public int childFormIndex;		// Set in online editor when creating a new sub form
 	public String name;
 	public String columnName;			// The name of the database column for this question
+	public String display_name;
 	public String type;
 	public String text_id;
 	public String hint_id;

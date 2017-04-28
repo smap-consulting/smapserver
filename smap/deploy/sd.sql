@@ -663,3 +663,4 @@ alter table linked_forms add constraint lf_survey2 FOREIGN KEY (linker_s_id)
 	
 -- Upgrade to 17.02
 alter table survey add column timing_data boolean;
+alter table question add column display_name text;

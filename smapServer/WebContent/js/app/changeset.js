@@ -1632,12 +1632,10 @@ define([
 	
 	/*
 	 * Return true if the passed in value is accepted by xlsFormConverter
-	 * Note:
-	 *   - The | characters has been added at customer request, this will not be accepted by pyxform
 	 */
 	function isValidODKQuestionName(val) {
 		
-		var sqlCheck = /^[A-Za-z_][A-Za-z0-9_\-\.:|]*$/;
+		var sqlCheck = /^[A-Za-z_][A-Za-z0-9_\-\.]*$/;
 		return sqlCheck.test(val);	
 	}
 	
