@@ -434,10 +434,14 @@ public class PDFSurveyManager {
 				boolean hideLabel = false;
 				String fieldName = getFieldName(formName, repeatIndex, r.name);
 				
-				Form form = survey.forms.get(r.fIdx);
-				org.smap.sdal.model.Question question = form.questions.get(r.qIdx);
 				DisplayItem di = new DisplayItem();
-				setQuestionFormats(question.appearance, di);
+				try {
+					Form form = survey.forms.get(r.fIdx);
+					org.smap.sdal.model.Question question = form.questions.get(r.qIdx);	
+					setQuestionFormats(question.appearance, di);
+				} catch (Exception e) {
+					// If we can't get the question details for this data then that is ok
+				}
 				
 				/*
 				 * Set the value based on the result
