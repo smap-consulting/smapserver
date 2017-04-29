@@ -665,6 +665,8 @@ define({
 	"d_c_day": "Count by day",
 	"d_c_month": "Coount by month",
 	"d_c_year": "Count by year",
+	"d_edit_web": "Edit in Web Form",
+	"d_d_pdf": "Download PDF",
 	
 	// Review
 	"rev_upd_diff": "Update a different question to the source question",
