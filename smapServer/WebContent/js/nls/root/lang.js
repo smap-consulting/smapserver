@@ -688,6 +688,7 @@ define({
     "d_from_q": "Link From Question",
     "d_edit_web": "Edit in Web Form",
     "d_d_pdf": "Download PDF",
+    "d_layers": "Map Layers",
 
     // Review
     "rev_upd_diff": "Update a different question to the source question",

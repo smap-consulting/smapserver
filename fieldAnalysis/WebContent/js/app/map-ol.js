@@ -25,7 +25,6 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
  */
 	
 var defaultMapExtent = [-20037508, -20037508, 20037508, 20037508.34];
-var mb_public_access = "pk.eyJ1IjoibmFwMjAwMCIsImEiOiJjaWc1a3ZqdWI0NHJ4c3prdzZzM2k5YzhjIn0.QA_G2TYCN0fJM3VcZpLlOg";
 
 $(document).ready(function() {
 
@@ -102,7 +101,7 @@ function initializeMap(idx){
 	// Add additional maps specified in the shared resources page
 	var sharedMaps = globals.gSelector.getSharedMaps();
 	if(!sharedMaps) {
-		getSharedMaps(map);
+		getServerSettings(getSharedMaps, map);
 	} else {
 		addSharedMaps(map, sharedMaps)
 	}

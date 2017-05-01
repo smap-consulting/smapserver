@@ -551,7 +551,7 @@ require([
 					 if(xhr.readyState == 0 || xhr.status == 0) {
 						 return;  // Not an error
 					 } else {
-							alert("Error failed to get column names from survey: " + sId + " " + xhr.responseText);
+							alert("Error failed to get column names from survey: " + sId);
 					 }
 				 }
 			 });

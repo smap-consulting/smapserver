@@ -85,7 +85,7 @@ require([
     'globals',
     'moment',
     'app/chart',
-    'app/map',
+    'app/mapOL3',
     'datatables.net-bs',
     'svgsave',
     'datatables.select',
@@ -374,6 +374,7 @@ require([
         $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
             var target = $(e.target).attr("href") // activated tab
             $('#showlayers').hide();
+            $('#m_add_chart').hide();
             gMapView = false;
             gChartView = false;
             if (target === '#map-view') {
@@ -382,6 +383,7 @@ require([
                 gMapView = true;
             } else if(target === '#chart-view') {
                 chart.init();
+                $('#m_add_chart').show();
                 gChartView = true;
             }
         });

@@ -2118,6 +2118,39 @@ function getTableData(table, columns) {
 	
 }
 
+/*
+ * Get server settings
+ */
+function getServerSettings(callback, param) {
+	
+	if(!globals.gServerSettings) {
+		addHourglass();
+		$.ajax({
+			url: '/surveyKPI/server',
+			cache: false,
+			success: function(data) {
+				removeHourglass();
+				globals.gServerSettings = data;
+				if(typeof callback === "function") {
+					callback(param);
+				}
+			},
+			error: function(xhr, textStatus, err) {
+				removeHourglass();
+				if(xhr.readyState == 0 || xhr.status == 0) {
+		              return;  // Not an error
+				} else {
+					alert("Error: Failed to get server data: " + err);
+				}
+			}
+		});
+	} else {
+		if(typeof callback === "function") {
+			callback(param);
+		}
+	}
+}
+
 
 /*
  * Get google map api
@@ -2142,6 +2175,8 @@ function getGoogleMapApi(callback, map) {
 			url: '/surveyKPI/server',
 			cache: false,
 			success: function(data) {
+				
+				globals.gServerSettings = data;
 				
 				var callingMap = map;
 				

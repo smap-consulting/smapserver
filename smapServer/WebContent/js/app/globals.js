@@ -101,6 +101,8 @@ define(function () {
         gMapLayersShown: false,
         gViewId: 0,						// Current survey view
 
+        gServerSettings: undefined,		// Server Settings
+        
         model: new Model()
 
     }

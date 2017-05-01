@@ -111,11 +111,6 @@
                 <li class="nav-divider"></li>
 
 
-                <li><a id="m_add_chart"><i class="fa fa-bar-chart-o"></i> <span class="nav-label lang"
-                                                                                data-lang="d_add">add</span></a></li>
-                <li><a id="m_add_layer"><i class="fa fa-map-o"></i> <span class="nav-label lang"
-                                                                          data-lang="d_add_l">add</span></a></li>
-
             </ul>
         </div>
 
@@ -129,7 +124,6 @@
                 <div class="navbar-header">
                     <a class="navbar-minimalize minimalize-styl-2 btn btn-primary " href="#"><i class="fa fa-bars"></i>
                     </a>
-
                 </div>
 
                 <ul class="nav navbar-top-links navbar-right">
@@ -221,8 +215,12 @@
                     <div class="ibox float-e-margins">
                         <div class="ibox-title">
                             <div class="ibox-tools">
-                                <a id="showlayers" style="display:none;"><i
-                                        class="btn btn-info fa fa-align-justify fa-lg"></i></a>
+                                <a id="showlayers" style="display:none;">
+                                    <i class="btn btn-info fa fa-align-justify fa-lg"> <span class="nav-label lang" data-lang="d_layers">layers</span></i>
+                                </a>
+                                <a id="m_add_chart" style="display:none;">
+                                    <i class="btn btn-success fa fa-bar-chart-o fa-lg"> <span class="nav-label lang" data-lang="d_add">add</span></i>
+                                </a>
                                 <a class="genfile pdf"><i class="btn btn-danger fa fa-file-pdf-o fa-lg"></i></a>
                                 <a class="genfile xls"><i class="btn btn-success fa fa-file-excel-o fa-lg"></i></a>
                                 <a class="genfile image"><i class="btn btn-warning fa fa-file-image-o fa-lg"></i></a>
@@ -261,6 +259,9 @@
                                                         <div class="ibox float-e-margins">
                                                             <div class="ibox-title">
                                                                 <h5 class="lang" data-lang="c_map_layers">layers</h5>
+                                                                <a id="m_add_layer" class="pull-right">
+                                                                    <i class="btn btn-success fa fa-bar-map-o fa-lg"> <span class="nav-label lang" data-lang="d_add">add</span></i>
+                                                                </a>
                                                             </div>
                                                         </div>
                                                         <div id="layerSelect">

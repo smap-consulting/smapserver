@@ -16,7 +16,7 @@
  */
 
 /*
- * Chart functions
+ * Open layers 3 functions
  */
 
 "use strict";
@@ -62,11 +62,11 @@ define([
                             'title': 'Base maps',
                             layers: [
                                 new ol.layer.Tile({
-                                    title: 'Water color',
+                                    title: 'HOT',
                                     type: 'base',
-                                    visible: false,
-                                    source: new ol.source.Stamen({
-                                        layer: 'watercolor'
+                                    visible: true,
+                                    source: new ol.source.OSM({
+                                        url: 'http://{a-c}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png'
                                     })
                                 }),
                                 new ol.layer.Tile({
@@ -84,7 +84,18 @@ define([
                             zoom: 1
                         }
                     )
+
+
                 });
+
+
+                // Add additional maps specified in the shared resources page
+                var sharedMaps = globals.gSelector.getSharedMaps();
+                if(!sharedMaps) {
+                    getServerSettings(getSharedMapsOL3, gMap);
+                } else {
+                    addSharedMapsOL3(gMap, sharedMaps)
+                }
 
                 var layerSwitcher = new ol.control.LayerSwitcher({
                     tipLabel: 'Legend' // Optional label for button
@@ -249,17 +260,6 @@ define([
                 }));
 
 
-            // Add the layer if it does not exist, else up date it
-            /*
-             var vectorSource = new ol.source.Vector({
-             features: (new ol.format.GeoJSON()).readFeatures(geoJson,
-             {
-             dataProjection: 'EPSG:4326',
-             featureProjection: 'EPSG:3857'
-             })
-             });
-             */
-
             if (layer.clump === "heatmap") {
                 gVectorLayers[index] = new ol.layer.Heatmap({
                     source: gVectorSources[index],
@@ -387,5 +387,81 @@ define([
             });
         }
 
-    })
-;
+        /*
+         * Get the shared maps from the server
+         */
+        function getSharedMapsOL3(map) {
+
+            var url = '/surveyKPI/shared/maps';
+            $.ajax({
+                url: url,
+                dataType: 'json',
+                cache: false,
+                success: function(data) {
+                    globals.gSelector.setSharedMaps(data);
+                    addSharedMapsOL3(map, data);
+                },
+                error: function(xhr, textStatus, err) {
+                    if(xhr.readyState == 0 || xhr.status == 0) {
+                        return;  // Not an error
+                    } else {
+                        alert("Error: Failed to get list of shared maps: " + err);
+                    }
+                }
+            });
+
+        }
+
+        /*
+         * Add shared maps
+         */
+        function addSharedMapsOL3(map, sharedMaps) {
+
+            var i,
+                layerUrl,
+                layer;
+
+            if(sharedMaps) {
+
+
+                var baseLayers = map.getLayers().item(0).getLayers().getArray();
+
+
+                for(i = 0; i < sharedMaps.length; i++) {
+
+                    layer = sharedMaps[i];
+
+                    if(layer.type === "mapbox") {
+                        //layerUrl = 'http://api.tiles.mapbox.com/v4/' + layer.config.mapid + ".jsonp?access_token=" + globals.gServerSettings.mapbox_default;
+                        layerUrl = "http://a.tiles.mapbox.com/v4/" + layer.config.mapid + "/{z}/{x}/{y}.png?access_token=" + globals.gServerSettings.mapbox_default;
+                        baseLayers.unshift(new ol.layer.Tile( {
+                            title: layer.name,
+                            type: 'base',
+                            visible: false,
+                            source: new ol.source.OSM({
+                                url: layerUrl,
+                                crossOrigin: 'anonymous'
+                            })
+                        }));
+
+                    } /* else if(layer.type === "vector") {
+                        layerUrl = "/surveyKPI/file/" + layer.config.vectorData + "/organisation";
+                        var vectorLayer = new OpenLayers.Layer.Vector(layer.name + ".", {
+                            projection: "EPSG:4326",
+                            strategies: [new OpenLayers.Strategy.Fixed()],
+                            protocol: new OpenLayers.Protocol.HTTP({
+                                url: layerUrl,
+                                format: new OpenLayers.Format.GeoJSON()
+                            })
+                        });
+                        map.addLayer(vectorLayer);
+
+                    }
+                    */
+                }
+            }
+        }
+
+    });
+
+
