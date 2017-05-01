@@ -2647,14 +2647,23 @@ public class GeneralUtilityMethods {
 	 */
 	private static void convertSqlFragToHrkElement(String item, StringBuffer output) {
 		
-		item = item.trim();
 		if(item.length() > 0) {
 			if(output.length() > 0) {
 				output.append(" || ");
 			}
-			if(item.startsWith("serial(")) {
+			if(item.contains("serial(")) {
+				int idx0 = item.indexOf("serial(");
 				int idx1 = item.indexOf('(');
 				int idx2 = item.indexOf(')');
+				
+				if(idx0 > 0) {
+					String initialText = item.substring(0, idx0);
+					output.append('\'');
+					initialText = initialText.replaceAll("'", "''");	// escape quotes
+					output.append(initialText);
+					output.append('\'');
+					output.append(" || ");
+				}
 				if(idx2 > idx1) {
 					String offset = item.substring(idx1 + 1, idx2);
 					if(offset.trim().length() > 0) {
@@ -2670,6 +2679,17 @@ public class GeneralUtilityMethods {
 					}
 				} else {
 					log.info("Error parsing HRK item: " + item);
+				}
+				
+				if(idx2 + 1 < item.length()) {
+					output.append(" || ");
+					String finalText = item.substring(idx2 + 1);
+					output.append('\'');
+					finalText = finalText.replaceAll("'", "''");	// escape quotes
+					output.append(finalText);
+					output.append('\'');
+
+					
 				}
 			} else {
 				output.append('\'');
