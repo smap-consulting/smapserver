@@ -29,6 +29,7 @@ WebContent/build
 smapServer/.idea/
 tasks/.idea/
 fieldManagerClient/.idea/
+fieldAnalysis/.idea/
 
 # External tool builders
 .externalToolBuilders/
