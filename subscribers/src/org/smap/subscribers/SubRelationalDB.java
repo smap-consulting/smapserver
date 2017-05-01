@@ -452,10 +452,18 @@ public class SubRelationalDB extends Subscriber {
 					pstmtAddHrk.executeUpdate();
 				}
 				
+				boolean addPrikey = true;	// Add the primary key to the HRK by default in order to guarantee uniqueness
+				if(hrk != null) {
+					if(hrk.contains("${prikey}") || hrk.contains("serial(")) {
+						addPrikey = false;			// User had included prikey in the HRK so er don't need to
+					}
+				}
 				String sql = "update " + topLevelTable + " set _hrk = "
-						+ GeneralUtilityMethods.convertAllxlsNamesToQuery(hrk, sId, cMeta)
-						+ " || '-' || prikey "
-						+ " where _hrk is null;";
+						+ GeneralUtilityMethods.convertAllxlsNamesToQuery(hrk, sId, cMeta);
+				if(addPrikey) {
+					sql += " || '-' || prikey ";
+				}
+				sql += " where _hrk is null;";
 				pstmtHrk = cResults.prepareStatement(sql);
 				System.out.println("Adding HRK: " + pstmtHrk.toString());
 				pstmtHrk.executeUpdate();

@@ -320,11 +320,11 @@ public class Items extends Application {
 				if(start_key > 0) {
 					sqlFilter = tName + ".prikey > " +  start_key;
 					if(!bBad) {
-						sqlFilter += " AND _bad = 'false'";
+						sqlFilter += " and " + tName + "._bad = 'false'";
 					}
 				} else {
 					if(!bBad) {
-						sqlFilter = " _bad = 'false'";
+						sqlFilter = tName + "._bad = 'false'";
 					}
 				}
 				
