@@ -498,7 +498,7 @@ public class PDFSurveyManager {
 					}
 				} else if(r.type.equals("geopoint") || r.type.equals("geoshape") || r.type.equals("geotrace") || r.type.startsWith("geopolygon_") || r.type.startsWith("geolinestring_")) {
 					
-					Image img = PdfUtilities.getMapImage(null, r.value, null, gv.mapbox_key);
+					Image img = PdfUtilities.getMapImage(di.map, r.value, di.location, gv.mapbox_key);
 					PdfUtilities.addImageTemplate(pdfForm, fieldName, img);
 				} else if(r.type.equals("image")) {
 					PdfUtilities.addImageTemplate(pdfForm, fieldName, basePath, value);

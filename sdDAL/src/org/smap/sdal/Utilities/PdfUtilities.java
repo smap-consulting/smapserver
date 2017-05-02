@@ -75,7 +75,13 @@ public class PdfUtilities {
 
 			String jsonValue = value;
 			url.append(URLEncoder.encode(jsonValue, "UTF-8"));
-			url.append(")/auto/");
+			url.append(")/");
+			if(location != null) {
+				url.append(location);
+			} else {
+				url.append("auto");
+			}
+			url.append("/");
 			getMap = true;
 		} else {
 			// Attempt to get default map boundary from appearance
