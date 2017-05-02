@@ -360,7 +360,7 @@ public class XLSResultsManager {
 							boolean isSelectMultiple = false;
 							String selectMultipleQuestionDisplayName = null;
 							String optionName = null;
-								
+							
 							if(!exp_ro && ro) {
 								continue;			// Drop read only columns if they are not selected to be exported				
 							}
@@ -435,6 +435,15 @@ public class XLSResultsManager {
 									f.columns += "," + selName;
 								}
 								f.columnCount++;
+								
+								// Increment the column count if this is a geopoint question and the lat/lon are being split
+								if(c.isGeometry() && split_locn) {
+									if(geomType.equals("geopoint")) {
+										System.out.println("Add column for: " + geomType);
+										f.columnCount++;
+									}
+								}
+								System.out.println("count for: " + c.name + " : " + f.columnCount);
 							}
 						}
 						
@@ -825,6 +834,10 @@ public class XLSResultsManager {
 			out.add("");
 			out.add("");
 			
+		} else if(split_locn && columnType != null & columnType.equals("geopoint") ) {
+			// Geopoint that needs to be split but there is no data
+			out.add("");
+			out.add("");
 		} else if(value.startsWith("POINT")) {
 			String coords [] = getLonLat(value);
 			if(coords.length > 1) {

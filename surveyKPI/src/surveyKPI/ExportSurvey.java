@@ -743,6 +743,9 @@ public class ExportSurvey extends Application {
 				// Can't split linestrings and polygons, leave latitude and longitude as blank
 				out= "<td></td><td></td>";
 				
+			} else if(split_locn && columnType != null & columnType.equals("geopoint") ) {
+				// Geopoint that needs to be split but there is no data
+				out= "<td></td><td></td>";
 			} else if(out.startsWith("POINT")) {
 				String coords [] = getLonLat(out);
 				if(coords.length > 1) {

@@ -1341,7 +1341,6 @@ public class Review extends Application {
 
 			}
 			
-			System.out.println("xxxxxx " + rawName + " : " + name + " : " + value);
 			KeyValue kv = new KeyValue(name, value);
 			names.add(kv);
 		}
@@ -1380,7 +1379,6 @@ public class Review extends Application {
 				if(idx2 > idx1) {
 					name = relevance.substring(idx1+1, idx2);
 				}
-				System.out.println("xxxxxx " + rawName + " : " + name + " : " + value);
 				KeyValue kv = new KeyValue(name, value);
 				names.add(kv);
 			}	
