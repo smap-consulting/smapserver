@@ -2610,21 +2610,24 @@ public class GeneralUtilityMethods {
 			// Add any text before the match
 			int startOfGroup = matcher.start();
 			item = input.substring(start, startOfGroup).trim();
-			if(item.length() > 0) {
-				if(output.length() > 0) {
-					output.append(" || ");
-				}
-				output.append('\'');
-				item = item.replaceAll("'", "''");	// escape quotes
-				output.append(item);
-				output.append('\'');
-			}
+			convertSqlFragToHrkElement(item, output);
 			
 			// Add the column name
 			if(output.length() > 0) {
 				output.append(" || ");
 			}
-			output.append(getColumnName(sd, sId, qname));
+			String columnName = getColumnName(sd, sId, qname);
+			if(columnName == null 
+					&& (qname.equals("prikey")
+					|| qname.equals("_start")
+					|| qname.equals("_upload_time")
+					|| qname.equals("_end")
+					|| qname.equals("device")
+					|| qname.equals("instancename")
+					)) {
+				columnName = qname;
+			}
+			output.append(columnName);
 
 			// Reset the start
 			start = matcher.end();
@@ -2634,10 +2637,62 @@ public class GeneralUtilityMethods {
 		// Get the remainder of the string
 		if(start < input.length()) {
 			item = input.substring(start).trim();
-			if(item.length() > 0) {
-				if(output.length() > 0) {
+			convertSqlFragToHrkElement(item, output);
+		}
+		
+		return output.toString().trim();
+	}
+	
+	/*
+	 * Add a component that is not a data
+	 */
+	private static void convertSqlFragToHrkElement(String item, StringBuffer output) {
+		
+		if(item.length() > 0) {
+			if(output.length() > 0) {
+				output.append(" || ");
+			}
+			if(item.contains("serial(")) {
+				int idx0 = item.indexOf("serial(");
+				int idx1 = item.indexOf('(');
+				int idx2 = item.indexOf(')');
+				
+				if(idx0 > 0) {
+					String initialText = item.substring(0, idx0);
+					output.append('\'');
+					initialText = initialText.replaceAll("'", "''");	// escape quotes
+					output.append(initialText);
+					output.append('\'');
 					output.append(" || ");
 				}
+				if(idx2 > idx1) {
+					String offset = item.substring(idx1 + 1, idx2);
+					if(offset.trim().length() > 0) {
+						try {
+							Integer.valueOf(offset);
+							output.append("prikey + " + offset);
+						} catch (Exception e) {
+							log.info("Error parsing HRK item: " + item);
+							output.append("prikey");
+						}
+					} else {
+						output.append("prikey");
+					}
+				} else {
+					log.info("Error parsing HRK item: " + item);
+				}
+				
+				if(idx2 + 1 < item.length()) {
+					output.append(" || ");
+					String finalText = item.substring(idx2 + 1);
+					output.append('\'');
+					finalText = finalText.replaceAll("'", "''");	// escape quotes
+					output.append(finalText);
+					output.append('\'');
+
+					
+				}
+			} else {
 				output.append('\'');
 				item = item.replaceAll("'", "''");	// escape quotes
 				output.append(item);
@@ -2645,9 +2700,7 @@ public class GeneralUtilityMethods {
 			}
 		}
 		
-		return output.toString().trim();
 	}
-	
 	/*
 	 * Translate a question type from its representation in the database to the survey model used for editing
 	 */

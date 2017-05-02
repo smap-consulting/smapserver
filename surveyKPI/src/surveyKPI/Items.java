@@ -245,12 +245,12 @@ public class Items extends Application {
 							|| c.type.equals("geoshape")) {
 						
 						geomIdx = newColIdx;
-						cols.append("ST_AsGeoJSON(" + c.name + ") ");
+						cols.append("ST_AsGeoJSON(" + tName + "." + c.name + ") ");
 						geomType = c.type;
 						newColIdx++;
 					
 					} else if(c.type.equals("image") || c.type.equals("audio") || c.type.equals("video")) {
-							cols.append("'" + urlprefix + "' || " + c.name + " as " + c.name);
+							cols.append("'" + urlprefix + "' || " + tName + "." + c.name + " as " + c.name);
 				
 					} else if(c.name.equals("prikey") || c.name.equals("parkey") 
 							|| c.name.equals("_bad") || c.name.equals("_bad_reason")) {
@@ -320,11 +320,11 @@ public class Items extends Application {
 				if(start_key > 0) {
 					sqlFilter = tName + ".prikey > " +  start_key;
 					if(!bBad) {
-						sqlFilter += " AND _bad = 'false'";
+						sqlFilter += " and " + tName + "._bad = 'false'";
 					}
 				} else {
 					if(!bBad) {
-						sqlFilter = " _bad = 'false'";
+						sqlFilter = tName + "._bad = 'false'";
 					}
 				}
 				

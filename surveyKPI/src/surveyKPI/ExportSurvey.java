@@ -496,6 +496,14 @@ public class ExportSurvey extends Application {
 									f.columns += "," + selName;
 								}
 								f.columnCount++;
+								
+								// Increment the column count if this is a geopoint question and the lat/lon are being split
+								if(c.isGeometry() && split_locn) {
+									if(geomType.equals("geopoint")) {
+										System.out.println("Add column for: " + geomType);
+										f.columnCount++;
+									}
+								}
 							}
 						}
 						
@@ -743,6 +751,9 @@ public class ExportSurvey extends Application {
 				// Can't split linestrings and polygons, leave latitude and longitude as blank
 				out= "<td></td><td></td>";
 				
+			} else if(split_locn && columnType != null & columnType.equals("geopoint") ) {
+				// Geopoint that needs to be split but there is no data
+				out= "<td></td><td></td>";
 			} else if(out.startsWith("POINT")) {
 				String coords [] = getLonLat(out);
 				if(coords.length > 1) {
