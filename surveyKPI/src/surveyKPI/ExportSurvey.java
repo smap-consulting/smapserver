@@ -496,6 +496,14 @@ public class ExportSurvey extends Application {
 									f.columns += "," + selName;
 								}
 								f.columnCount++;
+								
+								// Increment the column count if this is a geopoint question and the lat/lon are being split
+								if(c.isGeometry() && split_locn) {
+									if(geomType.equals("geopoint")) {
+										System.out.println("Add column for: " + geomType);
+										f.columnCount++;
+									}
+								}
 							}
 						}
 						

@@ -443,7 +443,6 @@ public class XLSResultsManager {
 										f.columnCount++;
 									}
 								}
-								System.out.println("count for: " + c.name + " : " + f.columnCount);
 							}
 						}
 						
