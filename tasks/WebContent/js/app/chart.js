@@ -88,6 +88,14 @@ define([
                 saveChart();
             });
 
+            $('#ew_tseries').off().click(function () {
+                var $this = $(this);
+
+                setChartDialogVisibility({
+                    tSeries: $this.prop("checked")
+                });
+            });
+
             if (gChartUpdatePending) {
                 refreshAllCharts(true, true);
             }
@@ -305,7 +313,7 @@ define([
                 parseTime = parseTimeSec;
             }
 
-            if (chart.tSeries) {
+            if (chart.tSeries && chart.groups) {
                 for (i = 0; i < chart.groups.length; i++) {
 
                     allData.push(d3.nest()
@@ -891,7 +899,7 @@ define([
          */
         function initialiseWidgetDialog() {
 
-            $("#chartForm")[0].reset();
+            //$("#chartForm")[0].reset();
 
             addChartTypeSelect(gEdChart);
             $('#ew_tseries').prop("checked", gEdChart.tSeries);
@@ -900,33 +908,53 @@ define([
             $('#ew_width').val(gEdChart.width);
             $('#ew_fn').val(gEdChart.fn);
             $('#ew_question').val(gEdChart.qIdx);
+            $('#ew_group').val(gEdChart.group);
 
-            if (gEdChart.chart_type === "bar" || gEdChart.chart_type === "pie") {
-                $(".numeric_only").show();
-            } else {
-                $(".numeric_only").hide();
-            }
-            if (gEdChart.group && gEdChart.chart_type !== "wordcloud") {
-                $(".group_only").show();
-                $('#ew_group').val(gEdChart.group);
-            } else {
-                $(".group_only").hide();
-            }
-            if (gEdChart.time_interval) {
-                $(".date_range_only").show();
-                $("#ew_date1").val(gEdChart.groups[0].q);
-                $("#ew_date2").val(gEdChart.groups[1].q);
-            } else {
-                $(".date_range_only").hide();
-            }
             if (gEdChart.tSeries) {
-                $(".period_only").show();
+                if(gEdChart.groups && gEdChart.groups.length > 0) {
+                    $("#ew_date1").val(gEdChart.groups[0].q);
+                    if(gEdChart.groups.length > 1) {
+                        $("#ew_date2").val(gEdChart.groups[1].q);
+                    }
+                }
                 $('#ew_period').val(gEdChart.period);
-
-            } else {
-                $(".period_only").hide();
             }
 
+            setChartDialogVisibility({
+                chart_type: gEdChart.chart_type,
+                group: gEdChart.group,
+                tSeries: gEdChart.tSeries
+            });
+
+        }
+
+        function setChartDialogVisibility(s) {
+
+            if(typeof s.tSeries !== "undefined") {
+                if(s.tSeries) {
+                    $(".date_range_only, .period_only").show();
+                    $(".question_only, .group_only").hide();
+                } else {
+                    $(".date_range_only, .period_only").hide();
+                    $(".question_only, .group_only").show();
+                }
+            }
+
+            if(typeof s.gEdChart !== "undefined") {
+                if (gEdChart.chart_type === "bar" || gEdChart.chart_type === "pie") {
+                    $(".numeric_only").show();
+                } else {
+                    $(".numeric_only").hide();
+                }
+
+                if(typeof s.group !== "undefined") {
+                    if (s.group && s.chart_type !== "wordcloud") {
+                        $(".group_only").show();
+                    } else {
+                        $(".group_only").hide();
+                    }
+                }
+            }
         }
 
         /*

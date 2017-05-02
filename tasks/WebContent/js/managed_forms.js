@@ -1427,9 +1427,9 @@ require([
                 h[++idx] = '</option>';
             }
         }
-        $('#date_question').html(h.join(''));
+        $('.date_question').html(h.join(''));
         if (typeof defValue !== "undefined") {
-            $('#date_question').val(defValue);
+            $('.date_question').val(defValue);
         }
     }
 
