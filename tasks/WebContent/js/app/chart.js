@@ -894,6 +894,7 @@ define([
             $("#chartForm")[0].reset();
 
             addChartTypeSelect(gEdChart);
+            $('#ew_tseries').prop("checked", gEdChart.tSeries);
             $('#ew_chart_type').val(gEdChart.chart_type);
             $("#ew_title").val(gEdChart.title);
             $('#ew_width').val(gEdChart.width);
@@ -986,9 +987,11 @@ define([
                 }
                 gEdChart.fn = $('#ew_fn').val();
                 gEdChart.title = title;
+                gEdChart.tSeries = $('#ew_tseries').prop("checked");
                 gEdChart.chart_type = $('#ew_chart_type').val();
                 gEdChart.width = $('#ew_width').val();
                 gEdChart.group = $('#ew_group').val();
+
                 if (gEdChart.time_interval) {
                     gEdChart.groups[0].q = $("#ew_date1").val();
                     gEdChart.groups[0].label = $("#ew_date1 option[value='" + gEdChart.groups[0].q + "']").text();
