@@ -87,6 +87,10 @@ public class XLSUtilities {
 		styles.put("datetime", style);
 		
 		style = wb.createCellStyle();
+		style.setDataFormat(format.getFormat("yyyy-mm-dd"));	
+		styles.put("date", style);
+		
+		style = wb.createCellStyle();
 		style.setDataFormat(HSSFDataFormat.getBuiltinFormat("0.00"));
 		styles.put("numeric", style);
 		

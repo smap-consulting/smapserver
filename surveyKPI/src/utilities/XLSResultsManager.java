@@ -29,6 +29,8 @@ import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 
 //import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 //import org.apache.poi.ss.usermodel.Workbook;
@@ -687,7 +689,6 @@ public class XLSResultsManager {
 	             * Write the value as double or string
 	             */
 	            boolean cellWritten = false; 
-           		cell.setCellStyle(styles.get("default"));
 	
 	            if(ci.type == CellItem.DECIMAL || 
 	            		ci.type == CellItem.INTEGER && 
@@ -695,13 +696,36 @@ public class XLSResultsManager {
 	        		try {
 	        			double vDouble = Double.parseDouble(ci.v);
 	
+	        			cell.setCellStyle(styles.get("default"));
 	        			cell.setCellValue(vDouble);
 	        			cellWritten = true;
 	        		} catch (Exception e) {
 	        			// Ignore
 	        		}
+	            } else if(ci.type == CellItem.DATETIME) {
+	            	DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+	            	try {
+	            		java.util.Date date = dateFormat.parse(ci.v);
+	            		cell.setCellStyle(styles.get("datetime"));
+		            	cell.setCellValue(date);
+		            	cellWritten = true;
+	            	} catch (Exception e) {
+	        			// Ignore
+	        		}
+	            } else if(ci.type == CellItem.DATE) {
+	            	DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+	            	try {
+	            		java.util.Date date = dateFormat.parse(ci.v);
+	            		cell.setCellStyle(styles.get("date"));
+		            	cell.setCellValue(date);
+		            	cellWritten = true;
+	            	} catch (Exception e) {
+	        			// Ignore
+	        		}
 	            }
+	            
 	           	if(!cellWritten) {
+	           		cell.setCellStyle(styles.get("default"));
 	        		cell.setCellValue(ci.v);
 	        	}
 			}         
