@@ -433,6 +433,7 @@ public class PDFSurveyManager {
 				String value = "";
 				boolean hideLabel = false;
 				String fieldName = getFieldName(formName, repeatIndex, r.name);
+				String fieldNameQR = getFieldName(formName, repeatIndex, r.name + "_qr");
 				
 				DisplayItem di = new DisplayItem();
 				try {
@@ -516,12 +517,22 @@ public class PDFSurveyManager {
 					        qrcodeImage.setAbsolutePosition(10,500);
 					        qrcodeImage.scalePercent(200);
 					        PdfUtilities.addImageTemplate(pdfForm, fieldName, qrcodeImage);
-					        //valueCell.addElement((qrcodeImage));
 						} else {
 							pdfForm.setField(fieldName, value);
 						}
 					}	
 				} 
+				
+				/*
+				 * Add any QR code values to fields that have been identified using the QR suffix
+				 */
+				if(fieldNameQR != null) {
+					BarcodeQRCode qrcode = new BarcodeQRCode(value.trim(), 1, 1, null);
+			        Image qrcodeImage = qrcode.getImage();
+			        qrcodeImage.setAbsolutePosition(10,500);
+			        qrcodeImage.scalePercent(200);
+			        PdfUtilities.addImageTemplate(pdfForm, fieldNameQR, qrcodeImage);
+				}
 				
 			}
 		} catch (Exception e) {
