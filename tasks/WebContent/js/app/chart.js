@@ -31,10 +31,8 @@ define([
         'app/charts/pie',
         'app/charts/line',
         'app/charts/wordcloud',
-        'app/charts/groupedBar',
         'svgsave'],
-    function ($, modernizr, lang, globals, bar_h, bar_v,  pie, line, wordcloud, groupedBar, svgsave) {
-
+    function ($, modernizr, lang, globals, bar_h, bar_v, pie, line, wordcloud, svgsave) {
 
         /*
          * Available charts
@@ -45,8 +43,7 @@ define([
             bar_v: bar_v,
             pie: pie,
             line: line,
-            wordcloud: wordcloud,
-            groupedBar: groupedBar
+            wordcloud: wordcloud
         };
 
         var gBlankChart = {
@@ -94,6 +91,7 @@ define([
                 setChartDialogVisibility({
                     tSeries: $this.prop("checked")
                 });
+                addChartTypeSelect();
             });
 
             if (gChartUpdatePending) {
@@ -140,7 +138,7 @@ define([
         function refreshAllCharts(chartView, clearExisting) {
 
             var i;
-            if(chartView) {
+            if (chartView) {
                 if (globals.gMainTable) {
                     var results = globals.gMainTable.rows({
                         order: 'current',  // 'current', 'applied', 'index',  'original'
@@ -148,7 +146,7 @@ define([
                         search: 'applied',     // 'none',    'applied', 'removed'
                     }).data();
 
-                    if(clearExisting) {
+                    if (clearExisting) {
                         $('.aChart').remove();
                     }
 
@@ -202,7 +200,7 @@ define([
                 existingChart = $chart.length;
             }
 
-            if(existingChart && clean) {
+            if (existingChart && clean) {
                 $chart.remove();
                 existingChart = false;
             }
@@ -224,10 +222,10 @@ define([
                 add = false,
                 name = chart.title;
 
-            if (chart.chart_type === "groupedBar") {
+            if (chart.tSeries) {
                 newData = data;
                 add = true;
-            } else if (chart.chart_type === "bar") {
+            } else if (chart.chart_type === "bar_h" || chart.chart_type === "bar_v") {
                 newData = [];
                 add = true;
                 for (i = 0; i < data.length; i++) {
@@ -273,7 +271,7 @@ define([
         function processData(results, chart, dataLength) {
 
             var allData = [],
-                data,
+                processedData,
                 parseTimeSec = d3.timeParse("%Y-%m-%d %H:%M:%S%Z"),
                 parseTimeDay = d3.timeParse("%Y-%m-%d"),
                 formatTimeDay = d3.timeFormat("%Y-%m-%d"),
@@ -287,7 +285,8 @@ define([
                 parseTime,
                 formatTime,
                 dateRange,
-                d3Fn;
+                d3Fn,
+                groupIdx;
 
             if (chart.fn === "count" || chart.fn === "percent") {
                 d3Fn = "length";
@@ -356,7 +355,7 @@ define([
 
                 // Add missing dates
                 // Based on http://stackoverflow.com/questions/18835053/d3-js-calculate-width-of-bars-in-time-scale-with-changing-range
-                if (chart.chart_type === "groupedBar" || chart.chart_type === "bar") {
+                if (chart.chart_type === "bar_v" || chart.chart_type === "bar_h") {
 
                     for (i = 0; i < allData.length; i++) {
                         allData[i].forEach(function (d) {
@@ -409,7 +408,7 @@ define([
                         newData.push(newDataItem);
                     });
 
-                    data = newData;
+                    processedData = newData;
                 }
 
             } else if (chart.chart_type === "wordcloud") {
@@ -447,32 +446,6 @@ define([
                         }
                     }
                 }
-            } else if (chart.type === "select") {
-                var i, j,
-                    data = [],
-                    dc;
-                for (i = 0; i < chart.choices.length; i++) {
-                    dc = d3.nest()
-                        .key(function (d) {
-                            return d[chart.choices[i]];
-                        })
-                        .rollup(function (v) {
-                            return v[d3Fn];
-                        })
-                        .entries(results);
-
-                    for (j = 0; j < dc.length; j++) {
-                        var choiceName = chart.choices[i].split(" - ");
-                        if (dc[j].key == "1") {
-                            data.push({
-                                key: choiceName[1],
-                                value: dc[j].value
-                            });
-                            break;
-                        }
-                    }
-                }
-
             } else if (chart.fn === "avgdurn") {
                 var i, j,
                     data = [],
@@ -512,19 +485,51 @@ define([
                 }
 
             } else {
-                data = d3.nest()
-                    .key(function (d) {
-                        return d[chart.name];
-                    })
-                    .rollup(function (v) {
-                        return v[d3Fn] / dataLength;
-                    })
-                    .entries(results);
 
+                for (groupIdx = 0; groupIdx < chart.groups.length; groupIdx++) {
+
+                    var item = chart.groups[groupIdx];
+                    if (item.type === "select") {
+                        var i, j,
+                            data = [],
+                            dc;
+                        for (i = 0; i < item.choices.length; i++) {
+                            dc = d3.nest()
+                                .key(function (d) {
+                                    return d[item.choices[i]];
+                                })
+                                .rollup(function (v) {
+                                    return v[d3Fn];
+                                })
+                                .entries(results);
+
+                            for (j = 0; j < dc.length; j++) {
+                                var choiceName = item.choices[i].split(" - ");
+                                if (dc[j].key == "1") {
+                                    data.push({
+                                        key: choiceName[1],
+                                        value: dc[j].value
+                                    });
+                                    break;
+                                }
+                            }
+                        }
+
+                    } else {
+                        processedData = d3.nest()
+                            .key(function (d) {
+                                return d[item.name];
+                            })
+                            .rollup(function (v) {
+                                return v[d3Fn] / dataLength;
+                            })
+                            .entries(results);
+                    }
+                }
 
             }
 
-            return data;
+            return processedData;
         }
 
         /*
@@ -562,7 +567,7 @@ define([
                         var width = $elem.width();
                         var height = $elem.height();
                         var svg = dimple.newSvg(config.domElement, width, height);
-                        config.graph = new dimple.chart(svg, data);
+                        config.graph = new dimple.chart(svg, data[0]);
                         avCharts[chart.chart_type].add(chart, config);
                         config.graph.draw();
                     }
@@ -845,8 +850,8 @@ define([
                 id = containerId.substr(2);   // jump over "c_"
                 $('#' + containerId).remove();
 
-                for(i = 0; i < gCharts.length; i++) {
-                    if(gCharts[i].id === id) {
+                for (i = 0; i < gCharts.length; i++) {
+                    if (gCharts[i].id === id) {
                         gCharts.splice(i, 1);
                         saveToServer(gCharts);
                         break;
@@ -873,7 +878,7 @@ define([
                 gEdConfig = gChartsConfig[id];
                 gIsNewChart = false;
 
-                for(i = 0; i < gCharts.length; i++) {
+                for (i = 0; i < gCharts.length; i++) {
                     if (gCharts[i].id === id) {
                         gEdChart = gCharts[i];
                         break;
@@ -907,14 +912,17 @@ define([
             $("#ew_title").val(gEdChart.title);
             $('#ew_width').val(gEdChart.width);
             $('#ew_fn').val(gEdChart.fn);
-            $('#ew_question').val(gEdChart.qIdx);
+            if (!gEdChart.tSeries && gEdChart.groups.length > 0) {
+                $('#ew_question').val(gEdChart.groups[0].qIdx);
+            }
+
             $('#ew_group').val(gEdChart.group);
 
             if (gEdChart.tSeries) {
-                if(gEdChart.groups && gEdChart.groups.length > 0) {
-                    $("#ew_date1").val(gEdChart.groups[0].q);
-                    if(gEdChart.groups.length > 1) {
-                        $("#ew_date2").val(gEdChart.groups[1].q);
+                if (gEdChart.groups && gEdChart.groups.length > 0) {
+                    $("#ew_date1").val(gEdChart.groups[0].qIdx);
+                    if (gEdChart.groups.length > 1) {
+                        $("#ew_date2").val(gEdChart.groups[1].qIdx);
                     }
                 }
                 $('#ew_period').val(gEdChart.period);
@@ -930,8 +938,8 @@ define([
 
         function setChartDialogVisibility(s) {
 
-            if(typeof s.tSeries !== "undefined") {
-                if(s.tSeries) {
+            if (typeof s.tSeries !== "undefined") {
+                if (s.tSeries) {
                     $(".date_range_only, .period_only").show();
                     $(".question_only, .group_only").hide();
                 } else {
@@ -940,14 +948,14 @@ define([
                 }
             }
 
-            if(typeof s.gEdChart !== "undefined") {
+            if (typeof s.gEdChart !== "undefined") {
                 if (gEdChart.chart_type === "bar" || gEdChart.chart_type === "pie") {
                     $(".numeric_only").show();
                 } else {
                     $(".numeric_only").hide();
                 }
 
-                if(typeof s.group !== "undefined") {
+                if (typeof s.group !== "undefined") {
                     if (s.group && s.chart_type !== "wordcloud") {
                         $(".group_only").show();
                     } else {
@@ -996,9 +1004,11 @@ define([
                 reset = false,
                 questions,
                 errMsg,
-                i;
+                i,
+                questionIndex;
 
             var questions = gTasks.cache.surveyConfig[globals.gViewId].questions;
+            var columns = gTasks.cache.surveyConfig[globals.gViewId].columns;
 
             var title = $('#ew_title').val();
             if (!title || title.trim().length === 0) {
@@ -1007,12 +1017,8 @@ define([
             }
 
             if (validated) {
-                gEdChart.qIdx = $('#ew_question').val();
-                if (typeof gEdChart.qIdx !== "undefined" && questions) {		// Question specific
-                    gEdChart.type = questions[gEdChart.qIdx].type;
-                    gEdChart.name = questions[gEdChart.qIdx].name;
-                    gEdChart.dataLabel = questions[gEdChart.qIdx].humanName;
-                }
+                questionIndex = $('#ew_question').val();
+                gEdChart.groups = [];
                 gEdChart.fn = $('#ew_fn').val();
                 gEdChart.title = title;
                 gEdChart.tSeries = $('#ew_tseries').prop("checked");
@@ -1020,12 +1026,37 @@ define([
                 gEdChart.width = $('#ew_width').val();
                 gEdChart.group = $('#ew_group').val();
 
-                if (gEdChart.time_interval) {
-                    gEdChart.groups[0].q = $("#ew_date1").val();
-                    gEdChart.groups[0].label = $("#ew_date1 option[value='" + gEdChart.groups[0].q + "']").text();
+                if (typeof questionIndex !== "undefined" && questions && questions[questionIndex]) {		// Question specific
 
-                    gEdChart.groups[1].q = $("#ew_date2").val();
-                    gEdChart.groups[1].label = $("#ew_date2 option[value='" + gEdChart.groups[1].q + "']").text();
+                    gEdChart.groups.push({
+                        qIdx: questionIndex,
+                        type: questions[questionIndex].type,
+                        name: questions[questionIndex].name,
+                        dataLabel: questions[questionIndex].humanName
+                    });
+                }
+
+                if (gEdChart.tSeries) {
+                    questionIndex = $("#ew_date1").val();
+                    gEdChart.groups.push({
+                        qIdx: questionIndex,
+                        type: columns[questionIndex].type,
+                        name: columns[questionIndex].name,
+                        dataLabel: columns[questionIndex].humanName
+                    });
+
+                    questionIndex = $("#ew_date2").val();
+                    gEdChart.groups.push({
+                        qIdx: questionIndex,
+                        type: columns[questionIndex].type,
+                        name: columns[questionIndex].name,
+                        dataLabel: columns[questionIndex].humanName
+                    });
+
+                    //gEdChart.groups[0].label = $("#ew_date1 option[value='" + gEdChart.groups[0].q + "']").text();
+
+                    //gEdChart.groups[1].q = $("#ew_date2").val();
+                    //gEdChart.groups[1].label = $("#ew_date2 option[value='" + gEdChart.groups[1].q + "']").text();
                 }
                 if (gEdChart.tSeries) {
                     var period = $('#ew_period').val();
@@ -1037,14 +1068,14 @@ define([
 
                 // Todo if chart is being edited, ie index id set then replace
                 var replaced = false;
-                for(i = 0; i < gCharts.length; i++) {
-                    if(gCharts[i].id === gEdChart.id) {
+                for (i = 0; i < gCharts.length; i++) {
+                    if (gCharts[i].id === gEdChart.id) {
                         gCharts.splice(i, 1, gEdChart);
                         replaced = true;
                         break;
                     }
                 }
-                if(!replaced) {
+                if (!replaced) {
                     gCharts.push(gEdChart);
                 }
                 saveToServer(gCharts);
@@ -1078,25 +1109,20 @@ define([
             var h = [];
             var idx = -1;
             var key;
-            var keylangid;
 
             for (key in avCharts) {
 
                 if (avCharts.hasOwnProperty(key)) {
                     if (gEdChart.tSeries) {
-                        if (key !== "groupedBar") {
-                            continue;
-                        }
-                    } else {
-                        if (key === "groupedBar") {
+                        if (key !== "bar_v" && key !== "bar_h") {
                             continue;
                         }
                     }
-                    keylangid = (key === "groupedBar") ? "bar" : (key === "map") ? "c_map" : key;
+
                     h[++idx] = '<option value="';
                     h[++idx] = key;
                     h[++idx] = '">';
-                    h[++idx] = localise.set[keylangid];
+                    h[++idx] = localise.set[key];
                     h[++idx] = '</option>';
                 }
             }

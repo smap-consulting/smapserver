@@ -45,8 +45,7 @@ define([
             var x = config.graph.addMeasureAxis("x", "value");
             var y = config.graph.addCategoryAxis("y", "key");
             x.title = localise.set[chart.fn];
-            y.title = chart.dataLabel;
-            config.graph.addSeries(null, dimple.plot.bar);
+            config.graph.addSeries("key", dimple.plot.bar);
 
         }
 
