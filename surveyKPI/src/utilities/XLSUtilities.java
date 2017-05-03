@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.poi.hssf.usermodel.HSSFCellStyle;
+import org.apache.poi.hssf.usermodel.HSSFDataFormat;
 import org.apache.poi.hssf.util.HSSFColor;
 import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.DataFormat;
@@ -84,6 +85,10 @@ public class XLSUtilities {
 		style = wb.createCellStyle();
 		style.setDataFormat(format.getFormat("yyyy-mm-dd h:mm"));	
 		styles.put("datetime", style);
+		
+		style = wb.createCellStyle();
+		style.setDataFormat(HSSFDataFormat.getBuiltinFormat("0.00"));
+		styles.put("numeric", style);
 		
 		style = wb.createCellStyle();
 	    style.setFont(linkFont);
