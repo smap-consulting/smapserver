@@ -603,7 +603,7 @@ public class GetXForm {
     				Element repeatElement = outputDoc.createElement("repeat");
     				repeatElement.setAttribute("nodeset", subForm.getPath(null));
     				String repeats = subForm.getRepeats(true, template.getQuestionPaths());
-    				if(repeats != null) {		// Add the path to the repeat count question
+    				if(repeats != null && repeats.trim().length() > 0) {		// Add the path to the repeat count question
     					String repeatCountPath = template.getQuestionPaths().get(q.getName()) + "_count";
     					repeatElement.setAttribute("jr:count", repeatCountPath);
     					repeatElement.setAttribute("jr:noAddRemove", "true()");
@@ -755,7 +755,7 @@ public class GetXForm {
 		} else if(q.getType().equals("begin repeat") && count) {
 			Form subForm = template.getSubForm(f,q);
 			String repeats = subForm.getRepeats(true, template.getQuestionPaths());
-			if(repeats != null) {		// Add the path to the repeat count question
+			if(repeats != null && repeats.trim().length() > 0) {		// Add the path to the repeat count question
 				calculate = repeats;
 			}
 		} else  {

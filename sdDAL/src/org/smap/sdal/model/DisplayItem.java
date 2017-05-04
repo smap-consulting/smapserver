@@ -27,6 +27,7 @@ public class DisplayItem {
 	public int rec_number = 0;
 	public String map;
 	public String location;
+	public String zoom;					// Map zoom
 	public boolean isBarcode = false;
 	
 	public void debug() {

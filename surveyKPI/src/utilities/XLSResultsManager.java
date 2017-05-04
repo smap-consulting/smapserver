@@ -29,6 +29,8 @@ import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 
 //import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 //import org.apache.poi.ss.usermodel.Workbook;
@@ -46,6 +48,7 @@ import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.apache.poi.xssf.usermodel.*;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.commons.io.IOUtils;
+import org.apache.poi.hssf.usermodel.HSSFDataFormat;
 import org.apache.poi.hssf.usermodel.HSSFHyperlink;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
@@ -83,10 +86,27 @@ public class XLSResultsManager {
 		}
 	}
 	
+	private class CellItem {
+		
+		public static final int DECIMAL = 1;
+		public static final int INTEGER = 2;
+		public static final int STRING = 3;
+		public static final int DATE = 4;
+		public static final int DATETIME = 5;
+		
+		public String v;
+		public int type;
+		
+		public CellItem(String v, int type) {
+			this.v = v;
+			this.type = type;
+		}
+	}
+	
 	private class RecordDesc {
 		String prikey;
 		String parkey;
-		ArrayList<String> record;
+		ArrayList<CellItem> record;
 	}
 	
 	private class FormDesc {
@@ -129,7 +149,7 @@ public class XLSResultsManager {
 			}
 		}
 		
-		public void addRecord(String prikey, String parkey, ArrayList<String> rec) {
+		public void addRecord(String prikey, String parkey, ArrayList<CellItem> rec) {
 			if(records == null) {
 				records = new ArrayList<RecordDesc> ();
 			}
@@ -600,33 +620,32 @@ public class XLSResultsManager {
 	 * Create a header row and set column widths
 	 */
 	private void closeRecord(
-			ArrayList<String> record, 
+			ArrayList<CellItem> record, 
 			Sheet sheet, 
 			Map<String, CellStyle> styles,
 			boolean embedImages) throws IOException {
 		
 		CreationHelper createHelper = wb.getCreationHelper();
 		
-		
 		Row row = sheet.createRow(rowIndex++);
 		if(embedImages) {
 			row.setHeight((short) 1000);
 		}
-		CellStyle style = styles.get("default");
+
 		for(int i = 0; i < record.size(); i++) {
-			String v = record.get(i);
+			CellItem ci = record.get(i);
 			
             Cell cell = row.createCell(i);
             
-            if(v != null && (v.startsWith("https://") || v.startsWith("http://"))) {
+            if(ci.v != null && (ci.v.startsWith("https://") || ci.v.startsWith("http://"))) {
             	
             	if(embedImages) {
-            		if(v.endsWith(".jpg") || v.endsWith(".png")) {
-            			int idx = v.indexOf("attachments");
-            			int idxName = v.lastIndexOf('/');
+            		if(ci.v.endsWith(".jpg") || ci.v.endsWith(".png")) {
+            			int idx = ci.v.indexOf("attachments");
+            			int idxName = ci.v.lastIndexOf('/');
             			if(idx > 0 && idxName > 0) {
-            				String fileName = v.substring(idxName);
-	            			String stem = basePath + "/" + v.substring(idx, idxName);
+            				String fileName = ci.v.substring(idxName);
+	            			String stem = basePath + "/" + ci.v.substring(idx, idxName);
 	            			String imageName = stem + "/thumbs" + fileName + ".jpg";
 	            			try {
 				            	InputStream inputStream = new FileInputStream(imageName);
@@ -654,20 +673,62 @@ public class XLSResultsManager {
 				cell.setCellStyle(styles.get("link"));
 				if(isXLSX) {
 					XSSFHyperlink url = (XSSFHyperlink)createHelper.createHyperlink(Hyperlink.LINK_URL);
-					url.setAddress(v);
+					url.setAddress(ci.v);
 					cell.setHyperlink(url);
 				} else {
 					HSSFHyperlink url = new HSSFHyperlink(HSSFHyperlink.LINK_URL);
-					url.setAddress(v);
+					url.setAddress(ci.v);
 					cell.setHyperlink(url);
 				}
 				
+				cell.setCellValue(ci.v);
+				
 			} else {
-				cell.setCellStyle(style);
-			}
             
-            cell.setCellValue(v);
-
+	            /*
+	             * Write the value as double or string
+	             */
+	            boolean cellWritten = false; 
+	
+	            if(ci.type == CellItem.DECIMAL || 
+	            		ci.type == CellItem.INTEGER && 
+	            		ci.v != null) {
+	        		try {
+	        			double vDouble = Double.parseDouble(ci.v);
+	
+	        			cell.setCellStyle(styles.get("default"));
+	        			cell.setCellValue(vDouble);
+	        			cellWritten = true;
+	        		} catch (Exception e) {
+	        			// Ignore
+	        		}
+	            } else if(ci.type == CellItem.DATETIME) {
+	            	DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+	            	try {
+	            		java.util.Date date = dateFormat.parse(ci.v);
+	            		cell.setCellStyle(styles.get("datetime"));
+		            	cell.setCellValue(date);
+		            	cellWritten = true;
+	            	} catch (Exception e) {
+	        			// Ignore
+	        		}
+	            } else if(ci.type == CellItem.DATE) {
+	            	DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+	            	try {
+	            		java.util.Date date = dateFormat.parse(ci.v);
+	            		cell.setCellStyle(styles.get("date"));
+		            	cell.setCellValue(date);
+		            	cellWritten = true;
+	            	} catch (Exception e) {
+	        			// Ignore
+	        		}
+	            }
+	            
+	           	if(!cellWritten) {
+	           		cell.setCellStyle(styles.get("default"));
+	        		cell.setCellValue(ci.v);
+	        	}
+			}         
         }
 	}
 	
@@ -806,10 +867,10 @@ public class XLSResultsManager {
 	/*
 	 * Return the text
 	 */
-	private ArrayList<String> getContent(Connection con, String value, boolean firstCol, String columnName,
+	private ArrayList<CellItem> getContent(Connection con, String value, boolean firstCol, String columnName,
 			String columnType, boolean split_locn) throws NumberFormatException, SQLException {
 
-		ArrayList<String> out = new ArrayList<String>();
+		ArrayList<CellItem> out = new ArrayList<CellItem>();
 		if(value == null) {
 			value = "";
 		}
@@ -819,40 +880,41 @@ public class XLSResultsManager {
 			String coords [] = getLonLat(value);
 
 			if(coords.length > 1) {
-				out.add(coords[1]);
-				out.add(coords[0]); 
+				out.add(new CellItem(coords[1], CellItem.DECIMAL));
+				out.add(new CellItem(coords[0], CellItem.DECIMAL)); 
 			} else {
-				out.add(value);
-				out.add(value);
+				out.add(new CellItem(value, CellItem.STRING));
+				out.add(new CellItem(value, CellItem.STRING));
 			}
 				
 			
 		} else if(split_locn && (value.startsWith("POLYGON") || value.startsWith("LINESTRING"))) {
 			
 			// Can't split linestrings and polygons, leave latitude and longitude as blank
-			out.add("");
-			out.add("");
+			out.add(new CellItem("", CellItem.STRING));
+			out.add(new CellItem("", CellItem.STRING));
+			
 			
 		} else if(split_locn && columnType != null & columnType.equals("geopoint") ) {
 			// Geopoint that needs to be split but there is no data
-			out.add("");
-			out.add("");
+			out.add(new CellItem("", CellItem.STRING));
+			out.add(new CellItem("", CellItem.STRING));
 		} else if(value.startsWith("POINT")) {
 			String coords [] = getLonLat(value);
 			if(coords.length > 1) {
-				out.add("http://www.openstreetmap.org/?mlat=" +
+				out.add(new CellItem("http://www.openstreetmap.org/?mlat=" +
 						coords[1] +
 						"&mlon=" +
 						coords[0] +
-						"&zoom=14");
+						"&zoom=14", CellItem.STRING));
 			
 			} else {
-				out.add(value);
+				out.add(new CellItem(value, CellItem.STRING));
 			}
 		} else if(columnName.equals("_device")) {
-			out.add(value);				
+			out.add(new CellItem(value, CellItem.STRING));			
 		} else if(columnName.equals("_complete")) {
-			out.add(value.equals("f") ? "No" : "Yes"); 
+			out.add(new CellItem(value.equals("f") ? "No" : "Yes", CellItem.STRING));
 				
 		} else if(columnName.equals("_s_id")) {
 			String displayName = surveyNames.get(out);
@@ -864,7 +926,7 @@ public class XLSResultsManager {
 				}
 				surveyNames.put(value, displayName);
 			}
-			out.add(displayName); 
+			out.add(new CellItem(displayName, CellItem.STRING));
 				
 		} else if(columnType.equals("dateTime")) {
 			// Convert the timestamp to the excel format specified in the xl2 mso-format
@@ -872,9 +934,18 @@ public class XLSResultsManager {
 			if(idx1 > 0) {
 				value = value.substring(0, idx1);
 			} 
-			out.add(value);
-		} else {
-			out.add(value);
+			out.add(new CellItem(value, CellItem.DATETIME));
+		} else if(columnType.equals("decimal")) {
+			out.add(new CellItem(value, CellItem.DECIMAL));
+		} else if(columnType.equals("date")) {
+			out.add(new CellItem(value, CellItem.DATE));
+		} else if(columnType.equals("int")) {
+			out.add(new CellItem(value, CellItem.INTEGER));
+		} else if(columnType.equals("string")) {
+			out.add(new CellItem(value, CellItem.STRING));
+		}else {
+			//System.out.println("Adding default string for column type: " + columnType);
+			out.add(new CellItem(value, CellItem.STRING));
 		}
 
 		return out;
@@ -950,7 +1021,7 @@ public class XLSResultsManager {
 			while (resultSet.next()) {
 				
 				String prikey = resultSet.getString(1);
-				ArrayList<String> record = new ArrayList<String>();
+				ArrayList<CellItem> record = new ArrayList<CellItem>();
 				
 				// If this is the top level form reset the current parents and add the primary key
 				if(f.parkey == null || f.parkey.equals("0")) {
@@ -1036,7 +1107,7 @@ public class XLSResultsManager {
 				if(f.parkey == null || f.parkey.equals("0")) {
 					
 					//f.printRecords(4, true);
-					appendToOutput(sd, new ArrayList<String> (), 
+					appendToOutput(sd, new ArrayList<CellItem> (), 
 							formList.get(0), formList, 0, null, resultsSheet, styles, embedImages);
 					
 				}
@@ -1056,7 +1127,7 @@ public class XLSResultsManager {
 	/*
 	 * Construct the output
 	 */
-	private void appendToOutput(Connection sd,  ArrayList<String> in, 
+	private void appendToOutput(Connection sd,  ArrayList<CellItem> in, 
 			FormDesc f, ArrayList<FormDesc> formList, int index, 
 			String parent,
 			Sheet resultsSheet, 
@@ -1072,7 +1143,7 @@ public class XLSResultsManager {
 		if(f.visible) {
 			
 			if(f.flat) {
-				ArrayList<String> newRec = new ArrayList<String> ();
+				ArrayList<CellItem> newRec = new ArrayList<CellItem> ();
 				newRec.addAll(in);
 				for(int i = 0; i < number_records; i++) {
 					newRec.addAll(f.records.get(i).record);
@@ -1081,7 +1152,7 @@ public class XLSResultsManager {
 				log.info("flat------>" + f.table_name + "Number records: " + number_records);
 				// Pad up to max repeats
 				for(int i = number_records; i < f.maxRepeats; i++) {
-					ArrayList<String> record = new ArrayList<String>();
+					ArrayList<CellItem> record = new ArrayList<CellItem>();
 					for(int j = 1; j < f.columnCount; j++) {	// Start from one to ignore primary key
 						record.addAll(getContent(sd, "",  false, "", "empty", false));
 					}
@@ -1104,7 +1175,7 @@ public class XLSResultsManager {
 						/*
 						 * Add an empty record for this form
 						 */
-						ArrayList<String> newRec = new ArrayList<String> ();
+						ArrayList<CellItem> newRec = new ArrayList<CellItem> ();
 						newRec.addAll(in);
 						for(int j = 1; j < f.columnCount; j++) {	// Start from one to ignore primary key
 							newRec.addAll(getContent(sd, "", false, "", "empty", false));
@@ -1133,7 +1204,7 @@ public class XLSResultsManager {
 						RecordDesc rd = f.records.get(i);
 						
 						if(parent == null || parent.equals("0") || parent.equals(rd.parkey)) {
-							ArrayList<String> newRec = new ArrayList<String> ();
+							ArrayList<CellItem> newRec = new ArrayList<CellItem> ();
 							newRec.addAll(in);
 							newRec.addAll(f.records.get(i).record);
 			
@@ -1166,7 +1237,7 @@ public class XLSResultsManager {
 									/*
 									 * Add an empty record for this form
 									 */
-									ArrayList<String> newRec = new ArrayList<String> ();
+									ArrayList<CellItem> newRec = new ArrayList<CellItem> ();
 									newRec.addAll(in);
 									for(int j = 1; j < f.columnCount; j++) {	// Start from one to ignore primary key
 										newRec.addAll(getContent(sd, "",  false, "", "empty", false));

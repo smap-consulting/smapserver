@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URLEncoder;
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -55,7 +57,12 @@ public class PdfUtilities {
 		}
 	}
 	
-	public static Image getMapImage(String map, String value, String location, String mapbox_key) throws BadElementException, MalformedURLException, IOException {
+	public static Image getMapImage(Connection sd, 
+			String map, 
+			String value, 
+			String location, 
+			String zoom,
+			String mapbox_key) throws BadElementException, MalformedURLException, IOException, SQLException {
 		
 		Image img = null;
 		
@@ -76,7 +83,9 @@ public class PdfUtilities {
 			String jsonValue = value;
 			url.append(URLEncoder.encode(jsonValue, "UTF-8"));
 			url.append(")/");
-			if(location != null) {
+			if(zoom != null && zoom.trim().length() > 0) {
+				url.append(GeneralUtilityMethods.getGeoJsonCentroid(value) + "," + zoom);
+			} else if(location != null) {
 				url.append(location);
 			} else {
 				url.append("auto");
@@ -99,7 +108,11 @@ public class PdfUtilities {
 		if(getMap) {
 			url.append("500x300.png?access_token=");
 			url.append(mapbox_key);
-			img = Image.getInstance(url.toString());
+			try {
+				img = Image.getInstance(url.toString());
+			} catch (Exception e) {
+				log.log(Level.SEVERE, "Exception", e);
+			}
 		} 
 		
 		return img;
