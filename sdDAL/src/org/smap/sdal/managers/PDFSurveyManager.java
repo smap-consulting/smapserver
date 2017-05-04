@@ -7,7 +7,6 @@ import java.io.OutputStream;
 import java.io.StringReader;
 import java.lang.reflect.Type;
 import java.net.MalformedURLException;
-import java.net.URLEncoder;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -139,7 +138,7 @@ public class PDFSurveyManager {
 	 * Return a suggested name for the PDF file derived from the results
 	 */
 	public String createPdf(
-			Connection connectionSD,
+			Connection sd,
 			Connection cResults,
 			OutputStream outputStream,
 			String basePath, 
@@ -163,7 +162,7 @@ public class PDFSurveyManager {
 		boolean generateBlank = (instanceId == null) ? true : false;	// If false only show selected options
 		
 		ServerManager serverManager = new ServerManager();
-		ServerData serverData = serverManager.getServer(connectionSD);
+		ServerData serverData = serverManager.getServer(sd);
 		
 		SurveyManager sm = new SurveyManager();
 		UserManager um = new UserManager();
@@ -209,8 +208,8 @@ public class PDFSurveyManager {
 			/*
 			 * Get the results and details of the user that submitted the survey
 			 */
-			boolean superUser = GeneralUtilityMethods.isSuperUser(connectionSD, remoteUser);
-			survey = sm.getById(connectionSD, cResults, remoteUser, sId, true, basePath, 
+			boolean superUser = GeneralUtilityMethods.isSuperUser(sd, remoteUser);
+			survey = sm.getById(sd, cResults, remoteUser, sId, true, basePath, 
 					instanceId, true, generateBlank, true, false, true, "real", superUser, utcOffset, "geojson");
 			log.info("User Ident who submitted the survey: " + survey.instance.user);
 			String userName = survey.instance.user;
@@ -218,7 +217,7 @@ public class PDFSurveyManager {
 				userName = remoteUser;
 			}
 			if(userName != null) {
-				user = um.getByIdent(connectionSD, userName);
+				user = um.getByIdent(sd, userName);
 			}
 				
 			// If a filename was not specified then get one from the survey data
@@ -267,7 +266,7 @@ public class PDFSurveyManager {
 				PdfStamper stamper = new PdfStamper(reader, outputStream);
 				int languageIdx = GeneralUtilityMethods.getLanguageIdx(survey, language);
 				for(int i = 0; i < survey.instance.results.size(); i++) {
-					fillTemplate(gv, stamper.getAcroFields(), survey.instance.results.get(i), basePath, null, i, survey, languageIdx);
+					fillTemplate(sd, gv, stamper.getAcroFields(), survey.instance.results.get(i), basePath, null, i, survey, languageIdx);
 				}
 				if(user != null) {
 					fillTemplateUserDetails(stamper.getAcroFields(), user, basePath);
@@ -315,7 +314,7 @@ public class PDFSurveyManager {
 				}
 				
 				for(int i = 0; i < survey.instance.results.size(); i++) {
-					processForm(parser, document, survey.instance.results.get(i), survey, basePath, 
+					processForm(sd, parser, document, survey.instance.results.get(i), survey, basePath, 
 							languageIdx,
 							generateBlank,
 							0,
@@ -334,7 +333,7 @@ public class PDFSurveyManager {
 					document.add(new Paragraph("Appendix", defaultFontBold));
 					
 					for(int i = 0; i < survey.instance.results.size(); i++) {
-						processForm(parser, document, survey.instance.results.get(i), survey, basePath, 
+						processForm(sd, parser, document, survey.instance.results.get(i), survey, basePath, 
 								languageIdx,
 								generateBlank,
 								0,
@@ -418,6 +417,7 @@ public class PDFSurveyManager {
 	 * Fill the template with data from the survey
 	 */
 	private void fillTemplate(
+			Connection sd,
 			GlobalVariables gv,
 			AcroFields pdfForm, 
 			ArrayList<Result> record, 
@@ -450,7 +450,7 @@ public class PDFSurveyManager {
 				 */
 				if(r.type.equals("form")) {
 					for(int k = 0; k < r.subForm.size(); k++) {
-						fillTemplate(gv, pdfForm, r.subForm.get(k), basePath, fieldName, k, survey, languageIdx);
+						fillTemplate(sd, gv, pdfForm, r.subForm.get(k), basePath, fieldName, k, survey, languageIdx);
 					} 
 				} else if(r.type.equals("select1")) {
 					for(Result c : r.choices) {
@@ -499,7 +499,7 @@ public class PDFSurveyManager {
 					}
 				} else if(r.type.equals("geopoint") || r.type.equals("geoshape") || r.type.equals("geotrace") || r.type.startsWith("geopolygon_") || r.type.startsWith("geolinestring_")) {
 					
-					Image img = PdfUtilities.getMapImage(di.map, r.value, di.location, gv.mapbox_key);
+					Image img = PdfUtilities.getMapImage(sd, di.map, r.value, di.location, di.zoom, gv.mapbox_key);
 					PdfUtilities.addImageTemplate(pdfForm, fieldName, img);
 				} else if(r.type.equals("image")) {
 					PdfUtilities.addImageTemplate(pdfForm, fieldName, basePath, value);
@@ -526,7 +526,7 @@ public class PDFSurveyManager {
 				/*
 				 * Add any QR code values to fields that have been identified using the QR suffix
 				 */
-				if(fieldNameQR != null) {
+				if(fieldNameQR != null && value != null && value.trim().length() > 0) {
 					BarcodeQRCode qrcode = new BarcodeQRCode(value.trim(), 1, 1, null);
 			        Image qrcodeImage = qrcode.getImage();
 			        qrcodeImage.setAbsolutePosition(10,500);
@@ -676,6 +676,7 @@ public class PDFSurveyManager {
 	 *  can be applied to showing the form on the screen and generating the PDF
 	 */
 	private void processForm(
+			Connection sd,
 			Parser parser,
 			Document document,  
 			ArrayList<Result> record,
@@ -706,7 +707,7 @@ public class PDFSurveyManager {
 					int blankRepeats = getBlankRepeats(r.appearance);
 					for(int k = 0; k < blankRepeats; k++) {
 						repIndexes[depth] = k;
-						processForm(parser, document, r.subForm.get(0), survey, basePath, languageIdx, 
+						processForm(sd, parser, document, r.subForm.get(0), survey, basePath, languageIdx, 
 								generateBlank, 
 								depth + 1,
 								k,
@@ -720,7 +721,7 @@ public class PDFSurveyManager {
 						// Maintain array list of parent records in order to look up ${values}
 						parentRecords.add(0, record);		// Push this record in at the beginning of the list as we want to search most recent first
 						repIndexes[depth] = k;
-						processForm(parser, document, r.subForm.get(k), survey, basePath, languageIdx, 
+						processForm(sd, parser, document, r.subForm.get(k), survey, basePath, languageIdx, 
 								generateBlank, 
 								depth + 1,
 								k,
@@ -745,7 +746,7 @@ public class PDFSurveyManager {
 						//ignore
 					} else {
 						Row row = prepareRow(record, survey, j, languageIdx, gv, length, appendix, parentRecords);
-						PdfPTable newTable = processRow(parser, row, basePath, generateBlank, depth, repIndexes, gv);
+						PdfPTable newTable = processRow(sd, parser, row, basePath, generateBlank, depth, repIndexes, gv);
 						
 						newTable.setWidthPercentage(100);
 				        
@@ -827,7 +828,10 @@ public class PDFSurveyManager {
 	/*
 	 * Add the table row to the document
 	 */
-	PdfPTable processRow(Parser parser, Row row, String basePath,
+	PdfPTable processRow(Connection sd, 
+			Parser parser, 
+			Row row, 
+			String basePath,
 			boolean generateBlank,
 			int depth,
 			int[] repIndexes,
@@ -849,7 +853,7 @@ public class PDFSurveyManager {
 		int numberItems = row.items.size();
 		for(DisplayItem di : row.items) {
 
-			PdfPCell cell = new PdfPCell(addDisplayItem(parser, di, basePath, generateBlank, gv));
+			PdfPCell cell = new PdfPCell(addDisplayItem(sd, parser, di, basePath, generateBlank, gv));
 			//cell.addElement(addDisplayItem(parser, di, basePath, generateBlank, gv));
 			cell.setBorderColor(BaseColor.LIGHT_GRAY);
 			
@@ -992,6 +996,7 @@ public class PDFSurveyManager {
 		setQuestionFormats(question.appearance, di);
 		di.fIdx = r.fIdx;
 		di.rec_number = recNumber;
+		
 		items.add(di);
 	}
 	
@@ -1134,6 +1139,8 @@ public class PDFSurveyManager {
 						di.location = getAppValue(appValues[i]);			// lon,lat,zoom
 					} else if(appValues[i].startsWith("pdfbarcode")) {
 						di.isBarcode = true;		
+					} else if(appValues[i].startsWith("pdfzoom")) {
+						di.zoom = getAppValue(appValues[i]);		
 					}
 				}
 			}
@@ -1252,7 +1259,9 @@ public class PDFSurveyManager {
 	/*
 	 * Add the question label, hint, and any media
 	 */
-	private PdfPTable addDisplayItem(Parser parser, DisplayItem di, 
+	private PdfPTable addDisplayItem(Connection sd,
+			Parser parser, 
+			DisplayItem di, 
 			String basePath,
 			boolean generateBlank,
 			GlobalVariables gv) throws BadElementException, MalformedURLException, IOException {
@@ -1322,7 +1331,7 @@ public class PDFSurveyManager {
 		
 		// Set the content of the value cell
 		try {
-			updateValueCell(valueCell, di, generateBlank, basePath, gv);
+			updateValueCell(sd, valueCell, di, generateBlank, basePath, gv);
 		} catch (Exception e) {
 			log.info("Error updating value cell, continuing: " + basePath + " : " + di.value);
 			log.log(Level.SEVERE, "Exception", e);
@@ -1361,10 +1370,13 @@ public class PDFSurveyManager {
 	/*
 	 * Set the contents of the value cell
 	 */
-	private void updateValueCell(PdfPCell valueCell, DisplayItem di, boolean generateBlank, 
+	private void updateValueCell(Connection sd,
+			PdfPCell valueCell, 
+			DisplayItem di, 
+			boolean generateBlank, 
 			String basePath,
 			GlobalVariables gv
-			) throws BadElementException, MalformedURLException, IOException {
+			) throws BadElementException, MalformedURLException, IOException, SQLException {
 		
 		// Questions that append their values to this question
 		ArrayList<String> deps = gv.addToList.get(di.fIdx + "_" + di.rec_number + "_" + di.name);
@@ -1387,7 +1399,7 @@ public class PDFSurveyManager {
 		
 		} else if(di.type.equals("geopoint") || di.type.equals("geoshape") || di.type.equals("geotrace") || di.type.startsWith("geopolygon_") || di.type.startsWith("geolinestring_")) {
 			
-			Image img = PdfUtilities.getMapImage(di.map, di.value, di.location, gv.mapbox_key);
+			Image img = PdfUtilities.getMapImage(sd, di.map, di.value, di.location, di.zoom, gv.mapbox_key);
 			
 			if(img != null) {
 				valueCell.addElement(img);

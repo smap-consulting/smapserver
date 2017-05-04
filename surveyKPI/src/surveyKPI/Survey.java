@@ -370,7 +370,6 @@ public class Survey extends Application {
 			Stack<Integer> surveys = new Stack<Integer>();
 			surveys.push(new Integer(sId));
 			completedSurveys.put(new Integer(sId), new Integer(sId));
-			System.out.println("Added survey: " + sId);
 			
 			/*
 			 * Get Forms and row counts the next survey
@@ -412,8 +411,6 @@ public class Survey extends Application {
 						}	
 					}	
 				}
-				
-				System.out.println("Processing for survey: " + currentSurveyId);
 				
 				pstmtTables.setInt(1, currentSurveyId);
 				resultSet = pstmtTables.executeQuery();
