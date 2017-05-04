@@ -108,7 +108,11 @@ public class PdfUtilities {
 		if(getMap) {
 			url.append("500x300.png?access_token=");
 			url.append(mapbox_key);
-			img = Image.getInstance(url.toString());
+			try {
+				img = Image.getInstance(url.toString());
+			} catch (Exception e) {
+				log.log(Level.SEVERE, "Exception", e);
+			}
 		} 
 		
 		return img;
