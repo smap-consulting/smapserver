@@ -504,7 +504,7 @@ public class GetXForm {
 					// Add a timing element if we have entered the meta group and timing is enabled
 					if(q.getName().equals("meta")) {
 						if(template.getSurvey().getTimingData()) {
-							questionElement = outputDoc.createElement("timing");
+							questionElement = outputDoc.createElement("audit");
 							currentParent.appendChild(questionElement);	
 						}
 					}
