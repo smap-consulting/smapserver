@@ -186,7 +186,7 @@ define([
 
             if (chart.groups) {
                 chart.groupLabels = chart.groups.map(function (e) {
-                    return e.label;
+                    return e.dataLabel;
                 });
             }
 
@@ -321,8 +321,8 @@ define([
                                 adjKey,
                                 adjKeyArray;
 
-                            if (d[chart.groups[i].q]) {
-                                dateArray = d[chart.groups[i].q].trim().split(" ");
+                            if (d[chart.groups[i].name]) {
+                                dateArray = d[chart.groups[i].name].trim().split(" ");
                                 if (dateArray.length > 0) {
                                     adjKey = dateArray[0];
                                     adjKeyArray = adjKey.split("-");
@@ -363,8 +363,10 @@ define([
                         });
 
                         dateValueMap[i] = allData[i].reduce(function (r, v) {
-                            r[v.key.toISOString()] = v.value;
-                            return r;
+                        	if(v.key) {
+                                r[v.key.toISOString()] = v.value;
+                                return r;
+                            }
                         }, {});
 
 
@@ -389,23 +391,21 @@ define([
                     var newData = [];
                     range.forEach(function (date) {
                         var dx = date.toISOString();
-                        var newDataItem = {
-                                'key': formatTime(date),
-                                'pr': []
-                            },
-                            newResults;
+
 
                         for (i = 0; i < allData.length; i++) {
-                            newResults = {};
-                            newResults.key = chart.groups[i].label;
-                            if (!(dx in dateValueMap[i])) {
-                                newResults.value = 0;
-                            } else {
-                                newResults.value = dateValueMap[i][dx];
+                            var value = 0;
+                            var newDataItem = {
+                                'key': formatTime(date)
+                            };
+                            if ((dx in dateValueMap[i])) {
+                                value = dateValueMap[i][dx];
                             }
-                            newDataItem.pr.push(newResults);
+                            newDataItem["count"] = value;
+                            newDataItem["group"] = chart.groups[i].dataLabel;
+                            newData.push(newDataItem);
                         }
-                        newData.push(newDataItem);
+
                     });
 
                     processedData = newData;
@@ -567,7 +567,7 @@ define([
                         var width = $elem.width();
                         var height = $elem.height();
                         var svg = dimple.newSvg(config.domElement, width, height);
-                        config.graph = new dimple.chart(svg, data[0]);
+                        config.graph = new dimple.chart(svg, data);
                         avCharts[chart.chart_type].add(chart, config);
                         config.graph.draw();
                     }
@@ -1024,16 +1024,20 @@ define([
                 gEdChart.tSeries = $('#ew_tseries').prop("checked");
                 gEdChart.chart_type = $('#ew_chart_type').val();
                 gEdChart.width = $('#ew_width').val();
+                gEdChart.period = $('#ew_period').val();
+
                 gEdChart.group = $('#ew_group').val();
 
-                if (typeof questionIndex !== "undefined" && questions && questions[questionIndex]) {		// Question specific
+                if(!gEdChart.tSeries) {
+                    if (typeof questionIndex !== "undefined" && questions && questions[questionIndex]) {		// Question specific
 
-                    gEdChart.groups.push({
-                        qIdx: questionIndex,
-                        type: questions[questionIndex].type,
-                        name: questions[questionIndex].name,
-                        dataLabel: questions[questionIndex].humanName
-                    });
+                        gEdChart.groups.push({
+                            qIdx: questionIndex,
+                            type: questions[questionIndex].type,
+                            name: questions[questionIndex].name,
+                            dataLabel: questions[questionIndex].humanName
+                        });
+                    }
                 }
 
                 if (gEdChart.tSeries) {

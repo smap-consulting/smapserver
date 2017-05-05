@@ -29,6 +29,7 @@ public class ChartDefn {
 	public boolean tSeries;
 	public int width;
 	public String id;
-	public boolean time_interval;	
+	public boolean time_interval;
+	public String period;
 	ArrayList<ChartItem> groups;
 }

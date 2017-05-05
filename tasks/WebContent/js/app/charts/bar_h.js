@@ -42,10 +42,14 @@ define([
         function add(chart, config) {
 
             config.graph.setMargins(80, 50, 20, 80);
-            var x = config.graph.addMeasureAxis("x", "value");
-            var y = config.graph.addCategoryAxis("y", "key");
+            var x = config.graph.addMeasureAxis("x", "count");
+
+            var labels = chart.groupLabels.unshift("key");
+            var y = config.graph.addCategoryAxis("y", ["key","group"]);
             x.title = localise.set[chart.fn];
-            config.graph.addSeries("key", dimple.plot.bar);
+            config.graph.addSeries("group", dimple.plot.bar);
+
+            config.graph.addLegend(65, 10, 510, 20, "right");
 
         }
 
