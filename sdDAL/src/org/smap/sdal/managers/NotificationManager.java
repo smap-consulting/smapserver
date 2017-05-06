@@ -303,7 +303,7 @@ public class NotificationManager {
 			int sId,
 			String ident,
 			String instanceId,
-			int pId) throws SQLException {
+			int pId) throws Exception {
 		/*
 		 * 1. Get notifications that may apply to the passed in upload event.
 		 * 		Notifications can be re-applied so the the notifications flag in upload event is ignored
@@ -374,6 +374,21 @@ public class NotificationManager {
 			String logContent = null;
 			if(nd.attach != null) {
 				System.out.println("Attaching link to email: " + nd.attach);
+				
+				/*
+				 * Get survey details
+				 */
+				PDFSurveyManager pm = new PDFSurveyManager();
+				SurveyManager sm = new SurveyManager();
+				org.smap.sdal.model.Survey survey = null;
+				boolean generateBlank =  (instanceId == null) ? true : false;	// If false only show selected options
+				boolean superUser = GeneralUtilityMethods.isSuperUser(sd, remoteUser);
+				survey = sm.getById(sd, cResults, remoteUser, sId, true, basePath, 
+						instanceId, true, generateBlank, true, false, true, "real", superUser, utcOffset, "geojson");
+
+				nd.subject = sm.fillStringTemplate(survey, nd.subject);
+				nd.content = sm.fillStringTemplate(survey, nd.content);
+				
 				if(nd.attach.startsWith("pdf")) {
 					docURL = null;
 					
@@ -385,8 +400,7 @@ public class NotificationManager {
 					} catch (Exception e) {
 						log.log(Level.SEVERE, "Error creating temporary PDF file", e);
 					}
-					PDFSurveyManager pm = new PDFSurveyManager();
-					
+										
 					// Split orientation from nd.attach
 					boolean landscape = false;
 					if(nd.attach != null && nd.attach.startsWith("pdf")) {
@@ -401,8 +415,8 @@ public class NotificationManager {
 							basePath, 
 							remoteUser,
 							"none", 
-							sId, 
-							instanceId,
+							survey, 
+							generateBlank,
 							null,
 							landscape,
 							null,

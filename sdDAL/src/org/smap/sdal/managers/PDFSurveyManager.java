@@ -144,8 +144,8 @@ public class PDFSurveyManager {
 			String basePath, 
 			String remoteUser,
 			String language, 
-			int sId, 
-			String instanceId,
+			org.smap.sdal.model.Survey survey,
+			boolean generateBlank,
 			String filename,
 			boolean landscape,					// Set true if landscape
 			HttpServletResponse response,
@@ -157,14 +157,11 @@ public class PDFSurveyManager {
 			language = "none";
 		}
 		
-		org.smap.sdal.model.Survey survey = null;
 		User user = null;
-		boolean generateBlank = (instanceId == null) ? true : false;	// If false only show selected options
 		
 		ServerManager serverManager = new ServerManager();
 		ServerData serverData = serverManager.getServer(sd);
 		
-		SurveyManager sm = new SurveyManager();
 		UserManager um = new UserManager();
 		int [] repIndexes = new int[20];		// Assume repeats don't go deeper than 20 levels
 
@@ -208,9 +205,7 @@ public class PDFSurveyManager {
 			/*
 			 * Get the results and details of the user that submitted the survey
 			 */
-			boolean superUser = GeneralUtilityMethods.isSuperUser(sd, remoteUser);
-			survey = sm.getById(sd, cResults, remoteUser, sId, true, basePath, 
-					instanceId, true, generateBlank, true, false, true, "real", superUser, utcOffset, "geojson");
+
 			log.info("User Ident who submitted the survey: " + survey.instance.user);
 			String userName = survey.instance.user;
 			if(userName == null) {
@@ -1003,7 +998,7 @@ public class PDFSurveyManager {
 	/*
 	 * Where a label incudes a reference value such as ${name} then these need to be converted to the actual value
 	 */
-	private String lookupReferenceValue(String input, ArrayList<Result> record,ArrayList<ArrayList<Result>> parentRecords) {
+	public String lookupReferenceValue(String input, ArrayList<Result> record, ArrayList<ArrayList<Result>> parentRecords) {
 		
 		StringBuffer newValue = new StringBuffer("");
 		String v;

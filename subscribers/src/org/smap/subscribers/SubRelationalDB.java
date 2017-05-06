@@ -46,15 +46,11 @@ import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.managers.NotificationManager;
 import org.smap.sdal.managers.SurveyManager;
 import org.smap.sdal.managers.TaskManager;
-import org.smap.sdal.model.ChangeItem;
 import org.smap.sdal.model.Survey;
 import org.smap.server.entities.SubscriberEvent;
 import org.smap.server.exceptions.SQLInsertException;
 import org.smap.server.utilities.UtilityMethods;
 import org.w3c.dom.Document;
-
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 
 
 public class SubRelationalDB extends Subscriber {

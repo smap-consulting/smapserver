@@ -3953,7 +3953,6 @@ public class GeneralUtilityMethods {
 		Double lonTotal = 0.0;
 		Double latTotal = 0.0;
 		
-		System.out.println("====> " + geoJson);
 		Pattern pattern = Pattern.compile("\\[[0-9\\.\\-,]+?\\]");
 		java.util.regex.Matcher matcher = pattern.matcher(geoJson);
 		while (matcher.find()) {
@@ -3961,8 +3960,6 @@ public class GeneralUtilityMethods {
 			count ++;
 			String matched = matcher.group();
 			String c = matched.substring(1, matched.length() - 1);
-			
-			System.out.println("@@@@: " + c);
 			
 			String coordArray [] = c.split(",");	
 			if(coordArray.length > 1) {
@@ -3974,8 +3971,6 @@ public class GeneralUtilityMethods {
 		if(count > 0) {
 			centroid = String.valueOf(lonTotal / count) + "," + String.valueOf(latTotal / count);
 		}
-		
-		System.out.println("Centroid: " + centroid);
 		
 		return centroid;
 	}
