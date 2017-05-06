@@ -121,20 +121,32 @@ public class Survey {
 	}
 	
 	// Get a name for the survey hrk
-	public String getHrk() {
-		String hrk = "";
+	public InstanceMeta getInstanceMeta() {
+		InstanceMeta im = new InstanceMeta();
+		im.surveyname = displayName;
 		
 		ArrayList<Result> results = instance.results.get(0);
 		
 		for(Result r : results) {
 			if(r.name.toLowerCase().equals("_hrk")) {	
 				if(r.value != null && r.value.trim().length() != 0) {
-					hrk = r.value;		
+					im.hrk = r.value;		
 				}
-				break;
+			} else if(r.name.toLowerCase().equals("instancename")) {	
+				if(r.value != null && r.value.trim().length() != 0) {
+					im.instancename = r.value;		
+				}
+			} else if(r.name.toLowerCase().equals("user")) {	
+				if(r.value != null && r.value.trim().length() != 0) {
+					im.username = r.value;		
+				}
+			} else if(r.name.toLowerCase().equals("_device")) {	
+				if(r.value != null && r.value.trim().length() != 0) {
+					im.device = r.value;		
+				}
 			}
 		}
-		return hrk;
+		return im;
 	}
 	
 	// Setters

@@ -43,6 +43,7 @@ import org.smap.sdal.model.ChangeLog;
 import org.smap.sdal.model.ChangeResponse;
 import org.smap.sdal.model.ChangeSet;
 import org.smap.sdal.model.Form;
+import org.smap.sdal.model.InstanceMeta;
 import org.smap.sdal.model.Language;
 import org.smap.sdal.model.LinkedSurvey;
 import org.smap.sdal.model.ManifestInfo;
@@ -2987,9 +2988,12 @@ public class SurveyManager {
 		String out = in;
 		
 		if(out != null) {
-			out = out.replaceAll("\\$\\{instancename\\}", s.getInstanceName());
-			out = out.replaceAll("\\$\\{surveyname\\}", s.getDisplayName());
-			out = out.replaceAll("\\$\\{hrk\\}", s.getHrk());
+			InstanceMeta im = s.getInstanceMeta();
+			out = out.replaceAll("\\$\\{instancename\\}", im.instancename);
+			out = out.replaceAll("\\$\\{surveyname\\}", im.surveyname);
+			out = out.replaceAll("\\$\\{hrk\\}", im.hrk);
+			out = out.replaceAll("\\$\\{username\\}", im.username);
+			out = out.replaceAll("\\$\\{device\\}", im.device);
 		}
 		
 		
