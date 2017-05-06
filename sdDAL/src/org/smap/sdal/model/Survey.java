@@ -117,6 +117,24 @@ public class Survey {
 		}
 		return instanceName;
 	}
+	
+	// Get a name for the survey hrk
+	public String getHrk() {
+		String hrk = "";
+		
+		ArrayList<Result> results = instance.results.get(0);
+		
+		for(Result r : results) {
+			if(r.name.toLowerCase().equals("_hrk")) {	
+				if(r.value != null && r.value.trim().length() != 0) {
+					hrk = r.value;		
+				}
+				break;
+			}
+		}
+		return hrk;
+	}
+	
 	// Setters
 	public void setId(int v) { id = v;};
 	public void setPId(int v) { p_id = v;};

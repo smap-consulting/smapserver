@@ -42,6 +42,7 @@ import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.managers.LogManager;
 import org.smap.sdal.managers.PDFSurveyManager;
+import org.smap.sdal.managers.SurveyManager;
 
 /*
  * Creates a PDF template
@@ -103,7 +104,11 @@ public class CreatePDF extends Application {
 		
 		try {
 			PDFSurveyManager pm = new PDFSurveyManager();  
-			
+			SurveyManager sm = new SurveyManager();
+			org.smap.sdal.model.Survey survey = null;
+			boolean generateBlank =  (instanceId == null) ? true : false;	// If false only show selected options
+			survey = sm.getById(connectionSD, cResults, request.getRemoteUser(), sId, true, basePath, 
+					instanceId, true, generateBlank, true, false, true, "real", superUser, utcOffset, "geojson");
 			
 			pm.createPdf(
 					connectionSD,
@@ -112,8 +117,8 @@ public class CreatePDF extends Application {
 					basePath, 
 					request.getRemoteUser(),
 					language, 
-					sId, 
-					instanceId,
+					survey,
+					generateBlank,
 					filename,
 					landscape,
 					response,

@@ -3007,4 +3007,17 @@ public class SurveyManager {
 		return questions;
 	}
 	
+	public String fillStringTemplate(Survey s, String in) {
+		String out = in;
+		
+		if(out != null) {
+			out = out.replaceAll("\\$\\{instancename\\}", s.getInstanceName());
+			out = out.replaceAll("\\$\\{surveyname\\}", s.getDisplayName());
+			out = out.replaceAll("\\$\\{hrk\\}", s.getHrk());
+		}
+		
+		
+		return out;
+	}
+	
 }
