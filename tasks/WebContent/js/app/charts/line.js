@@ -39,8 +39,18 @@ define([
          */
         function add(chart, config) {
 
+            var labels,
+                x, y;
 
+            config.graph.setMargins(80, 50, 20, 80);
+            y = config.graph.addMeasureAxis("y", "count");
 
+            labels = chart.groupLabels.unshift("date");
+            x = config.graph.addCategoryAxis("x", ["date", "group"]);
+            x.addOrderRule("Date");
+            config.graph.addSeries("group", dimple.plot.line);
+
+            y.title = localise.set[chart.fn];
 
         }
 
@@ -49,6 +59,7 @@ define([
          */
         function redraw(config, data) {
 
+            config.graph.data = data;
 
         }
 

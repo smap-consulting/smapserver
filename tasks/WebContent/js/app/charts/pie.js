@@ -39,10 +39,9 @@ define([
         function add(chart, config) {
 
             config.graph.setMargins(80, 50, 20, 80);
-            var p = config.graph.addMeasureAxis("p", "value");
-            config.graph.addSeries("key", dimple.plot.pie);
+            var p = config.graph.addMeasureAxis("p", "count");
+            config.graph.addSeries(chart.groupLabels[0], dimple.plot.pie);
             p.title = chart.dataLabel;
-            config.graph.addLegend(500, 20, 90, 300, "left");
 
         }
 

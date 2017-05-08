@@ -58,7 +58,6 @@ define([
             }
 
             x.title = localise.set[chart.fn];
-            config.graph.addLegend(65, 10, 510, 20, "right");
 
         }
 

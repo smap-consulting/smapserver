@@ -41,12 +41,24 @@ define([
          */
         function add(chart, config) {
 
+            var labels,
+                x, y;
+
             config.graph.setMargins(80, 50, 20, 80);
-            var y = config.graph.addMeasureAxis("y", "value");
-            var x = config.graph.addCategoryAxis("x",  "key");
-            x.title = localise.set[chart.fn];
-            y.title = chart.dataLabel;
-            config.graph.addSeries(null, dimple.plot.bar);
+            y = config.graph.addMeasureAxis("y", "count");
+
+            if(chart.tSeries) {
+                labels = chart.groupLabels.unshift("date");
+                x = config.graph.addCategoryAxis("x", ["date", "group"]);
+                x.addOrderRule("Date");
+                config.graph.addSeries("group", dimple.plot.bar);
+            } else {
+                x = config.graph.addCategoryAxis("x", chart.groupLabels[0]);
+                config.graph.addSeries(null, dimple.plot.bar);
+            }
+
+            y.title = localise.set[chart.fn];
+
 
         }
 

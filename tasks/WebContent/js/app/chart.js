@@ -39,11 +39,31 @@ define([
          * The system knows how to show these
          */
         var avCharts = {
-            bar_h: bar_h,
-            bar_v: bar_v,
-            pie: pie,
-            line: line,
-            wordcloud: wordcloud
+            bar_h: {
+                draw: bar_h,
+                tseries: true,
+                non_tseries: true
+            },
+            bar_v: {
+                draw: bar_v,
+                tseries: true,
+                non_tseries: true
+            },
+            pie: {
+                draw: pie,
+                tseries: false,
+                non_tseries: true
+            },
+            line: {
+                draw: line,
+                tseries: true,
+                non_tseries: false
+            },
+            wordcloud: {
+                draw: wordcloud,
+                tseries: false,
+                non_tseries: true
+            }
         };
 
         var gBlankChart = {
@@ -385,64 +405,65 @@ define([
 
                 // Add missing dates
                 // Based on http://stackoverflow.com/questions/18835053/d3-js-calculate-width-of-bars-in-time-scale-with-changing-range
-                if (chart.chart_type === "bar_v" || chart.chart_type === "bar_h") {
-
-                    for (i = 0; i < allData.length; i++) {
-                        allData[i].forEach(function (d) {
-                            d.key = parseTime(d.key);
-                        });
-
-                        dateValueMap[i] = allData[i].reduce(function (r, v) {
-                        	if(v.key) {
-                                r[v.key.toISOString()] = v.value;
-                                return r;
-                            }
-                        }, {});
 
 
-                    }
-
-                    // Get the extent from all the dates in the time series
-                    var allDates = [];
-                    for (i = 0; i < allData.length; i++) {
-                        allDates = allDates.concat(allData[i])
-                    }
-
-                    dateExtent = d3.extent(allDates.map(function (v) {
-                        return v.key;
-                    }));
-
-
-                    var range = dateRange.range(
-                        dateExtent[0],
-                        dateRange.offset(dateExtent[1], 1)
-                    );
-
-                    /*
-                     * Format the dates and rename the key column to date
-                     */
-                    var newData = [];
-                    range.forEach(function (date) {
-                        var dx = date.toISOString();
-
-
-                        for (i = 0; i < allData.length; i++) {
-                            var value = 0;
-                            var newDataItem = {
-                                'date': formatTime(date)
-                            };
-                            if ((dx in dateValueMap[i])) {
-                                value = dateValueMap[i][dx];
-                            }
-                            newDataItem["count"] = value;
-                            newDataItem["group"] = chart.groups[i].dataLabel;
-                            newData.push(newDataItem);
-                        }
-
+                for (i = 0; i < allData.length; i++) {
+                    allData[i].forEach(function (d) {
+                        d.key = parseTime(d.key);
                     });
 
-                    processedData = newData;
+                    dateValueMap[i] = allData[i].reduce(function (r, v) {
+                        if (v.key) {
+                            r[v.key.toISOString()] = v.value;
+                            return r;
+                        }
+                    }, {});
+
+
                 }
+
+                // Get the extent from all the dates in the time series
+                var allDates = [];
+                for (i = 0; i < allData.length; i++) {
+                    allDates = allDates.concat(allData[i])
+                }
+
+                dateExtent = d3.extent(allDates.map(function (v) {
+                    return v.key;
+                }));
+
+
+                var range = dateRange.range(
+                    dateExtent[0],
+                    dateRange.offset(dateExtent[1], 1)
+                );
+
+                /*
+                 * Format the dates and rename the key column to date
+                 */
+                var newData = [];
+                range.forEach(function (date) {
+                    var dx = date.toISOString();
+
+                    for (i = 0; i < allData.length; i++) {
+                        var value = 0;
+                        var newDataItem = {
+                            'date': formatTime(date)
+                        };
+                        if ((dx in dateValueMap[i])) {
+                            value = dateValueMap[i][dx];
+                        } else if(chart.chart_type === "line") {
+                            continue;   // Don't create new empty values for line charts
+                        }
+                        newDataItem["count"] = value;
+                        newDataItem["group"] = chart.groups[i].dataLabel;
+                        newData.push(newDataItem);
+                    }
+
+                });
+
+                processedData = newData;
+
 
             } else if (chart.chart_type === "wordcloud") {
                 /*
@@ -616,7 +637,8 @@ define([
                         var height = $elem.height();
                         var svg = dimple.newSvg(config.domElement, width, height);
                         config.graph = new dimple.chart(svg, data);
-                        avCharts[chart.chart_type].add(chart, config);
+                        avCharts[chart.chart_type].draw.add(chart, config);
+                        config.graph.addLegend(width - 150, 10, 100, height - 20, "right");
                         config.graph.draw();
                     }
                     //if (chart.chart_type !== "pie" && chart.chart_type !== "wordcloud") {
@@ -1146,7 +1168,11 @@ define([
 
                 if (avCharts.hasOwnProperty(key)) {
                     if (gEdChart.tSeries) {
-                        if (key !== "bar_v" && key !== "bar_h") {
+                        if (!avCharts[key].tseries) {
+                            continue;
+                        }
+                    } else {
+                        if (!avCharts[key].non_tseries) {
                             continue;
                         }
                     }
