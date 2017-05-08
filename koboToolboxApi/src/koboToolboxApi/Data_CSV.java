@@ -194,6 +194,7 @@ public class Data_CSV extends Application {
 						true,		// Include other meta data
 						true,		// Include preloads
 						true,		// Include instancename
+						false,		// Include survey duration
 						superUser,
 						false		// TODO include HXL processing
 						);

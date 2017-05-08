@@ -2088,6 +2088,7 @@ public class GeneralUtilityMethods {
 			boolean includeOtherMeta,
 			boolean includePreloads,
 			boolean includeInstanceName,
+			boolean includeSurveyDuration,
 			boolean superUser,
 			boolean hxl) throws SQLException {
 		
@@ -2164,6 +2165,14 @@ public class GeneralUtilityMethods {
 			c.name = "parkey";
 			c.humanName = "parkey";
 			c.type = "";
+			columnList.add(c);
+		}
+		
+		if(includeSurveyDuration && formParent == 0) {
+			c = new TableColumn();
+			c.name = "_duration";
+			c.humanName = "Survey Duration";
+			c.type = "duration";
 			columnList.add(c);
 		}
 		

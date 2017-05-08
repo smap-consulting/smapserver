@@ -362,6 +362,7 @@ public class XLSResultsManager {
 							true,		// Include other meta data
 							true,		// Incude preloads
 							true,		// instancename
+							false,		// Survey Duration
 							superUser,
 							hxl);
 						

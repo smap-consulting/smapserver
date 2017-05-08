@@ -244,6 +244,7 @@ public class Data extends Application {
 					true,		// include other meta data
 					true,		// include preloads
 					true,		// include instancename
+					true,		// include survey duration
 					superUser,
 					false		// TODO include HXL
 					);
@@ -389,6 +390,7 @@ public class Data extends Application {
 					fId = rs.getInt(1);
 					table_name = rs.getString(2);
 				}
+				rs.close();
 			} else {
 				pstmtGetForm = sd.prepareStatement(sqlGetForm);
 				pstmtGetForm.setInt(1,sId);
@@ -400,6 +402,7 @@ public class Data extends Application {
 					parentform = rs.getInt(1);
 					table_name = rs.getString(2);
 				}
+				rs.close();
 			}
 				
 			ArrayList<TableColumn> columns = GeneralUtilityMethods.getColumnsInForm(
@@ -417,6 +420,7 @@ public class Data extends Application {
 					true,		// Include other meta data
 					true,		// Include preloads
 					true,		// Include instance name
+					false,		// Include survey duration
 					superUser,
 					false		// Only include HXL with CSV and Excel output
 					);

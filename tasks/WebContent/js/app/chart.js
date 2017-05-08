@@ -85,37 +85,41 @@ define([
             gChartId,
             gCharts = [],
             gChartsConfig = {};
-        var gChartUpdatePending = true;
+        var gChartUpdatePending = true,
+            gTimingUpdatePending = true,
+            gInitDone = false;
 
         return {
             init: init,
             setCharts: setCharts,           // Set the list of charts to display
-            //            setChartList: setChartList,
             refreshAllCharts: refreshAllCharts,
-            addChartTypeSelect: addChartTypeSelect,
             addNewChart: addNewChart
 
         };
 
-        function init() {
+        function init(chartView, timingView) {
 
-            localise.setlang();
+            if(!gInitDone) {
+                localise.setlang();
 
-            $('#editChartSave').off().click(function () {
-                saveChart();
-            });
-
-            $('#ew_tseries').off().click(function () {
-                var $this = $(this);
-
-                setChartDialogVisibility({
-                    tSeries: $this.prop("checked")
+                $('#editChartSave').off().click(function () {
+                    saveChart();
                 });
-                addChartTypeSelect();
-            });
 
-            if (gChartUpdatePending) {
-                refreshAllCharts(true, true);
+                $('#ew_tseries').off().click(function () {
+                    var $this = $(this);
+
+                    setChartDialogVisibility({
+                        tSeries: $this.prop("checked")
+                    });
+                    addChartTypeSelect();
+                });
+
+                gInitDone = true;
+            }
+
+            if ((gChartUpdatePending && chartView) || (gTimingUpdatePending && timingView)) {
+                refreshAllCharts(chartView, timingView, true);
             }
         }
 
@@ -155,10 +159,10 @@ define([
         /*
          * Refresh all charts
          */
-        function refreshAllCharts(chartView, clearExisting) {
+        function refreshAllCharts(chartView, timingView, clearExisting) {
 
             var i;
-            if (chartView) {
+            if (chartView || timingView) {
                 if (globals.gMainTable) {
                     var results = globals.gMainTable.rows({
                         order: 'current',  // 'current', 'applied', 'index',  'original'
@@ -177,9 +181,17 @@ define([
                         updateSingleChart(results, gCharts[i], false);
                     }
                 }
-                gChartUpdatePending = false;
+                if(chartView) {
+                    gChartUpdatePending = false;
+                } else if(timingView) {
+                    gTimingUpdatePending = false;
+                }
             } else {
-                gChartUpdatePending = true;
+                if(chartView) {
+                    gChartUpdatePending = true;
+                } else if(timingView) {
+                    gTimingUpdatePending = true;
+                }
             }
 
         }
@@ -695,168 +707,6 @@ define([
             setupIbox("#c_" + id);		// Add event listeners
             return id;
         }
-
-        /*
-         * Set the list of charts to show based on:
-         *
-        function setChartList() {
-
-
-            var columns = gTasks.cache.surveyConfig[globals.gViewId].columns,
-                h = [],
-                idx = -1,
-                hGrp = [],
-                idxGrp = -1,
-                hQ = [],
-                idxQ = -1;
-
-
-            $("#chartcontent").empty();
-            var chartContent = d3.select("#chartcontent")
-                .selectAll(".row")
-                .data(gCurrentReport.row);
-
-            var row = chartContent.enter()
-                .append("div")
-                .attr("class", "row")
-                .attr("id", function (d) {
-                    return d.name
-                });
-
-
-            gChartsConfig = {};		// Force reinitialise of charts
-
-
-            var chartRow,
-                wrapper,
-                title,
-                content,
-                data,
-                i, j;
-
-            for (i = 0; i < gCurrentReport.row.length; i++) {
-
-                data = gCurrentReport.row[i].charts;
-
-                chartRow = d3.select("#" + gCurrentReport.row[i].name)
-                    .selectAll(".aChart")
-                    .data(data);
-
-
-                wrapper = chartRow.enter()
-                    .append("div").attr("class", function (d) {
-                        return "aChart col-md-" + (d.width ? d.width : "6");
-                    })
-                    .attr("id", function (d) {
-                        return "c_" + d.name + "_ibox"
-                    })
-                    .append("div").attr("class", "ibox float-e-margins");
-
-                title = wrapper.append("div").attr("class", "ibox-title");
-                title.append("div").append("h5").text(function (d) {
-                    if (d.tSeries) {
-                        return localise.set["d_c_" + d.period];
-                    } else {
-                        return d.humanName;
-                    }
-                });		// Add title
-                addChartTools(title);
-
-                content = wrapper.append("div").attr("class", "ibox-content");
-                content
-                    .append("div")
-                    .append("div").attr("class", "svg-container").attr("id", function (d) {
-                    return "c_" + d.name;
-                })
-            }
-
-            setupIbox("#chartcontent");		// Add event listeners
-
-
-            var filtered = [],
-                filtered_prelim = columns.filter(function (d) {
-                    return d.include && !d.hide &&
-                        d.name !== "prikey" &&
-                        d.name !== "_upload_time" &&
-                        d.name !== "_start" &&
-                        d.name !== "_end" &&
-                        d.name !== "instancename" &&
-                        d.type !== "dateTime" &&
-                        d.type !== "time" &&
-                        d.type !== "date" &&
-                        d.type !== "image" && d.type !== "video" && d.type !== "audio";
-                });
-
-            // Merge choices from select multiple questions
-            var select_questions = {};
-            for (i = 0; i < filtered_prelim.length; i++) {
-                if (filtered_prelim[i].type === "select") {
-                    var n = filtered_prelim[i].humanName.split(" - ");
-                    if (n.length > 1) {
-
-                        if (!select_questions[n[0]]) {		// New choice
-
-                            filtered_prelim[i].select_name = n[0];
-                            filtered_prelim[i].choices = [];
-                            filtered_prelim[i].choices.push(filtered_prelim[i].humanName);
-
-                            select_questions[n[0]] = filtered_prelim[i];
-                            filtered.push(filtered_prelim[i]);
-                        } else {
-                            var f = select_questions[n[0]];
-                            f.choices.push(filtered_prelim[i].humanName);
-                        }
-                    }
-
-
-                } else {
-                    filtered.push(filtered_prelim[i]);
-                }
-            }
-
-            for (i = 0; i < filtered.length; i++) {
-                if (!filtered[i].fn) {
-                    filtered[i].fn = "length";
-                }
-                if (!filtered[i].cDom) {
-                    filtered[i].cDom = "c_" + filtered[i].name;
-                }
-            }
-            gTasks.cache.surveyConfig[globals.gViewId].questions = filtered;	// cache the questions
-
-
-            for (i = 0; i < filtered.length; i++) {
-                hQ[++idxQ] = '<option value="';
-                hQ[++idxQ] = i;
-                hQ[++idxQ] = '">';
-                hQ[++idxQ] = filtered[i].humanName;
-                hQ[++idxQ] = '</option>';
-            }
-            $('.question').empty().append(hQ.join(''));
-
-
-            hGrp[++idxGrp] = h[++idx] = '<option value="none">';
-            hGrp[++idxGrp] = h[++idx] = localise.set["c_none"];
-            hGrp[++idxGrp] = h[++idx] = '</option>';
-            for (i = 0; i < columns.length; i++) {
-                if (columns[i].type === "date" || columns[i].type === "dateTime") {
-                    h[++idx] = '<option value="';
-                    h[++idx] = columns[i].name;
-                    h[++idx] = '">';
-                    h[++idx] = columns[i].humanName;
-                    h[++idx] = '</option>';
-                } else {
-                    hGrp[++idxGrp] = '<option value="';
-                    hGrp[++idxGrp] = columns[i].name;
-                    hGrp[++idxGrp] = '">';
-                    hGrp[++idxGrp] = columns[i].humanName;
-                    hGrp[++idxGrp] = '</option>';
-                }
-            }
-            $('.date_question').empty().append(h.join(''));
-            $('.group_question').empty().append(hGrp.join(''));
-        }
-        */
 
         /*
          * Add the controls to a chart ibox

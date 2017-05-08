@@ -403,6 +403,7 @@ public class ExportSurvey extends Application {
 							true,		// Include other meta data
 							true,		// Incude preloads
 							true,		// instancename
+							false,		// survey duration
 							superUser,
 							false		// TODO add HXL export processing
 							);

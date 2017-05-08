@@ -358,6 +358,7 @@ public class QueryGenerator {
 				first,				// Include other meta data
 				first,				// Include preloads
 				first,				// Include Instance Name
+				false,				// Survey duration
 				superUser,
 				false				// HXL only include with XLS exports
 				);

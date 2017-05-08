@@ -82,6 +82,8 @@ public class TableColumn {
 			selName = "ST_AsGeoJson(" + name + ") ";
 		} else if(isCalculate() && calculation != null) {
 			selName = calculation.sql.toString();
+		} else if(type.equals("duration")) {
+			selName = "extract(epoch FROM (_end - _start)) as "+ name;
 		} else {
 			selName = name;
 		}

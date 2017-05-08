@@ -224,7 +224,8 @@ public class Items extends Application {
 						true,	// Include instanceId
 						true,	// Include other meta data
 						true,	// Include preloads
-						true,	//Include instance names
+						true,	// Include instance names
+						false,	// Include survey duration
 						superUser,
 						false		// HXL only include with XLS exports
 						);		

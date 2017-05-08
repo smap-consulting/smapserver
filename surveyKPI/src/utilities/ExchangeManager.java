@@ -181,6 +181,7 @@ public class ExchangeManager {
 							true,		// Include other meta data
 							true,		// Incude preloads
 							true,		// instancename
+							false,		// Survey duration
 							superUser,
 							false);
 						

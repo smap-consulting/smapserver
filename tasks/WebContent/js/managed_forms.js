@@ -122,6 +122,7 @@ require([
         gConfigLoaded = false,
         gMapView = false;           // Set true when the map tab is shown
     var gChartView = false;         // Set true when the chart view is shown
+    var gTimingView = false;        // Set true when the timing view is shown
 
     window.gTasks = {
         cache: {
@@ -377,14 +378,19 @@ require([
             $('#m_add_chart').hide();
             gMapView = false;
             gChartView = false;
+            gTimingView = false;
             if (target === '#map-view') {
                 map.init();
                 $('#showlayers').show();
                 gMapView = true;
             } else if(target === '#chart-view') {
-                chart.init();
+                chart.init(true, false);
                 $('#m_add_chart').show();
                 gChartView = true;
+            } else if(target === '#timing-view') {
+                chart.init(false, true);
+                $('#m_add_chart').show();
+                gTimingView = true;
             }
         });
 
@@ -656,10 +662,8 @@ require([
                     chart.setCharts(data.charts);
                     if (gDataLoaded) {
                         map.refreshAllLayers(gMapView);
-                        chart.refreshAllCharts(gChartView, true);
+                        chart.refreshAllCharts(gChartView, gTimingView, true);
                         initialise();
-                        //chart.setChartList();	// Enable charts based on this survey config
-                        //chart.refreshCharts();
                     }
 
                     // Add a config item for the group value if this is a duplicates search
@@ -954,7 +958,7 @@ require([
                 if (gConfigLoaded) {
                     initialise();
                     map.refreshAllLayers(gMapView);
-                    chart.refreshAllCharts(gChartView, true);
+                    chart.refreshAllCharts(gChartView, gTimingView, true);
                 }
                 columns = gTasks.cache.surveyConfig[globals.gViewId].columns;
                 globals.gMainTable.columns().flatten().each(function (colIdx) {
@@ -1056,7 +1060,7 @@ require([
                     }
                 });
             } else {
-                chart.refreshAllCharts(gChartView, false);
+                chart.refreshAllCharts(gChartView, gTimingView, false);
                 map.refreshAllLayers(gMapView);
             }
 
@@ -1789,7 +1793,7 @@ require([
         for(i = 0; i < columns.length; i++) {
             var d = columns[i];
 
-            if(d.include && !d.hide &&
+            if(
                 d.name !== "prikey" &&
                 d.name !== "_upload_time" &&
                 d.name !== "_start" &&
@@ -1827,62 +1831,13 @@ require([
         }
 
         /*
-        if(!gTasks.cache.surveyConfig[globals.gViewId].questions) {
-
-            var filtered_prelim = columns.filter(function (d) {
-                return d.include && !d.hide &&
-                    d.name !== "prikey" &&
-                    d.name !== "_upload_time" &&
-                    d.name !== "_start" &&
-                    d.name !== "_end" &&
-                    d.name !== "instancename" &&
-                    d.type !== "dateTime" &&
-                    d.type !== "time" &&
-                    d.type !== "date" &&
-                    d.type !== "image" && d.type !== "video" && d.type !== "audio";
-            });
-
-
-
-            // Merge choices from select multiple questions
-            var select_questions = {};
-            for (i = 0; i < filtered_prelim.length; i++) {
-                if (filtered_prelim[i].type === "select") {
-                    var n = filtered_prelim[i].humanName.split(" - ");
-                    if (n.length > 1) {
-
-                        if (!select_questions[n[0]]) {		// New choice
-
-                            filtered_prelim[i].select_name = n[0];
-                            filtered_prelim[i].choices = [];
-                            filtered_prelim[i].choices.push(filtered_prelim[i].humanName);
-
-                            select_questions[n[0]] = filtered_prelim[i];
-                            filtered.push(filtered_prelim[i]);
-                        } else {
-                            var f = select_questions[n[0]];
-                            f.choices.push(filtered_prelim[i].humanName);
-                        }
-                    }
-
-
-                } else {
-                    filtered.push(filtered_prelim[i]);
-                }
-            }
-
-
-
-            //gTasks.cache.surveyConfig[globals.gViewId].questions = filtered;	// cache the questions
-        }
-        */
-
-        //var questions = gTasks.cache.surveyConfig[globals.gViewId].questions;
-
-        /*
          * Add question select options
          */
         for (i = 0; i < columns.length; i++) {
+
+            /*
+             * Add remaining questions
+             */
             if(columns[i].chartQuestion) {
                 h[++idx] = '<option value="';
                 h[++idx] = i;

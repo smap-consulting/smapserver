@@ -145,6 +145,7 @@ public class SurveyViewManager {
 					true,	// Include other meta data
 					true,		// include preloads
 					true,		// include instancename
+					true,		// Survey duration
 					superUser,
 					false		// HXL only include with XLS exports
 					);		
