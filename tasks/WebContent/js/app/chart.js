@@ -146,6 +146,8 @@ define([
                         search: 'applied',     // 'none',    'applied', 'removed'
                     }).data();
 
+                    gTasks.cache.surveyConfig[globals.gViewId].processedData = undefined;
+
                     if (clearExisting) {
                         $('.aChart').remove();
                     }
@@ -266,9 +268,37 @@ define([
         }
 
         /*
-         * Process the data according to chart type
+         * Generate data suitable for charting from the results
          */
         function processData(results, chart, dataLength) {
+            var i;
+
+            if(chart.tSeries) {
+                return processTimeSeriesData(results, chart, dataLength);
+
+            } else {
+                if (!gTasks.cache.surveyConfig[globals.gViewId].processedData) {
+
+                    gTasks.cache.surveyConfig[globals.gViewId].processedData = [];
+                    for (i = 0; i < results.length; i++) {
+                        var di = {};
+                        di.count = 1;
+                        for (var p in results[i]) {
+                            if (results[i].hasOwnProperty(p)) {
+                                di[p] = results[i][p];
+                            }
+                        }
+                        gTasks.cache.surveyConfig[globals.gViewId].processedData.push(di);
+                    }
+                }
+                return gTasks.cache.surveyConfig[globals.gViewId].processedData;
+            }
+        }
+
+        /*
+         * Process the data according to chart type
+         */
+        function processTimeSeriesData(results, chart, dataLength) {
 
             var allData = [],
                 processedData,

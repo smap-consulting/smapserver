@@ -1056,7 +1056,7 @@ require([
                     }
                 });
             } else {
-                //refreshCharts();
+                chart.refreshAllCharts(gChartView, false);
                 map.refreshAllLayers(gMapView);
             }
 
