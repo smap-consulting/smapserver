@@ -1774,21 +1774,61 @@ require([
      */
     function initialise() {
 
-        var filtered = [],
-            i;
 
         var columns = gTasks.cache.surveyConfig[globals.gViewId].columns,
+            i,
             h = [],
             idx = -1,
-            hGrp = [],
-            idxGrp = -1,
-            hQ = [],
-            idxQ = -1;
+            select_questions = {};
 
+        /*
+         * Add an indicator to coulumns if they can be used as a chart question
+         * Merge choices in select multiples
+         */
+
+        for(i = 0; i < columns.length; i++) {
+            var d = columns[i];
+
+            if(d.include && !d.hide &&
+                d.name !== "prikey" &&
+                d.name !== "_upload_time" &&
+                d.name !== "_start" &&
+                d.name !== "_end" &&
+                d.name !== "instancename" &&
+                d.type !== "dateTime" &&
+                d.type !== "time" &&
+                d.type !== "date" &&
+                d.type !== "image" && d.type !== "video" && d.type !== "audio") {
+                d.chartQuestion = true;
+            } else {
+                d.chartQuestion = false;
+            }
+
+            if(d.type === "select") {
+                var n = d.humanName.split(" - ");
+                if (n.length > 1) {
+
+                    if (!select_questions[n[0]]) {		// New choice
+
+                        d.select_name = n[0];
+                        d.choices = [];
+                        d.choices.push(d.humanName);
+
+                        select_questions[n[0]] = d[i];
+                        d.chartQuestion = true;
+                    } else {
+                        var f = select_questions[n[0]];
+                        f.choices.push(d.humanName);
+                        d.chartQuestion = false;
+                    }
+                }
+            }
+
+        }
+
+        /*
         if(!gTasks.cache.surveyConfig[globals.gViewId].questions) {
-            /*
-             * Filter the questions that the user is allowed to select
-             */
+
             var filtered_prelim = columns.filter(function (d) {
                 return d.include && !d.hide &&
                     d.name !== "prikey" &&
@@ -1801,6 +1841,8 @@ require([
                     d.type !== "date" &&
                     d.type !== "image" && d.type !== "video" && d.type !== "audio";
             });
+
+
 
             // Merge choices from select multiple questions
             var select_questions = {};
@@ -1829,25 +1871,27 @@ require([
                 }
             }
 
-            /*
-             * Cache the question data
-             */
-            gTasks.cache.surveyConfig[globals.gViewId].questions = filtered;	// cache the questions
-        }
 
-        var questions = gTasks.cache.surveyConfig[globals.gViewId].questions;
+
+            //gTasks.cache.surveyConfig[globals.gViewId].questions = filtered;	// cache the questions
+        }
+        */
+
+        //var questions = gTasks.cache.surveyConfig[globals.gViewId].questions;
 
         /*
          * Add question select options
          */
-        for (i = 0; i < questions.length; i++) {
-            hQ[++idxQ] = '<option value="';
-            hQ[++idxQ] = i;
-            hQ[++idxQ] = '">';
-            hQ[++idxQ] = questions[i].humanName;
-            hQ[++idxQ] = '</option>';
+        for (i = 0; i < columns.length; i++) {
+            if(columns[i].chartQuestion) {
+                h[++idx] = '<option value="';
+                h[++idx] = i;
+                h[++idx] = '">';
+                h[++idx] = columns[i].humanName;
+                h[++idx] = '</option>';
+            }
         }
-        $('.question').empty().append(hQ.join(''));
+        $('.question').empty().append(h.join(''));
 
 
     }

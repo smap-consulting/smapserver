@@ -41,14 +41,23 @@ define([
          */
         function add(chart, config) {
 
+            var labels,
+                x, y;
+
             config.graph.setMargins(80, 50, 20, 80);
-            var x = config.graph.addMeasureAxis("x", "count");
+            x = config.graph.addMeasureAxis("x", "count");
 
-            var labels = chart.groupLabels.unshift("key");
-            var y = config.graph.addCategoryAxis("y", ["key","group"]);
+            if(chart.tSeries) {
+                labels = chart.groupLabels.unshift("date");
+                y = config.graph.addCategoryAxis("y", ["date", "group"]);
+                y.addOrderRule("Date");
+                config.graph.addSeries("group", dimple.plot.bar);
+            } else {
+                y = config.graph.addCategoryAxis("y", chart.groupLabels[0]);
+                config.graph.addSeries(null, dimple.plot.bar);
+            }
+
             x.title = localise.set[chart.fn];
-            config.graph.addSeries("group", dimple.plot.bar);
-
             config.graph.addLegend(65, 10, 510, 20, "right");
 
         }

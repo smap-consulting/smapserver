@@ -70,7 +70,7 @@ define([
         return {
             init: init,
             setCharts: setCharts,           // Set the list of charts to display
-            setChartList: setChartList,
+            //            setChartList: setChartList,
             refreshAllCharts: refreshAllCharts,
             addChartTypeSelect: addChartTypeSelect,
             addNewChart: addNewChart
@@ -388,6 +388,9 @@ define([
                         dateRange.offset(dateExtent[1], 1)
                     );
 
+                    /*
+                     * Format the dates and rename the key column to date
+                     */
                     var newData = [];
                     range.forEach(function (date) {
                         var dx = date.toISOString();
@@ -396,7 +399,7 @@ define([
                         for (i = 0; i < allData.length; i++) {
                             var value = 0;
                             var newDataItem = {
-                                'key': formatTime(date)
+                                'date': formatTime(date)
                             };
                             if ((dx in dateValueMap[i])) {
                                 value = dateValueMap[i][dx];
@@ -516,6 +519,20 @@ define([
                         }
 
                     } else {
+
+                        var newData = [];
+                        for(i = 0; i < results.length; i++) {
+                            var di = {};
+                            di.count = 1;
+                            for (var p in results[i]) {
+                                if (results[i].hasOwnProperty(p)) {
+                                    di[p] = results[i][p];
+                                }
+                            }
+                            newData.push(di);
+                        }
+                        processedData = newData;
+                        /*
                         processedData = d3.nest()
                             .key(function (d) {
                                 return d[item.name];
@@ -524,6 +541,7 @@ define([
                                 return v[d3Fn] / dataLength;
                             })
                             .entries(results);
+                            */
                     }
                 }
 
@@ -628,14 +646,9 @@ define([
 
         /*
          * Set the list of charts to show based on:
-         *     the report
-         *     the available data  - TODO Remove its all report based now
-         */
+         *
         function setChartList() {
 
-            /*
-             * Get the list of visible columns
-             */
 
             var columns = gTasks.cache.surveyConfig[globals.gViewId].columns,
                 h = [],
@@ -645,10 +658,7 @@ define([
                 hQ = [],
                 idxQ = -1;
 
-            /*
-             * Generate the HTML
-             * Start by creating rows of related charts
-             */
+
             $("#chartcontent").empty();
             var chartContent = d3.select("#chartcontent")
                 .selectAll(".row")
@@ -664,9 +674,7 @@ define([
 
             gChartsConfig = {};		// Force reinitialise of charts
 
-            /*
-             * Create the charts for each row
-             */
+
             var chartRow,
                 wrapper,
                 title,
@@ -682,9 +690,7 @@ define([
                     .selectAll(".aChart")
                     .data(data);
 
-                /*
-                 * New Charts
-                 */
+
                 wrapper = chartRow.enter()
                     .append("div").attr("class", function (d) {
                         return "aChart col-md-" + (d.width ? d.width : "6");
@@ -714,9 +720,7 @@ define([
 
             setupIbox("#chartcontent");		// Add event listeners
 
-            /*
-             * Filter the questions that the user is allowed to select
-             */
+
             var filtered = [],
                 filtered_prelim = columns.filter(function (d) {
                     return d.include && !d.hide &&
@@ -768,9 +772,7 @@ define([
             }
             gTasks.cache.surveyConfig[globals.gViewId].questions = filtered;	// cache the questions
 
-            /*
-             * Add question select options
-             */
+
             for (i = 0; i < filtered.length; i++) {
                 hQ[++idxQ] = '<option value="';
                 hQ[++idxQ] = i;
@@ -780,10 +782,7 @@ define([
             }
             $('.question').empty().append(hQ.join(''));
 
-            /*
-             * Add date question select options
-             * Add group questions
-             */
+
             hGrp[++idxGrp] = h[++idx] = '<option value="none">';
             hGrp[++idxGrp] = h[++idx] = localise.set["c_none"];
             hGrp[++idxGrp] = h[++idx] = '</option>';
@@ -805,6 +804,7 @@ define([
             $('.date_question').empty().append(h.join(''));
             $('.group_question').empty().append(hGrp.join(''));
         }
+        */
 
         /*
          * Add the controls to a chart ibox
@@ -1002,12 +1002,10 @@ define([
             var width = $('#ew_width').val(),
                 validated = true,
                 reset = false,
-                questions,
                 errMsg,
                 i,
                 questionIndex;
 
-            var questions = gTasks.cache.surveyConfig[globals.gViewId].questions;
             var columns = gTasks.cache.surveyConfig[globals.gViewId].columns;
 
             var title = $('#ew_title').val();
@@ -1029,13 +1027,13 @@ define([
                 gEdChart.group = $('#ew_group').val();
 
                 if(!gEdChart.tSeries) {
-                    if (typeof questionIndex !== "undefined" && questions && questions[questionIndex]) {		// Question specific
+                    if (typeof questionIndex !== "undefined" && columns && columns[questionIndex]) {		// Question specific
 
                         gEdChart.groups.push({
                             qIdx: questionIndex,
-                            type: questions[questionIndex].type,
-                            name: questions[questionIndex].name,
-                            dataLabel: questions[questionIndex].humanName
+                            type: columns[questionIndex].type,
+                            name: columns[questionIndex].name,
+                            dataLabel: columns[questionIndex].humanName
                         });
                     }
                 }
