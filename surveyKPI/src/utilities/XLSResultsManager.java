@@ -460,7 +460,6 @@ public class XLSResultsManager {
 								// Increment the column count if this is a geopoint question and the lat/lon are being split
 								if(c.isGeometry() && split_locn) {
 									if(geomType.equals("geopoint")) {
-										System.out.println("Add column for: " + geomType);
 										f.columnCount++;
 									}
 								}
@@ -618,7 +617,7 @@ public class XLSResultsManager {
 	}
 	
 	/*
-	 * Create a header row and set column widths
+	 * Write the record to the XLS file
 	 */
 	private void closeRecord(
 			ArrayList<CellItem> record, 
@@ -914,9 +913,12 @@ public class XLSResultsManager {
 			}
 		} else if(columnName.equals("_device")) {
 			out.add(new CellItem(value, CellItem.STRING));			
+		} else if(columnName.equals("prikey")) {
+			out.add(new CellItem(value, CellItem.INTEGER));			
+		} else if(columnName.equals("_version")) {
+			out.add(new CellItem(value, CellItem.INTEGER));			
 		} else if(columnName.equals("_complete")) {
-			out.add(new CellItem(value.equals("f") ? "No" : "Yes", CellItem.STRING));
-				
+			out.add(new CellItem(value.equals("f") ? "No" : "Yes", CellItem.STRING));		
 		} else if(columnName.equals("_s_id")) {
 			String displayName = surveyNames.get(out);
 			if(displayName == null) {
@@ -942,10 +944,11 @@ public class XLSResultsManager {
 			out.add(new CellItem(value, CellItem.DATE));
 		} else if(columnType.equals("int")) {
 			out.add(new CellItem(value, CellItem.INTEGER));
+		} else if(columnType.equals("select")) {
+			out.add(new CellItem(value, CellItem.INTEGER));
 		} else if(columnType.equals("string")) {
 			out.add(new CellItem(value, CellItem.STRING));
-		}else {
-			//System.out.println("Adding default string for column type: " + columnType);
+		} else {
 			out.add(new CellItem(value, CellItem.STRING));
 		}
 
