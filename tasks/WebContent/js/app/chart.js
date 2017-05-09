@@ -953,7 +953,8 @@ define([
                 reset = false,
                 errMsg,
                 i,
-                questionIndex;
+                questionIndex,
+                groupIndex;
 
             var columns = gTasks.cache.surveyConfig[globals.gViewId].columns;
 
@@ -965,6 +966,7 @@ define([
 
             if (validated) {
                 questionIndex = $('#ew_question').val();
+                groupIndex = $('#ew_group').val();
                 gEdChart.groups = [];
                 gEdChart.fn = $('#ew_fn').val();
                 gEdChart.title = title;
@@ -983,6 +985,15 @@ define([
                             type: columns[questionIndex].type,
                             name: columns[questionIndex].name,
                             dataLabel: columns[questionIndex].humanName
+                        });
+                    }
+                    if (typeof groupIndex !== "undefined" && columns && columns[groupIndex]) {		// Question specific
+
+                        gEdChart.groups.push({
+                            qIdx: groupIndex,
+                            type: columns[groupIndex].type,
+                            name: columns[groupIndex].name,
+                            dataLabel: columns[groupIndex].humanName
                         });
                     }
                 }

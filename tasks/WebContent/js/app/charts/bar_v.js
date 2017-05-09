@@ -64,7 +64,7 @@ define([
                 x.addOrderRule("Date");
                 series = config.graph.addSeries("group", dimple.plot.bar);
             } else {
-                if(chart.fn === "count" || chart.groups[0].type === "duration") {
+                if(chart.fn === "count") {
                     x = config.graph.addCategoryAxis("x", chart.groupLabels[0]);
                 } else {
                     if(chart.groupLabels.length > 1) {
