@@ -76,6 +76,12 @@ define([
 
             if(chart.fn === "average") {
                 series.aggregate = dimple.aggregateMethod.avg;
+            } else if(chart.fn === "max") {
+                series.aggregate = dimple.aggregateMethod.max;
+            } else if(chart.fn === "min") {
+                series.aggregate = dimple.aggregateMethod.min;
+            } else if(chart.fn === "sum") {
+                series.aggregate = dimple.aggregateMethod.sum;
             }
 
             y.title = localise.set[chart.fn] + units;

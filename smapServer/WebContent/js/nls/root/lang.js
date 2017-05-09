@@ -485,6 +485,9 @@ define({
     "count": "Count",
     "none": "None",
     "average": "Average",
+    "max": "Max",
+    "min": "Min",
+    "sum": "Sum",
 
     // Web forms
     "wf_sig": "Signature",

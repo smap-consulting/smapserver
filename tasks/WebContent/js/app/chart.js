@@ -79,6 +79,21 @@ define([
                 fn: "average",
                 numeric: true,
                 nonNumeric: false
+            },
+            {
+                fn: "max",
+                numeric: true,
+                nonNumeric: false
+            },
+            {
+                fn: "min",
+                numeric: true,
+                nonNumeric: false
+            },
+            {
+                fn: "sum",
+                numeric: true,
+                nonNumeric: false
             }
         ]
 
