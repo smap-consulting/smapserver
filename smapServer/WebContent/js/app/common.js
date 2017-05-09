@@ -641,7 +641,14 @@ function getLoggedInUser(callback, getAll, getProjects, getOrganisationsFn, hide
 	              return;  // Not an error
 			} else {
 				console.log("Error: Failed to get user details: " + err);
-				alert("Error: Failed to get user details: " + err);
+				
+				var msg = Localise.set["c_error"] + ": ";
+				if(err && err.indexOf('Unauthorized') >= 0) {
+					msg += localise.set["c_auth"];
+				} else {
+					msg += err;
+				}
+				alert(msg);
 			}
 		}
 	});	

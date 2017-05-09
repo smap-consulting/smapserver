@@ -222,6 +222,7 @@ define({
     "c_for": "For",
     "c_normal": "Normal",
     "c_heatmap": "Heatmap",
+    "c_auth": "Authorized",
 
     // File Types
     "ft": "File Type",
