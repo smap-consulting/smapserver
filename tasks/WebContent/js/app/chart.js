@@ -66,6 +66,22 @@ define([
             }
         };
 
+        /*
+         * Graph functions
+         */
+        var avFunctions = [
+            {
+                fn: "count",
+                numeric: false,
+                nonNumeric: true
+            },
+            {
+                fn: "average",
+                numeric: true,
+                nonNumeric: false
+            }
+        ]
+
         var gBlankChart = {
             groups: [],
             time_interval: false,
@@ -93,7 +109,8 @@ define([
             init: init,
             setCharts: setCharts,           // Set the list of charts to display
             refreshAllCharts: refreshAllCharts,
-            addNewChart: addNewChart
+            addNewChart: addNewChart,
+            addFunctions: addFunctions
 
         };
 
@@ -112,7 +129,14 @@ define([
                     setChartDialogVisibility({
                         tSeries: $this.prop("checked")
                     });
-                    addChartTypeSelect();
+                    addChartTypeSelect($this.prop("checked"));
+                });
+
+                $('#ew_question').off().change(function () {
+                    var index = $(this).val();
+                    var columns = gTasks.cache.surveyConfig[globals.gViewId].columns;
+
+                    addFunctions(columns[index].type);
                 });
 
                 gInitDone = true;
@@ -320,6 +344,10 @@ define([
                                 di[p] = results[i][p];
                             }
                         }
+                        if(!di._duration) {         // Make sure durations have a number
+                            di._duration = 0;
+                        }
+                        di._duration = +di._duration;
                         gTasks.cache.surveyConfig[globals.gViewId].processedData.push(di);
                     }
                 }
@@ -806,9 +834,13 @@ define([
          */
         function initialiseWidgetDialog() {
 
-            //$("#chartForm")[0].reset();
+            var columns = gTasks.cache.surveyConfig[globals.gViewId].columns;
 
-            addChartTypeSelect(gEdChart);
+            addChartTypeSelect(gEdChart.tSeries);
+            if(gEdChart.groups.length > 0) {
+                addFunctions(columns[gEdChart.groups[0].qIdx].type);
+            }
+
             $('#ew_tseries').prop("checked", gEdChart.tSeries);
             $('#ew_chart_type').val(gEdChart.chart_type);
             $("#ew_title").val(gEdChart.title);
@@ -1006,10 +1038,8 @@ define([
         /*
          * Add the list of selectable chart types
          */
-        function addChartTypeSelect() {
-            /*
-             * Add the chart type select list
-             */
+        function addChartTypeSelect(tSeries) {
+
             var h = [];
             var idx = -1;
             var key;
@@ -1017,7 +1047,7 @@ define([
             for (key in avCharts) {
 
                 if (avCharts.hasOwnProperty(key)) {
-                    if (gEdChart.tSeries) {
+                    if (tSeries) {
                         if (!avCharts[key].tseries) {
                             continue;
                         }
@@ -1036,6 +1066,42 @@ define([
             }
             $('.chart_type').empty().append(h.join(''));
         }
+
+        /*
+         * Add the list of available functions for a chart
+         */
+        function addFunctions(type) {
+
+            var h = [];
+            var idx = -1;
+            var key;
+            var addNumeric = false;
+            var addNonNumeric = false;
+            var i;
+
+            if(type === "duration") {
+                addNumeric = true;
+            } else {
+                addNonNumeric = true;
+            }
+
+            for (i = 0; i < avFunctions.length; i++) {
+
+                if(addNumeric && avFunctions[i].numeric
+                    || addNonNumeric && avFunctions[i].nonNumeric) {
+
+
+                    h[++idx] = '<option value="';
+                    h[++idx] = avFunctions[i].fn;
+                    h[++idx] = '">';
+                    h[++idx] = localise.set[avFunctions[i].fn];
+                    h[++idx] = '</option>';
+                }
+
+            }
+            $('#ew_fn').empty().append(h.join(''));
+        }
+
 
         /*
          * Save the layers to the server

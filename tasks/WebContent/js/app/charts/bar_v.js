@@ -42,22 +42,43 @@ define([
         function add(chart, config) {
 
             var labels,
-                x, y;
+                x, y,
+                series,
+                units = "";
 
             config.graph.setMargins(80, 50, 20, 80);
-            y = config.graph.addMeasureAxis("y", "count");
+            if(chart.fn === "count") {
+                y = config.graph.addMeasureAxis("y", "count");
+            } else {
+
+                if(chart.groups[0].type === "duration") {
+                    y = config.graph.addMeasureAxis("y", "_duration");
+                } else {
+                    y = config.graph.addMeasureAxis("y", chart.groupLabels[0]);
+                }
+            }
 
             if(chart.tSeries) {
                 labels = chart.groupLabels.unshift("date");
                 x = config.graph.addCategoryAxis("x", ["date", "group"]);
                 x.addOrderRule("Date");
-                config.graph.addSeries("group", dimple.plot.bar);
+                series = config.graph.addSeries("group", dimple.plot.bar);
             } else {
-                x = config.graph.addCategoryAxis("x", chart.groupLabels[0]);
-                config.graph.addSeries(null, dimple.plot.bar);
+                if(chart.fn === "count" || chart.groups[0].type === "duration") {
+                    x = config.graph.addCategoryAxis("x", chart.groupLabels[0]);
+                } else {
+                    if(chart.groupLabels.length > 1) {
+                        x = config.graph.addCategoryAxis("x", chart.groupLabels[1]);
+                    }
+                }
+                series = config.graph.addSeries(null, dimple.plot.bar);
             }
 
-            y.title = localise.set[chart.fn];
+            if(chart.fn === "average") {
+                series.aggregate = dimple.aggregateMethod.avg;
+            }
+
+            y.title = localise.set[chart.fn] + units;
 
 
         }

@@ -1798,7 +1798,7 @@ require([
                 d.name !== "_upload_time" &&
                 d.name !== "_start" &&
                 d.name !== "_end" &&
-                d.name !== "instancename" &&
+                d.type !== "geopoint" &&
                 d.type !== "dateTime" &&
                 d.type !== "time" &&
                 d.type !== "date" &&
@@ -1847,6 +1847,7 @@ require([
             }
         }
         $('.question').empty().append(h.join(''));
+        chart.addFunctions(columns[$('#ew_question').val()].type);
 
 
     }
