@@ -675,7 +675,6 @@ require([
                             humanName: "_group"
                         });
                     }
-                    setDateChoices();
                     showManagedData(sId, '#content', undefined);
                 },
                 error: function (xhr, textStatus, err) {
@@ -688,7 +687,6 @@ require([
                 }
             });
         } else {
-            setDateChoices();
             showManagedData(sId, '#content', undefined);
         }
     }
@@ -1406,37 +1404,6 @@ require([
         }
     }
 
-
-    /*
-     * Set the available dates for filtering
-     */
-    function setDateChoices() {
-        var columns,
-            i,
-            h = [],
-            idx = -1,
-            defValue;
-
-        columns = gTasks.cache.surveyConfig[globals.gViewId].columns;
-
-        for (i = 0; i < columns.length; i++) {
-            if (columns[i].type === "dateTime" || columns[i].type === "date") {
-                if (i == 0 || columns[i].name === "_start") {
-                    defValue = i;
-                }
-                h[++idx] = '<option value="';
-                h[++idx] = i;
-                h[++idx] = '">';
-                h[++idx] = columns[i].humanName;
-                h[++idx] = '</option>';
-            }
-        }
-        $('.date_question').html(h.join(''));
-        if (typeof defValue !== "undefined") {
-            $('.date_question').val(defValue);
-        }
-    }
-
     /*
      * Get the currently selected recoord
      */
@@ -1673,47 +1640,6 @@ require([
         });
     }
 
-    /*
-     * Get the report
-     *
-     function getReport(gReport) {
-
-     addHourglass();
-     $.ajax({
-     url: "/surveyKPI/managed/getreportconfig/" + globals.gCurrentSurvey + "/db",
-     cache: false,
-     dataType: 'json',
-     success: function (data) {
-     removeHourglass();
-     gReportLoaded = true;
-     if (data) {
-     chart.setReport(data);
-     map.setLayers(data.layers);
-     } else {
-     chart.setReport(gReport);
-     }
-     console.log("Report loaded: " + gDataLoaded + " : " + gReportLoaded + " : " + gConfigLoaded)
-     if (gDataLoaded && gConfigLoaded) {
-     chart.setChartList();
-     chart.refreshCharts();
-     }
-     },
-     error: function (xhr, textStatus, err) {
-     removeHourglass();
-     chart.setReport(gReport);
-     gReportLoaded = true;
-     console.log("Report loaded: " + gDataLoaded + " : " + gReportLoaded + " : " + gConfigLoaded)
-     if (gDataLoaded && gConfigLoaded) {
-     chart.setChartList();
-     chart.refreshCharts();
-     }
-
-     }
-     });
-
-
-     }
-     */
 
     /*
      * Add HTML to show a form to edit a record
@@ -1830,24 +1756,6 @@ require([
 
         }
 
-        /*
-         * Add question select options
-         */
-        for (i = 0; i < columns.length; i++) {
-
-            /*
-             * Add remaining questions
-             */
-            if(columns[i].chartQuestion) {
-                h[++idx] = '<option value="';
-                h[++idx] = i;
-                h[++idx] = '">';
-                h[++idx] = columns[i].humanName;
-                h[++idx] = '</option>';
-            }
-        }
-        $('.question').empty().append(h.join(''));
-        chart.addFunctions(columns[$('#ew_question').val()].type);
 
 
     }

@@ -66,6 +66,8 @@ define([
             }
         };
 
+        var NONE_OPTION;
+
         /*
          * Graph functions
          */
@@ -124,8 +126,7 @@ define([
             init: init,
             setCharts: setCharts,           // Set the list of charts to display
             refreshAllCharts: refreshAllCharts,
-            addNewChart: addNewChart,
-            addFunctions: addFunctions
+            addNewChart: addNewChart
 
         };
 
@@ -138,27 +139,20 @@ define([
                     saveChart();
                 });
 
-                $('#ew_tseries').off().click(function () {
-                    var $this = $(this);
-
-                    setChartDialogVisibility();
-                    addChartTypeSelect($this.prop("checked"));
+                $('#ew_tseries').off().change(function () {
+                    setTimeSeries();
+                    setChartTypes();
+                    addQuestions();
                 });
 
-                $('#ew_chart_type').off().change(function () {
-                    var $this = $(this);
-
-                    setChartDialogVisibility();
+                $('#ew_question1').off().change(function () {
+                    addFunctions();
                 });
 
-                $('#ew_question').off().change(function () {
-                    var index = $(this).val();
-                    var columns = gTasks.cache.surveyConfig[globals.gViewId].columns;
-
-                    addFunctions(columns[index].type);
-                });
 
                 gInitDone = true;
+
+                NONE_OPTION = '<option value="-1">' + localise.set["none"] + '</option>';
             }
 
             if ((gChartUpdatePending && chartView) || (gTimingUpdatePending && timingView)) {
@@ -767,64 +761,185 @@ define([
 
             var columns = gTasks.cache.surveyConfig[globals.gViewId].columns;
 
-            addChartTypeSelect(gEdChart.tSeries);
-            if (gEdChart.groups.length > 0) {
-                addFunctions(columns[gEdChart.groups[0].qIdx].type);
-            }
-
             $('#ew_tseries').prop("checked", gEdChart.tSeries);
             $('#ew_chart_type').val(gEdChart.chart_type);
             $("#ew_title").val(gEdChart.title);
             $('#ew_width').val(gEdChart.width);
             $('#ew_fn').val(gEdChart.fn);
-            if (!gEdChart.tSeries && gEdChart.groups.length > 0) {
-                $('#ew_question').val(gEdChart.groups[0].qIdx);
-            }
 
-            $('#ew_group').val(gEdChart.group);
-
-            if (gEdChart.tSeries) {
-                if (gEdChart.groups && gEdChart.groups.length > 0) {
-                    $("#ew_date1").val(gEdChart.groups[0].qIdx);
-                    if (gEdChart.groups.length > 1) {
-                        $("#ew_date2").val(gEdChart.groups[1].qIdx);
-                    }
+            if (gEdChart.groups && gEdChart.groups.length > 0) {
+                $("#ew_question1").val(gEdChart.groups[0].qIdx);
+                if (gEdChart.groups.length > 1) {
+                    $("#ew_question2").val(gEdChart.groups[1].qIdx);
                 }
-                $('#ew_period').val(gEdChart.period);
             }
+            $('#ew_period').val(gEdChart.period);
 
-            setChartDialogVisibility();
+
+            setupChartDialog();
 
         }
 
-        function setChartDialogVisibility() {
+        function setupChartDialog() {
 
             var tSeries = $('#ew_tseries').prop("checked");
-            var chart_type = $('#ew_chart_type').val();
+
+            var h = [];
+            var idx = -1;
+            var key;
+
+            setTimeSeries();
+            setChartTypes();
+            addQuestions();
+
+        }
+
+        /*
+         * Add functions
+         */
+        function addFunctions() {
+
+            var columns = gTasks.cache.surveyConfig[globals.gViewId].columns;
+            var qIdx1 = $("#ew_question1").val();
+            var addNumeric = false;
+            var addNonNumeric = false;
+            var type = "";
+            var  h = [];
+            var idx = -1;
+            var i;
+            var defValue;
+
+            if (typeof gTasks.cache.surveyConfig[globals.gViewId].columns[qIdx1] !== "undefined") {
+                type = gTasks.cache.surveyConfig[globals.gViewId].columns[qIdx1].type;
+            }
+
+            if (type === "duration") {
+                addNumeric = true;
+            } else {
+                addNonNumeric = true;
+            }
+
+
+            for (i = 0; i < avFunctions.length; i++) {
+
+                if (addNumeric && avFunctions[i].numeric
+                    || addNonNumeric && avFunctions[i].nonNumeric) {
+
+                    if(typeof defValue === "undefined") {
+                        defValue = avFunctions[i].fn;
+                    }
+
+                    h[++idx] = '<option value="';
+                    h[++idx] = avFunctions[i].fn;
+                    h[++idx] = '">';
+                    h[++idx] = localise.set[avFunctions[i].fn];
+                    h[++idx] = '</option>';
+                }
+
+            }
+            $('#ew_fn').empty().append(h.join(''));
+            $('#ew_fn').val(defValue);
+        }
+
+        /*
+         * Set visibility of time series
+         */
+        function setTimeSeries() {
+
+            var tSeries = $('#ew_tseries').prop("checked");
 
             if (typeof tSeries !== "undefined") {
                 if (tSeries) {
-                    $(".date_range_only, .period_only").prop('disabled',false);
-                    $(".question_only, .group_only").prop('disabled',true);
+                    $(".tseries_only, .period_only").show();
                 } else {
-                    $(".date_range_only, .period_only").prop('disabled',true);
-                    $(".question_only, .group_only").prop('disabled',false);
+                    $(".tseries_only, .period_only").hide();
                 }
             }
+        }
 
-            if (typeof chart_type !== "undefined") {
-                if (chart_type === "bar_h" || chart_type === "bar_v" || chart_type === "pie") {
-                    $(".numeric_only").prop('disabled',false);
-                } else {
-                    $(".numeric_only").prop('disabled',true);
-                }
+        /*
+         * Set the available chart types
+         */
+        function setChartTypes() {
 
-                if (chart_type === "wordcloud" || chart_type === "pie") {
-                    $(".group_only").prop('disabled',true);
-                } else {
-                    $(".group_only").prop('disabled',false);
+            var tSeries = $('#ew_tseries').prop("checked");
+            var h = [];
+            var idx = -1;
+            var key;
+
+            for (key in avCharts) {
+
+                if (avCharts.hasOwnProperty(key)) {
+                    if (tSeries) {
+                        if (!avCharts[key].tseries) {
+                            continue;
+                        }
+                    } else {
+                        if (!avCharts[key].non_tseries) {
+                            continue;
+                        }
+                    }
+
+                    if(typeof defaultChartType === "undefined") {
+                        defaultChartType = key;
+                    }
+                    h[++idx] = '<option value="';
+                    h[++idx] = key;
+                    h[++idx] = '">';
+                    h[++idx] = localise.set[key];
+                    h[++idx] = '</option>';
                 }
             }
+            $('.chart_type').empty().append(h.join(''));
+        }
+
+        /*
+         * Add questions
+         */
+        function addQuestions() {
+
+            var tSeries = $('#ew_tseries').prop("checked");
+            var columns = gTasks.cache.surveyConfig[globals.gViewId].columns;
+            var h = [];
+            var idx = -1;
+            var i;
+
+            if(tSeries) {
+                for (i = 0; i < columns.length; i++) {
+                    if (columns[i].type === "dateTime" || columns[i].type === "date") {
+
+                        h[++idx] = '<option value="';
+                        h[++idx] = i;
+                        h[++idx] = '">';
+                        h[++idx] = columns[i].humanName;
+                        h[++idx] = '</option>';
+                    }
+                }
+
+            } else {
+                for (i = 0; i < columns.length; i++) {
+
+                    if (columns[i].chartQuestion) {
+
+                        if(typeof defValue === "undefined") {
+                            defValue = i;
+                        }
+                        
+                        h[++idx] = '<option value="';
+                        h[++idx] = i;
+                        h[++idx] = '">';
+                        h[++idx] = columns[i].humanName;
+                        h[++idx] = '</option>';
+                    }
+                }
+            }
+            $('.question_req').empty().append(h.join(''));
+            $('.question').empty().append(NONE_OPTION);
+            $('.question').append(h.join(''));
+            $('.question_req').val(defValue);
+            $('.question').val("-1");
+
+            addFunctions();
         }
 
         /*
@@ -866,8 +981,8 @@ define([
                 reset = false,
                 errMsg,
                 i,
-                questionIndex,
-                groupIndex;
+                qIdx1,
+                qIdx2;
 
             var columns = gTasks.cache.surveyConfig[globals.gViewId].columns;
 
@@ -878,8 +993,8 @@ define([
             }
 
             if (validated) {
-                questionIndex = $('#ew_question').val();
-                groupIndex = $('#ew_group').val();
+                qIdx1 = $('#ew_question1').val();
+                qIdx2 = $('#ew_question2').val();
                 gEdChart.groups = [];
                 gEdChart.fn = $('#ew_fn').val();
                 gEdChart.title = title;
@@ -890,49 +1005,28 @@ define([
 
                 gEdChart.group = $('#ew_group').val();
 
-                if (!gEdChart.tSeries) {
-                    if (typeof questionIndex !== "undefined" && columns && columns[questionIndex]) {		// Question specific
 
-                        gEdChart.groups.push({
-                            qIdx: questionIndex,
-                            type: columns[questionIndex].type,
-                            name: columns[questionIndex].name,
-                            dataLabel: columns[questionIndex].humanName
-                        });
-                    }
-                    if (typeof groupIndex !== "undefined" && columns && columns[groupIndex]) {		// Question specific
+                if (typeof qIdx1 !== "undefined" && columns && columns[qIdx1]) {		// Question specific
 
-                        gEdChart.groups.push({
-                            qIdx: groupIndex,
-                            type: columns[groupIndex].type,
-                            name: columns[groupIndex].name,
-                            dataLabel: columns[groupIndex].humanName
-                        });
-                    }
+                    gEdChart.groups.push({
+                        qIdx: qIdx1,
+                        type: columns[qIdx1].type,
+                        name: columns[qIdx1].name,
+                        dataLabel: columns[qIdx1].humanName
+                    });
+                }
+                if (typeof qIdx2 !== "undefined" && columns && columns[qIdx2]) {		// Question specific
+
+                    gEdChart.groups.push({
+                        qIdx: qIdx2,
+                        type: columns[qIdx2].type,
+                        name: columns[qIdx2].name,
+                        dataLabel: columns[qIdx2].humanName
+                    });
                 }
 
-                if (gEdChart.tSeries) {
-                    questionIndex = $("#ew_date1").val();
-                    gEdChart.groups.push({
-                        qIdx: questionIndex,
-                        type: columns[questionIndex].type,
-                        name: columns[questionIndex].name,
-                        dataLabel: columns[questionIndex].humanName
-                    });
 
-                    questionIndex = $("#ew_date2").val();
-                    gEdChart.groups.push({
-                        qIdx: questionIndex,
-                        type: columns[questionIndex].type,
-                        name: columns[questionIndex].name,
-                        dataLabel: columns[questionIndex].humanName
-                    });
 
-                    //gEdChart.groups[0].label = $("#ew_date1 option[value='" + gEdChart.groups[0].q + "']").text();
-
-                    //gEdChart.groups[1].q = $("#ew_date2").val();
-                    //gEdChart.groups[1].label = $("#ew_date2 option[value='" + gEdChart.groups[1].q + "']").text();
-                }
                 if (gEdChart.tSeries) {
                     var period = $('#ew_period').val();
                     if (period != gEdChart.period) {
@@ -972,73 +1066,6 @@ define([
             gIsNewChart = true;
             initialiseWidgetDialog();
             $('#editChart').modal("show");
-        }
-
-        /*
-         * Add the list of selectable chart types
-         */
-        function addChartTypeSelect(tSeries) {
-
-            var h = [];
-            var idx = -1;
-            var key;
-
-            for (key in avCharts) {
-
-                if (avCharts.hasOwnProperty(key)) {
-                    if (tSeries) {
-                        if (!avCharts[key].tseries) {
-                            continue;
-                        }
-                    } else {
-                        if (!avCharts[key].non_tseries) {
-                            continue;
-                        }
-                    }
-
-                    h[++idx] = '<option value="';
-                    h[++idx] = key;
-                    h[++idx] = '">';
-                    h[++idx] = localise.set[key];
-                    h[++idx] = '</option>';
-                }
-            }
-            $('.chart_type').empty().append(h.join(''));
-        }
-
-        /*
-         * Add the list of available functions for a chart
-         */
-        function addFunctions(type) {
-
-            var h = [];
-            var idx = -1;
-            var key;
-            var addNumeric = false;
-            var addNonNumeric = false;
-            var i;
-
-            if (type === "duration") {
-                addNumeric = true;
-            } else {
-                addNonNumeric = true;
-            }
-
-            for (i = 0; i < avFunctions.length; i++) {
-
-                if (addNumeric && avFunctions[i].numeric
-                    || addNonNumeric && avFunctions[i].nonNumeric) {
-
-
-                    h[++idx] = '<option value="';
-                    h[++idx] = avFunctions[i].fn;
-                    h[++idx] = '">';
-                    h[++idx] = localise.set[avFunctions[i].fn];
-                    h[++idx] = '</option>';
-                }
-
-            }
-            $('#ew_fn').empty().append(h.join(''));
         }
 
 

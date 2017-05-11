@@ -408,7 +408,7 @@
             </div>
             <div class="modal-body">
                 <div class="row">
-                    <div class="col-sm-12 b-r"><h3 class="m-t-none m-b lang" data-lang="mf_fd">form data</h3>
+                    <div class="col-sm-12"><h3 class="m-t-none m-b lang" data-lang="mf_fd">form data</h3>
 
                         <form id="chartForm" role="form" class="form-horizontal">
 
@@ -421,14 +421,28 @@
                                 </div>
                             </div>
 
+
                             <div class="form-group">
-                                <label class="col-sm-2 control-label lang" data-lang="a_ts" for="ew_tseries">time series</label>
-                                <div class="col-sm-10">
+                                <label class="col-sm-2 control-label lang" data-lang="a_ts" for="ew_tseries">time
+                                    series</label>
+                                <div class="col-sm-1">
                                     <div class="checkbox">
                                         <input type="checkbox" id="ew_tseries">
                                     </div>
                                 </div>
+
+                                <div class="tseries_only">
+                                    <label class="lang col-sm-2 control-label" data-lang="c_period" for="ew_period">period</label>
+                                    <div class="col-sm-3">
+                                        <select class="form-control" id="ew_period">
+                                            <option class="lang" value="day" data-lang="c_day">day</option>
+                                            <option class="lang" value="month" data-lang="c_month">month</option>
+                                            <option class="lang" value="year" data-lang="c_year">year</option>
+                                        </select>
+                                    </div>
+                                </div>
                             </div>
+
 
                             <div>
                                 <div class="form-group">
@@ -440,64 +454,31 @@
                                 </div>
                             </div>
 
-                                <div class="form-group">
-                                    <label class="lang col-sm-2 control-label" data-lang="c_question" for="ew_question">question</label>
-                                    <div class="col-sm-10">
-                                        <select class="form-control question" id="ew_question">
-                                        </select>
-                                    </div>
+                            <div class="form-group">
+                                <label class="col-sm-2 control-label"  for="ew_question1"><span data-lang="c_question" class=""lang>question</span> 1</label>
+                                <div class="col-sm-4">
+                                    <select class="form-control question_req" id="ew_question1">
+                                    </select>
                                 </div>
 
-                                <div class="form-group">
-                                    <label class="lang col-sm-2 control-label" data-lang="a_fn"
-                                           for="ew_fn">function</label>
-                                    <div class="col-sm-10">
-                                        <select class="form-control" id="ew_fn">
-                                        </select>
-                                    </div>
-                                </div>
-
-                                <div class="form-group">
-                                    <label class="lang col-sm-2 control-label" data-lang="a_gb"
-                                           for="ew_group">group</label>
-                                    <div class="col-sm-10">
-                                        <select class="form-control group_question question" id="ew_group">
-                                        </select>
-                                    </div>
-                                </div>
-
-                            <div class="date_range_only">
-                                <div class="form-group">
-                                    <label class="col-sm-2 control-label" for="ew_date1"><span class="lang"
-                                                                                               data-lang="c_dateq">date</span>
-                                        1</label>
-                                    <div class="col-sm-10">
-                                        <select class="form-control date_question" id="ew_date1">
-                                        </select>
-                                    </div>
-                                </div>
-                                <div class="form-group">
-                                    <label class="col-sm-2 control-label" for="ew_date2"><span class="lang"
-                                                                                               data-lang="c_dateq">date</span>
-                                        2</label>
-                                    <div class="col-sm-10">
-                                        <select class="form-control date_question" id="ew_date2">
-                                        </select>
-                                    </div>
+                                <label class="lang col-sm-2 control-label" data-lang="a_fn"
+                                       for="ew_fn">function</label>
+                                <div class="col-sm-4">
+                                    <select class="form-control" id="ew_fn">
+                                    </select>
                                 </div>
                             </div>
-                            <div class="period_only">
-                                <div class="form-group">
-                                    <label class="lang col-sm-2 control-label" data-lang="c_period" for="ew_period">period</label>
-                                    <div class="col-sm-10">
-                                        <select class="form-control" id="ew_period">
-                                            <option class="lang" value="day" data-lang="c_day">day</option>
-                                            <option class="lang" value="month" data-lang="c_month">month</option>
-                                            <option class="lang" value="year" data-lang="c_year">year</option>
-                                        </select>
-                                    </div>
+
+                            <div class="form-group">
+                                <label class="col-sm-2 control-label"
+                                       for="ew_question2"><span class="lang" data-lang="c_question">question</span> 2</label>
+                                <div class="col-sm-10">
+                                    <select class="form-control question" id="ew_question2">
+                                    </select>
                                 </div>
                             </div>
+
+
                             <div class="form-group">
                                 <label class="lang col-sm-2 control-label" data-lang="c_width"
                                        for="ew_width">width</label>
