@@ -131,7 +131,7 @@ define([
 
         function init(chartView, timingView) {
 
-            if(!gInitDone) {
+            if (!gInitDone) {
                 localise.setlang();
 
                 $('#editChartSave').off().click(function () {
@@ -141,10 +141,14 @@ define([
                 $('#ew_tseries').off().click(function () {
                     var $this = $(this);
 
-                    setChartDialogVisibility({
-                        tSeries: $this.prop("checked")
-                    });
+                    setChartDialogVisibility();
                     addChartTypeSelect($this.prop("checked"));
+                });
+
+                $('#ew_chart_type').off().change(function () {
+                    var $this = $(this);
+
+                    setChartDialogVisibility();
                 });
 
                 $('#ew_question').off().change(function () {
@@ -220,15 +224,15 @@ define([
                         updateSingleChart(results, gCharts[i], false);
                     }
                 }
-                if(chartView) {
+                if (chartView) {
                     gChartUpdatePending = false;
-                } else if(timingView) {
+                } else if (timingView) {
                     gTimingUpdatePending = false;
                 }
             } else {
-                if(chartView) {
+                if (chartView) {
                     gChartUpdatePending = true;
-                } else if(timingView) {
+                } else if (timingView) {
                     gTimingUpdatePending = true;
                 }
             }
@@ -344,9 +348,10 @@ define([
         function processData(results, chart, dataLength) {
             var i;
 
-            if(chart.tSeries) {
+            if (chart.tSeries) {
                 return processTimeSeriesData(results, chart, dataLength);
-
+            } else if (chart.chart_type === "wordcloud") {
+                return processWordCloudData(results, chart, dataLength);
             } else {
                 if (!gTasks.cache.surveyConfig[globals.gViewId].processedData) {
 
@@ -359,7 +364,7 @@ define([
                                 di[p] = results[i][p];
                             }
                         }
-                        if(!di._duration) {         // Make sure durations have a number
+                        if (!di._duration) {         // Make sure durations have a number
                             di._duration = 0;
                         }
                         di._duration = +di._duration;
@@ -417,243 +422,154 @@ define([
                 parseTime = parseTimeSec;
             }
 
-            if (chart.tSeries && chart.groups) {
-                for (i = 0; i < chart.groups.length; i++) {
+            for (i = 0; i < chart.groups.length; i++) {
 
-                    allData.push(d3.nest()
-                        .key(function (d) {
-                            var dateArray,
-                                adjKey,
-                                adjKeyArray;
-
-                            if (d[chart.groups[i].name]) {
-                                dateArray = d[chart.groups[i].name].trim().split(" ");
-                                if (dateArray.length > 0) {
-                                    adjKey = dateArray[0];
-                                    adjKeyArray = adjKey.split("-");
-
-                                    // Default is day
-                                    if (chart.period === "month") {
-                                        adjKey = adjKeyArray[0] + "-" + adjKeyArray[1];
-                                    } else if (chart.period === "year") {
-                                        adjKey = adjKeyArray[0];
-                                    }
-                                }
-                            }
-
-                            return adjKey;
-                        })
-                        .rollup(function (v) {
-                            return v[d3Fn];
-                        })
-                        .entries(results));
-                }
-
-                /*
-                 * Remove undefined dates
-                 */
-                for (i = 0; i < allData.length; i++) {
-                    allData[i] = allData[i].filter(function (v) {
-                        return v.key !== "undefined";
-                    })
-                }
-
-                // Add missing dates
-                // Based on http://stackoverflow.com/questions/18835053/d3-js-calculate-width-of-bars-in-time-scale-with-changing-range
-
-
-                for (i = 0; i < allData.length; i++) {
-                    allData[i].forEach(function (d) {
-                        d.key = parseTime(d.key);
-                    });
-
-                    dateValueMap[i] = allData[i].reduce(function (r, v) {
-                        if (v.key) {
-                            r[v.key.toISOString()] = v.value;
-                            return r;
-                        }
-                    }, {});
-
-
-                }
-
-                // Get the extent from all the dates in the time series
-                var allDates = [];
-                for (i = 0; i < allData.length; i++) {
-                    allDates = allDates.concat(allData[i])
-                }
-
-                dateExtent = d3.extent(allDates.map(function (v) {
-                    return v.key;
-                }));
-
-
-                var range = dateRange.range(
-                    dateExtent[0],
-                    dateRange.offset(dateExtent[1], 1)
-                );
-
-                /*
-                 * Format the dates and rename the key column to date
-                 */
-                var newData = [];
-                range.forEach(function (date) {
-                    var dx = date.toISOString();
-
-                    for (i = 0; i < allData.length; i++) {
-                        var value = 0;
-                        var newDataItem = {
-                            'date': formatTime(date)
-                        };
-                        if ((dx in dateValueMap[i])) {
-                            value = dateValueMap[i][dx];
-                        } else if(chart.chart_type === "line") {
-                            continue;   // Don't create new empty values for line charts
-                        }
-                        newDataItem["count"] = value;
-                        newDataItem["group"] = chart.groups[i].dataLabel;
-                        newData.push(newDataItem);
-                    }
-
-                });
-
-                processedData = newData;
-
-
-            } else if (chart.chart_type === "wordcloud") {
-                /*
-                 * Generate data for a word cloud
-                 */
-                //var text_string = "Of course that’s your contention. You’re a first year grad student. You just got finished readin’ some Marxian historian, Pete Garrison probably. You’re gonna be convinced of that ’til next month when you get to James Lemon and then you’re gonna be talkin’ about how the economies of Virginia and Pennsylvania were entrepreneurial and capitalist way back in 1740. That’s gonna last until next year. You’re gonna be in here regurgitating Gordon Wood, talkin’ about, you know, the Pre-Revolutionary utopia and the capital-forming effects of military mobilization… ‘Wood drastically underestimates the impact of social distinctions predicated upon wealth, especially inherited wealth.’ You got that from Vickers, Work in Essex County, page 98, right? Yeah, I read that, too. Were you gonna plagiarize the whole thing for us? Do you have any thoughts of your own on this matter? Or do you, is that your thing? You come into a bar. You read some obscure passage and then pretend, you pawn it off as your own, as your own idea just to impress some girls and embarrass my friend? See, the sad thing about a guy like you is in 50 years, you’re gonna start doin’ some thinkin’ on your own and you’re gonna come up with the fact that there are two certainties in life. One: don’t do that. And two: you dropped a hundred and fifty grand on a fuckin’ education you coulda got for a dollar fifty in late charges at the public library.";
-                var common = "poop,i,me,my,myself,we,us,our,ours,ourselves,you,your,yours,yourself,yourselves,he,him,his,himself,she,her,hers,herself,it,its,itself,they,them,their,theirs,themselves,what,which,who,whom,whose,this,that,these,those,am,is,are,was,were,be,been,being,have,has,had,having,do,does,did,doing,will,would,should,can,could,ought,i'm,you're,he's,she's,it's,we're,they're,i've,you've,we've,they've,i'd,you'd,he'd,she'd,we'd,they'd,i'll,you'll,he'll,she'll,we'll,they'll,isn't,aren't,wasn't,weren't,hasn't,haven't,hadn't,doesn't,don't,didn't,won't,wouldn't,shan't,shouldn't,can't,cannot,couldn't,mustn't,let's,that's,who's,what's,here's,there's,when's,where's,why's,how's,a,an,the,and,but,if,or,because,as,until,while,of,at,by,for,with,about,against,between,into,through,during,before,after,above,below,to,from,up,upon,down,in,out,on,off,over,under,again,further,then,once,here,there,when,where,why,how,all,any,both,each,few,more,most,other,some,such,no,nor,not,only,own,same,so,than,too,very,say,says,said,shall";
-
-                var textArray = results.map(function (d) {
-                    return d[chart.name];
-                });
-
-                var data = {};
-                for (i = 0; i < textArray.length; i++) {
-                    if (textArray[i]) {
-                        var words = textArray[i].split(/[ '\-\(\)\*":;\[\]|{},.!?]+/);
-                        if (words.length == 1) {
-                            if (data[words[0]]) {
-                                data[words[0]]++;
-                            } else {
-                                data[words[0]] = 1;
-                            }
-                        } else {
-                            words.forEach(function (word) {
-                                var word = word.toLowerCase();
-                                if (word != "" && common.indexOf(word) == -1 && word.length > 1) {
-                                    if (data[word]) {
-                                        data[word]++;
-                                    } else {
-                                        data[word] = 1;
-                                    }
-                                }
-                            })
-                        }
-                    }
-                }
-            } else if (chart.fn === "avgdurn") {
-                var i, j,
-                    data = [],
-                    dc,
-                    maxValue;
-
-                data = d3.nest()
+                allData.push(d3.nest()
                     .key(function (d) {
-                        return d[chart.group];
+                        var dateArray,
+                            adjKey,
+                            adjKeyArray;
+
+                        if (d[chart.groups[i].name]) {
+                            dateArray = d[chart.groups[i].name].trim().split(" ");
+                            if (dateArray.length > 0) {
+                                adjKey = dateArray[0];
+                                adjKeyArray = adjKey.split("-");
+
+                                // Default is day
+                                if (chart.period === "month") {
+                                    adjKey = adjKeyArray[0] + "-" + adjKeyArray[1];
+                                } else if (chart.period === "year") {
+                                    adjKey = adjKeyArray[0];
+                                }
+                            }
+                        }
+
+                        return adjKey;
                     })
                     .rollup(function (v) {
-                        return d3.mean(v, function (d) {
-                            if (d[chart.groups[0].q] && d[chart.groups[1].q]) {
-                                return d3.timeSecond.count(parseTime(d[chart.groups[0].q]), parseTime(d[chart.groups[1].q]));
-                            } else {
-                                return 0;
-                            }
-                        });
+                        return v[d3Fn];
                     })
-                    .entries(results);
+                    .entries(results));
+            }
 
-                maxValue = d3.max(data, function (d) {
-                    return +d.value;
+            /*
+             * Remove undefined dates
+             */
+            for (i = 0; i < allData.length; i++) {
+                allData[i] = allData[i].filter(function (v) {
+                    return v.key !== "undefined";
+                })
+            }
+
+            // Add missing dates
+            // Based on http://stackoverflow.com/questions/18835053/d3-js-calculate-width-of-bars-in-time-scale-with-changing-range
+
+
+            for (i = 0; i < allData.length; i++) {
+                allData[i].forEach(function (d) {
+                    d.key = parseTime(d.key);
                 });
-                if (maxValue < 120) {
-                    chart.scale = "seconds";
-                } else if (maxValue >= 120 && maxValue < 7200) {	// Between 2 minutes and 2 hours
-                    data.forEach(function (d) {
-                        d.value = d.value / 60;
-                    });
-                    chart.scale = "minutes";
-                } else {
-                    data.forEach(function (d) {
-                        d.value = d.value / 3600;
-                    });
-                    chart.scale = "hours";
-                }
 
-            } else {
-
-                for (groupIdx = 0; groupIdx < chart.groups.length; groupIdx++) {
-
-                    var item = chart.groups[groupIdx];
-                    if (item.type === "select") {
-                        var i, j,
-                            data = [],
-                            dc;
-                        for (i = 0; i < item.choices.length; i++) {
-                            dc = d3.nest()
-                                .key(function (d) {
-                                    return d[item.choices[i]];
-                                })
-                                .rollup(function (v) {
-                                    return v[d3Fn];
-                                })
-                                .entries(results);
-
-                            for (j = 0; j < dc.length; j++) {
-                                var choiceName = item.choices[i].split(" - ");
-                                if (dc[j].key == "1") {
-                                    data.push({
-                                        key: choiceName[1],
-                                        value: dc[j].value
-                                    });
-                                    break;
-                                }
-                            }
-                        }
-
-                    } else {
-
-                        var newData = [];
-                        for(i = 0; i < results.length; i++) {
-                            var di = {};
-                            di.count = 1;
-                            for (var p in results[i]) {
-                                if (results[i].hasOwnProperty(p)) {
-                                    di[p] = results[i][p];
-                                }
-                            }
-                            newData.push(di);
-                        }
-                        processedData = newData;
-                        /*
-                        processedData = d3.nest()
-                            .key(function (d) {
-                                return d[item.name];
-                            })
-                            .rollup(function (v) {
-                                return v[d3Fn] / dataLength;
-                            })
-                            .entries(results);
-                            */
+                dateValueMap[i] = allData[i].reduce(function (r, v) {
+                    if (v.key) {
+                        r[v.key.toISOString()] = v.value;
+                        return r;
                     }
-                }
+                }, {});
+
 
             }
 
-            return processedData;
+            // Get the extent from all the dates in the time series
+            var allDates = [];
+            for (i = 0; i < allData.length; i++) {
+                allDates = allDates.concat(allData[i])
+            }
+
+            dateExtent = d3.extent(allDates.map(function (v) {
+                return v.key;
+            }));
+
+
+            var range = dateRange.range(
+                dateExtent[0],
+                dateRange.offset(dateExtent[1], 1)
+            );
+
+            /*
+             * Format the dates and rename the key column to date
+             */
+            var newData = [];
+            range.forEach(function (date) {
+                var dx = date.toISOString();
+
+                for (i = 0; i < allData.length; i++) {
+                    var value = 0;
+                    var newDataItem = {
+                        'date': formatTime(date)
+                    };
+                    if ((dx in dateValueMap[i])) {
+                        value = dateValueMap[i][dx];
+                    } else if (chart.chart_type === "line") {
+                        continue;   // Don't create new empty values for line charts
+                    }
+                    newDataItem["count"] = value;
+                    newDataItem["group"] = chart.groups[i].dataLabel;
+                    newData.push(newDataItem);
+                }
+
+            });
+
+            return newData;
+        }
+
+        /*
+         * Process the wordcloud data
+         */
+        function processWordCloudData(results, chart, dataLength) {
+
+            var allData = [],
+                processedData,
+                i;
+
+            /*
+             * Generate data for a word cloud
+             */
+            //var text_string = "Of course that’s your contention. You’re a first year grad student. You just got finished readin’ some Marxian historian, Pete Garrison probably. You’re gonna be convinced of that ’til next month when you get to James Lemon and then you’re gonna be talkin’ about how the economies of Virginia and Pennsylvania were entrepreneurial and capitalist way back in 1740. That’s gonna last until next year. You’re gonna be in here regurgitating Gordon Wood, talkin’ about, you know, the Pre-Revolutionary utopia and the capital-forming effects of military mobilization… ‘Wood drastically underestimates the impact of social distinctions predicated upon wealth, especially inherited wealth.’ You got that from Vickers, Work in Essex County, page 98, right? Yeah, I read that, too. Were you gonna plagiarize the whole thing for us? Do you have any thoughts of your own on this matter? Or do you, is that your thing? You come into a bar. You read some obscure passage and then pretend, you pawn it off as your own, as your own idea just to impress some girls and embarrass my friend? See, the sad thing about a guy like you is in 50 years, you’re gonna start doin’ some thinkin’ on your own and you’re gonna come up with the fact that there are two certainties in life. One: don’t do that. And two: you dropped a hundred and fifty grand on a fuckin’ education you coulda got for a dollar fifty in late charges at the public library.";
+            var common = "poop,i,me,my,myself,we,us,our,ours,ourselves,you,your,yours,yourself,yourselves,he,him,his,himself,she,her,hers,herself,it,its,itself,they,them,their,theirs,themselves,what,which,who,whom,whose,this,that,these,those,am,is,are,was,were,be,been,being,have,has,had,having,do,does,did,doing,will,would,should,can,could,ought,i'm,you're,he's,she's,it's,we're,they're,i've,you've,we've,they've,i'd,you'd,he'd,she'd,we'd,they'd,i'll,you'll,he'll,she'll,we'll,they'll,isn't,aren't,wasn't,weren't,hasn't,haven't,hadn't,doesn't,don't,didn't,won't,wouldn't,shan't,shouldn't,can't,cannot,couldn't,mustn't,let's,that's,who's,what's,here's,there's,when's,where's,why's,how's,a,an,the,and,but,if,or,because,as,until,while,of,at,by,for,with,about,against,between,into,through,during,before,after,above,below,to,from,up,upon,down,in,out,on,off,over,under,again,further,then,once,here,there,when,where,why,how,all,any,both,each,few,more,most,other,some,such,no,nor,not,only,own,same,so,than,too,very,say,says,said,shall";
+
+            var textArray = results.map(function (d) {
+                return d[chart.groups[0].name];
+            });
+
+            var data = {};
+            for (i = 0; i < textArray.length; i++) {
+                if (textArray[i]) {
+                    var words = textArray[i].split(/[ '\-\(\)\*":;\[\]|{},.!?]+/);
+                    if (words.length == 1) {
+                        if (data[words[0]]) {
+                            data[words[0]]++;
+                        } else {
+                            data[words[0]] = 1;
+                        }
+                    } else {
+                        words.forEach(function (word) {
+                            var word = word.toLowerCase();
+                            if (word != "" && common.indexOf(word) == -1 && word.length > 1) {
+                                if (data[word]) {
+                                    data[word]++;
+                                } else {
+                                    data[word] = 1;
+                                }
+                            }
+                        })
+                    }
+                }
+            }
+
+
+            return data;
         }
 
         /*
@@ -852,7 +768,7 @@ define([
             var columns = gTasks.cache.surveyConfig[globals.gViewId].columns;
 
             addChartTypeSelect(gEdChart.tSeries);
-            if(gEdChart.groups.length > 0) {
+            if (gEdChart.groups.length > 0) {
                 addFunctions(columns[gEdChart.groups[0].qIdx].type);
             }
 
@@ -877,39 +793,36 @@ define([
                 $('#ew_period').val(gEdChart.period);
             }
 
-            setChartDialogVisibility({
-                chart_type: gEdChart.chart_type,
-                group: gEdChart.group,
-                tSeries: gEdChart.tSeries
-            });
+            setChartDialogVisibility();
 
         }
 
-        function setChartDialogVisibility(s) {
+        function setChartDialogVisibility() {
 
-            if (typeof s.tSeries !== "undefined") {
-                if (s.tSeries) {
-                    $(".date_range_only, .period_only").show();
-                    $(".question_only, .group_only").hide();
+            var tSeries = $('#ew_tseries').prop("checked");
+            var chart_type = $('#ew_chart_type').val();
+
+            if (typeof tSeries !== "undefined") {
+                if (tSeries) {
+                    $(".date_range_only, .period_only").prop('disabled',false);
+                    $(".question_only, .group_only").prop('disabled',true);
                 } else {
-                    $(".date_range_only, .period_only").hide();
-                    $(".question_only, .group_only").show();
+                    $(".date_range_only, .period_only").prop('disabled',true);
+                    $(".question_only, .group_only").prop('disabled',false);
                 }
             }
 
-            if (typeof s.gEdChart !== "undefined") {
-                if (gEdChart.chart_type === "bar" || gEdChart.chart_type === "pie") {
-                    $(".numeric_only").show();
+            if (typeof chart_type !== "undefined") {
+                if (chart_type === "bar_h" || chart_type === "bar_v" || chart_type === "pie") {
+                    $(".numeric_only").prop('disabled',false);
                 } else {
-                    $(".numeric_only").hide();
+                    $(".numeric_only").prop('disabled',true);
                 }
 
-                if (typeof s.group !== "undefined") {
-                    if (s.group && s.chart_type !== "wordcloud") {
-                        $(".group_only").show();
-                    } else {
-                        $(".group_only").hide();
-                    }
+                if (chart_type === "wordcloud" || chart_type === "pie") {
+                    $(".group_only").prop('disabled',true);
+                } else {
+                    $(".group_only").prop('disabled',false);
                 }
             }
         }
@@ -977,7 +890,7 @@ define([
 
                 gEdChart.group = $('#ew_group').val();
 
-                if(!gEdChart.tSeries) {
+                if (!gEdChart.tSeries) {
                     if (typeof questionIndex !== "undefined" && columns && columns[questionIndex]) {		// Question specific
 
                         gEdChart.groups.push({
@@ -1105,7 +1018,7 @@ define([
             var addNonNumeric = false;
             var i;
 
-            if(type === "duration") {
+            if (type === "duration") {
                 addNumeric = true;
             } else {
                 addNonNumeric = true;
@@ -1113,7 +1026,7 @@ define([
 
             for (i = 0; i < avFunctions.length; i++) {
 
-                if(addNumeric && avFunctions[i].numeric
+                if (addNumeric && avFunctions[i].numeric
                     || addNonNumeric && avFunctions[i].nonNumeric) {
 
 
