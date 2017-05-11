@@ -149,6 +149,18 @@ define([
                     addFunctions();
                 });
 
+                $('#ew_chart_type').off().change(function () {
+                    var chart_type = $(this).val();
+                    if(chart_type === "wordcloud") {
+                        disableElem('ew_question2');
+                        disableElem('ew_fn');
+                    } else {
+                        enableElem('ew_question2');
+                        enableElem('ew_fn');
+                    }
+
+                });
+
 
                 gInitDone = true;
 
@@ -601,10 +613,20 @@ define([
                         var width = $elem.width();
                         var height = $elem.height();
                         var svg = dimple.newSvg(config.domElement, width, height);
-                        config.graph = new dimple.chart(svg, data);
-                        avCharts[chart.chart_type].draw.add(chart, config);
-                        config.graph.addLegend(width - 150, 10, 100, height - 20, "right");
-                        config.graph.draw();
+
+                        if(chart.chart_type === "wordcloud") {
+                            // Hack for wordcloud
+                            config.svg = svg;
+                            avCharts[chart.chart_type].draw.add(chart, config, data, width, height);
+                        } else {
+                            config.graph = new dimple.chart(svg, data);
+                            avCharts[chart.chart_type].draw.add(chart, config);
+                            config.graph.addLegend(width - 150, 10, 100, height - 20, "right");
+                            config.graph.draw();
+                        }
+
+
+
                     }
                     //if (chart.chart_type !== "pie" && chart.chart_type !== "wordcloud") {
                     //    avCharts[chart.chart_type].redraw(chart, config, data, widthContainer, heightContainer);
@@ -924,7 +946,7 @@ define([
                         if(typeof defValue === "undefined") {
                             defValue = i;
                         }
-                        
+
                         h[++idx] = '<option value="';
                         h[++idx] = i;
                         h[++idx] = '">';
@@ -1097,6 +1119,14 @@ define([
                     alert(localise.set["msg_err_save"] + " " + data.responseText);
                 }
             });
+        }
+
+        function disableElem(elem) {
+            $('#' + elem).prop('disabled', 'disabled');
+        }
+
+        function enableElem(elem) {
+            $('#' + elem).prop('disabled', false);
         }
 
     });
