@@ -2112,9 +2112,14 @@ function getTableData(table, columns) {
 		for(j = 0; j < columns.length; j++) {
 			var k = columns[j].humanName,
 				lookup = columns[j].name;
+			var v = rows[i][lookup];
+			
+			if(typeof v !== "string") {
+				v = JSON.stringify(v);
+			}
 			cols.push({
 				k: k,
-				v: rows[i][lookup]
+				v: v
 			})
 		}
 		data.push(cols);

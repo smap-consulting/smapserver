@@ -126,7 +126,8 @@ define([
             init: init,
             setCharts: setCharts,           // Set the list of charts to display
             refreshAllCharts: refreshAllCharts,
-            addNewChart: addNewChart
+            addNewChart: addNewChart,
+            getXLSData: getXLSData
 
         };
 
@@ -782,6 +783,8 @@ define([
 
             var columns = gTasks.cache.surveyConfig[globals.gViewId].columns;
 
+            setupChartDialog();
+
             $('#ew_tseries').prop("checked", gEdChart.tSeries);
             $('#ew_chart_type').val(gEdChart.chart_type);
             $("#ew_title").val(gEdChart.title);
@@ -795,9 +798,6 @@ define([
                 }
             }
             $('#ew_period').val(gEdChart.period);
-
-
-            setupChartDialog();
 
         }
 
@@ -925,6 +925,7 @@ define([
             var h = [];
             var idx = -1;
             var i;
+            var defValue;
 
             if(tSeries) {
                 for (i = 0; i < columns.length; i++) {
