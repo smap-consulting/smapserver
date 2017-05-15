@@ -19,19 +19,21 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 
 package org.smap.sdal.Utilities;
 
-import java.sql.Array;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import org.smap.sdal.managers.LogManager;
 
 public class Authorise {
 	
 	private static Logger log =
 			 Logger.getLogger(Authorise.class.getName());
+	
+	LogManager lm = new LogManager();		// Application log
 	
 	public static String ENUM = "enum";
 	public static String ANALYST = "analyst";
@@ -116,10 +118,16 @@ public class Authorise {
 		
 		// Check to see if the user was authorised to access this service
  		if(count == 0 || sqlError) {
- 			log.info("Authorisation failed for: " + user + " group required was one of: ");
+ 			StringBuffer msg = new StringBuffer("");
+ 			msg.append("Authorisation failed for: " + user + " group required was one of: ");
  			for(int i = 0; i < permittedGroups.size(); i++) {
-				log.info("  ==== " + permittedGroups.get(i));
+				msg.append("  ==== " + permittedGroups.get(i));
 			}
+ 			log.info(msg.toString());
+ 			
+ 			
+ 			lm.writeLog(conn, 0, user, "error", msg.toString());		// Write the application log
+ 			
  			// Close the connection as throwing an exception will end the service call
 			
  			SDDataSource.closeConnection("isAuthorised", conn);

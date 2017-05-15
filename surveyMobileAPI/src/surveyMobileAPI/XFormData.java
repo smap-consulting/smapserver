@@ -43,6 +43,7 @@ import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.NotFoundException;
 import org.smap.sdal.Utilities.SDDataSource;
+import org.smap.sdal.managers.LogManager;
 import org.smap.sdal.managers.SurveyManager;
 import org.smap.sdal.model.Survey;
 import org.smap.server.entities.MissingSurveyException;
@@ -65,6 +66,8 @@ public class XFormData {
 	
 	private static Logger log =
 			 Logger.getLogger(XFormData.class.getName());
+	
+	LogManager lm = new LogManager();		// Application log
 	
 	String serverName = null;
 	
@@ -293,8 +296,8 @@ public class XFormData {
 			if(uem != null) {uem.close();}
 		}
 		
-		//UploadEventManager uem = new UploadEventManager(pc);
-		//uem.persist(ue);
+		lm.writeLog(sd, survey.id, user, "error", reason);		// Write the application log
+		
 	}
 	
 	private SaveDetails saveToDisk(
