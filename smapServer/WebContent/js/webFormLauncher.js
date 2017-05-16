@@ -233,7 +233,7 @@ function getKey(formData) {
 
 function projectSet() {
 	getSurveysForList(globals.gCurrentProject);			// Get surveys
-	getAlerts();
+	//getAlerts();
 }
 
 

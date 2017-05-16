@@ -40,9 +40,6 @@
             name: '../resources',
         },
         {
-            name: '../dashboard',
-        },
-        {
             name: '../userTrail',
 	    exclude: [ 'ol3/js/ol']
         }
