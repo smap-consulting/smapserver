@@ -309,18 +309,6 @@ define([
             if (chart.tSeries) {
                 newData = data;
                 add = true;
-            } else if (chart.chart_type === "bar_h" || chart.chart_type === "bar_v") {
-                newData = [];
-                add = true;
-                for (i = 0; i < data.length; i++) {
-                    newData.push({
-                        key: data[i].key,
-                        pr: [{
-                            key: name,
-                            value: data[i].value
-                        }]
-                    });
-                }
             } else if (chart.chart_type === "wordcloud") {
                 newData = [];
                 add = true;
@@ -335,10 +323,18 @@ define([
                         });
                     }
                 }
-
             } else {
-                console.log("Unknown chart type: " + chart.chart_type);
+                // Rollup the data as per the chart settings
+
+                var
+                add = true;
+                newData = d3.nest()
+                    .key(function(d) { return d[chart.groups[0].name]; })
+                    .rollup(function(v) { return v[chart.fn]; })
+                    .entries(data);
+
             }
+
 
             if (add) {
                 xlsResponse.push({
@@ -887,6 +883,7 @@ define([
             var h = [];
             var idx = -1;
             var key;
+            var defaultChartType;
             
 
             for (key in avCharts) {
