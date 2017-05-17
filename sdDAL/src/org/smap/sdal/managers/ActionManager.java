@@ -148,7 +148,8 @@ public class ActionManager {
 	
 	/*
 	 * Create a temporary user to complete an action
-	 * Add an alert into the alerts table
+	 * Add an alert into the alerts table  - Deprecate
+	 * add a message into message table (Replaces alerts)
 	 */
 	private void addAction(Connection sd, Action a, int oId, ResourceBundle localisation, 
 			String action,
