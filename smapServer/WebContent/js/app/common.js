@@ -642,7 +642,7 @@ function getLoggedInUser(callback, getAll, getProjects, getOrganisationsFn, hide
 			} else {
 				console.log("Error: Failed to get user details: " + err);
 				
-				var msg = Localise.set["c_error"] + ": ";
+				var msg = localise.set["c_error"] + ": ";
 				if(err && err.indexOf('Unauthorized') >= 0) {
 					msg += localise.set["c_auth"];
 				} else {
