@@ -634,11 +634,11 @@ define([
 
 		} else {
 			h[++idx] = '<textarea class="labelProp has_tt';
-			if(question.type === 'calculate' && selProperty !== "appearance") {
+			if(question.type === 'calculate' && selProperty !== "appearance" && selProperty !== "display_name") {
 				h[++idx] = ' calculate';
 			}
 			h[++idx] = '" title="';
-			if(question.type === 'calculate' && selProperty !== "appearance") {
+			if(question.type === 'calculate' && selProperty !== "appearance" && selProperty !== "display_name") {
 				h[++idx] = 'Add calculation here';
 			} else {
 				h[++idx] = type === "option" ? "Choice Label" : selLabel;
@@ -659,7 +659,7 @@ define([
 				h[++idx] = ' not required';
 			} else {
 				h[++idx] = '>';
-				if(question.type === 'calculate' && selProperty !== "appearance") {
+				if(question.type === 'calculate' && selProperty !== "appearance" && selProperty !== "display_name") {
 					h[++idx] = question.calculation;
 				} else {
 					if(selProperty === "label") { 
