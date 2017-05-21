@@ -534,7 +534,7 @@ public class ManagedForms extends Application {
 					if(priority < 0) {
 						priority = am.getPriority(cResults, f.tableName, u.prikey);
 					}
-					am.applyManagedFormActions(sd, tc, oId, sId, pId, managedId, u.prikey, priority, u.value, localisation);
+					am.applyManagedFormActions(request, sd, tc, oId, sId, pId, managedId, u.prikey, priority, u.value, localisation);
 				}
 				
 

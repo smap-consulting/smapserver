@@ -233,6 +233,53 @@ public class UtilityMethodsEmail {
 		return o;
 	}
 	
+	/*
+	 * Get the details for the provided organisation
+	 */
+	static public Organisation getOrganisationDefaults(
+			Connection sd, 
+			int oId) throws SQLException {
+		
+		Organisation o = new Organisation();
+		
+		String sql = "select o.id, o.name, o.company_name, o.admin_email, o.smtp_host, " +
+				" o.email_domain, o.default_email_content,"
+				+ "o.locale, o.company_email, o.timezone " +
+				" from organisation o " +
+				" where o.id = ? ";
+		
+		PreparedStatement pstmt = null;
+		
+		try {
+			
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setInt(1, oId);
+			ResultSet rs = pstmt.executeQuery();
+			if(rs.next()) {
+				o.id = rs.getInt(1);
+				o.name = rs.getString(2);
+				o.company_name = rs.getString(3);
+				o.admin_email = rs.getString(4);
+				o.smtp_host = rs.getString(5);
+				o.email_domain = rs.getString(6);
+				o.default_email_content = rs.getString(7);
+				o.locale = rs.getString(8);
+				o.company_email = rs.getString(9);
+				o.timeZone = rs.getString(10);
+				
+				if(o.locale == null) {
+					o.locale = "en";
+				}
+				
+			}
+		} catch (SQLException e) {
+			log.log(Level.SEVERE,"Error", e);
+			throw e;
+		} finally {
+			try {if (pstmt != null) { pstmt.close();}} catch (Exception e) {}
+		}
+		return o;
+	}
 
 	
 	/*

@@ -9,6 +9,9 @@ import java.util.ResourceBundle;
 import java.util.UUID;
 import java.util.logging.Logger;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.core.Context;
+
 import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.model.Action;
@@ -58,7 +61,9 @@ public class ActionManager {
 	/*
 	 * Apply actions resulting from a change to managed forms
 	 */
-	public void applyManagedFormActions(Connection sd, 
+	public void applyManagedFormActions(
+			@Context HttpServletRequest request, 
+			Connection sd, 
 			TableColumn tc, 
 			int oId, 
 			int sId, 
@@ -80,7 +85,7 @@ public class ActionManager {
 			
 			log.info("Apply managed actions: Action: " + a.action + " : " + a.notify_type + " : " + a.notify_person);
 			
-			addAction(sd, a, oId, localisation, a.action, null, priority, value);
+			addAction(request, sd, a, oId, localisation, a.action, null, priority, value);
 		}
 	}
 	
@@ -151,120 +156,86 @@ public class ActionManager {
 	 * Add an alert into the alerts table  - Deprecate
 	 * add a message into message table (Replaces alerts)
 	 */
-	private void addAction(Connection sd, Action a, int oId, ResourceBundle localisation, 
-			String action,
-			String msg, 
-			int priority,
-			String value) throws Exception {
-		
-		String sql = "insert into alert"
-				+ "(u_id, status, priority, created_time, updated_time, link, message, s_id, m_id, prikey) "
-				+ "values(?, ?, ?, now(), now(), ?, ?, ?, ?, ?)";
-		PreparedStatement pstmt = null;
-		
-		String sqlUpdate = "update alert "
-				+ "set "
-				+ "u_id = ?,"
-				+ "status = ?,"
-				+ "priority = ?, "
-				+ "updated_time = now(), "
-				+ "message = ? "
-				+ "where id = ?";
-		
-		String sqlActionExists = "select id from alert where s_id = ? and m_id = ? and prikey = ?";
-		PreparedStatement pstmtActionExists = null;
-		
-		String sqlDeleteAction = "delete from alert where id = ?";
-		PreparedStatement pstmtDeleteAction = null;
-		
+	private void addAction(@Context HttpServletRequest request, 
+			Connection sd, Action a, int oId, ResourceBundle localisation, String action, String msg,
+			int priority, String value) throws Exception {
+
+		String sqlMsg = "insert into message" + "(o_id, topic, description, data, outbound, created_time) "
+				+ "values(?, ?, ?, ?, 'true', now())";
+		PreparedStatement pstmtMsg = null;
+
 		String link = null;
-		int actionId = 0;
 		try {
-			
-			// Check to see if an action already exists for this managed form
-			pstmtActionExists = sd.prepareStatement(sqlActionExists);
-			pstmtActionExists.setInt(1, a.sId);
-			pstmtActionExists.setInt(2, a.managedId);
-			pstmtActionExists.setInt(3, a.prikey);
-			ResultSet rs = pstmtActionExists.executeQuery();
-			if(rs.next()) {
-				actionId = rs.getInt(1);
+
+			if (a.action.equals("respond") /* && actionId == 0 */) {
+				link = request.getScheme() +
+						"://" +
+						request.getServerName() + 
+						getLink(sd, a, oId);
 			}
-			
-			/*
-			 * If this is a new action then create a temporary user that controls access to the resource
-			 */
-			if(a.action.equals("respond") && actionId == 0) {
-				link = getLink(sd, a, oId);
-			}
-			
-			// Get the id of the user to notify
-			int uId = 0;
-			if(a.notify_type != null) {
-				if(a.notify_type.equals("ident")) {		// Only ident currently supported
-					if(a.notify_person == null) {
-						a.notify_person = value;	// Use the value that is being set as the ident of the person to notify
+
+			// Get the topic
+			String topic = null;
+			if (a.notify_type != null) {
+				if (a.notify_type.equals("ident")) { 
+														
+					if (a.notify_person == null) {
+						a.notify_person = value; // Use the value that is being
+													// set as the ident of the
+													// person to notify
 					}
-					if(a.notify_person != null && a.notify_person.trim().length() > 0) {
-						uId = GeneralUtilityMethods.getUserId(sd, a.notify_person);
+					if (a.notify_person != null && a.notify_person.trim().length() > 0) {
+						topic = GeneralUtilityMethods.getUserEmail(sd, a.notify_person);
 					}
-					
+				} else if (a.notify_type.equals("email")) {
+					if (a.notify_person == null) {
+						topic = value;
+					} else {
+						topic = a.notify_person;
+					}
 				} else {
 					log.info("Info: User attempted to use a notify type other than ident");
 				}
-			}
-			
-			/*
-			 * If this alert is no longer assigned to an individual and has no subscriptions (TODO) then it can be deleted
-			 */
-			if(uId == 0 && actionId > 0) {
-				pstmtDeleteAction = sd.prepareStatement(sqlDeleteAction);
-				pstmtDeleteAction.setInt(1, actionId);
-				pstmtDeleteAction.executeUpdate();
 			} else {
-			
-				if(action != null && msg == null) {
-					msg = localisation.getString("action_" + action);
-				}
-				
-				if(actionId > 0) {
-					// Update existing action
-					pstmt = sd.prepareStatement(sqlUpdate);
-					pstmt.setInt(1,  uId);			// User
-					pstmt.setString(2, "open");    // Status: open || reject || complete
-					pstmt.setInt(3, priority);		// Priority
-					pstmt.setString(4,  msg);		// Message TODO set for info type actions
-					pstmt.setInt(5,  actionId);
-					log.info("Update alert: " + pstmt.toString());
-					pstmt.executeUpdate();
-					
-				} else {
-					// Insert action
-					if(action != null && msg == null) {
-						msg = localisation.getString("action_" + action);
-					}
-					pstmt = sd.prepareStatement(sql);
-					pstmt.setInt(1,  uId);			// User
-					pstmt.setString(2, "open");    // Status: open || reject || complete
-					pstmt.setInt(3, priority);				// Priority
-					pstmt.setString(4,  link);		// Link for the user to click on to complete the action
-					pstmt.setString(5,  msg);		// Message TODO set for info type actions
-					pstmt.setInt(6,  a.sId);
-					pstmt.setInt(7,  a.managedId);
-					pstmt.setInt(8,  a.prikey);
-					
-					log.info("Create alert: " + pstmt.toString());
-					pstmt.executeUpdate();
-				}
+				log.info("Error: Notify type null for message: " + msg);
 			}
-					    
+
+			/*
+			 * If this alert is no longer assigned to an individual and has no
+			 * subscriptions (TODO) then it can be deleted
+			 */
+
+			if (action != null && msg == null) {
+				msg = localisation.getString("action_" + action);
+			}
+
+			if (link != null) {
+				msg += " " + link;
+			}
+
+			if (topic != null) {
+				pstmtMsg = sd.prepareStatement(sqlMsg);
+				pstmtMsg.setInt(1, oId);
+				pstmtMsg.setString(2, topic);
+				pstmtMsg.setString(3, msg);
+				pstmtMsg.setString(4, null);
+				log.info("Add message: " + pstmtMsg.toString());
+				pstmtMsg.executeUpdate();
+			} else {
+				log.info("Error: Null topic for message: " + msg);
+			}
+
 		} finally {
-			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
-			try {if (pstmtActionExists != null) {pstmtActionExists.close();}} catch (SQLException e) {}
-			try {if (pstmtDeleteAction != null) {pstmtDeleteAction.close();}} catch (SQLException e) {}
+
+			try {
+				if (pstmtMsg != null) {
+					pstmtMsg.close();
+				}
+			} catch (SQLException e) {
+			}
+
 		}
-		
-		
+
 	}
 	
 	public String getLink(Connection sd, Action a, int oId) throws Exception {
@@ -275,18 +246,18 @@ public class ActionManager {
 		String tempUserId = null;
 		String link = null;
 		
-		String sqlResourceHasUser = "select ident from users where action_details = ?";
-		PreparedStatement pstmtResourceHasUser = null;
+		//String sqlResourceHasUser = "select ident from users where action_details = ?";
+		//PreparedStatement pstmtResourceHasUser = null;
 	
 		try {
 			//  If a temporary user already exists then use that user
-			pstmtResourceHasUser = sd.prepareStatement(sqlResourceHasUser);
-			pstmtResourceHasUser.setString(1, resource);
-			log.info("Check for resource with user: " + pstmtResourceHasUser);
-			ResultSet rs2 = pstmtResourceHasUser.executeQuery();
-			if(rs2.next()) {
-				tempUserId = rs2.getString(1);
-			}
+			//pstmtResourceHasUser = sd.prepareStatement(sqlResourceHasUser);
+			//pstmtResourceHasUser.setString(1, resource);
+			//log.info("Check for resource with user: " + pstmtResourceHasUser);
+			//ResultSet rs2 = pstmtResourceHasUser.executeQuery();
+			//if(rs2.next()) {
+			//	tempUserId = rs2.getString(1);
+			//}
 			
 			if(tempUserId == null) {
 				UserManager um = new UserManager();
@@ -311,7 +282,7 @@ public class ActionManager {
 			
 			link = "/action/" + tempUserId;
 		} finally {
-			try {if (pstmtResourceHasUser != null) {pstmtResourceHasUser.close();}} catch (SQLException e) {}
+			//try {if (pstmtResourceHasUser != null) {pstmtResourceHasUser.close();}} catch (SQLException e) {}
 		}
 		
 		return link;

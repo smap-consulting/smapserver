@@ -235,7 +235,8 @@ CREATE TABLE users (
 	o_id integer REFERENCES organisation(id) ON DELETE CASCADE,
 	action_details text,			-- Details of a specific action the user can undertake
 	lastalert text,					-- Time last alert sent to the user
-	seen boolean					-- True if the user has aknowledged the alert
+	seen boolean,					-- True if the user has aknowledged the alert
+	created timestamp with time zone
 	);
 CREATE UNIQUE INDEX idx_users_ident ON users(ident);
 ALTER TABLE users OWNER TO ws;
@@ -878,12 +879,14 @@ ALTER SEQUENCE message_seq OWNER TO ws;
 DROP TABLE IF EXISTS message CASCADE;
 create TABLE message (
 	id integer DEFAULT NEXTVAL('message_seq') CONSTRAINT pk_message PRIMARY KEY,
+	o_id integer REFERENCES organisation(id) ON DELETE CASCADE,
 	topic text,
-	desription text,
+	description text,
 	data text,
 	outbound boolean,
 	created_time TIMESTAMP WITH TIME ZONE,
-	processed_time TIMESTAMP WITH TIME ZONE
+	processed_time TIMESTAMP WITH TIME ZONE,
+	status text
 );
 ALTER TABLE message OWNER TO ws;
 

@@ -142,11 +142,8 @@ public class EmailManager {
 		    msg.setRecipients(rt,	emailArray);
 		    msg.setSubject(subject);
 		    
-		    if(emailServer.emailDomain == null) {
-		    	sender = sender + "@" + serverName;
-		    } else {
-		    	sender = sender + "@" + emailServer.emailDomain;
-		    }
+		    sender = sender + "@" + emailServer.emailDomain;
+		 
 		    log.info("Sending email from: " + sender);
 		    msg.setFrom(InternetAddress.parse(sender, false)[0]);
 	    
