@@ -140,7 +140,7 @@ require([
 					  dataType: 'text',
 					  cache: false,
 					  contentType: "application/json",
-					  url: "/surveyKPI/managed/update/" + globals.gCurrentSurvey + "/" + gManageId,
+					  url: "/action/update/" + globals.gCurrentSurvey + "/" + gManageId,
 					  data: { settings: saveString },
 					  success: function(data, status) {
 						  removeHourglass();

@@ -65,8 +65,6 @@ public class MessagingManager {
 		PreparedStatement pstmtGetMessages = null;
 		PreparedStatement pstmtConfirm = null;
 
-		log.info("process outbound messages");
-
 		String sqlGetMessages = "select id, "
 				+ "o_id, "
 				+ "topic, "
@@ -83,7 +81,6 @@ public class MessagingManager {
 			pstmtGetMessages = sd.prepareStatement(sqlGetMessages);
 			pstmtConfirm = sd.prepareStatement(sqlConfirm);
 
-			log.info("Get messages:: " + pstmtGetMessages.toString());
 			rs = pstmtGetMessages.executeQuery();
 			while (rs.next()) {
 

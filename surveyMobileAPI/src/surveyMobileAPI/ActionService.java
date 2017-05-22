@@ -20,15 +20,24 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 package surveyMobileAPI;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Locale;
 import java.util.ResourceBundle;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -38,6 +47,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import org.codehaus.jettison.json.JSONArray;
+import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
@@ -49,9 +59,13 @@ import org.smap.sdal.model.Action;
 import org.smap.sdal.model.Form;
 import org.smap.sdal.model.ManagedFormConfig;
 import org.smap.sdal.model.Survey;
+import org.smap.sdal.model.TableColumn;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
+
+
 
 
 /*
@@ -61,9 +75,18 @@ import com.google.gson.GsonBuilder;
 @Path("/action")
 public class ActionService extends Application{
 
+	Authorise a = null;
+	
 	private static Logger log =
 			 Logger.getLogger(ActionService.class.getName());
 	
+	public ActionService() {
+		
+		ArrayList<String> authorisations = new ArrayList<String> ();	
+		authorisations.add(Authorise.ANALYST);
+		authorisations.add(Authorise.MANAGE);		// Enumerators with MANAGE access can process managed forms
+		a = new Authorise(authorisations, null);		
+	}
 
 	/*
 	 * Get instance data
@@ -79,7 +102,95 @@ public class ActionService extends Application{
 		return getActionForm(request, userIdent);
 	}
 	
+
 	
+	@POST
+	@Produces("text/html")
+	@Consumes("application/json")
+	@Path("/update/{ident}")
+	public Response updateManagedRecordAnon(
+			@Context HttpServletRequest request, 
+			@PathParam("ident") String userIdent,
+			@FormParam("settings") String settings
+			) throws Exception { 
+		
+		Response response = null;
+		String requester = "surveyMobileAPI-updateManagedRecordAnon";
+
+		Connection sd = SDDataSource.getConnection(requester);
+		Connection cResults = ResultsDataSource.getConnection(requester);
+		
+		try {
+			Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(sd, request.getRemoteUser()));
+			ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
+			
+			// 1. Get details on the action to be performed using the user credentials
+			ActionManager am = new ActionManager();
+			Action a = am.getAction(sd, userIdent);
+			
+			// 2. If temporary user does not exist then throw exception
+	    	if(a == null) {
+	        	throw new Exception(localisation.getString("mf_adnf"));
+	        }
+		
+	    	response = am.processUpdate(request, sd, cResults, userIdent, a.sId, a.managedId, settings);
+	    	
+		} finally {
+			SDDataSource.closeConnection(requester, sd);
+			ResultsDataSource.closeConnection(requester, cResults);
+		}
+		
+		return response;
+	}
+	
+	@POST
+	@Produces("text/html")
+	@Consumes("application/json")
+	@Path("/updatestatus/{uIdent}/{status}")
+	public Response updateStatus(
+			@Context HttpServletRequest request, 
+			@PathParam("uIdent") String uIdent,
+			@PathParam("status") String status
+			) { 
+		
+		Response response = null;
+
+		try {
+		    Class.forName("org.postgresql.Driver");	 
+		} catch (ClassNotFoundException e) {
+			log.log(Level.SEVERE,"Error: Can't find PostgreSQL JDBC Driver", e);
+			response = Response.serverError().build();
+		    return response;
+		}
+		
+		String sql = "delete from users where temporary and ident = ?";
+		PreparedStatement pstmt = null;
+		
+		Connection sd = SDDataSource.getConnection("surveyKPI-managedForms");
+
+		try {
+
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setString(1, uIdent);
+			log.info("Delete temporary user - action complete" + pstmt.toString());
+			pstmt.executeUpdate();
+			
+			response = Response.ok().build();
+				
+		} catch (Exception e) {
+			response = Response.serverError().entity(e.getMessage()).build();
+			log.log(Level.SEVERE,"Error", e);
+		} finally {
+			
+			try {if (pstmt != null) {pstmt.close();}} catch (Exception e) {}
+		
+			
+			SDDataSource.closeConnection("surveyKPI-managedForms", sd);
+		
+		}
+		
+		return response;
+	}
 	
 	/*
 	 * Get the response as either HTML or JSON
@@ -90,7 +201,7 @@ public class ActionService extends Application{
 		
 		Response response = null;
 		StringBuffer outputString = new StringBuffer();
-		String requester = "surveyMobileAPI-getWebForm";
+		String requester = "surveyMobileAPI-getActionForm";
 		
 		try {
 		    Class.forName("org.postgresql.Driver");	 
@@ -397,5 +508,6 @@ public class ActionService extends Application{
 		
 		return output;
 	}
+	
 }
 
