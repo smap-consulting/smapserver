@@ -871,6 +871,25 @@ create TABLE alert (
 );
 ALTER TABLE alert OWNER TO ws;
 
+DROP SEQUENCE IF EXISTS message_seq CASCADE;
+CREATE SEQUENCE message_seq START 1;
+ALTER SEQUENCE message_seq OWNER TO ws;
+
+-- Very draft definition of Smap messaging
+DROP TABLE IF EXISTS message CASCADE;
+create TABLE message (
+	id integer DEFAULT NEXTVAL('message_seq') CONSTRAINT pk_message PRIMARY KEY,
+	o_id integer REFERENCES organisation(id) ON DELETE CASCADE,
+	topic text,
+	description text,
+	data text,
+	outbound boolean,
+	created_time TIMESTAMP WITH TIME ZONE,
+	processed_time TIMESTAMP WITH TIME ZONE,
+	status text
+);
+ALTER TABLE message OWNER TO ws;
+
 DROP SEQUENCE IF EXISTS custom_query_seq CASCADE;
 CREATE SEQUENCE custom_query_seq START 1;
 ALTER SEQUENCE custom_query_seq OWNER TO ws;
