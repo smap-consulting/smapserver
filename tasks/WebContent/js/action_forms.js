@@ -164,7 +164,7 @@ require([
             dataType: 'text',
             contentType: "application/json",
             cache: false,
-            url: "/surveyKPI/managed/update/" + gSurvey + "/" + gManage,
+            url: "/action/update/" + gIdent,
             data: {settings: saveString},
             success: function (data, status) {
                 removeHourglass();
@@ -203,7 +203,7 @@ require([
             dataType: 'text',
             contentType: "application/json",
             cache: false,
-            url: "/surveyKPI/managed/updatestatus/" + gIdent + "/complete"
+            url: "/action/updatestatus/" + gIdent + "/complete"
 
         });
     }
