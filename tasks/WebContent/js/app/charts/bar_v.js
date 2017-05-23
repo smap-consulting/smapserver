@@ -65,13 +65,19 @@ define([
                 series = config.graph.addSeries("group", dimple.plot.bar);
             } else {
                 if(chart.fn === "count") {
-                    x = config.graph.addCategoryAxis("x", chart.groupLabels[0]);
+                    if(chart.groupLabels.length === 1) {
+                        x = config.graph.addCategoryAxis("x", chart.groupLabels[0]);
+                        series = config.graph.addSeries(null, dimple.plot.bar);
+                    } else {
+                        x = config.graph.addCategoryAxis("x", chart.groupLabels );
+                        series = config.graph.addSeries(chart.groupLabels[1] , dimple.plot.bar);
+                    }
                 } else {
                     if(chart.groupLabels.length > 1) {
                         x = config.graph.addCategoryAxis("x", chart.groupLabels[1]);
+                        series = config.graph.addSeries(null, dimple.plot.bar);
                     }
                 }
-                series = config.graph.addSeries(null, dimple.plot.bar);
             }
 
             if(chart.fn === "average") {

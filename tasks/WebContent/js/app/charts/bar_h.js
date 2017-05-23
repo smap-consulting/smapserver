@@ -42,10 +42,21 @@ define([
         function add(chart, config) {
 
             var labels,
-                x, y;
+                x, y,
+                series;
 
             config.graph.setMargins(80, 50, 20, 80);
-            x = config.graph.addMeasureAxis("x", "count");
+            if(chart.fn === "count") {
+                x = config.graph.addMeasureAxis("x", "count");
+            } else {
+
+                if(chart.groups[0].type === "duration") {
+                    x = config.graph.addMeasureAxis("x", "_duration");
+                } else {
+                    x = config.graph.addMeasureAxis("x", chart.groupLabels[0]);
+                }
+            }
+            //x = config.graph.addMeasureAxis("x", "count");
 
             if(chart.tSeries) {
                 labels = chart.groupLabels.unshift("date");
@@ -53,8 +64,32 @@ define([
                 y.addOrderRule("Date");
                 config.graph.addSeries("group", dimple.plot.bar);
             } else {
-                y = config.graph.addCategoryAxis("y", chart.groupLabels[0]);
-                config.graph.addSeries(null, dimple.plot.bar);
+                if(chart.fn === "count") {
+                    if(chart.groupLabels.length === 1) {
+                        y = config.graph.addCategoryAxis("y", chart.groupLabels[0]);
+                        series = config.graph.addSeries(null, dimple.plot.bar);
+                    } else {
+                        y = config.graph.addCategoryAxis("y", chart.groupLabels );
+                        series = config.graph.addSeries(chart.groupLabels[1] , dimple.plot.bar);
+                    }
+                } else {
+                    if(chart.groupLabels.length > 1) {
+                        y = config.graph.addCategoryAxis("y", chart.groupLabels[1]);
+                        series = config.graph.addSeries(null, dimple.plot.bar);
+                    }
+                }
+                //y = config.graph.addCategoryAxis("y", chart.groupLabels[0]);
+                //config.graph.addSeries(null, dimple.plot.bar);
+            }
+
+            if(chart.fn === "average") {
+                series.aggregate = dimple.aggregateMethod.avg;
+            } else if(chart.fn === "max") {
+                series.aggregate = dimple.aggregateMethod.max;
+            } else if(chart.fn === "min") {
+                series.aggregate = dimple.aggregateMethod.min;
+            } else if(chart.fn === "sum") {
+                series.aggregate = dimple.aggregateMethod.sum;
             }
 
             x.title = localise.set[chart.fn];

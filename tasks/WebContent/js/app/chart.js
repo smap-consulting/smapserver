@@ -147,9 +147,14 @@ define([
 
                 $('#ew_question1').off().change(function () {
                     addFunctions();
+                    chartTypeChanged();
                 });
 
                 $('#ew_chart_type').off().change(function () {
+                    chartTypeChanged();
+                });
+
+                $('#ew_fn').off().change(function () {
                     chartTypeChanged();
                 });
 
@@ -786,6 +791,7 @@ define([
             }
             $('#ew_period').val(gEdChart.period);
 
+            addFunctions();
             chartTypeChanged();
 
         }
@@ -795,6 +801,7 @@ define([
             setTimeSeries();
             setChartTypes();
             addQuestions();
+            addFunctions();
 
         }
 
@@ -907,8 +914,10 @@ define([
          * Respond to the chart type being changed
          */
         function chartTypeChanged() {
-            var chart_type = $('#ew_chart_type').val();
-            if(chart_type === "wordcloud" || chart_type === "pie") {
+            var chart_type = $('#ew_chart_type').val(),
+                fn = $('#ew_fn').val();
+
+            if(chart_type === "wordcloud" || (chart_type === "pie" && fn === "count")) {
                 disableElem('ew_question2');
                 disableElem('ew_fn');
             } else {
@@ -964,7 +973,6 @@ define([
             $('.question_req').val(defValue);
             $('.question').val("-1");
 
-            addFunctions();
         }
 
         /*

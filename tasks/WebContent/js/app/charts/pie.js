@@ -38,10 +38,37 @@ define([
          */
         function add(chart, config) {
 
+            var p,
+                series;
+
             config.graph.setMargins(80, 50, 20, 80);
-            var p = config.graph.addMeasureAxis("p", "count");
-            config.graph.addSeries(chart.groupLabels[0], dimple.plot.pie);
-            p.title = chart.dataLabel;
+
+            if(chart.fn === "count") {
+                p = config.graph.addMeasureAxis("p", "count");
+                series = config.graph.addSeries(chart.groupLabels[0], dimple.plot.pie);
+            } else {
+
+                if(chart.groups[0].type === "duration") {
+                    p = config.graph.addMeasureAxis("p", "_duration");
+                    series = config.graph.addSeries(chart.groupLabels[1], dimple.plot.pie);
+
+                } else {
+                    p = config.graph.addMeasureAxis("p", chart.groupLabels[0]);
+                    series = config.graph.addSeries(chart.groupLabels[1], dimple.plot.pie);
+                }
+            }
+
+            if(chart.fn === "average") {
+                series.aggregate = dimple.aggregateMethod.avg;
+            } else if(chart.fn === "max") {
+                series.aggregate = dimple.aggregateMethod.max;
+            } else if(chart.fn === "min") {
+                series.aggregate = dimple.aggregateMethod.min;
+            } else if(chart.fn === "sum") {
+                series.aggregate = dimple.aggregateMethod.sum;
+            }
+
+            p.title = chart.dataLabel + " (" + chart.fn + ")";
 
         }
 
