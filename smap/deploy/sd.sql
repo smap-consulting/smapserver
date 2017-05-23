@@ -665,7 +665,24 @@ alter table linked_forms add constraint lf_survey2 FOREIGN KEY (linker_s_id)
 alter table survey add column timing_data boolean;
 alter table question add column display_name text;
 
--- Upgrade to 17.03
+-- Upgrade to 17.05
+CREATE SEQUENCE message_seq START 1;
+ALTER SEQUENCE message_seq OWNER TO ws;
+
+create TABLE message (
+	id integer DEFAULT NEXTVAL('message_seq') CONSTRAINT pk_message PRIMARY KEY,
+	o_id integer REFERENCES organisation(id) ON DELETE CASCADE,
+	topic text,
+	description text,
+	data text,
+	outbound boolean,
+	created_time TIMESTAMP WITH TIME ZONE,
+	processed_time TIMESTAMP WITH TIME ZONE,
+	status text
+);
+ALTER TABLE message OWNER TO ws;
+
+alter table users add column created timestamp with time zone;
 alter table question add column linked_target text;
 update question set linked_target = cast(linked_survey as text) where linked_survey > 0 and linked_target is null ;
 
@@ -721,5 +738,23 @@ ALTER TABLE default_user_view OWNER TO ws;
 
 alter TABLE survey_view add column map_view text;
 alter TABLE survey_view add column chart_view text;
+
+CREATE SEQUENCE message_seq START 1;
+ALTER SEQUENCE message_seq OWNER TO ws;
+
+create TABLE message (
+	id integer DEFAULT NEXTVAL('message_seq') CONSTRAINT pk_message PRIMARY KEY,
+	o_id integer REFERENCES organisation(id) ON DELETE CASCADE,
+	topic text,
+	description text,
+	data text,
+	outbound boolean,
+	created_time TIMESTAMP WITH TIME ZONE,
+	processed_time TIMESTAMP WITH TIME ZONE,
+	status text
+);
+ALTER TABLE message OWNER TO ws;
+
+alter table users add column created timestamp with time zone;
 
 
