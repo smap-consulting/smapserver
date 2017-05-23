@@ -64,6 +64,7 @@ define([
                 x.addOrderRule("Date");
                 series = config.graph.addSeries("group", dimple.plot.bar);
             } else {
+
                 if(chart.fn === "count") {
                     if(chart.groupLabels.length === 1) {
                         x = config.graph.addCategoryAxis("x", chart.groupLabels[0]);
@@ -73,11 +74,17 @@ define([
                         series = config.graph.addSeries(chart.groupLabels[1] , dimple.plot.bar);
                     }
                 } else {
-                    if(chart.groupLabels.length > 1) {
-                        x = config.graph.addCategoryAxis("x", chart.groupLabels[1]);
+
+                    if(chart.groupLabels.length === 1) {
+                        x = config.graph.addCategoryAxis("x", chart.fn);
                         series = config.graph.addSeries(null, dimple.plot.bar);
+                    } else {
+                        x = config.graph.addCategoryAxis("x", chart.groupLabels[1]);
+                        series = config.graph.addSeries(chart.groupLabels[1], dimple.plot.bar);
                     }
                 }
+
+               
             }
 
             if(chart.fn === "average") {

@@ -73,9 +73,13 @@ define([
                         series = config.graph.addSeries(chart.groupLabels[1] , dimple.plot.bar);
                     }
                 } else {
-                    if(chart.groupLabels.length > 1) {
-                        y = config.graph.addCategoryAxis("y", chart.groupLabels[1]);
+
+                    if(chart.groupLabels.length === 1) {
+                        y = config.graph.addCategoryAxis("y", chart.fn);
                         series = config.graph.addSeries(null, dimple.plot.bar);
+                    } else {
+                        y = config.graph.addCategoryAxis("y", chart.groupLabels[1]);
+                        series = config.graph.addSeries(chart.groupLabels[1], dimple.plot.bar);
                     }
                 }
                 //y = config.graph.addCategoryAxis("y", chart.groupLabels[0]);

@@ -824,7 +824,7 @@ define([
                 type = gTasks.cache.surveyConfig[globals.gViewId].columns[qIdx1].type;
             }
 
-            if (type === "duration") {
+            if (type === "duration" || type === "int") {
                 addNumeric = true;
             } else {
                 addNonNumeric = true;
