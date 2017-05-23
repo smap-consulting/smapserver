@@ -233,11 +233,8 @@ define([
                     gTimingUpdatePending = false;
                 }
             } else {
-                if (chartView) {
-                    gChartUpdatePending = true;
-                } else if (timingView) {
-                    gTimingUpdatePending = true;
-                }
+                gChartUpdatePending = true;
+                gTimingUpdatePending = true;
             }
 
         }
@@ -298,6 +295,7 @@ define([
          */
         function getXlsResponseObject(xlsResponse, chart, data) {
             var newData,
+                twoDim = [],
                 i,
                 add = false,
                 name = chart.title;
@@ -305,38 +303,58 @@ define([
             if (chart.tSeries) {
                 newData = data;
                 add = true;
+
             } else if (chart.chart_type === "wordcloud") {
-                newData = [];
-                add = true;
-                for (var p in data) {
+                // the data for word clouds is in an object
+                 add = true;
+                 for (var p in data) {
                     if (data.hasOwnProperty(p)) {
-                        newData.push({
+                        twoDim.push({
                             key: p,
                             pr: [{
                                 key: name,
                                 value: data[p]
                             }]
                         });
-                    }
-                }
+                     }
+                 }
+
             } else {
                 // Rollup the data as per the chart settings
 
-                var
-                add = true;
+                var add = true,
+                    rollupFn = chart.fn;
+
+                if(rollupFn === "count") {
+                    rollupFn = "length";
+                }
+
                 newData = d3.nest()
                     .key(function(d) { return d[chart.groups[0].name]; })
-                    .rollup(function(v) { return v[chart.fn]; })
+                    .rollup(function(v) { return v[rollupFn]; })
                     .entries(data);
 
+                // Convert into a 2 dimensional array suitable for java
+                for(i = 0; i < newData.length; i++) {
+                    twoDim.push({
+                        key: newData[i].key,
+                        pr: [{
+                            key: name,
+                            value: newData[i].values
+                        }]
+                    });
+                }
+
             }
+
+
 
 
             if (add) {
                 xlsResponse.push({
                     chart_type: chart.chart_type,
                     name: chart.title,
-                    data: newData
+                    data: twoDim
                 });
             }
         }
@@ -824,7 +842,7 @@ define([
                 type = gTasks.cache.surveyConfig[globals.gViewId].columns[qIdx1].type;
             }
 
-            if (type === "duration" || type === "int") {
+            if (type === "duration" || type === "int" || type === "decimal") {
                 addNumeric = true;
             } else {
                 addNonNumeric = true;
@@ -1027,7 +1045,10 @@ define([
 
             if (validated) {
                 qIdx1 = $('#ew_question1').val();
-                qIdx2 = $('#ew_question2').val();
+                if(!$('#ew_question2').prop("disabled")) {
+                    qIdx2 = $('#ew_question2').val();
+                }
+
                 gEdChart.groups = [];
                 gEdChart.fn = $('#ew_fn').val();
                 gEdChart.title = title;
@@ -1035,8 +1056,6 @@ define([
                 gEdChart.chart_type = $('#ew_chart_type').val();
                 gEdChart.width = $('#ew_width').val();
                 gEdChart.period = $('#ew_period').val();
-
-                gEdChart.group = $('#ew_group').val();
 
 
                 if (typeof qIdx1 !== "undefined" && columns && columns[qIdx1]) {		// Question specific
@@ -1057,8 +1076,6 @@ define([
                         dataLabel: columns[qIdx2].humanName
                     });
                 }
-
-
 
                 if (gEdChart.tSeries) {
                     var period = $('#ew_period').val();

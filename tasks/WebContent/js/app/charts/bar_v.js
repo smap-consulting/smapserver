@@ -84,7 +84,7 @@ define([
                     }
                 }
 
-               
+
             }
 
             if(chart.fn === "average") {
