@@ -141,9 +141,8 @@ define([
                 });
 
                 $('#ew_tseries').off().change(function () {
-                    setTimeSeries();
-                    setChartTypes();
-                    addQuestions();
+                   setupChartDialog();
+                   chartTypeChanged();
                 });
 
                 $('#ew_question1').off().change(function () {
@@ -151,15 +150,7 @@ define([
                 });
 
                 $('#ew_chart_type').off().change(function () {
-                    var chart_type = $(this).val();
-                    if(chart_type === "wordcloud") {
-                        disableElem('ew_question2');
-                        disableElem('ew_fn');
-                    } else {
-                        enableElem('ew_question2');
-                        enableElem('ew_fn');
-                    }
-
+                    chartTypeChanged();
                 });
 
 
@@ -795,15 +786,11 @@ define([
             }
             $('#ew_period').val(gEdChart.period);
 
+            chartTypeChanged();
+
         }
 
         function setupChartDialog() {
-
-            var tSeries = $('#ew_tseries').prop("checked");
-
-            var h = [];
-            var idx = -1;
-            var key;
 
             setTimeSeries();
             setChartTypes();
@@ -904,12 +891,30 @@ define([
                     }
                     h[++idx] = '<option value="';
                     h[++idx] = key;
-                    h[++idx] = '">';
+                    h[++idx] = '"';
+                    if(defaultChartType === key) {
+                        h[++idx] = ' selected'
+                    }
+                    h[++idx] = '>';
                     h[++idx] = localise.set[key];
                     h[++idx] = '</option>';
                 }
             }
             $('.chart_type').empty().append(h.join(''));
+        }
+
+        /*
+         * Respond to the chart type being changed
+         */
+        function chartTypeChanged() {
+            var chart_type = $('#ew_chart_type').val();
+            if(chart_type === "wordcloud" || chart_type === "pie") {
+                disableElem('ew_question2');
+                disableElem('ew_fn');
+            } else {
+                enableElem('ew_question2');
+                enableElem('ew_fn');
+            }
         }
 
         /*
