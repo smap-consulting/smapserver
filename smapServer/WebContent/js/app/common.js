@@ -2475,7 +2475,7 @@ function getRoles(callback) {
 
 /*
  * Get the alerts
- */
+ *
 function getAlerts() {
 	addHourglass();
 	$.ajax({
@@ -2498,16 +2498,18 @@ function getAlerts() {
 		}
 	});	
 }
+*/
 
+/*
 function showAlerts(alerts) {
 	var h = [],
 		idx = -1,
 		i,
 		a;
 
-	/*
+	 *
 	 * Check for a change in the alert list
-	 */
+	 *
 	if(alerts.length > 0) {
 		if(alerts[0].updatedTime != globals.gLastAlertTime) {
 			$('.alert_icon').addClass("text-danger");
@@ -2519,13 +2521,14 @@ function showAlerts(alerts) {
 		}
 		
 	}
-	/*
+	
+	 *
 	 * Drop down messages have 4 parts
 	 * At left icon
 	 * Main message
 	 * Small message to right of main message
 	 * Footer message (Required)
-	 */
+	 
 	for(i = 0; i < alerts.length; i++) {
 		a = alerts[i];
 		h[++idx] = '<li>';
@@ -2567,6 +2570,7 @@ function showAlerts(alerts) {
 	}
 	$('.dropdown-messages').html(h.join(''));
 }
+*/
 
 function getInterval(seconds) {
 	if(seconds < 2) {

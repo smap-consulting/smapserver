@@ -41,9 +41,6 @@
             name: '../resources',
         },
         {
-            name: '../dashboard',
-        },
-        {
             name: '../queries',
         },
         {

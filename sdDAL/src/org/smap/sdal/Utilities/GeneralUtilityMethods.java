@@ -814,6 +814,40 @@ public class GeneralUtilityMethods {
 	}
 	
 	/*
+	 * Get the user email from the user ident
+	 */
+	static public String getUserEmail(
+			Connection sd, 
+			String user) throws SQLException {
+		
+		String email = null;
+		
+		String sql = "select email " +
+				" from users u " +
+				" where u.ident = ?;";
+		
+		PreparedStatement pstmt = null;
+		
+		try {
+		
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setString(1, user);
+			ResultSet rs = pstmt.executeQuery();
+			if(rs.next()) {
+				email = rs.getString(1);	
+			}
+			
+		} catch(SQLException e) {
+			log.log(Level.SEVERE,"Error", e);
+			throw e;
+		} finally {
+			try {if (pstmt != null) { pstmt.close();}} catch (SQLException e) {}
+		}
+		
+		return email;
+	}
+	
+	/*
 	 * Update the project id in the upload_event table
 	 */
 	static public void updateUploadEvent(

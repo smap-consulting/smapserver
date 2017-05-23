@@ -410,8 +410,8 @@ public class UserManager {
 		
 		int u_id = -1;
 		String sql = "insert into users "
-				+ "(ident, o_id, email, name, temporary, action_details) "
-				+ "values (?, ?, ?, ?, true, ?) ";
+				+ "(ident, o_id, email, name, temporary, action_details, created) "
+				+ "values (?, ?, ?, ?, true, ?, now()) ";
 		
 		PreparedStatement pstmt = null;
 		

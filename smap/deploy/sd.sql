@@ -757,4 +757,3 @@ ALTER TABLE message OWNER TO ws;
 
 alter table users add column created timestamp with time zone;
 
-

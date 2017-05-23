@@ -26,6 +26,7 @@ import javax.xml.xpath.XPathFactory;
 import org.smap.model.SurveyInstance;
 import org.smap.model.SurveyTemplate;
 import org.smap.sdal.Utilities.SDDataSource;
+import org.smap.sdal.managers.MessagingManager;
 import org.smap.sdal.managers.NotificationManager;
 import org.smap.sdal.managers.ServerManager;
 import org.smap.sdal.managers.SurveyManager;
@@ -327,6 +328,9 @@ public class SubscriberBatch {
 			
 			// Erase any templates that were deleted more than a set time ago
 			eraseOldTemplates(sd, cResults, basePath);
+			
+			MessagingManager mm = new MessagingManager();
+			mm.applyOutbound(sd, "smap");
 			subscribers = null;
 			
 		} catch (Exception e) {
@@ -442,9 +446,7 @@ public class SubscriberBatch {
 						System.out.println("Error: " + surveyDisplayName + " : " + e.getMessage());
 					}
 				}
-				
-				
-				
+
 			}
 			
 			/*
