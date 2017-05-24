@@ -25,8 +25,8 @@ public class ChartData {
 	public String name;
 	public String chart_type;
 	public String fn;
-	public ArrayList<String> labelArray;
-	public ArrayList<String> columnArray;	
+	public ArrayList<String> labels;
+	public ArrayList<String> columns;	
 	public ArrayList<ChartRow> data;
 	
 }

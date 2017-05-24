@@ -137,10 +137,19 @@ public class XLSReportsManager {
 					Row headerRow = dataSheet.createRow(rowIndex++);
 					CellStyle headerStyle = styles.get("header");
 					
-					// Add blank cell above the row labels
+					// Add label summary cell above the row labels
+					String labsum = "";
+					if(cd.labels != null && cd.labels.size() > 0) {
+						for(String label : cd.labels) {
+							if(labsum.length() > 0) {
+								labsum += " / ";
+							}
+							labsum += label;
+						}
+					}
 					Cell cell = headerRow.createCell(colIndex++);
 			        cell.setCellStyle(headerStyle);
-			        cell.setCellValue("");
+			        cell.setCellValue(labsum);
 			        
 			        // Add a column for each group
 			        ChartRow row = cd.data.get(0);

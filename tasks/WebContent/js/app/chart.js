@@ -322,34 +322,87 @@ define([
             } else {
                 // Rollup the data as per the chart settings
 
-                var add = true,
-                    rollupFn = chart.fn;
-
-                if(rollupFn === "count") {
-                    rollupFn = "length";
-                }
-
+                var add = true;
                 if(chart.groups.length === 1) {
-                    newData = d3.nest()
-                        .key(function (d) {
-                            return d[chart.groups[0].name];
-                        })
-                        .rollup(function (v) {
-                            return v[rollupFn];
-                        })
-                        .entries(data);
+                    if(chart.fn === "count") {
+                        newData = d3.nest()
+                            .key(function (d) {
+                                return d[chart.groups[0].name];
+                            })
+                            .rollup(function (v) {
+                                return v.length;
+                            })
+                            .entries(data);
+                    } else {
+                        newData = d3.nest()
+                            .rollup(function (v) {
+                               if (chart.fn === "average") {
+                                    return d3.mean(v, function (d) {
+                                        var val = +d[chart.groups[0].name];
+                                        return val;
+                                    });
+                                } else if(chart.fn === "sum") {
+                                    return d3.sum(v, function (d) {
+                                       var val = +d[chart.groups[0].name];
+                                       return val;
+                                    });
+                                } else if(chart.fn === "min") {
+                                   return d3.min(v, function (d) {
+                                       var val = +d[chart.groups[0].name];
+                                       return val;
+                                   });
+                               } else if(chart.fn === "max") {
+                                   return d3.max(v, function (d) {
+                                       var val = +d[chart.groups[0].name];
+                                       return val;
+                                   });
+                               }
+                            })
+                            .entries(data);
+                    }
                 } else {
-                    newData = d3.nest()
-                        .key(function (d) {
-                            return d[chart.groups[0].name];
-                        })
-                        .key(function (d) {
-                            return d[chart.groups[1].name];
-                        })
-                        .rollup(function (v) {
-                            return v[rollupFn];
-                        })
-                        .entries(data);
+                    if(chart.fn === "count") {
+                        newData = d3.nest()
+                            .key(function (d) {
+                                return d[chart.groups[0].name];
+                            })
+                            .key(function (d) {
+                                return d[chart.groups[1].name];
+                            })
+                            .rollup(function (v) {
+                                return v.length;
+                            })
+                            .entries(data);
+                    } else {
+                        newData = d3.nest()
+                            .key(function (d) {
+                                return d[chart.groups[1].name];
+                            })
+                            .rollup(function (v) {
+                               if (chart.fn === "average") {
+                                   return d3.mean(v, function (d) {
+                                       var val = +d[chart.groups[0].name];
+                                       return val;
+                                   });
+                                } else if(chart.fn === "sum") {
+                                    return d3.sum(v, function (d) {
+                                        var val = +d[chart.groups[0].name];
+                                        return val;
+                                    });
+                                } else if(chart.fn === "min") {
+                                   return d3.min(v, function (d) {
+                                       var val = +d[chart.groups[0].name];
+                                       return val;
+                                   });
+                               } else if(chart.fn === "max") {
+                                   return d3.max(v, function (d) {
+                                       var val = +d[chart.groups[0].name];
+                                       return val;
+                                   });
+                               }
+                            })
+                            .entries(data);
+                    }
                 }
 
                 // Get the array of labels
@@ -379,9 +432,9 @@ define([
                         pr: []
                     };
 
-                    if(chart.groups.length === 1) {
+                    if(chart.groups.length === 1 || chart.fn !== "count") {
                         item.pr.push({
-                            key: newData[i].key,
+                            key: chart.fn,
                             value: newData[i].values
                         });
                     }
@@ -413,7 +466,6 @@ define([
                 }
 
             }
-
 
             var responseItem = {
                 chart_type: chart.chart_type,
