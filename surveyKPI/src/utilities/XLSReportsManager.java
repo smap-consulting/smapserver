@@ -159,7 +159,7 @@ public class XLSReportsManager {
 			        	Row aRow = dataSheet.createRow(rowIndex++);
 					
 					
-						// Adde row label
+						// Add row label
 						cell = aRow.createCell(colIndex++);
 				        cell.setCellValue(chartRow.key);
 			        

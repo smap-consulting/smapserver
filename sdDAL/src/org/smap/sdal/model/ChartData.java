@@ -24,7 +24,9 @@ import java.util.ArrayList;
 public class ChartData {
 	public String name;
 	public String chart_type;
-	
+	public String fn;
+	public ArrayList<String> labelArray;
+	public ArrayList<String> columnArray;	
 	public ArrayList<ChartRow> data;
 	
 }

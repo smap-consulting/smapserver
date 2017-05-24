@@ -292,13 +292,13 @@ define([
 
         /*
          * Add a charts data to the xlsResponse object if the data is to be sent to an XLS export
+         * The data has to be transformed into a two dimensional array so it can be processed by the Java server
          */
         function getXlsResponseObject(xlsResponse, chart, data) {
             var newData,
                 twoDim = [],
-                i,
-                add = false,
-                name = chart.title;
+                i, j, k,
+                add = false;
 
             if (chart.tSeries) {
                 newData = data;
@@ -311,8 +311,8 @@ define([
                     if (data.hasOwnProperty(p)) {
                         twoDim.push({
                             key: p,
-                            pr: [{
-                                key: name,
+                            values: [{
+                                key: chart.groups[0].dataLabel,
                                 value: data[p]
                             }]
                         });
@@ -329,34 +329,103 @@ define([
                     rollupFn = "length";
                 }
 
-                newData = d3.nest()
-                    .key(function(d) { return d[chart.groups[0].name]; })
-                    .rollup(function(v) { return v[rollupFn]; })
-                    .entries(data);
+                if(chart.groups.length === 1) {
+                    newData = d3.nest()
+                        .key(function (d) {
+                            return d[chart.groups[0].name];
+                        })
+                        .rollup(function (v) {
+                            return v[rollupFn];
+                        })
+                        .entries(data);
+                } else {
+                    newData = d3.nest()
+                        .key(function (d) {
+                            return d[chart.groups[0].name];
+                        })
+                        .key(function (d) {
+                            return d[chart.groups[1].name];
+                        })
+                        .rollup(function (v) {
+                            return v[rollupFn];
+                        })
+                        .entries(data);
+                }
 
-                // Convert into a 2 dimensional array suitable for java
+                // Get the array of labels
+                var labelArray = [];
+                for(i = 0; i < chart.groups.length; i++) {
+                    labelArray.push(chart.groups[i].dataLabel);
+                }
+
+                // Get the array of columns
+                var columnArray = [];
+                if(chart.groups.length === 2) {
+                    for(i = 0; i < newData.length; i++) {
+                        for(j = 0; j < newData[i].values.length; j++) {
+                            var key = newData[i].values[j].key;
+                            if(columnArray.indexOf(key) < 0) {
+                                columnArray.push(key);
+                            }
+                        }
+                    }
+                }
+
+                // Normalise 2 dimensional array
                 for(i = 0; i < newData.length; i++) {
-                    twoDim.push({
+
+                    var item = {
                         key: newData[i].key,
-                        pr: [{
-                            key: name,
+                        pr: []
+                    };
+
+                    if(chart.groups.length === 1) {
+                        item.pr.push({
+                            key: newData[i].key,
                             value: newData[i].values
-                        }]
-                    });
+                        });
+                    }
+                    if(chart.groups.length === 2) {
+                        for(j = 0; j < columnArray.length; j++) {
+                            var hasValue = false;
+                            for(k = 0; k < newData[i].values.length; k++) {
+                                if(newData[i].values[k].key === columnArray[j]) {
+                                    item.pr.push({
+                                        key: columnArray[j],
+                                        value: newData[i].values[k].values
+                                    });
+                                    hasValue = true;
+                                    break;
+                                }
+                            }
+                            if(!hasValue) {
+                                item.pr.push({
+                                    key: columnArray[j],
+                                    value: 0
+                                });
+                            }
+
+                        }
+
+                    }
+
+                    twoDim.push(item);
                 }
 
             }
 
 
+            var responseItem = {
+                chart_type: chart.chart_type,
+                name: chart.title,
+                fn: chart.fn,
+                labels: labelArray,
+                columns: columnArray,
+                data: twoDim
+            };
 
+            xlsResponse.push(responseItem);
 
-            if (add) {
-                xlsResponse.push({
-                    chart_type: chart.chart_type,
-                    name: chart.title,
-                    data: twoDim
-                });
-            }
         }
 
         /*
