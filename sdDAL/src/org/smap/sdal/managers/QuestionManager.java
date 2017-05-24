@@ -1514,7 +1514,8 @@ public class QuestionManager {
 				 + "column_name," 
 				 + "published,"
 				 + "column_name_applied,"
-				 + "l_id)"						// List ids will need to be updated
+				 + "l_id,"
+				 + "display_name)"						// List ids will need to be updated
 				 
 				 // Get the existing data
 				 + " select "
@@ -1548,7 +1549,8 @@ public class QuestionManager {
 				 + "column_name," 
 				 + (sharedResults ? "published, " : "'false', ")	// Set to false if this question is for a new table	
 				 + "column_name_applied, "
-				 + "l_id "
+				 + "l_id,"
+				 + "display_name "
 				 
 				 + "from question where f_id = ? "		// Existing form id
 				 + "and soft_deleted = 'false';";	

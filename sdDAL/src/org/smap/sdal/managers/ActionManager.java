@@ -355,8 +355,8 @@ public class ActionManager {
 			 * Get the data processing columns
 			 */
 			ArrayList<TableColumn> columns = new ArrayList<TableColumn> ();
-			ManagedFormsManager qm = new ManagedFormsManager();
-			qm.getDataProcessingConfig(sd, managedId, columns, null, oId);
+			SurveyViewManager svm = new SurveyViewManager();
+			svm.getDataProcessingConfig(sd, managedId, columns, null, oId);
 			
 			Form f = GeneralUtilityMethods.getTopLevelForm(sd, sId);	// Get the table name of the top level form
 			DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
