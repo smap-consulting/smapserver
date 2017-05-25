@@ -915,8 +915,6 @@ define([
 
             var columns = gTasks.cache.surveyConfig[globals.gViewId].columns;
 
-            setupChartDialog();
-
             $('#ew_tseries').prop("checked", gEdChart.tSeries);
             $('#ew_chart_type').val(gEdChart.chart_type);
             $("#ew_title").val(gEdChart.title);
@@ -931,6 +929,7 @@ define([
             }
             $('#ew_period').val(gEdChart.period);
 
+            setupChartDialog();
             addFunctions();
             chartTypeChanged();
 
@@ -1017,7 +1016,7 @@ define([
             var h = [];
             var idx = -1;
             var key;
-            var defaultChartType;
+            var defaultChartType = $('#ew_chart_type').val();
             
 
             for (key in avCharts) {
@@ -1222,7 +1221,7 @@ define([
                 saveToServer(gCharts);
 
                 $('#editChart').modal("hide");	// All good close the modal
-                refreshChart(gEdChart, true);
+                refreshChart(gEdChart, false);
 
             } else {
                 $('#chartInfo').show().removeClass('alert-success').addClass('alert-danger').html(errMsg);
