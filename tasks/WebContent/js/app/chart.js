@@ -31,8 +31,9 @@ define([
         'app/charts/pie',
         'app/charts/line',
         'app/charts/wordcloud',
+        'd3',
         'svgsave'],
-    function ($, modernizr, lang, globals, bar_h, bar_v, pie, line, wordcloud, svgsave) {
+    function ($, modernizr, lang, globals, bar_h, bar_v, pie, line, wordcloud, d3, svgsave) {
 
         /*
          * Available charts
