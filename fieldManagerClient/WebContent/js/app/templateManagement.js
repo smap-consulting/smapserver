@@ -439,11 +439,17 @@ function completeSurveyList() {
 			h[++idx] = i;
 			h[++idx] = '"></td>';
 			h[++idx] = '<td class="displayName">';
-			h[++idx] = '<a class="displayName" href="/edit.html?id=';
-			h[++idx] = survey.id;
-			h[++idx] = '&name=';
-			h[++idx] = encodeURI(survey.displayName);
-			h[++idx] = '"><span style="word-wrap: break-word;">';
+			h[++idx] = '<a class="displayName" href="';
+            if(survey.deleted) {
+                h[++idx] = '#"';
+            } else {
+                h[++idx] = '/edit.html?id=';
+                h[++idx] = survey.id;
+                h[++idx] = '&name=';
+                h[++idx] = encodeURI(survey.displayName);
+                h[++idx] = '"';
+			}
+			h[++idx] = '><span style="word-wrap: break-word;">';
 			h[++idx] = survey.displayName;
 			h[++idx] = '</span></a></td>';
 			h[++idx] = '<td class="control_block"><input type="checkbox" name="block" value="';
