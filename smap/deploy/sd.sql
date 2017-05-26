@@ -699,18 +699,6 @@ create TABLE custom_query (
 ALTER TABLE custom_query OWNER TO ws;
 
 -- Create view tables
-CREATE SEQUENCE user_view_seq START 1;
-ALTER SEQUENCE user_view_seq OWNER TO ws;
-
-create TABLE user_view (
-	id INTEGER DEFAULT NEXTVAL('user_view_seq') CONSTRAINT pk_user_view PRIMARY KEY,
-	u_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-	v_id INTEGER REFERENCES survey_view(id) ON DELETE CASCADE,
-	access text		-- read || write || owner
-	);
-ALTER TABLE user_view OWNER TO ws;
-
-DROP SEQUENCE IF EXISTS survey_view_seq CASCADE;
 CREATE SEQUENCE survey_view_seq START 1;
 ALTER SEQUENCE survey_view_seq OWNER TO ws;
 
@@ -722,6 +710,17 @@ create TABLE survey_view (
 	view text
 );
 ALTER TABLE survey_view OWNER TO ws;
+
+CREATE SEQUENCE user_view_seq START 1;
+ALTER SEQUENCE user_view_seq OWNER TO ws;
+
+create TABLE user_view (
+	id INTEGER DEFAULT NEXTVAL('user_view_seq') CONSTRAINT pk_user_view PRIMARY KEY,
+	u_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+	v_id INTEGER REFERENCES survey_view(id) ON DELETE CASCADE,
+	access text		-- read || write || owner
+	);
+ALTER TABLE user_view OWNER TO ws;
 
 CREATE SEQUENCE default_user_view_seq START 1;
 ALTER SEQUENCE default_user_view_seq OWNER TO ws;

@@ -83,7 +83,7 @@ cp $deploy_from/subscribers.jar /smap_bin
 cp $deploy_from/codebook.jar /smap_bin
 cp -r $deploy_from/subscribers/default /smap_bin
 cp -r $deploy_from/resources /smap_bin
-cp -r $deploy_from/bin/* /smap_bin
+cp -r $deploy_from/scripts/* /smap_bin
 cp  $deploy_from/resources/fonts/* /usr/share/fonts/truetype
 chmod +x /smap_bin/*.sh
 

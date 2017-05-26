@@ -97,7 +97,7 @@ public class ExternalFileManager {
 		int linked_sId = 0;
 		String data_key = null;
 		boolean non_unique_key = false;
-		File f = new File(filepath + ".ext");	// file path does not include the extension because getshape.sh adds it
+		File f = new File(filepath + ".csv");	// file path does not include the extension because getshape.sh adds it
 		ArrayList<Pulldata> pdArray = null;
 		boolean regenerate = true;
 		
@@ -119,9 +119,10 @@ public class ExternalFileManager {
 			
 			ArrayList<String> uniqueColumns = new ArrayList<String> ();
 			/*
-			 * 1. Get parameters
-			 *  If this is a linked_ type then get the survey ident that is going to provide the CSV data (That is the ident of the file being linked to)
-			 *  If this is a pulldata specific linked type then get all the pull data parameters from the database
+			 * Get parameters
+			 * There are two types of linked CSV files generated
+			 *  1. Parent child records where there can be many records from a sub form that match the key. Filename starts with "linked_s_pd_" (PD_IDENT)
+			 *  2. Normal lookup where there is only one record that should match a key. Filename starts with "linked_"
 			 */
 			if(filename.startsWith(PD_IDENT)) {
 				linked_pd = true;	

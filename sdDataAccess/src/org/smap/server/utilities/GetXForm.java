@@ -202,13 +202,15 @@ public class GetXForm {
 	    	List<ManifestValue> manifests = tm.getPulldataManifests(sd, template.getSurvey().getId());
 	    	for(int i = 0; i < manifests.size(); i++) {
 	    		ManifestValue mv = manifests.get(i);
-	    		Element pulldataElement = outputDoc.createElement("instance");
-				pulldataElement.setAttribute("id", mv.baseName);
-				pulldataElement.setAttribute("src", "jr://csv/" + mv.baseName + ".csv");
-				modelElement.appendChild(pulldataElement);
-				Element rootElement = outputDoc.createElement("root");
-    	    	pulldataElement.appendChild(rootElement);
-				populateCSVElements(outputDoc, rootElement, mv.filePath);
+	    		if(mv.filePath != null) {
+		    		Element pulldataElement = outputDoc.createElement("instance");
+					pulldataElement.setAttribute("id", mv.baseName);
+					pulldataElement.setAttribute("src", "jr://csv/" + mv.baseName + ".csv");
+					modelElement.appendChild(pulldataElement);
+					Element rootElement = outputDoc.createElement("root");
+	    	    	pulldataElement.appendChild(rootElement);
+					populateCSVElements(outputDoc, rootElement, mv.filePath);
+	    		}
 				
 	    	}
     	}
