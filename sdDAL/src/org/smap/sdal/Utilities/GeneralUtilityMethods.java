@@ -4087,6 +4087,29 @@ public class GeneralUtilityMethods {
 		
 		return centroid;
 	}
+	
+	/*
+	 * 
+	 */
+	public static void updateSelfCalcs(Connection sd, int qId) throws SQLException {
+		// update calculates that reference "self" ie this survey to use the ident
+		PreparedStatement pstmt = null;
+		String sql = "update question set "
+				+ "calculate = replace(calculate, 'linked_self', 'linked_' || "
+				+ "(select ident from survey where s_id in (select s_id from form where f_id in (select f_id from question where q_id = ?)))) "
+				+ "where q_id = ?";
+		
+		try {
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setInt(1, qId);
+			pstmt.setInt(2, qId);
+			log.info("Update self calcs: " + pstmt.toString());
+			pstmt.executeUpdate();
+		} finally {
+			try {if(pstmt != null) {pstmt.close();}} catch(Exception e) {};
+		}
+		
+	}
 
 
 }

@@ -313,13 +313,13 @@ public class QuestionManager {
 				// Update the survey manifest if this question references CSV files
 				sm.updateSurveyManifest(sd, sId, q.appearance, q.calculation);
 				
+				rs = pstmtInsertQuestion.getGeneratedKeys();
+				rs.next();
+				int qId = rs.getInt(1);
+				
 				// If this is a begin repeat then create a new form
 				if(isRepeatType) {
-					
-					rs = pstmtInsertQuestion.getGeneratedKeys();
-					rs.next();
-					int qId = rs.getInt(1);
-					
+						
 					// Create the sub form
 					String tableName = "s" + sId + "_" + columnName;
 			
@@ -338,6 +338,9 @@ public class QuestionManager {
 					pstmtForm.executeUpdate();
 					
 				}
+				
+				// Update any calculations that reference the survey itself
+				GeneralUtilityMethods.updateSelfCalcs(sd, qId);
 				
 			}
 			

@@ -1018,10 +1018,11 @@ public class SurveyTemplate {
 					q.setListId(sd, survey.getId());
 					if(!q.isRepeatCount()) {
 						qm.write(q);
-						//qPersist.persist(q);
 					}
 				} 			
 			}
+			
+			sm.updateSelfCalcs(survey.getIdent(), survey.getId());
 			
 	
 			/*

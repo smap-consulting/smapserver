@@ -1986,6 +1986,8 @@ public class SurveyManager {
 						if(ci.property.prop.equals("calculation")) {
 							updateSurveyManifest(sd, sId, null, ci.property.newVal);
 							removeUnusedSurveyManifests(sd, sId);
+							// Update any calculations that reference the survey itself
+							GeneralUtilityMethods.updateSelfCalcs(sd, ci.property.qId);
 						} else if(ci.property.prop.equals("appearance")) {
 							updateSurveyManifest(sd, sId, ci.property.newVal, null);
 							removeUnusedSurveyManifests(sd, sId);

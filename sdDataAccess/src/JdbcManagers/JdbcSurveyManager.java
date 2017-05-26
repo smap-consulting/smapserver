@@ -49,11 +49,17 @@ public class JdbcSurveyManager {
 			+ "created) "
 			+ "values (nextval('s_seq'), ?, now(), ?, ?, ?, ?, ?, ?, ?, ?, ?, now());";
 	
-	// Update
+	// Update survey ident based on id
 	PreparedStatement pstmtUpdate = null;
 	String sqlUpdate = "update survey set "
 			+ "ident = ? "
 			+ "where s_id = ?;";
+	
+	// update calculates that reference "self" ie this survey to use the ident
+	PreparedStatement pstmtUpdateSelfCalcs = null;
+	String sqlUpdateSelfCalcs = "update question set "
+			+ "calculate = replace(calculate, 'linked_self', 'linked_' || ?) "
+			+ "where f_id in (select f_id from form where s_id = ?)";
 	
 	// Retrieve
 	PreparedStatement pstmtGetByIdent = null;
@@ -86,6 +92,7 @@ public class JdbcSurveyManager {
 	public JdbcSurveyManager(Connection sd) throws SQLException {
 		pstmt = sd.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
 		pstmtUpdate = sd.prepareStatement(sqlUpdate);
+		pstmtUpdateSelfCalcs = sd.prepareStatement(sqlUpdateSelfCalcs);
 		pstmtGetByIdent = sd.prepareStatement(sqlGet + sqlIdentWhere);
 		pstmtGetById = sd.prepareStatement(sqlGet + sqlIdWhere);
 		pstmtExists = sd.prepareStatement(sqlExists);
@@ -129,6 +136,16 @@ public class JdbcSurveyManager {
 		pstmtUpdate.executeUpdate();
 	}
 	
+	
+	/*
+	 * Update reference to self in calculations
+	 */
+	public void updateSelfCalcs(String ident, int sId) throws SQLException {
+		pstmtUpdateSelfCalcs.setString(1, ident);
+		pstmtUpdateSelfCalcs.setInt(2, sId);
+		pstmtUpdateSelfCalcs.executeUpdate();
+	}
+	
 	/*
 	 * Get a survey using its ident
 	 */
@@ -169,6 +186,7 @@ public class JdbcSurveyManager {
 	public void close() {
 		try {if(pstmt != null) {pstmt.close();}} catch(Exception e) {};
 		try {if(pstmtUpdate != null) {pstmtUpdate.close();}} catch(Exception e) {};
+		try {if(pstmtUpdateSelfCalcs != null) {pstmtUpdateSelfCalcs.close();}} catch(Exception e) {};
 		try {if(pstmtGetByIdent != null) {pstmtGetByIdent.close();}} catch(Exception e) {};
 		try {if(pstmtGetById != null) {pstmtGetById.close();}} catch(Exception e) {};
 	}
