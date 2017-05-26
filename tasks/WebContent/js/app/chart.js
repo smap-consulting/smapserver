@@ -312,7 +312,7 @@ define([
                     if (data.hasOwnProperty(p)) {
                         twoDim.push({
                             key: p,
-                            values: [{
+                            pr: [{
                                 key: chart.groups[0].dataLabel,
                                 value: data[p]
                             }]
