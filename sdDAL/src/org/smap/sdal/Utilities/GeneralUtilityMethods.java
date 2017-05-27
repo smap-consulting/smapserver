@@ -4089,10 +4089,32 @@ public class GeneralUtilityMethods {
 	}
 	
 	/*
-	 * 
+	 * Update links to self for the specified survey
 	 */
-	public static void updateSelfCalcs(Connection sd, int qId) throws SQLException {
-		// update calculates that reference "self" ie this survey to use the ident
+	public static void updateSelfCalcsManifest(Connection sd, int sId) throws SQLException {
+
+		PreparedStatement pstmt = null;
+		String sql = "update survey set "
+				+ "manifest = replace(manifest, 'linked_self', 'linked_' || "
+				+ "(select ident from survey where s_id = ?)) "
+				+ "where s_id = ?";
+		
+		try {
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setInt(1, sId);
+			pstmt.setInt(2, sId);
+			log.info("Update self calcs manifest: " + pstmt.toString());
+			pstmt.executeUpdate();
+		} finally {
+			try {if(pstmt != null) {pstmt.close();}} catch(Exception e) {};
+		}
+		
+	}
+	
+	/*
+	 * Update links to self for the specified question
+	 */
+	public static void updateSelfCalcsQuestion(Connection sd, int qId) throws SQLException {
 		PreparedStatement pstmt = null;
 		String sql = "update question set "
 				+ "calculate = replace(calculate, 'linked_self', 'linked_' || "
@@ -4110,6 +4132,7 @@ public class GeneralUtilityMethods {
 		}
 		
 	}
+
 
 
 }

@@ -61,6 +61,12 @@ public class JdbcSurveyManager {
 			+ "calculate = replace(calculate, 'linked_self', 'linked_' || ?) "
 			+ "where f_id in (select f_id from form where s_id = ?)";
 	
+	// update manifests that reference "self"
+	PreparedStatement pstmtUpdateSelfCalcsManifest = null;
+	String sqlUpdateSelfCalcsManifest = "update survey set "
+			+ "manifest = replace(manifest, 'linked_self', 'linked_' || ?) "
+			+ "where s_id = ?";
+	
 	// Retrieve
 	PreparedStatement pstmtGetByIdent = null;
 	PreparedStatement pstmtGetById = null;
@@ -93,6 +99,7 @@ public class JdbcSurveyManager {
 		pstmt = sd.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
 		pstmtUpdate = sd.prepareStatement(sqlUpdate);
 		pstmtUpdateSelfCalcs = sd.prepareStatement(sqlUpdateSelfCalcs);
+		pstmtUpdateSelfCalcsManifest = sd.prepareStatement(sqlUpdateSelfCalcsManifest);
 		pstmtGetByIdent = sd.prepareStatement(sqlGet + sqlIdentWhere);
 		pstmtGetById = sd.prepareStatement(sqlGet + sqlIdWhere);
 		pstmtExists = sd.prepareStatement(sqlExists);
@@ -144,6 +151,10 @@ public class JdbcSurveyManager {
 		pstmtUpdateSelfCalcs.setString(1, ident);
 		pstmtUpdateSelfCalcs.setInt(2, sId);
 		pstmtUpdateSelfCalcs.executeUpdate();
+		
+		pstmtUpdateSelfCalcsManifest.setString(1, ident);
+		pstmtUpdateSelfCalcsManifest.setInt(2, sId);
+		pstmtUpdateSelfCalcsManifest.executeUpdate();
 	}
 	
 	/*
@@ -187,6 +198,7 @@ public class JdbcSurveyManager {
 		try {if(pstmt != null) {pstmt.close();}} catch(Exception e) {};
 		try {if(pstmtUpdate != null) {pstmtUpdate.close();}} catch(Exception e) {};
 		try {if(pstmtUpdateSelfCalcs != null) {pstmtUpdateSelfCalcs.close();}} catch(Exception e) {};
+		try {if(pstmtUpdateSelfCalcsManifest != null) {pstmtUpdateSelfCalcsManifest.close();}} catch(Exception e) {};
 		try {if(pstmtGetByIdent != null) {pstmtGetByIdent.close();}} catch(Exception e) {};
 		try {if(pstmtGetById != null) {pstmtGetById.close();}} catch(Exception e) {};
 	}
