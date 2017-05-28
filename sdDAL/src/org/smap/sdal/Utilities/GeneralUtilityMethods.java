@@ -3102,7 +3102,8 @@ public class GeneralUtilityMethods {
 	public static int getListId(Connection sd, int sId, String name) throws SQLException {
 		int listId = 0;
 		
-		String cleanName = GeneralUtilityMethods.cleanName(name, true, false, false);
+		// I don't think we need to lean the list name
+		//String cleanName = GeneralUtilityMethods.cleanName(name, true, false, false);
 		PreparedStatement pstmtGetListId = null;
 		String sqlGetListId = "select l_id from listname where s_id = ? and name = ?;";
 
@@ -3112,7 +3113,7 @@ public class GeneralUtilityMethods {
 		try {
 			pstmtGetListId = sd.prepareStatement(sqlGetListId);
 			pstmtGetListId.setInt(1, sId);
-			pstmtGetListId.setString(2, cleanName);
+			pstmtGetListId.setString(2, name);
 			
 			log.info("SQL: Get list id: " + pstmtGetListId.toString());
 			ResultSet rs = pstmtGetListId.executeQuery();
@@ -3122,7 +3123,7 @@ public class GeneralUtilityMethods {
 				
 				pstmtListName = sd.prepareStatement(sqlListName, Statement.RETURN_GENERATED_KEYS);
 				pstmtListName.setInt(1, sId);
-				pstmtListName.setString(2, cleanName);
+				pstmtListName.setString(2, name);
 				
 				log.info("SQL: Create list name: " + pstmtListName.toString());
 				
