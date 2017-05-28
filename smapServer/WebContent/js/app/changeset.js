@@ -1099,7 +1099,6 @@ define([
 				}
 			
 			} else if(change.action === "delete") {
-				change.option.$deletedElement.prev().remove();	// Remove the add before button
 				change.option.$deletedElement.remove();
 			}
 		} else if(change.changeType === "property") {

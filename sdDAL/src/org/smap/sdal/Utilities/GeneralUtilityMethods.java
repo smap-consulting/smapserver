@@ -3102,7 +3102,7 @@ public class GeneralUtilityMethods {
 	public static int getListId(Connection sd, int sId, String name) throws SQLException {
 		int listId = 0;
 		
-		// I don't think we need to lean the list name
+		// I don't think we need to clean the list name
 		//String cleanName = GeneralUtilityMethods.cleanName(name, true, false, false);
 		PreparedStatement pstmtGetListId = null;
 		String sqlGetListId = "select l_id from listname where s_id = ? and name = ?;";
