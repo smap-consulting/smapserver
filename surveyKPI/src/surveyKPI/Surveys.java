@@ -411,8 +411,6 @@ public class Surveys extends Application {
 			String parsedPd = gson.toJson(pulldataList);
 			
 			// Update the pulldata settings
-
-		
 			pstmt = sd.prepareStatement(sql);
 			pstmt.setString(1, parsedPd);
 			pstmt.setInt(2, sId);

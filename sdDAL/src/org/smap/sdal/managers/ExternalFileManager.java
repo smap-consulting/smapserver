@@ -164,7 +164,12 @@ public class ExternalFileManager {
 				int idx = filename.indexOf('_');
 				sIdent = filename.substring(idx + 1);
 			}
-			linked_sId = GeneralUtilityMethods.getSurveyId(sd, sIdent);
+			
+			if(sIdent != null && sIdent.equals("self")) {
+				linked_sId = sId;
+			} else {
+				linked_sId = GeneralUtilityMethods.getSurveyId(sd, sIdent);
+			}
 			
 			// 2. Determine whether or not the file needs to be regenerated
 			log.info("Test for regenerate of file: " + f.getAbsolutePath() + " File exists: " + f.exists());
@@ -209,7 +214,7 @@ public class ExternalFileManager {
 				
 				// 5. Get the sql
 				RoleManager rm = new RoleManager();
-				SqlDef sqlDef = getSql(sd, sIdent, uniqueColumns, linked_pd, data_key, userName, rm);		
+				SqlDef sqlDef = getSql(sd, linked_sId, uniqueColumns, linked_pd, data_key, userName, rm);		
 				pstmtData = cRel.prepareStatement(sqlDef.sql);
 				int paramCount = 1;
 				if(sqlDef.hasRbacFilter) {
@@ -474,7 +479,7 @@ public class ExternalFileManager {
 	 */
 	private SqlDef getSql(
 			Connection sd, 
-			String sIdent, 
+			int sId, 
 			ArrayList<String> qnames,
 			boolean linked_pd,
 			String data_key,
@@ -484,7 +489,6 @@ public class ExternalFileManager {
 		StringBuffer sql = new StringBuffer("select distinct ");
 		StringBuffer where = new StringBuffer("");
 		StringBuffer tabs = new StringBuffer("");
-		int sId = 0;
 		String linked_pd_sel = null;
 		SqlDef sqlDef = new SqlDef();
 		ArrayList<String> colNames = new ArrayList<String> ();
@@ -503,11 +507,9 @@ public class ExternalFileManager {
 		PreparedStatement pstmtGetTable = null;
 		
 		try {
-			// 1. Get the survey id
-			sId = GeneralUtilityMethods.getSurveyId(sd, sIdent);
-			int fId;
+			int fId;	
 			
-			// 2. Add the columns
+			// 1. Add the columns
 			pstmtGetCol = sd.prepareStatement(sqlGetCol);
 			pstmtGetCol.setInt(2,  sId);
 			
@@ -543,20 +545,20 @@ public class ExternalFileManager {
 				
 			}
 			
-			// 3. Add the tables
+			// 2. Add the tables
 			pstmtGetTable = sd.prepareStatement(sqlGetTable);
 			pstmtGetTable.setInt(1,  sId);
 			getTables(pstmtGetTable, 0, null, tabs, where, forms);
 			sql.append(" from ");
 			sql.append(tabs);
 			
-			// 4. Add the where clause
+			// 3. Add the where clause
 			if(where.length() > 0) {
 				sql.append(" where ");
 				sql.append(where);
 			}
 			
-			// 5. Add the RBAC/Row filter
+			// 4. Add the RBAC/Row filter
 			// Add RBAC/Role Row Filter
 			sqlDef.rfArray = null;
 			sqlDef.hasRbacFilter = false;
