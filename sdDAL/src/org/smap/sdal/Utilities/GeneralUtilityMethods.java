@@ -4121,14 +4121,27 @@ public class GeneralUtilityMethods {
 				+ "(select ident from survey where s_id in (select s_id from form where f_id in (select f_id from question where q_id = ?)))) "
 				+ "where q_id = ?";
 		
+		PreparedStatement pstmt2 = null;
+		String sql2 = "update question set "
+				+ "calculate = replace(calculate, 'linked_s_pd_self', 'linked_s_pd_' || "
+				+ "(select ident from survey where s_id in (select s_id from form where f_id in (select f_id from question where q_id = ?)))) "
+				+ "where q_id = ?";
+		
 		try {
 			pstmt = sd.prepareStatement(sql);
 			pstmt.setInt(1, qId);
 			pstmt.setInt(2, qId);
 			log.info("Update self calcs: " + pstmt.toString());
 			pstmt.executeUpdate();
+			
+			pstmt2 = sd.prepareStatement(sql);
+			pstmt2.setInt(1, qId);
+			pstmt2.setInt(2, qId);
+			log.info("Update self calcs: " + pstmt2.toString());
+			pstmt2.executeUpdate();
 		} finally {
 			try {if(pstmt != null) {pstmt.close();}} catch(Exception e) {};
+			try {if(pstmt2 != null) {pstmt2.close();}} catch(Exception e) {};
 		}
 		
 	}

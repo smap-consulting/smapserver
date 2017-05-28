@@ -2172,7 +2172,7 @@ function updatePulldataView() {
 		
 			h[++idx] = '<button type="button" data-idx="';
 			h[++idx] = i;
-			h[++idx] = '" class="btn btn-default btn-sm rm_language danger">';
+			h[++idx] = '" class="btn btn-default btn-sm rm_pulldata danger">';
 			h[++idx] = '<span class="glyphicon glyphicon-trash" aria-hidden="true"></span></button>';
 		
 			h[++idx] = '</td>';
@@ -2210,6 +2210,12 @@ function updatePulldataView() {
 		gTempPulldata[idx].repeats = $(this).prop('checked');
 		updatePulldataView();
 	});
+
+    $(".rm_pulldata", $selector).click(function(){
+        var idx = $(this).data("idx");
+        gTempPulldata.slice(idx, 1);
+        updatePulldataView();
+    });
 	
 	
 }
