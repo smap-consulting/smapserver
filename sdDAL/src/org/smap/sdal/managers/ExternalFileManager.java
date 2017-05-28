@@ -518,6 +518,8 @@ public class ExternalFileManager {
 				sql.append(linked_pd_sel);
 				sql.append(" as _data_key");
 			}
+			// Always add top level form
+			forms.put(topForm.id, topForm.id);
 			for(int i = 0; i < qnames.size(); i++) {
 				String name = qnames.get(i);
 				if(name.equals("_data_key") || name.equals("_count")) {
@@ -535,6 +537,8 @@ public class ExternalFileManager {
 				}
 				colNames.add(colName);
 				forms.put(fId, fId);
+				
+				System.out.println("Adding form: " + fId + " for name: " + colName);
 				
 				if(i > 0 || linked_pd) {
 					sql.append(",");

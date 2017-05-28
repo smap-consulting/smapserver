@@ -340,7 +340,7 @@ public class QuestionManager {
 				}
 				
 				// Update any calculations that reference the survey itself
-				GeneralUtilityMethods.updateSelfCalcsQuestion(sd, qId);
+				//GeneralUtilityMethods.updateSelfCalcsQuestion(sd, qId);
 				
 			}
 			

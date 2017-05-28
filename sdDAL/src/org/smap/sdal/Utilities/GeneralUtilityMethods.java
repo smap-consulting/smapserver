@@ -18,7 +18,6 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
-import java.util.ResourceBundle;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -38,7 +37,6 @@ import org.smap.sdal.model.LinkedTarget;
 import org.smap.sdal.model.ManifestInfo;
 import org.smap.sdal.model.Option;
 import org.smap.sdal.model.RoleColumnFilter;
-import org.smap.sdal.model.SqlFrag;
 import org.smap.sdal.model.SurveyLinkDetails;
 import org.smap.sdal.model.TableColumn;
 
@@ -4091,7 +4089,7 @@ public class GeneralUtilityMethods {
 	
 	/*
 	 * Update links to self for the specified survey
-	 */
+	 *
 	public static void updateSelfCalcsManifest(Connection sd, int sId) throws SQLException {
 
 		PreparedStatement pstmt = null;
@@ -4111,10 +4109,11 @@ public class GeneralUtilityMethods {
 		}
 		
 	}
+	*/
 	
 	/*
 	 * Update links to self for the specified question
-	 */
+	 *
 	public static void updateSelfCalcsQuestion(Connection sd, int qId) throws SQLException {
 		PreparedStatement pstmt = null;
 		String sql = "update question set "
@@ -4146,6 +4145,7 @@ public class GeneralUtilityMethods {
 		}
 		
 	}
+	*/
 
 
 

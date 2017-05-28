@@ -119,6 +119,12 @@ public class TranslationManager {
 					m.fileName = manifestList.get(i);
 					m.sId = surveyId;
 					
+					System.out.println("Filename: " + m.fileName);
+					if(m.fileName.equals("linked_self")) {
+						m.fileName = "linked_" + surveyIdent;
+					} else if(m.fileName.equals("linked_pd_self")) {
+						m.fileName = "linked_pd_" + surveyIdent;
+					}
 					if(m.fileName.endsWith(".csv")) {
 						m.type = "csv";
 						UtilityMethodsEmail.getFileUrl(m, surveyIdent, m.fileName, basePath, oId, surveyId);
@@ -151,7 +157,8 @@ public class TranslationManager {
 	 */
 	public List<ManifestValue> getLinkedManifests(Connection sd, 
 			String user, 
-			int surveyId
+			int surveyId,
+			String surveyIdent
 			)	throws SQLException {
 		
 		ArrayList<ManifestValue> manifests = new ArrayList<ManifestValue>();	// Results of request
@@ -181,6 +188,12 @@ public class TranslationManager {
 					ManifestValue m = new ManifestValue();
 					m.fileName = manifestList.get(i);
 					m.sId = surveyId;
+					
+					if(m.fileName.equals("linked_self")) {
+						m.fileName = "linked_" + surveyIdent;
+					} else if(m.fileName.equals("linked_pd_self")) {
+						m.fileName = "linked_pd_" + surveyIdent;
+					}
 					
 					if(!m.fileName.endsWith(".csv")) {
 						m.type = "linked";

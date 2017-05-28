@@ -353,13 +353,14 @@ public class MyAssignments extends Application {
 			while(resultSet.next()) {
 				boolean newManifestFile = false;
 				int sId = resultSet.getInt("s_id");
+				String sIdent = resultSet.getString("ident");
 				
 				/*
 				 * For each form that has a manifest that links to another form
 				 *  generate the new CSV files if the linked data has changed
 				 */
 				List<ManifestValue> manifestList = translationMgr.
-						getLinkedManifests(connectionSD, request.getRemoteUser(), sId);
+						getLinkedManifests(connectionSD, request.getRemoteUser(), sId, sIdent);
 				
 				for( ManifestValue m : manifestList) {
 					
@@ -374,7 +375,6 @@ public class MyAssignments extends Application {
 					 */
 					ExternalFileManager efm = new ExternalFileManager();
 					String basepath = GeneralUtilityMethods.getBasePath(request);
-					String sIdent = GeneralUtilityMethods.getSurveyIdent(connectionSD, sId);
 					String dirPath = basepath + "/media/" + sIdent+ "/" + userName + "/";
 					filepath =  dirPath + m.fileName;
 					

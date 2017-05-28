@@ -1022,8 +1022,7 @@ public class SurveyTemplate {
 				} 			
 			}
 			
-			sm.updateSelfCalcs(survey.getIdent(), survey.getId());
-			
+			//sm.updateSelfCalcs(survey.getIdent(), survey.getId());
 	
 			/*
 			 * Forms 2. Update the form record with parent form and question keys

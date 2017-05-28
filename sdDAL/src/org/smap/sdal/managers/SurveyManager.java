@@ -1987,7 +1987,7 @@ public class SurveyManager {
 							updateSurveyManifest(sd, sId, null, ci.property.newVal);
 							removeUnusedSurveyManifests(sd, sId);
 							// Update any calculations that reference the survey itself
-							GeneralUtilityMethods.updateSelfCalcsQuestion(sd, ci.property.qId);
+							//GeneralUtilityMethods.updateSelfCalcsQuestion(sd, ci.property.qId);
 						} else if(ci.property.prop.equals("appearance")) {
 							updateSurveyManifest(sd, sId, ci.property.newVal, null);
 							removeUnusedSurveyManifests(sd, sId);
@@ -2767,7 +2767,7 @@ public class SurveyManager {
 				pstmtUpdate.executeUpdate();
 			}
 			
-			GeneralUtilityMethods.updateSelfCalcsManifest(sd, sId);
+			//GeneralUtilityMethods.updateSelfCalcsManifest(sd, sId);
 			
 			
 			
