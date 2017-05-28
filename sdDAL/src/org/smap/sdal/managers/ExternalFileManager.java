@@ -6,16 +6,20 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.lang.reflect.Type;
+import java.sql.Array;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.model.Action;
+import org.smap.sdal.model.Form;
 import org.smap.sdal.model.Pulldata;
 import org.smap.sdal.model.SqlFrag;
 import org.smap.sdal.model.TableColumn;
@@ -422,32 +426,20 @@ public class ExternalFileManager {
 				int count = 0;
 				if(table != null) {
 					log.info("Creating a new count entry");
-					String sqlCount = "select count(*) from " + table;
-					try {
-						pstmtCount = cRel.prepareStatement(sqlCount);
-						log.info("Regenerate: " + pstmtCount.toString());
-						ResultSet rsCount = pstmtCount.executeQuery();
-						if(rsCount.next()) {
-							count = rsCount.getInt(1);
-						}
+					count = 0;
+					pstmtInsert = sd.prepareStatement(sqlInsert);
+					pstmtInsert.setInt(1, linked_sId);
+					pstmtInsert.setString(2, table);
+					pstmtInsert.setInt(3, count);
+					pstmtInsert.setInt(4, linker_sId);
+					pstmtInsert.setString(5, filepath);
+							
+					log.info("Create new count entry: " + pstmtInsert.toString());
+					pstmtInsert.executeUpdate();
+							
+					regenerate = false;
+					log.info("Not regenerating because we created a new count entry with a value of 0");
 						
-						pstmtInsert = sd.prepareStatement(sqlInsert);
-						pstmtInsert.setInt(1, linked_sId);
-						pstmtInsert.setString(2, table);
-						pstmtInsert.setInt(3, count);
-						pstmtInsert.setInt(4, linker_sId);
-						pstmtInsert.setString(5, filepath);
-						
-						log.info("Create new count entry: " + pstmtInsert.toString());
-						pstmtInsert.executeUpdate();
-						
-						regenerate = true;
-						log.info("Regenerating because we created a new count entry");
-						
-					} catch(Exception e) {
-						log.log(Level.SEVERE, "Table not found", e);
-						tableExists = false;
-					}
 					
 				} else {
 					log.info("Table " + table + " not found. Probably no data has been submitted");
@@ -496,9 +488,11 @@ public class ExternalFileManager {
 		String linked_pd_sel = null;
 		SqlDef sqlDef = new SqlDef();
 		ArrayList<String> colNames = new ArrayList<String> ();
+		HashMap <Integer, Integer> forms = new HashMap <Integer, Integer> ();
+		Form topForm = GeneralUtilityMethods.getTopLevelForm(sd, sId);
 		
 		ResultSet rs = null;
-		String sqlGetCol = "select column_name from question "
+		String sqlGetCol = "select column_name, f_id from question "
 				+ "where qname = ? "
 				+ "and f_id in (select f_id from form where s_id = ?)";
 		PreparedStatement pstmtGetCol = null;
@@ -511,6 +505,7 @@ public class ExternalFileManager {
 		try {
 			// 1. Get the survey id
 			sId = GeneralUtilityMethods.getSurveyId(sd, sIdent);
+			int fId;
 			
 			// 2. Add the columns
 			pstmtGetCol = sd.prepareStatement(sqlGetCol);
@@ -531,10 +526,13 @@ public class ExternalFileManager {
 				rs = pstmtGetCol.executeQuery();
 				if(rs.next()) {
 					colName = rs.getString(1);
+					fId = rs.getInt(2);
 				} else {
 					colName = name;		// For columns that are not questions such as _hrk, _device
+					fId = topForm.id;
 				}
 				colNames.add(colName);
+				forms.put(fId, fId);
 				
 				if(i > 0 || linked_pd) {
 					sql.append(",");
@@ -548,7 +546,7 @@ public class ExternalFileManager {
 			// 3. Add the tables
 			pstmtGetTable = sd.prepareStatement(sqlGetTable);
 			pstmtGetTable.setInt(1,  sId);
-			getTables(pstmtGetTable, 0, null, tabs, where);
+			getTables(pstmtGetTable, 0, null, tabs, where, forms);
 			sql.append(" from ");
 			sql.append(tabs);
 			
@@ -595,7 +593,8 @@ public class ExternalFileManager {
 			int parentId, 
 			String parentTable,
 			StringBuffer tabs, 
-			StringBuffer where) throws SQLException {
+			StringBuffer where,
+			HashMap<Integer, Integer> forms) throws SQLException {
 		
 		ArrayList<Integer> parents = new ArrayList<Integer> ();
 		ArrayList<String> parentTables = new ArrayList<String> ();
@@ -607,34 +606,40 @@ public class ExternalFileManager {
 			int fId = rs.getInt(1);
 			String table = rs.getString(2);
 			
-			// Update table list
-			if(tabs.length() > 0) {
-				tabs.append(",");
-			}
-			tabs.append(table);
+			/*
+			 * Ignore forms that where no questions have been asked for
+			 */
+			if(forms.get(fId) != null) {
 			
-			// update where statement
-			if(where.length() > 0) {
-				where.append(" and ");
+				// Update table list
+				if(tabs.length() > 0) {
+					tabs.append(",");
+				}
+				tabs.append(table);
+				
+				// update where statement
+				if(where.length() > 0) {
+					where.append(" and ");
+				}
+				if(parentId == 0) {
+					where.append(table);
+					where.append("._bad = 'false'");
+				} else {
+					where.append(table);
+					where.append(".parkey = ");
+					where.append(parentTable);
+					where.append(".prikey");
+				}
+				parents.add(fId);
+				parentTables.add(table);
 			}
-			if(parentId == 0) {
-				where.append(table);
-				where.append("._bad = 'false'");
-			} else {
-				where.append(table);
-				where.append(".parkey = ");
-				where.append(parentTable);
-				where.append(".prikey");
-			}
-			parents.add(fId);
-			parentTables.add(table);
 			
 		}
 		
 		for(int i = 0; i < parents.size(); i++) {
 			int fId = parents.get(i);
 			String table = parentTables.get(i);
-			getTables(pstmt, fId, table, tabs, where);
+			getTables(pstmt, fId, table, tabs, where, forms);
 		}
 		
 	}

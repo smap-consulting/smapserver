@@ -402,8 +402,6 @@ public class MyAssignments extends Application {
 				
 				// If a new manifest was created then increase the version of this file so that it will be requested again by clients
 	            if(newManifestFile) {
-	            	//GeneralUtilityMethods.updateVersion(connectionSD, sId);	// Temporary - should rely on dirty flag to force refresh
-	            	//fl.version++;		
 	            	fl.dirty = true;
 	            } else {
 	            	fl.dirty = false;
