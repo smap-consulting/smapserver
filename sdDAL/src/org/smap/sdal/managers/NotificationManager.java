@@ -372,7 +372,7 @@ public class NotificationManager {
 			String filePath = null;
 			String filename = "instance";
 			String logContent = null;
-			if(nd.attach != null) {
+			if(nd.attach != null && !nd.attach.equals("none")) {
 				System.out.println("Attaching link to email: " + nd.attach);
 				
 				/*
