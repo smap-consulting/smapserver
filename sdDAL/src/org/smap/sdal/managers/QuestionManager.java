@@ -793,7 +793,9 @@ public class QuestionManager {
 						pstmt.executeUpdate();
 						
 						// Update the sequences of questions after the deleted end group
+						pstmtUpdateSeq.setInt(1, q.fId);
 						pstmtUpdateSeq.setInt(2, seq);
+						pstmtUpdateSeq.setInt(3, sId);
 						
 						log.info("Update sequences: " + pstmtUpdateSeq.toString());
 						pstmtUpdateSeq.executeUpdate();
