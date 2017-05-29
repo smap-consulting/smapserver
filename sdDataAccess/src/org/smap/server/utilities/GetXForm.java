@@ -750,7 +750,7 @@ public class GetXForm {
 		// Add calculate
 		String calculate = null;
 		if(q.getName().equals("instanceName")) {
-			calculate = UtilityMethods.convertAllxlsNames(template.getSurvey().getInstanceName(), false, template.getQuestionPaths(),f.getId());
+			calculate = UtilityMethods.convertAllxlsNames(template.getSurvey().getInstanceName(), false, template.getQuestionPaths(),f.getId());	
 			if(calculate == null) {
 				calculate = q.getCalculate(true, template.getQuestionPaths());	// Allow for legacy forms that were loaded before the instance name was set in the survey table
 			}
@@ -764,6 +764,9 @@ public class GetXForm {
 			calculate = q.getCalculate(true, template.getQuestionPaths());
 		}
 		if(calculate != null && calculate.trim().length() > 0 ) {
+			Survey s = template.getSurvey();
+			calculate = GeneralUtilityMethods.removeSelfReferences(calculate, s.getIdent());
+			log.info("Adding calculate to bind:" + calculate);
 			questionElement.setAttribute("calculate", calculate);
 		}
 		

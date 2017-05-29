@@ -4095,6 +4095,17 @@ public class GeneralUtilityMethods {
 	}
 	
 	/*
+	 * Replace links to self with links to absolute survey ident
+	 */
+	public static String removeSelfReferences(String in, String sIdent) {
+		String resp = in;
+		resp = resp.replaceAll("linked_self", "linked_" + sIdent);
+		resp = resp.replaceAll("linked_pd_self", "linked_pd_" + sIdent);
+		
+		return resp;
+	}
+	
+	/*
 	 * Update links to self for the specified survey
 	 *
 	public static void updateSelfCalcsManifest(Connection sd, int sId) throws SQLException {
