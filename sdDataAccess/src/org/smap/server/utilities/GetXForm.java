@@ -141,6 +141,7 @@ public class GetXForm {
     	rootElement.setAttribute("xmlns:ev", "http://www.w3.org/2001/xml-events");
     	rootElement.setAttribute("xmlns:h", "http://www.w3.org/1999/xhtml");
     	rootElement.setAttribute("xmlns:jr", "http://openrosa.org/javarosa");
+    	rootElement.setAttribute("xmlns:orx", "http://openrosa.org/xforms");
     	rootElement.setAttribute("xmlns:xsd", "http://www.w3.org/2001/XMLSchema");
     	outputDoc.appendChild(rootElement);  
     	
