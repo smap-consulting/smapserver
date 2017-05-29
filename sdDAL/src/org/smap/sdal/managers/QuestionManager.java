@@ -787,7 +787,9 @@ public class QuestionManager {
 						pstmtDelLabels.executeUpdate();
 						
 						// Delete the end group
+						pstmt.setInt(1, q.fId);
 						pstmt.setString(2, endGroupName);
+						pstmt.setInt(3, sId );
 						
 						log.info("Delete End group of question: " + pstmt.toString());
 						pstmt.executeUpdate();
