@@ -167,6 +167,7 @@ public class ExternalFileManager {
 			
 			if(sIdent != null && sIdent.equals("self")) {
 				linked_sId = sId;
+				sIdent = GeneralUtilityMethods.getSurveyIdent(sd, sId);
 			} else {
 				linked_sId = GeneralUtilityMethods.getSurveyId(sd, sIdent);
 			}
@@ -184,7 +185,7 @@ public class ExternalFileManager {
 				while(rs.next()) {
 					int qId = rs.getInt(1);
 					String appearance = rs.getString(2);
-					ArrayList<String> columns = GeneralUtilityMethods.getManifestParams(sd, qId, appearance,  filename, true);
+					ArrayList<String> columns = GeneralUtilityMethods.getManifestParams(sd, qId, appearance,  filename, true, sIdent);
 					if(columns != null) {
 						for (String col : columns) {
 							if(!uniqueColumns.contains(col)) {
@@ -197,12 +198,12 @@ public class ExternalFileManager {
 				// 4. Get columns from calculate
 				pstmtCalculate = sd.prepareStatement(sqlCalculate);
 				pstmtCalculate.setInt(1, sId);
-				log.info("Calculate cols: " + pstmtAppearance.toString());
+				log.info("Calculate cols: " + pstmtCalculate.toString());
 				rs = pstmtCalculate.executeQuery();
 				while(rs.next()) {
 					int qId = rs.getInt(1);
 					String calculate = rs.getString(2);
-					ArrayList<String> columns = GeneralUtilityMethods.getManifestParams(sd, qId, calculate,  filename, false);
+					ArrayList<String> columns = GeneralUtilityMethods.getManifestParams(sd, qId, calculate,  filename, false, sIdent);
 					if(columns != null) {
 						for (String col : columns) {
 							if(!uniqueColumns.contains(col)) {

@@ -3145,9 +3145,10 @@ public class GeneralUtilityMethods {
 	}
 	
 	/*
-	 * Get manifest parameters from appearance
+	 * Get manifest parameters from appearance or calculations
 	 */
-	public static ArrayList<String> getManifestParams(Connection sd, int qId, String property, String filename, boolean isAppearance) throws SQLException {
+	public static ArrayList<String> getManifestParams(Connection sd, int qId, String property, 
+			String filename, boolean isAppearance, String sIdent) throws SQLException {
 		ArrayList<String> params = null;
 		
 		PreparedStatement pstmt = null;
@@ -3157,6 +3158,8 @@ public class GeneralUtilityMethods {
 				"and o.l_id = q.l_id " +
 				"and q.q_id = ? " +
 				"and externalfile ='false';";
+		
+		System.out.println("Get manifest params, filename: " + filename);
 		
 		try {
 			pstmt = sd.prepareStatement(sql);
@@ -3175,8 +3178,12 @@ public class GeneralUtilityMethods {
 						
 						if(criteria[0] != null && criteria[0].length() > 2) {	// allow for quotes
 							String appFilename = criteria[0].trim();
+
 							appFilename = appFilename.substring(1, appFilename.length() -1);
-							
+							if(appFilename.endsWith("self")) {
+								appFilename = appFilename.replace("self", sIdent);
+							}
+							log.info("yyyy app file name: " + appFilename);
 							if(filename.equals(appFilename)) {	// We want this one
 								log.info("We have found a manifest link to " + filename);
 								
