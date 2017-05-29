@@ -226,6 +226,8 @@ public class ExternalFileManager {
 				// 6. Create the file
 				if(linked_pd && non_unique_key) {
 					
+					log.info("create linked file for linked_pd: " + sIdent);
+					
 					rs = pstmtData.executeQuery();
 					
 					BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(
