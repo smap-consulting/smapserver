@@ -2803,7 +2803,7 @@ public class SurveyManager {
 			
 			pstmt = sd.prepareStatement(sql);
 			pstmt.setInt(1, sId);
-			log.info("Leaning up manifest. Getting questions that may affect manifest: " + pstmt.toString());
+			log.info("Cleaning up manifest. Getting questions that may affect manifest: " + pstmt.toString());
 			
 			ResultSet rs = pstmt.executeQuery();
 			while(rs.next()) {

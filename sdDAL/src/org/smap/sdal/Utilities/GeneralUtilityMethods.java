@@ -3247,7 +3247,7 @@ public class GeneralUtilityMethods {
 						String filename = criteria[0].trim();
 						filename = filename.substring(1, filename.length() -1);
 						
-						if(filename.startsWith("linked_s")) {	// Linked survey
+						if(filename.startsWith("linked_s") || filename.startsWith("linked_pd_s")) {	// Linked survey
 							log.info("We have found a manifest link to " + filename);
 							refQuestions = getRefQuestionsSearch(criteria);
 							manifestType = "linked";
@@ -3300,8 +3300,8 @@ public class GeneralUtilityMethods {
 							String filename = criteria[0].trim();
 							filename = filename.substring(1, filename.length() -1);
 							
-							if(filename.startsWith("linked_s")) {	// Linked survey
-								log.info("We have found a manifest link to " + filename);
+							if(filename.startsWith("linked_s") || filename.startsWith("linked_pd_s")) {	// Linked survey
+								log.info("We have found a manifest link to " + filename + " calculate is: " + calculate);
 								refQuestions = getRefQuestionsSearch(criteria);
 								manifestType = "linked";
 							} else {

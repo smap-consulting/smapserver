@@ -56,7 +56,7 @@ public class ExternalFileManager {
 	
 	LogManager lm = new LogManager();		// Application log
 	
-	private static String PD_IDENT = "linked_s_pd_";
+	private static String PD_IDENT = "linked_pd_";
 	
 	/*
 	 * Class to return SQL
@@ -105,6 +105,8 @@ public class ExternalFileManager {
 		ArrayList<Pulldata> pdArray = null;
 		boolean regenerate = true;
 		
+		log.info("createLinkedFile: " + filename);
+		
 		String sqlPulldata = "select pulldata from survey where s_id = ?";
 		PreparedStatement pstmtPulldata = null;
 		
@@ -145,18 +147,25 @@ public class ExternalFileManager {
 								". Set the pulldata definition from the online editor file menu.");
 					}
 					for(int i = 0; i < pdArray.size(); i++) {
-						if(pdArray.get(i).survey.equals(sIdent)) {
+						String pulldataIdent = pdArray.get(i).survey;
+						
+						if(pulldataIdent.equals("self")) {
+							pulldataIdent = sIdent;
+						}
+						log.info("PulldataIdent: " + pulldataIdent);
+						
+						if(pulldataIdent.equals(sIdent)) {
 							data_key = pdArray.get(i).data_key;
 							non_unique_key = pdArray.get(i).repeats;
 							break;
 						}
 					}
 				} else {
-					throw new Exception("Puldata definition not found");
+					throw new Exception("No record found for pull data");
 				}
 				
 				if(data_key == null) {
-					throw new Exception("Pulldata definition not found");
+					throw new Exception("Pulldata data_key not found");
 				}
 				
 				
