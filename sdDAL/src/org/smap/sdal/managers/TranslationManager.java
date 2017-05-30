@@ -122,8 +122,8 @@ public class TranslationManager {
 					System.out.println("Filename: " + m.fileName);
 					if(m.fileName.equals("linked_self")) {
 						m.fileName = "linked_" + surveyIdent;
-					} else if(m.fileName.equals("linked_pd_self")) {
-						m.fileName = "linked_pd_" + surveyIdent;
+					} else if(m.fileName.equals("linked_s_pd_self")) {
+						m.fileName = "linked_s_pd_" + surveyIdent;
 					}
 					if(m.fileName.endsWith(".csv")) {
 						m.type = "csv";
@@ -191,8 +191,8 @@ public class TranslationManager {
 					
 					if(m.fileName.equals("linked_self")) {
 						m.fileName = "linked_" + surveyIdent;
-					} else if(m.fileName.equals("linked_pd_self")) {
-						m.fileName = "linked_pd_" + surveyIdent;
+					} else if(m.fileName.equals("linked_s_pd_self")) {
+						m.fileName = "linked_s_pd_" + surveyIdent;
 					}
 					
 					if(!m.fileName.endsWith(".csv")) {

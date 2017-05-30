@@ -56,7 +56,7 @@ public class ExternalFileManager {
 	
 	LogManager lm = new LogManager();		// Application log
 	
-	private static String PD_IDENT = "linked_pd_";
+	private static String PD_IDENT = "linked_s_pd_";
 	
 	/*
 	 * Class to return SQL
@@ -96,7 +96,7 @@ public class ExternalFileManager {
 			String userName) throws Exception {
 		
 		ResultSet rs = null;
-		boolean linked_pd = false;
+		boolean linked_s_pd = false;
 		String sIdent = null;
 		int linked_sId = 0;
 		String data_key = null;
@@ -131,7 +131,7 @@ public class ExternalFileManager {
 			 *  2. Normal lookup where there is only one record that should match a key. Filename starts with "linked_"
 			 */
 			if(filename.startsWith(PD_IDENT)) {
-				linked_pd = true;	
+				linked_s_pd = true;	
 				
 				sIdent = filename.substring(PD_IDENT.length());
 				
@@ -224,7 +224,7 @@ public class ExternalFileManager {
 				
 				// 5. Get the sql
 				RoleManager rm = new RoleManager();
-				SqlDef sqlDef = getSql(sd, linked_sId, uniqueColumns, linked_pd, data_key, userName, rm);		
+				SqlDef sqlDef = getSql(sd, linked_sId, uniqueColumns, linked_s_pd, data_key, userName, rm);		
 				pstmtData = cRel.prepareStatement(sqlDef.sql);
 				int paramCount = 1;
 				if(sqlDef.hasRbacFilter) {
@@ -233,9 +233,9 @@ public class ExternalFileManager {
 				log.info("Get CSV data: " + pstmtData.toString());
 				
 				// 6. Create the file
-				if(linked_pd && non_unique_key) {
+				if(linked_s_pd && non_unique_key) {
 					
-					log.info("create linked file for linked_pd: " + sIdent);
+					log.info("create linked file for linked_s_pd: " + sIdent);
 					
 					rs = pstmtData.executeQuery();
 					
@@ -493,7 +493,7 @@ public class ExternalFileManager {
 			Connection sd, 
 			int sId, 
 			ArrayList<String> qnames,
-			boolean linked_pd,
+			boolean linked_s_pd,
 			String data_key,
 			String user,
 			RoleManager rm) throws SQLException  {
@@ -501,7 +501,7 @@ public class ExternalFileManager {
 		StringBuffer sql = new StringBuffer("select distinct ");
 		StringBuffer where = new StringBuffer("");
 		StringBuffer tabs = new StringBuffer("");
-		String linked_pd_sel = null;
+		String linked_s_pd_sel = null;
 		SqlDef sqlDef = new SqlDef();
 		ArrayList<String> colNames = new ArrayList<String> ();
 		HashMap <Integer, Integer> forms = new HashMap <Integer, Integer> ();
@@ -525,9 +525,9 @@ public class ExternalFileManager {
 			pstmtGetCol = sd.prepareStatement(sqlGetCol);
 			pstmtGetCol.setInt(2,  sId);
 			
-			if(linked_pd) {
-				linked_pd_sel = GeneralUtilityMethods.convertAllxlsNamesToQuery(data_key, sId, sd);
-				sql.append(linked_pd_sel);
+			if(linked_s_pd) {
+				linked_s_pd_sel = GeneralUtilityMethods.convertAllxlsNamesToQuery(data_key, sId, sd);
+				sql.append(linked_s_pd_sel);
 				sql.append(" as _data_key");
 			}
 			// Always add top level form
@@ -552,7 +552,7 @@ public class ExternalFileManager {
 				
 				System.out.println("Adding form: " + fId + " for name: " + colName);
 				
-				if(i > 0 || linked_pd) {
+				if(i > 0 || linked_s_pd) {
 					sql.append(",");
 				}
 				sql.append(colName);
@@ -590,7 +590,7 @@ public class ExternalFileManager {
 			}
 			
 			// If this is a pulldata linked file then order the data by _data_key
-			if(linked_pd) {
+			if(linked_s_pd) {
 				sql.append( " order by _data_key");
 			}
 			
