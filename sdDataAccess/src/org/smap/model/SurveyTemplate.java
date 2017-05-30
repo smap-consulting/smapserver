@@ -56,6 +56,7 @@ public class SurveyTemplate {
 	private Project project = null;
 	private String firstFormRef = null;
 	private String firstFormName = null;
+	private String xFormFormName = null;
 	private int nextOptionSeq = 0;
 	private int nextQuestionSeq = 0;
 	private int MAX_COLUMNS = 1600 - 20;		// Max number of columns in Postgres is 1600, allow for automcatically generated columns
@@ -265,6 +266,16 @@ public class SurveyTemplate {
 		firstFormRef = formRef;
 	}
 	
+	/*
+	 * Method to set the reference for the first form used in an Xform import
+	 * This is converted to "main" by smap
+	 * 
+	 * @param formRef the reference for the form to be set
+	 */
+	public void setXFormFormName(String formName) {
+		xFormFormName = formName;
+	}
+	
 	public void setFirstFormName(String formName) {
 		firstFormName = formName;
 	}
@@ -280,6 +291,10 @@ public class SurveyTemplate {
 	
 	public String getFirstFormName() {
 		return firstFormName;
+	}
+	
+	public String getXFormFormName() {
+		return xFormFormName;
 	}
 
 	public void addIText(String lCode, String id, String type, String value) {
@@ -548,7 +563,7 @@ public class SurveyTemplate {
 			System.out.println("	Mandatory: " + q.isMandatory());
 			System.out.println("	Default: " + q.getDefaultAnswer());
 			System.out.println("	QuestionId: " + q.getQTextId());
-			System.out.println("	Relevance: " + q.getRelevant(true, questionPaths));
+			System.out.println("	Relevance: " + q.getRelevant(true, questionPaths, getXFormFormName()));
 			System.out.println("	Question Sequence: " + q.getSeq());
 		}
 
@@ -778,8 +793,8 @@ public class SurveyTemplate {
 			String qType = q.getType();
 			boolean man = q.isMandatory();
 			boolean ro = q.isReadOnly() || (qType != null && qType.equals("note"));
-			String relevance = q.getRelevant(true, questionPaths);
-			String constraint = q.getConstraint(true, questionPaths);
+			String relevance = q.getRelevant(true, questionPaths, getXFormFormName());
+			String constraint = q.getConstraint(true, questionPaths, getXFormFormName());
 		
 			// Check for mandatory and readonly
 			if(man && ro && relevance == null) {
@@ -1017,7 +1032,7 @@ public class SurveyTemplate {
 					q.setSeq(f.qSeq++);
 					q.setListId(sd, survey.getId());
 					if(!q.isRepeatCount()) {
-						qm.write(q);
+						qm.write(q, getXFormFormName());
 					}
 				} 			
 			}
@@ -1036,7 +1051,7 @@ public class SurveyTemplate {
 				if(f.getRepeatsRef() != null) {		// Set the repeat count from the dummy calculation question
 					String rRef = f.getRepeatsRef().trim();
 					Question qRef = questions.get(rRef);
-					f.setRepeats(qRef.getCalculate(false, null));
+					f.setRepeats(qRef.getCalculate(false, null, getXFormFormName()));
 				}
 				fm.update(f);
 			}

@@ -730,13 +730,13 @@ public class GetXForm {
 			}
 			
 			// Add relevant
-			String relevant = q.getRelevant(true, template.getQuestionPaths());
+			String relevant = q.getRelevant(true, template.getQuestionPaths(), template.getXFormFormName());
 			if(relevant != null && relevant.trim().length() > 0 ) {
 				questionElement.setAttribute("relevant", relevant);
 			}
 			
 			// Add constraint
-			String constraint = q.getConstraint(true, template.getQuestionPaths());
+			String constraint = q.getConstraint(true, template.getQuestionPaths(), template.getXFormFormName());
 			if(constraint != null && constraint.trim().length() > 0 ) {
 				questionElement.setAttribute("constraint", constraint);
 			}
@@ -753,7 +753,7 @@ public class GetXForm {
 		if(q.getName().equals("instanceName")) {
 			calculate = UtilityMethods.convertAllxlsNames(template.getSurvey().getInstanceName(), false, template.getQuestionPaths(),f.getId());	
 			if(calculate == null) {
-				calculate = q.getCalculate(true, template.getQuestionPaths());	// Allow for legacy forms that were loaded before the instance name was set in the survey table
+				calculate = q.getCalculate(true, template.getQuestionPaths(), template.getXFormFormName());	// Allow for legacy forms that were loaded before the instance name was set in the survey table
 			}
 		} else if(q.getType().equals("begin repeat") && count) {
 			Form subForm = template.getSubForm(f,q);
@@ -762,7 +762,7 @@ public class GetXForm {
 				calculate = repeats;
 			}
 		} else  {
-			calculate = q.getCalculate(true, template.getQuestionPaths());
+			calculate = q.getCalculate(true, template.getQuestionPaths(), template.getXFormFormName());
 		}
 		if(calculate != null && calculate.trim().length() > 0 ) {
 			Survey s = template.getSurvey();

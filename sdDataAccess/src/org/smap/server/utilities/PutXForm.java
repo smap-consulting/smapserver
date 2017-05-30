@@ -630,18 +630,22 @@ public class PutXForm {
      */
     String createTopLevelForm(String path) {
     	String formRef = null;
+    	String smapFormName = "main";	// Always use main as the top level form name
     	
+    	System.out.println("Creating top level form: " + path);
     	String topFormRef = template.getFirstFormRef();
 		if(topFormRef == null) {
-			String parentFormName = UtilityMethods.getFirstFromPath(path);
-			if(parentFormName == null) {
-				// Use the top level entity name from the instance
-				parentFormName = template.getFirstFormName();
-			}
-			formRef = "/" + parentFormName;
-			template.createForm(formRef, parentFormName);
+			//String parentFormName = UtilityMethods.getFirstFromPath(path);
+			//if(parentFormName == null) {
+			//	// Use the top level entity name from the instance
+			//	parentFormName = template.getFirstFormName();
+			//}
+			//formRef = "/" + parentFormName;
+			formRef = "/" + smapFormName;						
+			template.createForm(formRef, smapFormName);
 			template.setFirstFormRef(formRef);
-			template.setFirstFormName(parentFormName);
+			template.setFirstFormName(smapFormName);
+			template.setXFormFormName(UtilityMethods.getFirstFromPath(path));
 		} else {
 			formRef = topFormRef;
 		}

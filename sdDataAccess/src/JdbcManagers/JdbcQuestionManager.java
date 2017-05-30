@@ -132,7 +132,7 @@ public class JdbcQuestionManager {
 	/*
 	 * Write to the database
 	 */
-	public void write(Question q) throws Exception {
+	public void write(Question q, String xFormRoot) throws Exception {
 		pstmt.setInt(1, q.getFormId());
 		pstmt.setInt(2, q.getSeq());
 		pstmt.setString(3, q.getName());
@@ -147,9 +147,9 @@ public class JdbcQuestionManager {
 		pstmt.setString(12, q.getSourceParam());	
 		pstmt.setBoolean(13, q.isReadOnly());
 		pstmt.setBoolean(14, q.isMandatory());
-		pstmt.setString(15, q.getRelevant(false, null));
-		pstmt.setString(16, q.getCalculate(false, null));
-		pstmt.setString(17, q.getConstraint(false, null));
+		pstmt.setString(15, q.getRelevant(false, null, xFormRoot));
+		pstmt.setString(16, q.getCalculate(false, null, xFormRoot));
+		pstmt.setString(17, q.getConstraint(false, null, xFormRoot));
 		pstmt.setString(18, q.getConstraintMsg()); // ok
 		pstmt.setString(19, q.getRequiredMsg());
 		pstmt.setString(20, q.getAppearance(false, null));

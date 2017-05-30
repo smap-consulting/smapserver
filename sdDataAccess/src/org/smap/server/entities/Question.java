@@ -225,18 +225,26 @@ public class Question {
 		return mandatory;
 	}
 
-	public String getRelevant(boolean convertToXPath, HashMap<String, String> questionPaths) throws Exception {
+	public String getRelevant(boolean convertToXPath, HashMap<String, String> questionPaths, String xFormRoot) throws Exception {
 		String v = relevant;
 		
+		if(xFormRoot != null) {
+			v = substituteRootName(v, xFormRoot);
+		}
+		
 		if(convertToXPath) {
 			v = UtilityMethods.convertAllxlsNames(v, false, questionPaths, f_id);
 		}
 		return v;
 	}
 	
-	public String getCalculate(boolean convertToXPath, HashMap<String, String> questionPaths) throws Exception {
+	public String getCalculate(boolean convertToXPath, HashMap<String, String> questionPaths, String xFormRoot) throws Exception {
 		String v = calculate;
 		
+		if(xFormRoot != null) {
+			v = substituteRootName(v, xFormRoot);
+		}
+		
 		if(convertToXPath) {
 			v = UtilityMethods.convertAllxlsNames(v, false, questionPaths, f_id);
 		}
@@ -244,8 +252,12 @@ public class Question {
 		return v;
 	}
 	
-	public String getConstraint(boolean convertToXPath, HashMap<String, String> questionPaths) throws Exception {
+	public String getConstraint(boolean convertToXPath, HashMap<String, String> questionPaths, String xFormRoot) throws Exception {
 		String v = constraint;
+		
+		if(xFormRoot != null) {
+			v = substituteRootName(v, xFormRoot);
+		}
 		
 		if(convertToXPath) {
 			v = UtilityMethods.convertAllxlsNames(v, false, questionPaths, f_id);
@@ -697,5 +709,18 @@ public class Question {
 			}
 			return choices;
 	 }
+	 
+	    /*
+	     * Replace the root name from an xForm with main
+	     */
+	    private String substituteRootName(String in, String xFormRoot) {
+	    	System.out.println("Replacing " + xFormRoot + " for calculate");
+	    	if(xFormRoot != null && in != null) {
+	    		if(in.contains("/" + xFormRoot + "/")) {
+	    			in = in.replaceAll("/" + xFormRoot + "/", "/main/");
+	    		}
+	    	}
+	    	return in;
+	    }
 	 
 }
