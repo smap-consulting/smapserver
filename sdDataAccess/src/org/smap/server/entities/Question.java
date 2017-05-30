@@ -714,7 +714,7 @@ public class Question {
 	     * Replace the root name from an xForm with main
 	     */
 	    private String substituteRootName(String in, String xFormRoot) {
-	    	System.out.println("Replacing " + xFormRoot + " for calculate");
+	    	
 	    	if(xFormRoot != null && in != null) {
 	    		if(in.contains("/" + xFormRoot + "/")) {
 	    			in = in.replaceAll("/" + xFormRoot + "/", "/main/");

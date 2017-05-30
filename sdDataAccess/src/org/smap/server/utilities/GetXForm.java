@@ -605,6 +605,13 @@ public class GetXForm {
     				
     				Element repeatElement = outputDoc.createElement("repeat");
     				repeatElement.setAttribute("nodeset", subForm.getPath(null));
+    				
+    				// Add appearance
+    				String appearance = q.getAppearance(true, template.getQuestionPaths());
+    				if(appearance != null) {
+    					repeatElement.setAttribute("appearance", appearance);
+    				}
+    				
     				String repeats = subForm.getRepeats(true, template.getQuestionPaths());
     				if(repeats != null && repeats.trim().length() > 0) {		// Add the path to the repeat count question
     					String repeatCountPath = template.getQuestionPaths().get(q.getName()) + "_count";

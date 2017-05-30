@@ -569,14 +569,25 @@ public class PutXForm {
     	}
     	
     	// Set the appearance
-		Node appNode = nm.getNamedItem("appearance");	
-		String appearance = null;
-		if(appNode != null) {
-			appearance = appNode.getNodeValue();
-			q.setAppearance(appearance);
-			// Survey level manifests can be set in the appearance attribute
-			template.addManifestFromAppearance(appearance);	
-		}
+    	System.out.println("Process question " +  q.getName() + " : " + q.getType());
+    	String appearance = null;
+    	if(q.getType().equals("begin group") && isRepeat(n)) {
+    		appearance = getRepeatAppearance(n);
+    		if(appearance != null) {
+	    		q.setAppearance(appearance);
+				System.out.println("Set repeat appearance of: " + appearance + " for " + q.getName());
+    		}
+    	} else {
+			Node appNode = nm.getNamedItem("appearance");	
+			
+			if(appNode != null) {
+				appearance = appNode.getNodeValue();
+				q.setAppearance(appearance);
+				System.out.println("Set appearance of: " + appearance + " for " + q.getName());
+				// Survey level manifests can be set in the appearance attribute
+				template.addManifestFromAppearance(appearance);	
+			}
+    	}
 		
     	// Set the autoplay
 		Node autoplayNode = nm.getNamedItem("autoplay");	
@@ -869,6 +880,33 @@ public class PutXForm {
     	}
     	
     	return false;
+    	
+    }
+    
+private String getRepeatAppearance(Node n) { 	 
+    	
+    	// Get the group to be checked
+    	//Question q = template.getQuestion(questionRef);   
+    	
+		NodeList eList = n.getChildNodes();
+    	    
+    	if (eList != null) {
+			for(int i = 0; i < eList.getLength(); i++) {
+		    	if(eList.item(i).getNodeName().equals("repeat")) {
+		    		
+		    		Node nrep = eList.item(i);
+		    		NamedNodeMap nm = nrep.getAttributes();
+		    		Node appNode = nm.getNamedItem("appearance");	
+					
+					if(appNode != null) {
+						String appearance = appNode.getNodeValue();
+						return appearance;
+					}
+		    	} 
+			}
+    	}
+    	
+    	return null;
     	
     }
     
