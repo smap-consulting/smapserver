@@ -372,22 +372,23 @@ public class NotificationManager {
 			String filePath = null;
 			String filename = "instance";
 			String logContent = null;
+			
+			/*
+			 * Get survey details
+			 */
+			PDFSurveyManager pm = new PDFSurveyManager();
+			SurveyManager sm = new SurveyManager();
+			org.smap.sdal.model.Survey survey = null;
+			boolean generateBlank =  (instanceId == null) ? true : false;	// If false only show selected options
+			boolean superUser = GeneralUtilityMethods.isSuperUser(sd, remoteUser);
+			survey = sm.getById(sd, cResults, remoteUser, sId, true, basePath, 
+					instanceId, true, generateBlank, true, false, true, "real", superUser, utcOffset, "geojson");
+
+			nd.subject = sm.fillStringTemplate(survey, nd.subject);
+			nd.content = sm.fillStringTemplate(survey, nd.content);
+			
 			if(nd.attach != null && !nd.attach.equals("none")) {
 				System.out.println("Attaching link to email: " + nd.attach);
-				
-				/*
-				 * Get survey details
-				 */
-				PDFSurveyManager pm = new PDFSurveyManager();
-				SurveyManager sm = new SurveyManager();
-				org.smap.sdal.model.Survey survey = null;
-				boolean generateBlank =  (instanceId == null) ? true : false;	// If false only show selected options
-				boolean superUser = GeneralUtilityMethods.isSuperUser(sd, remoteUser);
-				survey = sm.getById(sd, cResults, remoteUser, sId, true, basePath, 
-						instanceId, true, generateBlank, true, false, true, "real", superUser, utcOffset, "geojson");
-
-				nd.subject = sm.fillStringTemplate(survey, nd.subject);
-				nd.content = sm.fillStringTemplate(survey, nd.content);
 				
 				if(nd.attach.startsWith("pdf")) {
 					docURL = null;
