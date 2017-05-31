@@ -650,7 +650,8 @@ public class Surveys extends Application {
 					+ "instance_name = ?, "
 					+ "version = ?, "
 					+ "class = ?,"
-					+ "hrk = ? "
+					+ "hrk = ?,"
+					+ "key_policy = ? "
 					+ "where s_id = ?;";		
 		
 			if(survey.surveyClass != null && survey.surveyClass.equals("none")) {
@@ -667,7 +668,8 @@ public class Surveys extends Application {
 			pstmt.setInt(8, version);
 			pstmt.setString(9, survey.surveyClass);
 			pstmt.setString(10, survey.hrk);
-			pstmt.setInt(11, sId);
+			pstmt.setString(11, survey.key_policy);
+			pstmt.setInt(12, sId);
 			
 			log.info("Saving survey: " + pstmt.toString());
 			int count = pstmt.executeUpdate();
@@ -681,7 +683,10 @@ public class Surveys extends Application {
 				
 				ChangeElement change = new ChangeElement();
 				change.action = "settings_update";
-				change.msg = "Name: " + survey.displayName + ", Default Language: " + survey.def_lang + ", Instance Name: "+ survey.instanceNameDefn; 
+				change.msg = "Name: " + survey.displayName + ", Default Language: " + survey.def_lang 
+						+ ", Instance Name: "+ survey.instanceNameDefn
+						+ ", HRK: " + survey.hrk 
+						+ ", Key Policy: " + survey.key_policy;
 				
 				// Write to the change log
 				pstmtChangeLog = connectionSD.prepareStatement(sqlChangeLog);

@@ -517,10 +517,10 @@ define(function () {
                     removeHourglass();
                     globals.model.savedSettings = settings;
                     globals.model.forceSettingsChange = false;
-                    $('#save_settings').prop("disabled", true);
+                    $('#save_settings, #save_keys').prop("disabled", true);
 
                     $('.formName').html(globals.model.survey.displayName);
-                    $('#settingsModal').modal("hide");
+                    $('#settingsModal, #keysModal').modal("hide");
                 },
                 error: function (xhr, textStatus, err) {
                     removeHourglass();
@@ -719,7 +719,8 @@ define(function () {
                 $('#set_default_language option:selected').text(),
                 $('#task_file').prop('checked'),
                 $('#timing_data').prop('checked'),
-                $('#set_hrk').val()
+                $('#set_hrk').val(),
+                $('#set_key_policy').val()
             );
 
             // Update the model to reflect the current values
@@ -732,6 +733,7 @@ define(function () {
                 this.survey.task_file = current.task_file;
                 this.survey.timing_data = current.timing_data;
                 this.survey.hrk = current.hrk;
+                this.survey.key_policy = current.key_policy;
             }
 
             return current;
@@ -747,13 +749,21 @@ define(function () {
                     this.survey.def_lang,
                     this.survey.task_file,
                     this.survey.timing_data,
-                    this.hrk
+                    this.survey.hrk,
+                    this.survey.key_policy
                 ));
 
             this.forceSettingsChange = false;
         }
 
-        this.createSettingsObject = function (displayName, instanceNameDefn, surveyClass, p_id, def_lang, task_file, timing_data, hrk) {
+        this.createSettingsObject = function (displayName, instanceNameDefn,
+                                              surveyClass,
+                                              p_id,
+                                              def_lang,
+                                              task_file,
+                                              timing_data,
+                                              hrk,
+                                              key_policy) {
 
             var projId;
             if (typeof p_id === "string") {
@@ -769,7 +779,8 @@ define(function () {
                 def_lang: def_lang,
                 task_file: task_file,
                 timing_data: timing_data,
-                hrk: hrk
+                hrk: hrk,
+                key_policy: key_policy
             }
         }
 
@@ -777,9 +788,9 @@ define(function () {
             var current = globals.model.getSettings(false);
 
             if (JSON.stringify(current) !== globals.model.savedSettings || globals.model.forceSettingsChange) {
-                $('#save_settings').prop("disabled", false);
+                $('#save_settings, #save_keys').prop("disabled", false);
             } else {
-                $('#save_settings').prop("disabled", true);
+                $('#save_settings, #save_keys').prop("disabled", true);
             }
         }
 

@@ -223,6 +223,9 @@ define({
     "c_normal": "Normal",
     "c_heatmap": "Heatmap",
     "c_auth": "Authorized",
+    "c_merge": "Merge",
+    "c_discard": "Discard",
+    "c_keys": "Keys",
 
     // File Types
     "ft": "File Type",
@@ -363,6 +366,7 @@ define({
     "msg_es": "Email has been sent to",
     "msg_refresh": "You have made some changes and not saved them, are you sure you want to refresh?",
     "msg_leave": "You have made some changes and not saved them, are you sure you want to leave?",
+    "msg_test": "You have made some changes and will need to save them before testing the form.",
     "msg_not_f": "was not found",
     "msg_ren": "renamed to",
     "msg_nq": "You have no queries defined, use the 'add query' button to add one",
@@ -547,6 +551,7 @@ define({
     "ed_gl": "For a location question the nane must be 'the_geom'",
     "ed_ogl": "Only location questions can have a name of 'the_geom'",
     "ed_ns": "Add a new survey using the 'File' menu before adding questions",
+    "ed_kp": "Key Policy",
 
     // Managed Forms
     "mf_fd": "Form Data",

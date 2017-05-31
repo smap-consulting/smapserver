@@ -1109,20 +1109,7 @@ define([
 			if(change.property.type === "option") {
 				/*
 				 * No option property changes result in markup changes
-				// Get the changed option row(s) Multiple rows if several questions share a list name
-				$changedRow = $('#formList').find('li.option').filter(function(index){
-					var $this = $(this);
-					return $this.data("list_name") == change.property.optionList && $this.data("id") == change.property.itemIndex;
-				});
-				
-				newMarkup = option.addOneOption(
-						survey.optionLists[change.property.optionList],
-						survey.optionLists[change.property.optionList].options[change.property.itemIndex], 
-						change.property.formIndex, 
-						survey.optionLists[change.property.optionList].oSeq[change.property.itemIndex], 
-						change.property.optionList,
-						change.property.qname);
-				*/
+				 */
 			} else if(change.property.type === "question") {
 				
 				// Get the changed question row

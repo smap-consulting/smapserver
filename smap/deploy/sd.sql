@@ -755,4 +755,5 @@ create TABLE message (
 ALTER TABLE message OWNER TO ws;
 
 alter table users add column created timestamp with time zone;
+alter table survey add column key_policy text;
 

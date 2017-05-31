@@ -202,7 +202,7 @@ public class SurveyManager {
 		sql.append("select s.s_id, s.name, s.ident, s.display_name, s.deleted, s.blocked, p.name, p.id,"
 				+ "s.def_lang, s.task_file, s.timing_data, u.o_id, s.class,"
 				+ "s.instance_name, s.hrk, s.based_on, s.shared_table, s.created, s.loaded_from_xls,"
-				+ "s.pulldata, s.version "
+				+ "s.pulldata, s.version, s.key_policy "
 				+ "from survey s, users u, user_project up, project p "
 				+ "where u.id = up.u_id "
 				+ "and p.id = up.p_id "
@@ -256,6 +256,7 @@ public class SurveyManager {
 				s.pulldata = new Gson().fromJson(resultSet.getString(20), type); 
 				
 				s.version = resultSet.getInt(21);
+				s.key_policy = resultSet.getString(22);
 				// Get the pdf template
 				File templateFile = GeneralUtilityMethods.getPdfTemplate(basePath, s.displayName, s.p_id);
 				if(templateFile.exists()) {
@@ -1030,11 +1031,11 @@ public class SurveyManager {
 		
 		Survey s = null;	// Survey to return
 		ResultSet resultSet = null;
-		String sql = "select s.p_id, s.s_id, s.blocked, s.class, s.deleted, s.display_name " +
+		String sql = "select s.p_id, s.s_id, s.blocked, s.class, s.deleted, s.display_name, s.key_policy " +
 				" from survey s" +
 				" where s.ident = ?; ";
 		
-		String sql2 = "select s.p_id, s.s_id, s.blocked, s.class, s.deleted, s.display_name " +		// Hack due to issue with upgrade of a server where ident not set to survey id by default
+		String sql2 = "select s.p_id, s.s_id, s.blocked, s.class, s.deleted, s.display_name, s.key_policy " +		// Hack due to issue with upgrade of a server where ident not set to survey id by default
 				" from survey s" +
 				" where s.s_id = ?; ";
 		
@@ -1055,6 +1056,7 @@ public class SurveyManager {
 				s.surveyClass = resultSet.getString(4);
 				s.deleted = resultSet.getBoolean(5);
 				s.displayName = resultSet.getString(6);
+				s.key_policy = resultSet.getString(7);
 				
 				
 			} else {	// Attempt to find the survey assuming the ident is the survey id
@@ -1079,6 +1081,7 @@ public class SurveyManager {
 					s.surveyClass = resultSet.getString(4);
 					s.deleted = resultSet.getBoolean(5);
 					s.displayName = resultSet.getString(6);
+					s.key_policy = resultSet.getString(7);
 				} else {			
 					log.info("Error: survey not found");
 				}

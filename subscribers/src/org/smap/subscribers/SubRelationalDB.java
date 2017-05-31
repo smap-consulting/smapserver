@@ -165,7 +165,7 @@ public class SubRelationalDB extends Subscriber {
 		try {
 			
 			writeAllTableContent(instance, remoteUser, server, device, 
-					formStatus, updateId, survey.id, uploadTime, surveyNotes, locationTrigger);
+					formStatus, updateId, survey.id, uploadTime, surveyNotes, locationTrigger, survey.key_policy);
 			applyNotifications(ue_id, remoteUser, server, survey.id);
 			applyAssignmentStatus(ue_id, remoteUser);
 			se.setStatus("success");			
@@ -353,7 +353,8 @@ public class SubRelationalDB extends Subscriber {
 	 */
 	private void writeAllTableContent(SurveyInstance instance, String remoteUser, 
 			String server, String device, String formStatus, String updateId,
-			int sId, Date uploadTime, String surveyNotes, String locationTrigger) throws SQLInsertException {
+			int sId, Date uploadTime, String surveyNotes, String locationTrigger,
+			String keyPolicy) throws SQLInsertException {
 			
 		String response = null;
 		Connection cResults = null;
@@ -395,24 +396,16 @@ public class SubRelationalDB extends Subscriber {
 					sId,
 					uploadTime);
 
-			// 
+			/*
+			 * Update existing records
+			 */
+			String existingKey = null;
 			if(keys.duplicateKeys.size() > 0) {
-				/*
-				 * Bug fix - duplicates
-				 *
-				if((formStatus != null && 
-						(formStatus.equals("draft") || formStatus.equals("incomplete"))) ||
-						getDuplicatePolicy() == DUPLICATE_REPLACE) {
-					System.out.println("Replacing existing record with " + keys.newKey);
-					replaceExistingRecord(cResults, cMeta, topElement, keys.duplicateKeys, keys.newKey);		// Mark the existing record as being replaced
-				} else {
-				*/
 					System.out.println("Dropping duplicate");
-				//}
 			} else {
 				// Check to see this submission was set to update an existing record with new data
 				
-				String existingKey = null;
+				
 				if(updateId != null) {
 					System.out.println("Existing unique id:" + updateId);
 					existingKey = getKeyFromId(cResults, topElement, updateId);
@@ -424,22 +417,22 @@ public class SubRelationalDB extends Subscriber {
 					System.out.println("Existing key:" + existingKey);
 					ArrayList<Integer> existingKeys = new ArrayList<Integer>();
 					existingKeys.add(Integer.parseInt(existingKey));
-					replaceExistingRecord(cResults, 
+					replaceExistingRecord(cResults, 	// Mark the existing record as being replaced
 							cMeta, 
 							topElement,
 							existingKeys , 
 							keys.newKey, 
 							hasHrk,
-							sId);		// Mark the existing record as being replaced
+							sId);		
 				}
-				
 			}
 			
 			/*
 			 * Update any Human readable keys if this survey has them
 			 */
+			String topLevelTable = null;
 			if(hasHrk) {
-				String topLevelTable = GeneralUtilityMethods.getMainResultsTable(cMeta, cResults, sId);
+				topLevelTable = GeneralUtilityMethods.getMainResultsTable(cMeta, cResults, sId);
 				if(!GeneralUtilityMethods.hasColumn(cResults, topLevelTable, "_hrk")) {
 					// This should not be needed as the _hrk column should be in the table if an hrk has been specified for the survey
 					log.info("Error:  _hrk being created for table " + topLevelTable + " this column should already be there");
@@ -448,21 +441,36 @@ public class SubRelationalDB extends Subscriber {
 					pstmtAddHrk.executeUpdate();
 				}
 				
-				boolean addPrikey = true;	// Add the primary key to the HRK by default in order to guarantee uniqueness
-				if(hrk != null) {
-					if(hrk.contains("${prikey}") || hrk.contains("serial(")) {
-						addPrikey = false;			// User had included prikey in the HRK so er don't need to
-					}
-				}
+				//boolean addPrikey = true;	// Add the primary key if requested
+				//if(hrk != null) {
+				//	if(hrk.contains("${prikey}") || hrk.contains("serial(")) {
+				//		addPrikey = false;			// User had included prikey in the HRK so er don't need to
+				//	}
+				//}
 				String sql = "update " + topLevelTable + " set _hrk = "
 						+ GeneralUtilityMethods.convertAllxlsNamesToQuery(hrk, sId, cMeta);
-				if(addPrikey) {
-					sql += " || '-' || prikey ";
-				}
+				//if(addPrikey) {
+				//	sql += " || '-' || prikey ";
+				//}
 				sql += " where _hrk is null;";
 				pstmtHrk = cResults.prepareStatement(sql);
 				System.out.println("Adding HRK: " + pstmtHrk.toString());
 				pstmtHrk.executeUpdate();
+			}
+			
+			/*
+			 * Apply the key policy
+			 */
+			if(hasHrk && existingKey == null && keyPolicy != null) {
+				if(keyPolicy.equals("add")) {
+					System.out.println("Apply add policy - no action");
+				} else if(keyPolicy.equals("merge")) {
+					System.out.println("Apply merge policy");
+					mergeTableContent(cResults, topLevelTable, keys.newKey);
+				} else if(keyPolicy.equals("discard")) {
+					System.out.println("Apply discard policy");
+					discardTableContent(cResults, topLevelTable, keys.newKey);
+				}
 			}
 			
 			cResults.commit();
@@ -567,15 +575,7 @@ public class SubRelationalDB extends Subscriber {
 					boolean tableChanged = false;
 					boolean tablePublished = false;
 					keys.duplicateKeys = checkDuplicate(cRel, tableName, uuid);
-					/*
-					 * Bug fix duplicates
-					 *
-					if(keys.duplicateKeys.size() > 0 && 
-							getDuplicatePolicy() == DUPLICATE_DROP && 
-							formStatus.equals("complete")) {
-						throw new Exception("Duplicate survey: " + uuid);
-					}
-					*/
+				
 					if(keys.duplicateKeys.size() > 0 && 
 							getDuplicatePolicy() == DUPLICATE_DROP) {
 						throw new Exception("Duplicate survey: " + uuid);
@@ -699,6 +699,184 @@ public class SubRelationalDB extends Subscriber {
 		}
 		
 		return keys;
+
+	}
+	
+	/*
+	 * Method to merge a previous records content into this new record
+	 */
+	private void mergeTableContent(
+			Connection cRel,
+			String table,
+			int prikey) throws SQLException, Exception {
+
+		String sqlHrk = "select _hrk from " + table + " where prikey = ?";
+		PreparedStatement pstmtHrk = null;
+		
+		String sqlSource = "select prikey from " + table + " where _hrk = ? "
+				+ "and prikey != ? "
+				+ "and _bad = 'false' "
+				+ "order by prikey desc limit 1";
+		PreparedStatement pstmtSource = null;
+		
+		String sqlCols = "select column_name from information_schema.columns where table_name = ? "
+				+ "and column_name not like '\\_%' "
+				+ "and column_name != 'prikey' "
+				+ "and column_name != 'parkey' "
+				+ "and column_name != 'instancename' "
+				+ "and column_name != 'instanceid'";
+		PreparedStatement pstmtCols = null;
+		
+		PreparedStatement pstmtGetTarget = null;
+		PreparedStatement pstmtUpdateTarget = null;
+		
+		String sqlCloseSource = "update " + table + " set _bad = 'true', _bad_reason = ? "
+				+ "where _hrk = ? "
+				+ "and _bad = 'false' "
+				+ "and prikey != ?";
+		PreparedStatement pstmtCloseSource = null;
+			
+		try {
+			boolean merged = false;
+			
+			// Get the HRK that identifies duplicates
+			String hrk = null;
+			pstmtHrk = cRel.prepareStatement(sqlHrk);
+			pstmtHrk.setInt(1, prikey);
+			ResultSet rs = pstmtHrk.executeQuery();
+			if(rs.next()) {
+				hrk = rs.getString(1);
+				System.out.println("===== Hrk: " + hrk);
+			}
+			
+			// Get the prikey of the source table
+			int sourceKey = 0;
+			pstmtSource = cRel.prepareStatement(sqlSource);
+			pstmtSource.setString(1, hrk);
+			pstmtSource.setInt(2, prikey);
+			rs = pstmtSource.executeQuery();
+			if(rs.next()) {
+				sourceKey = rs.getInt(1);
+				System.out.println("===== Source Prikey: " + sourceKey);
+			
+				// Get the columns to merge
+				pstmtCols = cRel.prepareStatement(sqlCols);
+				pstmtCols.setString(1, table);
+				ResultSet rsCols = pstmtCols.executeQuery();
+				while(rsCols.next()) {
+					String col = rsCols.getString(1);
+					System.out.println("    col: " + col);
+					
+					String sqlGetTarget = "select " + col + " from " + table + " where prikey = ?";
+					
+					if(pstmtGetTarget != null) try{pstmtGetTarget.close();}catch(Exception e) {}
+					pstmtGetTarget = cRel.prepareStatement(sqlGetTarget);
+					pstmtGetTarget.setInt(1, prikey);
+					ResultSet rsGetTarget = pstmtGetTarget.executeQuery();
+					if(rsGetTarget.next()) {
+						String val = rsGetTarget.getString(1);
+						System.out.println("         " + val);
+						
+						if( val == null || val.trim().length() == 0) {
+							System.out.println("        --------- updating");
+							
+							String sqlUpdateTarget = "update " + table + " set " + col + " = (select " + col + " from " + table + " where prikey = ?) "
+									+ "where prikey = ?";
+							if(pstmtUpdateTarget != null) try{pstmtUpdateTarget.close();}catch(Exception e) {}
+							pstmtUpdateTarget = cRel.prepareStatement(sqlUpdateTarget);
+							pstmtUpdateTarget.setInt(1, sourceKey);
+							pstmtUpdateTarget.setInt(2, prikey);
+							System.out.println(("Merging col: " + pstmtUpdateTarget.toString()));
+							pstmtUpdateTarget.executeUpdate();
+							merged = true;
+							
+						}
+					}
+					
+				}
+				
+			}
+			
+			if(merged) {
+				pstmtCloseSource = cRel.prepareStatement(sqlCloseSource);
+				pstmtCloseSource.setString(1, "Merged with " + prikey);
+				pstmtCloseSource.setString(2, hrk);
+				pstmtCloseSource.setInt(3, prikey);
+				System.out.println(("Closing Source: " + pstmtCloseSource.toString()));
+				pstmtCloseSource.executeUpdate();
+			}
+			
+		
+		} finally {
+			if(pstmtCols != null) try{pstmtCols.close();}catch(Exception e) {}
+			if(pstmtHrk != null) try{pstmtHrk.close();}catch(Exception e) {}
+			if(pstmtSource != null) try{pstmtSource.close();}catch(Exception e) {}
+			if(pstmtGetTarget != null) try{pstmtGetTarget.close();}catch(Exception e) {}
+			if(pstmtUpdateTarget != null) try{pstmtUpdateTarget.close();}catch(Exception e) {}
+			if(pstmtCloseSource != null) try{pstmtCloseSource.close();}catch(Exception e) {}
+		}
+
+	}
+	
+	/*
+	 * Method to merge a previous records content into this new record
+	 */
+	private void discardTableContent(
+			Connection cRel,
+			String table,
+			int prikey) throws SQLException, Exception {
+
+		String sqlHrk = "select _hrk from " + table + " where prikey = ?";
+		PreparedStatement pstmtHrk = null;
+		
+		String sqlSource = "select prikey from " + table + " where _hrk = ? "
+				+ "and prikey != ? "
+				+ "and _bad = 'false' "
+				+ "order by prikey desc limit 1";
+		PreparedStatement pstmtSource = null;
+		
+		String sqlCloseNew = "update " + table + " set _bad = 'true', _bad_reason = ? "
+				+ "where prikey = ? ";
+		PreparedStatement pstmtCloseNew = null;
+			
+		try {
+			boolean exists = false;
+			
+			// Get the HRK that identifies duplicates
+			String hrk = null;
+			pstmtHrk = cRel.prepareStatement(sqlHrk);
+			pstmtHrk.setInt(1, prikey);
+			ResultSet rs = pstmtHrk.executeQuery();
+			if(rs.next()) {
+				hrk = rs.getString(1);
+			}
+			
+			// Get the prikey of existing data
+			int sourceKey = 0;
+			pstmtSource = cRel.prepareStatement(sqlSource);
+			pstmtSource.setString(1, hrk);
+			pstmtSource.setInt(2, prikey);
+			rs = pstmtSource.executeQuery();
+			if(rs.next()) {
+				sourceKey = rs.getInt(1);
+				exists = true;
+				
+			}
+			
+			if(exists) {
+				pstmtCloseNew = cRel.prepareStatement(sqlCloseNew);
+				pstmtCloseNew.setString(1, "Discarded in favour of " + sourceKey);
+				pstmtCloseNew.setInt(2, prikey);
+				System.out.println(("Discarding new: " + pstmtCloseNew.toString()));
+				pstmtCloseNew.executeUpdate();
+			}
+			
+		
+		} finally {
+			if(pstmtHrk != null) try{pstmtHrk.close();}catch(Exception e) {}
+			if(pstmtSource != null) try{pstmtSource.close();}catch(Exception e) {}
+			if(pstmtCloseNew != null) try{pstmtCloseNew.close();}catch(Exception e) {}
+		}
 
 	}
 	

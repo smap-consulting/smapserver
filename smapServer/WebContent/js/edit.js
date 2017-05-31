@@ -336,8 +336,19 @@ $(document).ready(function() {
 		$('#settingsModal').modal('show');
 	});
 
+    $('#m_keys').off().click(function() {	// Show the keys dialog
 
-	$('#save_settings').off().click(function() {	// Save settings to the database
+        // Close any drop downmenus
+        $('.dropdown-toggle').parent().removeClass("open");
+        $('.navbar-collapse').removeClass("in");
+
+        updateSettingsData();
+
+        $('#keysModal').modal('show');
+    });
+
+
+	$('#save_settings, #save_keys').off().click(function() {	// Save settings to the database
 		globals.model.save_settings();
 	});
 	
@@ -462,6 +473,9 @@ $(document).ready(function() {
 		globals.model.settingsAddPdfClicked();
 		$('.upload_file_msg').val("");
 	});
+    $('#set_key_policy').change(function() {
+        globals.model.settingsChange();
+    });
 
 	// Check for selection of the label indicating successful updates and the one indicating failed
 	$('#successLabel').off().click(function() {
@@ -470,6 +484,14 @@ $(document).ready(function() {
 	// Check for selection of the label indicating successful updates and the one indicating failed
 	$('#failedLabel').off().click(function() {
 		alert("failed");
+	});
+
+    $('.m_test_survey').off().click(function() {
+        if(globals.changes.length > 0) {
+            alert(localise.set["msg_test"]);
+            return false;
+        }
+		return true;
 	});
 	
 	
@@ -480,7 +502,7 @@ $(document).ready(function() {
 	 */
 	window.onbeforeunload = function() {
 		if(globals.changes.length > 0) {
-			return "You have unsaved changes are you sure you want to leave?";
+			return localise.set["msg_leave"];
 		} else {
 			return;
 		}
@@ -2019,6 +2041,11 @@ function updateSettingsData() {
 	$('#set_style').val(globals.model.survey.surveyClass);
 	$('.upload_file_msg').val(globals.model.survey.pdfTemplateName);
 	$('#set_hrk').val(globals.model.survey.hrk);
+	if(globals.model.survey.key_policy) {
+        $('#set_key_policy').val(globals.model.survey.key_policy);
+    } else {
+        $('#set_key_policy').val("add");
+	}
 	$('#task_file').prop('checked', globals.model.survey.task_file);
 	$('#timing_data').prop('checked', globals.model.survey.timing_data);
 }

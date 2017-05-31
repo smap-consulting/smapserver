@@ -41,6 +41,7 @@ public class Survey {
 	public boolean loadedFromXLS;
 	public ArrayList<Pulldata> pulldata;
 	public String hrk;
+	public String key_policy;
 	public ArrayList<LinkedSurvey> linkedSurveys = new ArrayList<LinkedSurvey> ();
 	public String basedOn;
 	public boolean sharedTable;
