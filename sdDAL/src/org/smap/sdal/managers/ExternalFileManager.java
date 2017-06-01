@@ -371,104 +371,78 @@ public class ExternalFileManager {
 		boolean regenerate = false;
 		boolean tableExists = true;
 		
-		String sql = "select id, linked_table, number_records from linked_forms "
+		String sql = "select count (*) from linked_forms "
 				+ "where linked_s_id = ? "
 				+ "and linker_s_id = ? "
-				+ "and link_file = ?;";
+				+ "and link_file = ? ";
+				//+ "and download_time > (select upload_time from upload_event "
+				//+ "where s_id = ? order by ue_id desc limit 1)";
 		PreparedStatement pstmt = null;
 		
-		PreparedStatement pstmtCount = null;
+		/*
+		String sqlDelete = "delete from linked_forms "
+				+ "where linked_s_id = ? "
+				+ "and linker_s_id = ? "
+				+ "and link_file = ? ";
+		PreparedStatement pstmtDelete = null;
+		*/
 		
 		String sqlInsert = "insert into linked_forms "
-				+ "(Linked_s_id, linked_table, number_records,linker_s_id, link_file) "
-				+ "values(?, ?, ?, ?, ?)";
+				+ "(Linked_s_id, linker_s_id, link_file, download_time) "
+				+ "values(?, ?, ?, now())";
 		PreparedStatement pstmtInsert = null;
 		
-		String sqlUpdate = "update linked_forms "
-				+ "set number_records = ? "
-				+ "where id = ?";
-		PreparedStatement pstmtUpdate = null;
-		
 		try {
-		// Get data on the link between the two surveys
-        
+		
+			// Get data on the link between the two surveys
 			pstmt = sd.prepareStatement(sql);
 			pstmt.setInt(1, linked_sId);
 			pstmt.setInt(2, linker_sId);
 			pstmt.setString(3, filepath);
-			log.info("Get existing count info: " + pstmt.toString());
+			//pstmt.setInt(4, linked_sId);
+			log.info("Test for regen: " + pstmt.toString());
 			
 			ResultSet rs = pstmt.executeQuery();
 			if(rs.next()) {
-				int id = rs.getInt(1);
-				String table = rs.getString(2);
-				int previousCount = rs.getInt(3);
-				
-				log.info("Existing count found: " + previousCount);
-				
-				String sqlCount = "select count(*) from " + table;
-				int count = 0;
-				try {
-					pstmtCount = cRel.prepareStatement(sqlCount);
-					log.info("Get current count info: " + pstmtCount.toString());
-					ResultSet rsCount = pstmtCount.executeQuery();
-					if(rsCount.next()) {
-						count = rsCount.getInt(1);
-					}
-				} catch(Exception e) {
-					// Table may not exist yet
-					log.info("Exception getting current count: " + e.getMessage());
-					tableExists = false;
-				}
-				
-				log.info("New count: " + count);
-				
-				if(count != previousCount) {
-					regenerate = true;
-					log.info("Regenerating because the new count does not match the old count");
-					
-					pstmtUpdate = sd.prepareStatement(sqlUpdate);
-					pstmtUpdate.setInt(1, count);
-					pstmtUpdate.setInt(2, id);
-					
-					log.info("Regenerate: " + pstmtUpdate.toString());
-					pstmtUpdate.executeUpdate();
-					
-				}
-				
-			} else {
-				// Create a new entry
-				
-				String table = GeneralUtilityMethods.getMainResultsTable(sd, cRel, linked_sId);
-				int count = 0;
-				if(table != null) {
-					log.info("Creating a new count entry");
-					count = 0;
-					pstmtInsert = sd.prepareStatement(sqlInsert);
-					pstmtInsert.setInt(1, linked_sId);
-					pstmtInsert.setString(2, table);
-					pstmtInsert.setInt(3, count);
-					pstmtInsert.setInt(4, linker_sId);
-					pstmtInsert.setString(5, filepath);
-							
-					log.info("Create new count entry: " + pstmtInsert.toString());
-					pstmtInsert.executeUpdate();
-							
+				int count = rs.getInt(1);
+				if(count > 0) {
 					regenerate = false;
-					log.info("Not regenerating because we created a new count entry with a value of 0");
-						
-					
+					log.info("Regenerate is false");
 				} else {
-					log.info("Table " + table + " not found. Probably no data has been submitted");
-					tableExists = false;
-				}		
+					
+					String table = GeneralUtilityMethods.getMainResultsTable(sd, cRel, linked_sId);
+				
+					if(table != null) {
+						regenerate = true;
+						log.info("Need to regenerate");
+						
+						/*
+						pstmtDelete = sd.prepareStatement(sqlDelete);
+						pstmtDelete.setInt(1, linked_sId);
+						pstmtDelete.setInt(2, linker_sId);
+						pstmtDelete.setString(3, filepath);
+						pstmtDelete.executeUpdate();
+						log.info("Delete record: " + pstmtDelete.toString());
+						*/
+						
+						pstmtInsert = sd.prepareStatement(sqlInsert);
+						pstmtInsert.setInt(1, linked_sId);
+						pstmtInsert.setInt(2, linker_sId);
+						pstmtInsert.setString(3, filepath);
+						pstmtInsert.executeUpdate();
+						log.info("Insert record: " + pstmtInsert.toString());
+					} else {
+						log.info("Table " + table + " not found. Probably no data has been submitted");
+						tableExists = false;
+					}
+					
+				}
 
 			}
 		} finally {
-			try {pstmt.close();} catch (Exception e) {};
-			try {pstmtCount.close();} catch (Exception e) {};
+			if(pstmt != null) {try {pstmt.close();} catch (Exception e) {}};
+			//if(pstmtDelete != null) {try {pstmtDelete.close();} catch (Exception e) {}};
 			if(pstmtInsert != null) {try {pstmtInsert.close();} catch(Exception e) {}}
-			if(pstmtUpdate != null) {try {pstmtUpdate.close();} catch(Exception e) {}}
 		}
 		
 
@@ -510,6 +484,7 @@ public class ExternalFileManager {
 		ResultSet rs = null;
 		String sqlGetCol = "select column_name, f_id from question "
 				+ "where qname = ? "
+				+ "and published "
 				+ "and f_id in (select f_id from form where s_id = ?)";
 		PreparedStatement pstmtGetCol = null;
 		

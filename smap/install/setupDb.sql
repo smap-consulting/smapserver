@@ -829,10 +829,12 @@ DROP TABLE IF EXISTS public.linked_forms CASCADE;
 CREATE TABLE public.linked_forms (
 	id integer DEFAULT nextval('linked_forms_seq') NOT NULL PRIMARY KEY,
 	Linked_s_id integer REFERENCES survey(s_id) ON DELETE CASCADE,
-	linked_table text,
-	number_records integer,
+	linked_table text,			-- deprecate
+	number_records integer,		-- deprecate
 	linker_s_id integer REFERENCES survey(s_id) ON DELETE CASCADE,
-	link_file text
+	link_file text,
+	user_ident text,
+	download_time TIMESTAMP WITH TIME ZONE
 );
 ALTER TABLE public.linked_forms OWNER TO ws;
 

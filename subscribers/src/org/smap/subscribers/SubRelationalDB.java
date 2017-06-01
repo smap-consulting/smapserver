@@ -466,7 +466,7 @@ public class SubRelationalDB extends Subscriber {
 					System.out.println("Apply add policy - no action");
 				} else if(keyPolicy.equals("merge")) {
 					System.out.println("Apply merge policy");
-					mergeTableContent(cResults, topLevelTable, keys.newKey);
+					mergeTableContent(cMeta, cResults, sId, topLevelTable, keys.newKey);
 				} else if(keyPolicy.equals("discard")) {
 					System.out.println("Apply discard policy");
 					discardTableContent(cResults, topLevelTable, keys.newKey);
@@ -475,6 +475,11 @@ public class SubRelationalDB extends Subscriber {
 			
 			cResults.commit();
 			cResults.setAutoCommit(true);
+			
+			/*
+			 * Clear any entries in linked_forms for this survey - The CSV files will need to be refreshed
+			 */
+			clearLinkedForms(cMeta, sId);
 
 		} catch (Exception e) {
 			if(cResults != null) {
@@ -703,10 +708,33 @@ public class SubRelationalDB extends Subscriber {
 	}
 	
 	/*
+	 * Clear entries for linked forms to force reload
+	 */
+	private void clearLinkedForms(
+			Connection cMeta,
+			int sId
+			) throws SQLException {
+		
+		String sql = "delete from linked_forms where linked_s_id = ?";
+		PreparedStatement pstmt = null;
+		
+		try {
+			pstmt = cMeta.prepareStatement(sql);
+			pstmt.setInt(1, sId);
+			log.info("Clear entries in linked_forms: " + pstmt.toString());
+			pstmt.executeUpdate(sql);
+		} finally {
+			if(pstmt != null) try{pstmt.close();}catch(Exception e) {}
+		}
+	}
+	
+	/*
 	 * Method to merge a previous records content into this new record
 	 */
 	private void mergeTableContent(
+			Connection cMeta,
 			Connection cRel,
+			int sId,
 			String table,
 			int prikey) throws SQLException, Exception {
 
@@ -736,9 +764,13 @@ public class SubRelationalDB extends Subscriber {
 				+ "and prikey != ?";
 		PreparedStatement pstmtCloseSource = null;
 			
+		String sqlChildTables = "select table_name from form where parentform = (select f_id from form where parentform = 0 and s_id = ?)";
+		PreparedStatement pstmtChildTables = null;
+		
+		PreparedStatement pstmtChildUpdate = null;
+		
 		try {
-			boolean merged = false;
-			
+	
 			// Get the HRK that identifies duplicates
 			String hrk = null;
 			pstmtHrk = cRel.prepareStatement(sqlHrk);
@@ -788,23 +820,39 @@ public class SubRelationalDB extends Subscriber {
 							pstmtUpdateTarget.setInt(2, prikey);
 							System.out.println(("Merging col: " + pstmtUpdateTarget.toString()));
 							pstmtUpdateTarget.executeUpdate();
-							merged = true;
-							
 						}
 					}
 					
 				}
 				
+				// Add the child records from the merged survey to the new survey (TODO) possibly these should be replicated
+				pstmtChildTables = cMeta.prepareStatement(sqlChildTables);
+				pstmtChildTables.setInt(1,  sId);
+				ResultSet rsChildTables = pstmtChildTables.executeQuery();
+				
+				
+				
+				while(rsChildTables.next()) {
+					System.out.println("Child Table: " + rsChildTables.getString(1));
+					
+					String sqlChildUpdate = "update " + rsChildTables.getString(1) + " set parkey = ? where parkey = ?;";
+					pstmtChildUpdate = cRel.prepareStatement(sqlChildUpdate);
+					
+					pstmtChildUpdate.setInt(1, prikey);
+					pstmtChildUpdate.setInt(2, sourceKey);
+					log.info("Updating parent keys: " + pstmtChildUpdate.toString());
+					pstmtChildUpdate.executeUpdate();
+				}
+				
 			}
 			
-			if(merged) {
-				pstmtCloseSource = cRel.prepareStatement(sqlCloseSource);
-				pstmtCloseSource.setString(1, "Merged with " + prikey);
-				pstmtCloseSource.setString(2, hrk);
-				pstmtCloseSource.setInt(3, prikey);
-				System.out.println(("Closing Source: " + pstmtCloseSource.toString()));
-				pstmtCloseSource.executeUpdate();
-			}
+			pstmtCloseSource = cRel.prepareStatement(sqlCloseSource);
+			pstmtCloseSource.setString(1, "Merged with " + prikey);
+			pstmtCloseSource.setString(2, hrk);
+			pstmtCloseSource.setInt(3, prikey);
+			System.out.println(("Closing Source: " + pstmtCloseSource.toString()));
+			pstmtCloseSource.executeUpdate();
+
 			
 		
 		} finally {
@@ -814,6 +862,8 @@ public class SubRelationalDB extends Subscriber {
 			if(pstmtGetTarget != null) try{pstmtGetTarget.close();}catch(Exception e) {}
 			if(pstmtUpdateTarget != null) try{pstmtUpdateTarget.close();}catch(Exception e) {}
 			if(pstmtCloseSource != null) try{pstmtCloseSource.close();}catch(Exception e) {}
+			if(pstmtChildTables != null) try{pstmtChildTables.close();}catch(Exception e) {}
+			if(pstmtChildUpdate != null) try{pstmtChildUpdate.close();}catch(Exception e) {}
 		}
 
 	}

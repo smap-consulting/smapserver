@@ -555,8 +555,8 @@ ALTER TABLE linked_forms_seq OWNER TO ws;
 CREATE TABLE public.linked_forms (
 	id integer DEFAULT nextval('linked_forms_seq') NOT NULL PRIMARY KEY,
 	Linked_s_id integer,
-	linked_table text,
-	number_records integer,
+	linked_table text,		-- deprecate
+	number_records integer,	-- deprecate
 	linker_s_id integer
 );
 ALTER TABLE public.linked_forms OWNER TO ws;
@@ -756,4 +756,6 @@ ALTER TABLE message OWNER TO ws;
 
 alter table users add column created timestamp with time zone;
 alter table survey add column key_policy text;
+alter table linked_forms add column user_ident text;
+alter table linked_forms add column download_time TIMESTAMP WITH TIME ZONE;
 
