@@ -477,8 +477,9 @@ public class ExternalFileManager {
 		StringBuffer tabs = new StringBuffer("");
 		String linked_s_pd_sel = null;
 		SqlDef sqlDef = new SqlDef();
-		ArrayList<String> colNames = new ArrayList<String> ();
-		HashMap <Integer, Integer> forms = new HashMap <Integer, Integer> ();
+		ArrayList<String> colNames = new ArrayList<> ();
+		ArrayList<String> subTables = new ArrayList<> ();
+		HashMap <Integer, Integer> forms = new HashMap <> ();
 		Form topForm = GeneralUtilityMethods.getTopLevelForm(sd, sId);
 		
 		ResultSet rs = null;
@@ -539,7 +540,17 @@ public class ExternalFileManager {
 			// 2. Add the tables
 			pstmtGetTable = sd.prepareStatement(sqlGetTable);
 			pstmtGetTable.setInt(1,  sId);
-			getTables(pstmtGetTable, 0, null, tabs, where, forms);
+			getTables(pstmtGetTable, 0, null, tabs, where, forms, subTables);
+			
+			// 2.5 Add the primary keys of sub tables so they can be sorted on
+			if(linked_s_pd && subTables.size() > 0) {
+				for(String subTable : subTables) {
+					sql.append(",");
+					sql.append(subTable);
+					sql.append(".prikey");
+				}
+			}
+			
 			sql.append(" from ");
 			sql.append(tabs);
 			
@@ -564,9 +575,16 @@ public class ExternalFileManager {
 				}
 			}
 			
-			// If this is a pulldata linked file then order the data by _data_key
+			// If this is a pulldata linked file then order the data by _data_key and then the primary keys of sub forms
 			if(linked_s_pd) {
 				sql.append( " order by _data_key");
+				if(subTables.size() > 0) {
+					for(String subTable : subTables) {
+						sql.append(",");
+						sql.append(subTable);
+						sql.append(".prikey asc");
+					}
+				}
 			}
 			
 		} finally {
@@ -587,10 +605,11 @@ public class ExternalFileManager {
 			String parentTable,
 			StringBuffer tabs, 
 			StringBuffer where,
-			HashMap<Integer, Integer> forms) throws SQLException {
+			HashMap<Integer, Integer> forms,
+			ArrayList<String> subTables) throws SQLException {
 		
-		ArrayList<Integer> parents = new ArrayList<Integer> ();
-		ArrayList<String> parentTables = new ArrayList<String> ();
+		ArrayList<Integer> parents = new ArrayList<> ();
+		ArrayList<String> parentTables = new ArrayList<> ();
 		
 		pstmt.setInt(2, parentId);
 		log.info("Get tables: " + pstmt.toString());
@@ -622,6 +641,7 @@ public class ExternalFileManager {
 					where.append(".parkey = ");
 					where.append(parentTable);
 					where.append(".prikey");
+					subTables.add(table);
 				}
 				parents.add(fId);
 				parentTables.add(table);
@@ -632,7 +652,7 @@ public class ExternalFileManager {
 		for(int i = 0; i < parents.size(); i++) {
 			int fId = parents.get(i);
 			String table = parentTables.get(i);
-			getTables(pstmt, fId, table, tabs, where, forms);
+			getTables(pstmt, fId, table, tabs, where, forms, subTables);
 		}
 		
 	}
