@@ -265,7 +265,6 @@ public class ExternalFileManager {
 					String dkv = null;
 					while(rs.next()) {
 						dkv = rs.getString("_data_key");
-						System.out.println("Data key: " + dkv);
 						if(dkv != null && !dkv.equals(currentDkv)) {
 							// A new data key
 							writeRecords(non_unique_key, nonUniqueRecords, bw, currentDkv);
@@ -501,13 +500,15 @@ public class ExternalFileManager {
 			pstmtGetCol = sd.prepareStatement(sqlGetCol);
 			pstmtGetCol.setInt(2,  sId);
 			
+			boolean first = true;;
 			if(linked_s_pd) {
 				linked_s_pd_sel = GeneralUtilityMethods.convertAllxlsNamesToQuery(data_key, sId, sd);
 				sql.append(linked_s_pd_sel);
 				sql.append(" as _data_key");
+				first = false;
 			}
-			// Always add top level form
-			forms.put(topForm.id, topForm.id);
+			
+			forms.put(topForm.id, topForm.id);	// Always add top level form
 			for(int i = 0; i < qnames.size(); i++) {
 				String name = qnames.get(i);
 				if(name.equals("_data_key") || name.equals("_count")) {
@@ -519,21 +520,30 @@ public class ExternalFileManager {
 				if(rs.next()) {
 					colName = rs.getString(1);
 					fId = rs.getInt(2);
-				} else {
+				} else if(name.equals("_hrk") 
+						|| name.equals("_device")
+						|| name.equals("_user")
+						|| name.equals("_start")
+						|| name.equals("_end")
+						|| name.equals("_upload_time")
+						|| name.equals("_survey_notes")) {
 					colName = name;		// For columns that are not questions such as _hrk, _device
 					fId = topForm.id;
+				} else {
+					continue;		// Name not found
 				}
 				colNames.add(colName);
 				forms.put(fId, fId);
 				
 				System.out.println("Adding form: " + fId + " for name: " + colName);
 				
-				if(i > 0 || linked_s_pd) {
+				if(!first) {
 					sql.append(",");
 				}
 				sql.append(colName);
 				sql.append(" as ");
 				sql.append(name);
+				first = false;
 				
 			}
 			

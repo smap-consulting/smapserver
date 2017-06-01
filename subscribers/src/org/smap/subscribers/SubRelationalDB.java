@@ -722,7 +722,7 @@ public class SubRelationalDB extends Subscriber {
 			pstmt = cMeta.prepareStatement(sql);
 			pstmt.setInt(1, sId);
 			log.info("Clear entries in linked_forms: " + pstmt.toString());
-			pstmt.executeUpdate(sql);
+			pstmt.executeUpdate();
 		} finally {
 			if(pstmt != null) try{pstmt.close();}catch(Exception e) {}
 		}

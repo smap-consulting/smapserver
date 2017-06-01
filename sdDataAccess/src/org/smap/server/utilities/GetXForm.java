@@ -774,7 +774,6 @@ public class GetXForm {
 		if(calculate != null && calculate.trim().length() > 0 ) {
 			Survey s = template.getSurvey();
 			calculate = GeneralUtilityMethods.removeSelfReferences(calculate, s.getIdent());
-			log.info("Adding calculate to bind:" + calculate);
 			questionElement.setAttribute("calculate", calculate);
 		}
 		
