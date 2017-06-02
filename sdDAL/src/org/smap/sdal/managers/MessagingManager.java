@@ -1,32 +1,18 @@
 package org.smap.sdal.managers;
 
-import java.io.FileOutputStream;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.Locale;
 import java.util.ResourceBundle;
-import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.mail.internet.AddressException;
 import javax.mail.internet.InternetAddress;
-import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.UtilityMethodsEmail;
 import org.smap.sdal.model.EmailServer;
-import org.smap.sdal.model.Notification;
-import org.smap.sdal.model.NotifyDetails;
 import org.smap.sdal.model.Organisation;
-
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 
 /*****************************************************************************
  * 
@@ -101,6 +87,12 @@ public class MessagingManager {
 				/*
 				 * Send document to target
 				 */
+				
+				pstmtConfirm.setString(1, "Sending");
+				pstmtConfirm.setInt(2, id);
+				log.info(pstmtConfirm.toString());
+				pstmtConfirm.executeUpdate();
+				
 				EmailServer emailServer = UtilityMethodsEmail.getSmtpHost(sd, null, null);
 				if (isValidEmail(topic) && 
 						emailServer.smtpHost != null && emailServer.smtpHost.trim().length() > 0) {
@@ -122,6 +114,7 @@ public class MessagingManager {
 
 				} else {
 					log.log(Level.SEVERE, "Error: Attempt to do email notification but email server not set");
+					status = "Error: email server not enabled";
 				}
 				
 				pstmtConfirm.setString(1, status);

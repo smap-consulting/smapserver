@@ -86,6 +86,7 @@ require([
     'common',
     'localise',
     'globals',
+    'app/actioncommon',
     'inspinia',
     'metismenu',
     'slimscroll',
@@ -102,7 +103,7 @@ require([
              common,
              localise,
              globals,
-             datatables) {
+             actioncommon) {
 
     window.gTasks = {
         cache: {
@@ -120,14 +121,6 @@ require([
 
     $(document).ready(function () {
 
-        var i,
-            params,
-            pArray = [],
-            param = [],
-            openingNew = false,
-            dont_get_current_survey = true,
-            bs = isBusinessServer();
-
         localise.setlang();		// Localise HTML
 
         var $editForm = $('#editRecordForm'),
@@ -143,7 +136,7 @@ require([
         gTasks.gSelectedRecord = gRecord[0];
 
         // Show the dialog
-        showEditRecordForm(gRecord[0], gSurveyConfig.columns, $editForm, $surveyForm);
+        actioncommon.showEditRecordForm(gRecord[0], gSurveyConfig.columns, $editForm, $surveyForm);
 
 
         $('#saveRecord').click(function () {
