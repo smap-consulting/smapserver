@@ -472,6 +472,7 @@ public class SurveyViewManager {
 			pstmtGetDefault.setInt(3, queryId);
 			pstmtGetDefault.setInt(4, managedId);
 			
+			log.info("Get default view: " + pstmtGetDefault.toString());
 			ResultSet rs = pstmtGetDefault.executeQuery();
 			if(rs.next()) {
 				viewId = rs.getInt(1);
