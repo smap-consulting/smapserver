@@ -79,7 +79,7 @@ public class TableColumn {
 		if(isAttachment()) {
 			selName = "'" + urlprefix + "' || " + name + " as " + name;
 		} else if(isGeometry()) {
-			selName = "ST_AsGeoJson(" + name + ") ";
+			selName = "ST_AsGeoJson(the_geom) ";
 		} else if(isCalculate() && calculation != null) {
 			selName = calculation.sql.toString();
 		} else if(type.equals("duration")) {

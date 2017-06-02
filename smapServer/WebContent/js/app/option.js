@@ -199,9 +199,9 @@ define([
 					h[++idx] = option.value;
 					h[++idx] = '" ';
 							
-					if(option.published) {				// Mark disabled if the option has been published
-						h[++idx] = 'readonly="true"';
-					}
+					//if(option.published) {				// Mark disabled if the option has been published
+					//	h[++idx] = 'readonly="true"';
+					//}
 					h[++idx] = ' type="text" title="';
 					h[++idx] = localise.set["ed_cval"];
 					h[++idx] = '">';
