@@ -293,6 +293,7 @@ public class TextManager {
 				} else if(r.type.equals("image")) {
 
 				} else {
+					
 					for(int i = 0; i < text.size(); i++) {
 						String s = text.get(i);
 						s = s.replaceAll("\\$\\{" + fieldName + "\\}", value);
@@ -312,7 +313,7 @@ public class TextManager {
 		if(formName == null || formName.equals("")) {
 			name = qName;
 		} else {
-			name = formName + "[" + index + "]." + qName;
+			name = formName + "\\[" + index + "\\]." + qName;
 		}
 		return name;
 	}
