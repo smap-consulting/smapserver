@@ -430,7 +430,25 @@ public class NotificationManager {
 							"?datakey=instanceid&datakeyvalue=" + instanceId;
 					logContent = docURL;
 				}
+			} else {
+				TextManager tm = new TextManager();
+				ArrayList<String> text = new ArrayList<> ();
+				text.add(nd.subject);
+				text.add(nd.content);
+				tm.createTextOutput(sd,
+							cResults,
+							text,
+							basePath, 
+							remoteUser,
+							survey,
+							utcOffset,
+							"none");
+				nd.subject = text.get(0);
+				nd.content = text.get(1);
 			}
+			
+			System.out.println("Subject: " + nd.subject);
+			System.out.println("Content: " + nd.content);
 				
 			/*
 			 * Send document to target
