@@ -2127,6 +2127,7 @@ public class GeneralUtilityMethods {
 		ArrayList<TableColumn> columnList = new ArrayList<TableColumn>();
 		ArrayList<TableColumn> realQuestions = new ArrayList<TableColumn> ();	// Temporary array so that all property questions can be added first
 		boolean uptodateTable = false;	// Set true if the results table has the latest meta data columns
+		TableColumn durationColumn = null;
 		
 		// Get column restrictions for RBAC
 		StringBuffer colList = new StringBuffer("");
@@ -2201,11 +2202,11 @@ public class GeneralUtilityMethods {
 		}
 		
 		if(includeSurveyDuration && formParent == 0) {
-			c = new TableColumn();
-			c.name = "_duration";
-			c.humanName = "Survey Duration";
-			c.type = "duration";
-			columnList.add(c);
+			durationColumn = new TableColumn();
+			durationColumn.name = "_duration";
+			durationColumn.humanName = "Survey Duration";
+			durationColumn.type = "duration";
+			columnList.add(durationColumn);
 		}
 		
 		if(includeBad) {
@@ -2316,6 +2317,15 @@ public class GeneralUtilityMethods {
 					question_human_name = display_name;
 				}
 				String hxlCode = getHxlCode(appearance, question_human_name);
+				
+				if(durationColumn != null && source_param != null) {	
+					if(source_param.equals("start")) {
+						durationColumn.startName = question_column_name;
+					} else if(source_param.equals("end")) {
+						durationColumn.endName = question_column_name;
+					}
+				}
+				
 				
 				String cName = question_column_name.trim().toLowerCase();
 				if(cName.equals("parkey") ||	cName.equals("_bad") ||	cName.equals("_bad_reason")

@@ -19,6 +19,8 @@ public class TableColumn {
 	public String filterValue;
 	public String hxlCode;
 	public boolean isCondition = false;	// For a calculate sql is created from an array of conditions
+	public String startName = null;
+	public String endName = null;
 	
 	// Manage updating of data
 	public boolean readonly;	// Can't be modified by form management
@@ -83,7 +85,7 @@ public class TableColumn {
 		} else if(isCalculate() && calculation != null) {
 			selName = calculation.sql.toString();
 		} else if(type.equals("duration")) {
-			selName = "extract(epoch FROM (_end - _start)) as "+ name;
+			selName = "extract(epoch FROM (" + endName + " - " + startName + ")) as "+ name;
 		} else {
 			selName = name;
 		}

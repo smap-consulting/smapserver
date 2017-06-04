@@ -351,9 +351,9 @@ public class MyAssignments extends Application {
 			
 			tr.forms = new ArrayList<FormLocator> ();
 			while(resultSet.next()) {
-				boolean newManifestFile = false;
 				int sId = resultSet.getInt("s_id");
 				String sIdent = resultSet.getString("ident");
+				boolean newManifestFile = false;
 				
 				/*
 				 * For each form that has a manifest that links to another form
@@ -388,6 +388,7 @@ public class MyAssignments extends Application {
 					if(fileRegenerated) {
 						newManifestFile = true;
 					}
+					newManifestFile = true;  // Set to be always true, fieldTask should download manifests where checksum has changed
 				}
 				
 				
@@ -400,7 +401,7 @@ public class MyAssignments extends Application {
 				fl.tasks_only = resultSet.getBoolean("tasks_only");
 				fl.hasManifest = translationMgr.hasManifest(connectionSD, userName, sId);
 				
-				// If a new manifest was created then increase the version of this file so that it will be requested again by clients
+				// If a new manifest then mark the form dirty so it will be downloaded
 	            if(newManifestFile) {
 	            	fl.dirty = true;
 	            } else {
