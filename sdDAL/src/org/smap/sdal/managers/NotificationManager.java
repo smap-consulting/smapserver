@@ -186,7 +186,7 @@ public class NotificationManager {
 		String [] hostParts = n.remote_host.split("//");
 		remote_host = hostParts[1];
 		
-		log.info("Checking for forwardign feedback loop. Current server is: " + server + " : " + remote_host);
+		log.info("Checking for forwarding feedback loop. Current server is: " + server + " : " + remote_host);
 		
 		// Get the ident of the local survey to compare with the remote ident
 		PreparedStatement pstmt;
@@ -384,8 +384,25 @@ public class NotificationManager {
 			survey = sm.getById(sd, cResults, remoteUser, sId, true, basePath, 
 					instanceId, true, generateBlank, true, false, true, "real", superUser, utcOffset, "geojson");
 
+			/*
+			 * Add details from the survey to the subject and email content
+			 */
 			nd.subject = sm.fillStringTemplate(survey, nd.subject);
 			nd.content = sm.fillStringTemplate(survey, nd.content);
+			TextManager tm = new TextManager();
+			ArrayList<String> text = new ArrayList<> ();
+			text.add(nd.subject);
+			text.add(nd.content);
+			tm.createTextOutput(sd,
+						cResults,
+						text,
+						basePath, 
+						remoteUser,
+						survey,
+						utcOffset,
+						"none");
+			nd.subject = text.get(0);
+			nd.content = text.get(1);
 			
 			if(nd.attach != null && !nd.attach.equals("none")) {
 				System.out.println("Attaching link to email: " + nd.attach);
@@ -430,22 +447,7 @@ public class NotificationManager {
 							"?datakey=instanceid&datakeyvalue=" + instanceId;
 					logContent = docURL;
 				}
-			} else {
-				TextManager tm = new TextManager();
-				ArrayList<String> text = new ArrayList<> ();
-				text.add(nd.subject);
-				text.add(nd.content);
-				tm.createTextOutput(sd,
-							cResults,
-							text,
-							basePath, 
-							remoteUser,
-							survey,
-							utcOffset,
-							"none");
-				nd.subject = text.get(0);
-				nd.content = text.get(1);
-			}
+			} 
 			
 			System.out.println("Subject: " + nd.subject);
 			System.out.println("Content: " + nd.content);
