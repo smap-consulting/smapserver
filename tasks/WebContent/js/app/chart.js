@@ -1075,7 +1075,8 @@ define([
             var h = [];
             var idx = -1;
             var i;
-            var defValue;
+            var defValue1 = $('#ew_question1').val(),
+                defValue2 = $('#ew_question2').val();
 
             if(tSeries) {
                 for (i = 0; i < columns.length; i++) {
@@ -1109,8 +1110,11 @@ define([
             $('.question_req').empty().append(h.join(''));
             $('.question').empty().append(NONE_OPTION);
             $('.question').append(h.join(''));
-            $('.question_req').val(defValue);
-            $('.question').val("-1");
+
+
+            $('#ew_question1').val(defValue1);
+            $('#ew_question2').val(defValue2);
+
 
         }
 
@@ -1262,7 +1266,12 @@ define([
                 data: {chartView: saveString},
                 success: function (data, status) {
                     removeHourglass();
-                    globals.gViewId = data.viewId;
+                    if(globals.gViewId != data.viewId) {  // Store data under new viewId
+                        gTasks.cache.surveyConfig[data.viewId] = gTasks.cache.surveyConfig[globals.gViewId];
+                        globals.gViewId = data.viewId;
+                    }
+
+
                 }, error: function (data, status) {
                     removeHourglass();
                     alert(localise.set["msg_err_save"] + " " + data.responseText);

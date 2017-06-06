@@ -759,4 +759,20 @@ alter table survey add column key_policy text;
 alter table linked_forms add column user_ident text;
 alter table linked_forms add column download_time TIMESTAMP WITH TIME ZONE;
 
+-- reports available for an organisation
+CREATE SEQUENCE report_seq START 1;
+ALTER SEQUENCE report_seq OWNER TO ws;
+
+create TABLE report (
+	id INTEGER DEFAULT NEXTVAL('report_seq') CONSTRAINT pk_report PRIMARY KEY,
+	o_id integer REFERENCES organisation(id) ON DELETE CASCADE,
+	name text,				-- Report Name
+	template_name text,		-- Name of PDF template
+	template_desc text		-- Template description for dynamicly generated templates
+	);
+ALTER TABLE report OWNER TO ws;
+
+-- reports in a survey
+alter table survey add column report text;
+
 

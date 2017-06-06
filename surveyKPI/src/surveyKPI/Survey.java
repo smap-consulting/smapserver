@@ -652,16 +652,15 @@ public class Survey extends Application {
 
 		return response;
 	}
-	
 
-	
 	/*
 	 * Prevent any more submissions of the survey
 	 */
 	@Path("/block")
 	@POST
 	@Consumes("application/json")
-	public Response block(@Context HttpServletRequest request,
+	public Response block(
+			@Context HttpServletRequest request,
 			@PathParam("sId") int sId,
 			@QueryParam("set") boolean set) { 
 		
