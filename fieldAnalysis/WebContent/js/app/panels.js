@@ -138,9 +138,10 @@ $(document).ready(function() {
 			show:"drop",
 			width:600,
 			zIndex: 2000,
+			title: localise.set["c_settings"],
 			buttons: [
 		        {
-		        	text: "Cancel",
+		        	text: localise.set["c_cancel"],
 		        	click: function() {
 		        		if(gNewPanel) {
 		        			gNewPanel = false;
@@ -149,7 +150,7 @@ $(document).ready(function() {
 		        		$(this).dialog("close");
 		        	}
 		        }, {
-		        	text: "Save",
+		        	text: localise.set["c_save"],
 		        	click: function() {
 		        		var i, views, view,
 		        			newType, newTitle,

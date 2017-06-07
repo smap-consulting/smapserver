@@ -108,6 +108,8 @@ require(['jquery', 'jquery_ui', 'rmm', 'common', 'localise', 'globals', 'moment'
          'crf',
          
          ], function($, jquery_ui, rmm, common, localise, globals, moment) {
+	window.localise = localise;
+    initialiseDialogs()
 
 });
 
