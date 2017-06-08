@@ -205,7 +205,9 @@ $(document).ready(function() {
 	 */
 	$('#addFormSave').click(function() {
 		var form = {},
-			valid = true;
+			valid = true,
+			i,
+			msg;
 		
 		form.project = $('#new_project').val();
 		form.project_name = $('#new_project option:selected').text();
@@ -264,14 +266,13 @@ $(document).ready(function() {
  */
 function setAddNewForm() {
 	
-	var on = false;
+	var on = $('#add_new_survey').prop('checked', on);
 	
 	//if(!gCurrentQuery.forms  || gCurrentQuery.forms.length == 0) {
 	//	on = true;
 	//} else {
 		// TODO set on if all forms in the survey list have been selected
 	//}
-	//$('#add_new_survey').prop('checked', on);
 	
 	gCurrentFormNewSurvey = false;
 	$('.add_form_msg').hide();
@@ -303,12 +304,13 @@ function getSurveys() {
 function showSurveys(surveyList) {
 	var $elem = $('.survey_select'),
 		h = [],
-		idx = -1;
+		idx = -1,
+		i;
 	
 	$elem.empty();
 	
 	for(i = 0; i < surveyList.length; i++) {
-		item = surveyList[i];
+		var item = surveyList[i];
 		h[++idx] = '<option value="';
 		h[++idx] = item.id;
 		h[++idx] = '">';
@@ -331,12 +333,13 @@ function getForms() {
 function showForms(formList) {
 	var $elem = $('.form_select'),
 		h = [],
-		idx = -1;
+		idx = -1,
+		i;
 
 	$elem.empty();
 
 	for(i = 0; i < formList.length; i++) {
-		item = formList[i];
+		var item = formList[i];
 		h[++idx] = '<option value="';
 		h[++idx] = item.f_id;
 		h[++idx] = '">';
@@ -480,7 +483,7 @@ function showQueries() {
 function updateFormEditor() {
 	
 	var i,
-		idx = -1;
+		idx = -1,
 		h = [],
 		needSep = false,
 		sep = ", "
