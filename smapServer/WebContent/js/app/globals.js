@@ -26,6 +26,7 @@ define(function () {
         gRoleList: undefined,
         gCurrentProject: 0,
         gCurrentSurvey: 0,
+        gCurrentForm: 0,
         gCurrentLayer: undefined,
         gLoggedInUser: undefined,
         gEditingReportProject: undefined,   		// Set if fieldAnalysis called to edit a report

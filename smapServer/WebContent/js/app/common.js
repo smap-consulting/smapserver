@@ -1040,7 +1040,7 @@ function removeHourglass() {
  */
 
 /*
- * Load the surveys from the server
+ * Load the forms from the server
  */
 function loadSurveys(projectId, selector, getDeleted, addAll, callback) {
 	
@@ -1129,6 +1129,67 @@ function loadSurveys(projectId, selector, getDeleted, addAll, callback) {
 		}
 
 	}
+}
+
+/*
+ * Load the surveys from the server
+ */
+function loadForms(surveyId, selector) {
+	
+	var url="/surveyKPI/surveys/forms?surveyId=" + surveyId,
+		$elem,
+		selector_disable_blocked,
+		h = [],
+		idx = -1,
+		i,
+		item;
+	
+	if(selector === undefined) {
+		selector = ".form_select";	// Update the entire class of form select controls
+	}
+	$elem = $(selector);
+	
+
+	addHourglass();
+
+	$.ajax({
+		url: url,
+		dataType: 'json',
+		cache: false,
+		success: function(data) {
+			
+			removeHourglass();
+			$elem.empty();
+			
+			for(i = 0; i < data.length; i++) {
+				item = data[i];
+				h[++idx] = '<option';
+				h[++idx] = ' value="';
+				h[++idx] = item.id;
+				h[++idx] = '">';
+				h[++idx] = item.name;
+				h[++idx] = '</option>';
+			}
+
+			$elem.empty().append(h.join(''));
+			
+			if(globals.gCurrentForm > 0) {
+				$elem.val(globals.gCurrentForm);
+			}
+			
+		
+		},
+		error: function(xhr, textStatus, err) {
+			
+			removeHourglass();
+			if(xhr.readyState == 0 || xhr.status == 0) {
+	              return;  // Not an error
+			} else {
+				console.log("Error: Failed to get list of forms: " + err);
+			}
+		}
+	});	
+	
 }
 
 // Common Function to get the language and question list (for the default language)
