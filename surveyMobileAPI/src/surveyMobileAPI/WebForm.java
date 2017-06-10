@@ -366,7 +366,7 @@ public class WebForm extends Application{
 			} catch (Exception e) {
 				log.log(Level.SEVERE, e.getMessage(), e);
 			} finally {
-				SDDataSource.closeConnection("surveyKPI-Dashboard", connectionSD);
+				SDDataSource.closeConnection(requester, connectionSD);
 			}
 			
 			// Get the XML of the Form

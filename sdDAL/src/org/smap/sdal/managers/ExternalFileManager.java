@@ -474,6 +474,7 @@ public class ExternalFileManager {
 		StringBuffer sql = new StringBuffer("select distinct ");
 		StringBuffer where = new StringBuffer("");
 		StringBuffer tabs = new StringBuffer("");
+		StringBuffer order_cols = new StringBuffer("");
 		String linked_s_pd_sel = null;
 		SqlDef sqlDef = new SqlDef();
 		ArrayList<String> colNames = new ArrayList<> ();
@@ -539,12 +540,14 @@ public class ExternalFileManager {
 				
 				if(!first) {
 					sql.append(",");
+					order_cols.append(",");
 				}
 				sql.append(colName);
 				sql.append(" as ");
 				sql.append(name);
 				first = false;
 				
+				order_cols.append(colName);
 			}
 			
 			// 2. Add the tables
@@ -594,7 +597,14 @@ public class ExternalFileManager {
 						sql.append(subTable);
 						sql.append(".prikey asc");
 					}
+				} else {
+					sql.append(" asc");
 				}
+			} else {
+				// order by the columns
+				sql.append(" order by ");
+				sql.append(order_cols);
+				sql.append(" asc");
 			}
 			
 		} finally {

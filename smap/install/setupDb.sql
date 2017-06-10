@@ -963,8 +963,11 @@ create TABLE report (
 	id INTEGER DEFAULT NEXTVAL('report_seq') CONSTRAINT pk_report PRIMARY KEY,
 	o_id integer REFERENCES organisation(id) ON DELETE CASCADE,
 	name text,				-- Report Name
-	template_name text,		-- Name of PDF template
-	template_desc text		-- Template description for dynamicly generated templates
+	template_type text,		-- CSV or XLS
+	template_name text,		-- Name of PDF or XLS template
+	template_desc text,		-- Template description for dynamicly generated templates
+	select_sql text,		-- SQL and template field names
+	filter_s
 	);
 ALTER TABLE report OWNER TO ws;
 
