@@ -801,6 +801,8 @@ public class GetXForm {
     public Element populateBodyQuestion(Connection sd, Document outputXML, Form f, Question q, String parentXPath) throws Exception {
 
 		Element questionElement = null;
+		Survey s = template.getSurvey();
+		
 		String type = q.getType();
 		if(type.equals("string") || type.equals("int") || type.equals("dateTime") || 
 				type.equals("decimal") || type.equals("barcode") || type.equals("date") ||
@@ -853,6 +855,7 @@ public class GetXForm {
 				}
 			}
 			if(appearance != null) {
+				appearance = GeneralUtilityMethods.removeSelfReferences(appearance, s.getIdent());
 				questionElement.setAttribute("appearance", appearance);
 			}
 		}
