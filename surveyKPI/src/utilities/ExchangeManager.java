@@ -57,6 +57,7 @@ import org.apache.poi.ss.usermodel.*;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.managers.LogManager;
 import org.smap.sdal.model.ExchangeFile;
+import org.smap.sdal.model.Option;
 import org.smap.sdal.model.TableColumn;
 
 import model.FormDesc;
@@ -80,7 +81,7 @@ public class ExchangeManager {
 		String columnName;
 		String type;
 		String geomCol;
-		ArrayList<String> choices = null;
+		ArrayList<Option> choices = null;
 		boolean write = true;
 		
 		Column(String h) {
@@ -211,7 +212,7 @@ public class ExchangeManager {
 							if(n != null) {
 								skipSelectMultipleOption = true;
 							} else {
-								selectMultipleColumnNames.put(humanName, humanName);		// Record that we have 
+								selectMultipleColumnNames.put(humanName, humanName);		// Record that we have this select multiple
 							}
 						}
 						
@@ -428,7 +429,7 @@ public class ExchangeManager {
 									if(addedCol) {
 										sqlInsert.append(",");
 									}
-									sqlInsert.append(col.columnName + "__" + col.choices.get(j));
+									sqlInsert.append(col.columnName + "__" + col.choices.get(j).columnName);
 									addedCol = true;
 								}
 							} else {
@@ -586,10 +587,10 @@ public class ExchangeManager {
 							} else if(col.type.equals("select")) {
 								String [] choices = value.split("\\s");
 								for(int k = 0; k < col.choices.size(); k++) {
-									String cVal = col.choices.get(k);
+									Option cVal = col.choices.get(k);
 									boolean hasChoice = false;
 									for(int l = 0; l < choices.length; l++) {
-										if(cVal.equals(choices[l])) {
+										if(cVal.value.equals(choices[l])) {
 											hasChoice = true;
 											break;
 										}
@@ -1148,12 +1149,15 @@ public class ExchangeManager {
 						// Get choices for this select question
 						int qId = rs.getInt("q_id");
 						
-						col.choices = new ArrayList<String> ();
+						col.choices = new ArrayList<Option> ();
 						pstmtGetChoices.setInt(1, qId);
 						log.info("Get choices:" + pstmtGetChoices.toString());
 						ResultSet rsChoices = pstmtGetChoices.executeQuery();
 						while(rsChoices.next()) {
-							col.choices.add(rsChoices.getString("column_name"));
+							Option o = new Option();
+							o.columnName = rsChoices.getString("column_name");
+							o.value = rsChoices.getString("ovalue");
+							col.choices.add(o);
 						}
 					}
 				}
