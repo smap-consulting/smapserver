@@ -441,6 +441,20 @@ public class GeneralUtilityMethods {
 	}
 	
 	/*
+	 * Get a document template
+	 */
+	static public File getDocumentTemplate(String basePath, String fileName, int oId) {
+		
+		String templateName = basePath + "/media/organisation/" + oId + "/" + 
+				fileName;
+		
+		log.info("Attempt to get a document  template with name: " + templateName);
+		File templateFile = new File(templateName);
+		
+		return templateFile;
+	}
+	
+	/*
 	 * convert display name to file name
 	 */
 	static public String convertDisplayNameToFileName(String name) {

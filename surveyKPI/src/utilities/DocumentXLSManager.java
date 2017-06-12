@@ -1,5 +1,6 @@
 package utilities;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 
@@ -47,6 +48,8 @@ import javax.servlet.http.HttpServletRequest;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.apache.poi.xssf.usermodel.*;
 import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.ss.util.AreaReference;
+import org.apache.poi.ss.util.CellReference;
 import org.apache.commons.io.IOUtils;
 import org.apache.poi.hssf.usermodel.HSSFDataFormat;
 import org.apache.poi.hssf.usermodel.HSSFHyperlink;
@@ -60,7 +63,7 @@ import org.smap.sdal.model.KeyValue;
 import org.smap.sdal.model.TableColumn;
 import surveyKPI.ExportSurveyXls;
 
-public class ReportXLSManager {
+public class DocumentXLSManager {
 	
 	private static Logger log =
 			 Logger.getLogger(ExportSurveyXls.class.getName());
@@ -71,7 +74,7 @@ public class ReportXLSManager {
 
 	
 	
-	public ReportXLSManager() {
+	public DocumentXLSManager() {
 	
 	}
 	
@@ -79,11 +82,36 @@ public class ReportXLSManager {
 	
 	public void create(
 			ArrayList<KeyValue> data,
-			OutputStream outputStream
-			
+			OutputStream outputStream,
+			String basePath,
+			int oId
 			) throws Exception {
 		
-		Sheet resultsSheet = wb.createSheet("report");
+		File templateFile = GeneralUtilityMethods.getDocumentTemplate(basePath, "ewarn_report_template.xlsx", oId);
+		FileInputStream templateIS = new FileInputStream(templateFile);
+		wb = new XSSFWorkbook(templateIS);
+		templateIS.close();
+		
+		Sheet sheet = wb.getSheetAt(0);
+		for(KeyValue kv : data) {
+			int namedCellIdx = wb.getNameIndex(kv.k);
+		    Name aNamedCell = wb.getNameAt(namedCellIdx);
+
+		    AreaReference aref = new AreaReference(aNamedCell.getRefersToFormula());
+		    CellReference[] crefs = aref.getAllReferencedCells();
+		    System.out.println("    xxxxxxx: " + crefs.length + " " + kv.k + " : " + kv.v);
+		    for (int i = 0; i < crefs.length; i++) {
+		        Sheet s = wb.getSheet(crefs[i].getSheetName());
+		        Row r = sheet.getRow(crefs[i].getRow());
+		        Cell cell = r.getCell(crefs[i].getCol());
+		        // extract the cell contents based on cell type etc.
+		        cell.setCellValue(kv.v);
+		    }
+			
+		}
+		wb.write(outputStream);
+		wb.write(outputStream);
+		outputStream.close();
 	
 	}
 	

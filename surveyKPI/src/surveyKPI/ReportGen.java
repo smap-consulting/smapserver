@@ -1,13 +1,9 @@
 package surveyKPI;
 
 import java.io.IOException;
-import java.net.URLDecoder;
-import java.net.URLEncoder;
 import java.sql.Connection;
 import java.sql.Date;
-import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.servlet.http.HttpServletRequest;
@@ -23,13 +19,13 @@ import javax.ws.rs.core.Response;
 
 import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
+import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.managers.LogManager;
-import org.smap.sdal.managers.ReportDataManager;
+import org.smap.sdal.managers.DocumentDataManager;
 import org.smap.sdal.model.KeyValue;
 
-import utilities.ReportXLSManager;
-import utilities.XLSResultsManager;
+import utilities.DocumentXLSManager;
 
 /*
  * Reports
@@ -47,7 +43,7 @@ public class ReportGen extends Application {
 	
 	@GET
 	@Produces("application/x-download")
-	public Response exportSurvey (@Context HttpServletRequest request, 
+	public Response reportGen (@Context HttpServletRequest request, 
 			@PathParam("sId") int sId,
 			@PathParam("filename") String filename,
 			@QueryParam("from") Date startDate,
@@ -55,7 +51,7 @@ public class ReportGen extends Application {
 			@Context HttpServletResponse response) throws IOException, Exception {
 
 		// Authorisation - Access
-		Connection sd = SDDataSource.getConnection("surveyKPI-ExportSurvey");
+		Connection sd = SDDataSource.getConnection("surveyKPI-ReportGen");
 		boolean superUser = false;
 		try {
 			superUser = GeneralUtilityMethods.isSuperUser(sd, request.getRemoteUser());
@@ -65,19 +61,23 @@ public class ReportGen extends Application {
 		a.isValidSurvey(sd, request.getRemoteUser(), sId, false, superUser);
 		// End Authorisation
 		
+		Connection cResults = ResultsDataSource.getConnection("surveyKPI-ReportGen");
+		
 		lm.writeLog(sd, sId, request.getRemoteUser(), "view", "Report");
 		
 		Response responseVal = null;
-		String filetype = "xls";
+		String filetype = "xlsx";
 		GeneralUtilityMethods.setFilenameInResponse(filename + "." + filetype, response);
 		response.setHeader("Content-type",  "application/vnd.ms-excel; charset=UTF-8");
 		
-		ReportDataManager rdm = new ReportDataManager(sd, sId);
-		ArrayList<KeyValue> data = rdm.getData();
+		DocumentDataManager rdm = new DocumentDataManager(sd, sId);
+		ArrayList<KeyValue> data = rdm.getData(sd, cResults, sId, startDate, endDate);
 		
-		ReportXLSManager rxm = new ReportXLSManager();
+		DocumentXLSManager rxm = new DocumentXLSManager();
+		String basePath = GeneralUtilityMethods.getBasePath(request);
 		
-		rxm.create(data, response.getOutputStream());
+		int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser(), sId);
+		rxm.create(data, response.getOutputStream(), basePath, oId);
 		
 		responseVal = Response.ok("").build();
 		
