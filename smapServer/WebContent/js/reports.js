@@ -65,8 +65,8 @@ require([
 
 		// Get the user details
 		globals.gIsAdministrator = false;
-		getLoggedInUser(projectSet, false, true, undefined);
-
+		getLoggedInUser(undefined, false, true, undefined);
+		getReportsForUser();
 
 		enableUserProfileBS();
 	});
@@ -74,7 +74,7 @@ require([
 
 	function getReportsForUser() {
 
-		url="/surveyKPI/myassignments";
+		url="/surveyKPI/reportgen";
 
 		addHourglass();
 		$.ajax({
@@ -82,16 +82,15 @@ require([
 			dataType: 'json',
 			cache: false,
 			success: function(data) {
-				var filterProject = projectId;
 				removeHourglass();
-				completeReportList(data, filterProject);
+				completeReportList(data);
 			},
 			error: function(xhr, textStatus, err) {
 				removeHourglass();
 				if(xhr.readyState == 0 || xhr.status == 0) {
 					  return;  // Not an error
 				} else {
-					console.log("Error: Failed to get list of surveys: " + err);
+					console.log("Error: Failed to get list of reports: " + err);
 				}
 			}
 		});
@@ -100,39 +99,29 @@ require([
 	/*
 	 * Fill in the report list
 	 */
-	function completeReportList(surveyList, filterProjectId) {
+	function completeReportList(reportList) {
 
 		var i,
 			h = [],
 			idx = -1,
-			$formList = $('#form_list'),
-			formList = surveyList.forms,
-			taskList = surveyList.data,
-			params,
-			repeat;
+			$reportList = $('#report_list');
 
-		// Add the forms
-		if(formList) {
-            for (i = 0; i < formList.length; i++) {
-                if (!filterProjectId || filterProjectId == formList[i].pid) {
-                    h[++idx] = '<a role="button" class="btn btn-primary btn-block btn-lg" target="_blank" href="/webForm/';
-                    h[++idx] = formList[i].ident;
-                    h[++idx] = '">';
-                    h[++idx] = formList[i].name;
-                    h[++idx] = '</a>';
-                }
+		// Add the reports
+		if(reportList) {
+            for (i = 0; i < reportList.length; i++) {
+				h[++idx] = '<a role="button" class="btn btn-primary btn-block btn-lg" href="/surveyKPI/reportgen/';
+				h[++idx] = reportList[i].sId;
+				h[++idx] = '/';
+				h[++idx] = cleanFileName(reportList[i].name);
+                h[++idx] = '">';
+                h[++idx] = reportList[i].name;
+                h[++idx] = '</a>';
+
             }
         }
 
-		$formList.html(h.join(''));
-		$formList.find('.task').off().click(function(){
-			var $this = $(this),
-				repeat = $this.data("repeat");
+		$reportList.html(h.join(''));
 
-			if(!repeat) {
-				$this.removeClass('btn-warning').addClass('btn-success');		// Mark task as done
-			}
-		});
 	}
 
 });

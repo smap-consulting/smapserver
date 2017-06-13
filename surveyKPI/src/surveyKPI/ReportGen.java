@@ -29,6 +29,7 @@ import org.smap.sdal.managers.LogManager;
 import org.smap.sdal.managers.DocumentDataManager;
 import org.smap.sdal.model.KeyValue;
 import org.smap.sdal.model.Project;
+import org.smap.sdal.model.Report2;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -59,44 +60,56 @@ public class ReportGen extends Application {
 		
 		Connection sd = SDDataSource.getConnection(fn);
 		PreparedStatement pstmt = null;
-		ArrayList<Project> projects = new ArrayList<Project> ();
 		
+		StringBuffer sql = new StringBuffer("select id, name, s_id from report where s_id in "
+				+ "(select s_id from survey s, users u, user_project up, project p "
+				+ "where u.id = up.u_id "
+				+ "and p.id = up.p_id "
+				+ "and s.p_id = up.p_id "
+				+ "and u.ident = ? "
+				+ "and not s.deleted ");
+		
+		ArrayList<Report2> reports = new ArrayList<Report2> ();
+		
+		boolean superUser = false;
 		try {
-			int o_id = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser(), 0);
+			superUser = GeneralUtilityMethods.isSuperUser(sd, request.getRemoteUser());
+		} catch (Exception e) {
+		}
+		
+		try {		
+			
+			if(!superUser) {
+				// Add RBAC
+				sql.append(GeneralUtilityMethods.getSurveyRBAC());
+			}
+
+			sql.append(")");
 			ResultSet resultSet = null;
 			
-			if(o_id > 0) {	
-				
-				String sql = "select id, name, description, tasks_only, changed_by, changed_ts "
-						+ "from project "
-						+ "where o_id = ? "
-						+ "order by name ASC;";	
-					
-				pstmt = sd.prepareStatement(sql);
-				pstmt.setInt(1, o_id);
-				
-				log.info("Get project list: " + pstmt.toString());
-				resultSet = pstmt.executeQuery();
-				while(resultSet.next()) {
-					Project project = new Project();
-					project.id = resultSet.getInt("id");
-					project.name = resultSet.getString("name");
-					project.desc = resultSet.getString("description");
-					project.tasks_only = resultSet.getBoolean("tasks_only");
-					project.changed_by = resultSet.getString("changed_by");
-					project.changed_ts = resultSet.getString("changed_ts");
-					projects.add(project);
+			pstmt = sd.prepareStatement(sql.toString());
+			pstmt.setString(1, request.getRemoteUser());
 			
-				}
-				
-				Gson gson = new GsonBuilder().disableHtmlEscaping().create();
-				String resp = gson.toJson(projects);
-				response = Response.ok(resp).build();
-						
-			} else {
-				log.log(Level.SEVERE,"Error: No organisation");
-			    response = Response.serverError().build();
+			if(!superUser) {
+				pstmt.setString(2, request.getRemoteUser());
 			}
+			
+			
+			log.info("Get report list: " + pstmt.toString());
+			resultSet = pstmt.executeQuery();
+			while(resultSet.next()) {
+				Report2 report = new Report2();
+				report.id = resultSet.getInt("id");
+				report.name = resultSet.getString("name");
+				report.sId = resultSet.getInt("s_id");
+				reports.add(report);
+		
+			}
+			
+			Gson gson = new GsonBuilder().disableHtmlEscaping().create();
+			String resp = gson.toJson(reports);
+			response = Response.ok(resp).build();
+						
 				
 		} catch (Exception e) {
 			
@@ -106,7 +119,7 @@ public class ReportGen extends Application {
 		} finally {
 			try {if (pstmt != null) {pstmt.close();} } catch (SQLException e) {}
 			
-			SDDataSource.closeConnection("surveyKPI-ProjectList", sd);
+			SDDataSource.closeConnection(fn, sd);
 		}
 
 		return response;

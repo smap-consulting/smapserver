@@ -26,6 +26,10 @@ function setCustom() {
 	// Menus
 }
 
+function setCustomReports() {
+    // Menus
+}
+
 function setCustomUserTrail() {
 	// Menus
 }

@@ -111,11 +111,6 @@
                         <a href="#" id="m_refresh"><span class="lang" data-lang="m_refresh">refresh</span></a>
                     </li>
 
-                    <li>
-                        <a class="right-sidebar-toggle">
-                            <i class="fa fa-cog"></i>
-                        </a>
-                    </li>
 
                 </ul>
 
@@ -158,90 +153,16 @@
                                 <ul class="nav nav-tabs tab_controls">
                                     <li id="formsTab" role="presentation" class="active"><a href="#"><span class="lang"
                                                                                                            data-lang="m_web_forms">web forms</span></a>
-                                    </li>
-                                    <li id="userTab" role="presentation"><a href="#"><span class="lang"
-                                                                                           data-lang="c_settings">My Settings</span></a>
-                                    </li>
                                 </ul>
 
                                 <div class="tab-content">
 
-                                    <div id="formsPanel" class="tab-pane active">
+                                    <div id="reportsPanel" class="tab-pane active">
                                         <div class="panel-body">
-                                            <div id="form_list"></div>
+                                            <div id="report_list"></div>
                                         </div>
                                     </div>
 
-                                    <div id="userPanel" class="tab-pane">
-                                        <div class="panel-body">
-                                            <div id="up_alert" style="display:none;" class="alert alert-success"
-                                                 role="alert"></div>
-                                            <form role="form" class="form-horizontal" id="my_edit_form"
-                                                  enctype="multipart/form-data" name="signaturesave">
-                                                <div class="form-group">
-                                                    <label for="my_name" data-lang="c_name"
-                                                           class="lang col-sm-2 control-label">Name</label>
-                                                    <div class="col-sm-10">
-                                                        <input type="text" id="my_name" required class="form-control">
-                                                    </div>
-                                                </div>
-                                                <div class="form-group">
-                                                    <label for="my_title" data-lang="c_title"
-                                                           class="lang col-sm-2 control-label">Title</label>
-                                                    <div class="col-sm-10">
-                                                        <input type="text" id="my_title" class="form-control">
-                                                    </div>
-                                                </div>
-                                                <div class="form-group">
-                                                    <label for="my_license" data-lang="c_license"
-                                                           class="lang col-sm-2 control-label">License</label>
-                                                    <div class="col-sm-10">
-                                                        <input type="text" id="my_license" class="form-control">
-                                                    </div>
-                                                </div>
-
-                                                <div class="form-group">
-                                                    <label for="my_signature_file" data-lang="wf_sig"
-                                                           class="lang col-sm-2 control-label">sig</label>
-                                                    <div class="col-sm-10">
-                                                        <div class="input-group form-control">
-										   						<span class="input-group-btn">
-										     						<input id="my_signature_file" name="files"
-                                                                           title="Add" class="file-inputs" type="file"
-                                                                           accept="image/png, image/jpeg, image/gif">
-										   						</span>
-                                                            <input type="text" class="upload_file_msg">
-                                                            <span class="input-group-btn">
-										  					 		<button id="del_my_sig" type="button"
-                                                                            class="btn btn-danger"><span
-                                                                            class="glyphicon glyphicon-trash"
-                                                                            aria-hidden="true"></span></button>
-										  					 	</span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                <div class="form-group">
-                                                    <div class="col-sm-10 col-sm-offset-2">
-                                                        <img id="my_signature" src="" width="300" height="200">
-                                                    </div>
-                                                </div>
-                                                <input id="userSettings" type="hidden" name="settings">
-                                                <div class="col-sm-5 col-sm-offset-2">
-                                                    <button id="userDetailsCancel" type="button"
-                                                            class="btn btn-default lang btn-block" data-dismiss="modal"
-                                                            data-lang="c_cancel">cancel
-                                                    </button>
-                                                </div>
-                                                <div class="col-sm-5">
-                                                    <button id="userDetailsSave" type="button"
-                                                            class="btn btn-primary lang btn-block" data-dismiss="modal"
-                                                            data-lang="c_save">save
-                                                    </button>
-                                                </div>
-                                            </form>
-                                        </div>
-                                    </div>
                                 </div>
 
                             </div>
@@ -252,34 +173,6 @@
         </div>
     </div>
 
-    <div id="right-sidebar">
-        <div class="sidebar-container">
-
-            <ul class="nav nav-tabs navs-3">
-
-                <li class="active"><a data-toggle="tab" href="#tab-1"><i class="fa fa-cogs"></i></a></li>
-
-            </ul>
-
-            <div class="tab-content">
-
-                <div id="tab-1" class="tab-pane active">
-
-                    <div class="sidebar-title">
-                        <h3><span class="lang" data-lang="c_settings">settings</span></h3>
-                    </div>
-
-
-                    <div class="sidebar-content">
-                        <button id="applyColumns" type="button" class="btn btn-primary lang" data-lang="c_apply">apply
-                        </button>
-
-                    </div>
-
-                </div>
-            </div>
-        </div>
-    </div>
 
     <!-- Modal to allow the user to edit their own details -->
     <div id="modify_me_popup" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="modifyMeLabel"
