@@ -55,13 +55,6 @@ public class Region extends Application {
 	public String getRegion(@Context HttpServletRequest request,
 			@PathParam("region") String region) { 
 		
-		try {
-		    Class.forName("org.postgresql.Driver");	 
-		} catch (ClassNotFoundException e) {
-		    e.printStackTrace();
-		    return "Error: Can't find PostgreSQL JDBC Driver";
-		}
-		
 		if(region != null) {
 			region = region.replace("'", "''"); 
 		} 

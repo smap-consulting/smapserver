@@ -80,12 +80,12 @@ import com.google.gson.reflect.TypeToken;
  * Manage creation and supply of reports
  */
 @Path("/reports")
-public class ReportListSvc extends Application {
+public class ReportListSvcDeprecate extends Application {
 	
 	Authorise a = new Authorise(null, Authorise.ANALYST);
 	
 	private static Logger log =
-			 Logger.getLogger(ReportListSvc.class.getName());
+			 Logger.getLogger(ReportListSvcDeprecate.class.getName());
 	
 	private class ImageDim {
 		int width = 0;

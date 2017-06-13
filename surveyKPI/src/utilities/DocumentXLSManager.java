@@ -70,7 +70,7 @@ public class DocumentXLSManager {
 	
 	LogManager lm = new LogManager();		// Application log
 	
-	Workbook wb = null;
+	XSSFWorkbook wb = null;
 
 	
 	
@@ -105,10 +105,11 @@ public class DocumentXLSManager {
 		        Row r = sheet.getRow(crefs[i].getRow());
 		        Cell cell = r.getCell(crefs[i].getCol());
 		        // extract the cell contents based on cell type etc.
-		        cell.setCellValue(kv.v);
+		        cell.setCellValue(new Double(kv.v));
 		    }
 			
 		}
+		XSSFFormulaEvaluator.evaluateAllFormulaCells(wb);
 		wb.write(outputStream);
 		wb.write(outputStream);
 		outputStream.close();

@@ -415,7 +415,6 @@ CREATE TABLE survey (
 	based_on text,									-- Survey and form this survey was based on
 	shared_table boolean default false,				-- True if this survey shares its table
 	pulldata text,									-- Settings to customise pulling data from another survey into a csv file
-	report text,									-- Reports available with this survey (json)
 	created timestamp with time zone				-- Date / Time the survey was created
 	);
 ALTER TABLE survey OWNER TO ws;
@@ -963,11 +962,7 @@ create TABLE report (
 	id INTEGER DEFAULT NEXTVAL('report_seq') CONSTRAINT pk_report PRIMARY KEY,
 	o_id integer REFERENCES organisation(id) ON DELETE CASCADE,
 	name text,				-- Report Name
-	template_type text,		-- CSV or XLS
-	template_name text,		-- Name of PDF or XLS template
-	template_desc text,		-- Template description for dynamicly generated templates
-	select_sql text,		-- SQL and template field names
-	filter_s
+	s_id int				-- Replace with many to many relationship
 	);
 ALTER TABLE report OWNER TO ws;
 

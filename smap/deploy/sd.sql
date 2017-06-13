@@ -767,12 +767,8 @@ create TABLE report (
 	id INTEGER DEFAULT NEXTVAL('report_seq') CONSTRAINT pk_report PRIMARY KEY,
 	o_id integer REFERENCES organisation(id) ON DELETE CASCADE,
 	name text,				-- Report Name
-	template_name text,		-- Name of PDF template
-	template_desc text		-- Template description for dynamicly generated templates
+	s_id int				-- Replace with many to many relationship
 	);
 ALTER TABLE report OWNER TO ws;
-
--- reports in a survey
-alter table survey add column report text;
 
 
