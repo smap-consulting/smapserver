@@ -35,6 +35,9 @@
             name: '../webFormLauncher',
         },
         {
+            name: '../reports',
+        },
+        {
             name: '../passwords',
         },
         {
