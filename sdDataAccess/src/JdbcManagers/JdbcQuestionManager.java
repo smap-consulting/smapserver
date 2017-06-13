@@ -160,7 +160,7 @@ public class JdbcQuestionManager {
 		String nodeset_label = null;
 		if(q.getType().startsWith("select")) {
 			
-			nodeset = q.getNodeset(false, null, false);
+			nodeset = q.getNodeset(false, true, null, false);
 			if(nodeset == null || nodeset.trim().length() == 0) {
 				// the remaining item list values TODO is there an issue with this??????
 				nodeset = GeneralUtilityMethods.getNodesetFromChoiceFilter(null, q.getListName());

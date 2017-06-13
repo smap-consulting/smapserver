@@ -225,6 +225,11 @@ public class Question {
 		return mandatory;
 	}
 
+	/*
+	 * Get the relevance
+	 *  if convertToXPath is set then any names in the format ${...} will be converted to an Xpath
+	 *  By default they are converted to XLS names ${...}
+	 */
 	public String getRelevant(boolean convertToXPath, HashMap<String, String> questionPaths, String xFormRoot) throws Exception {
 		String v = relevant;
 		
@@ -234,6 +239,8 @@ public class Question {
 		
 		if(convertToXPath) {
 			v = UtilityMethods.convertAllxlsNames(v, false, questionPaths, f_id);
+		} else {
+			v = GeneralUtilityMethods.convertAllXpathNames(v, true);
 		}
 		return v;
 	}
@@ -247,6 +254,8 @@ public class Question {
 		
 		if(convertToXPath) {
 			v = UtilityMethods.convertAllxlsNames(v, false, questionPaths, f_id);
+		} else {
+			v = GeneralUtilityMethods.convertAllXpathNames(v, true);
 		}
 		
 		return v;
@@ -261,6 +270,8 @@ public class Question {
 		
 		if(convertToXPath) {
 			v = UtilityMethods.convertAllxlsNames(v, false, questionPaths, f_id);
+		} else {
+			v = GeneralUtilityMethods.convertAllXpathNames(v, true);
 		}
 		
 		return v;
@@ -280,6 +291,8 @@ public class Question {
 		
 		if(convertToXPath) {
 			v = UtilityMethods.convertAllxlsNames(v, false, questionPaths, f_id);
+		} else {
+			v = GeneralUtilityMethods.convertAllXpathNames(v, true);
 		}
 		
 		return v;
@@ -302,7 +315,7 @@ public class Question {
 		return relativePath;
 	}
 	
-	public String getNodeset(boolean convertToXPath, HashMap<String, String> questionPaths, boolean embedExternalSearch) throws Exception {
+	public String getNodeset(boolean convertToXPath, boolean convertToXLSName, HashMap<String, String> questionPaths, boolean embedExternalSearch) throws Exception {
 		
 		String v = nodeset;
 		
@@ -327,6 +340,8 @@ public class Question {
 		
 		if(convertToXPath) {
 			v = UtilityMethods.convertAllxlsNames(v, false, questionPaths, f_id);
+		} else if(convertToXLSName) {
+			v = GeneralUtilityMethods.convertAllXpathNames(v, true);
 		}
 		return v;
 	}

@@ -151,6 +151,8 @@ public class Form implements Serializable {
 		
 		if(convertToXPath) {
 			v = UtilityMethods.convertAllxlsNames(v, false, questionPaths, f_id);
+		} else {		// default to xls names ${...}
+			v = GeneralUtilityMethods.convertAllXpathNames(v, true);
 		}
 		
 		return v;

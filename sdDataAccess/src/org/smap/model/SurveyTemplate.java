@@ -1321,7 +1321,7 @@ public class SurveyTemplate {
 					String nodeset = null;
 					boolean isExternal = false;
 					try {
-						nodeset = q.getNodeset(false, null, false);
+						nodeset = q.getNodeset(false, true, null, false);
 						isExternal = GeneralUtilityMethods.isExternalChoices(q.getAppearance(true, getQuestionPaths()));
 					} catch (Exception e) {
 						
