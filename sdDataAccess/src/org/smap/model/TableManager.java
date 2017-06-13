@@ -573,7 +573,7 @@ public class TableManager {
 				" and l.l_id = ? " +
 				" and q.qtype = 'select'";
 		
-		String sqlGetOptions = "select column_name, externalfile from option where l_id = ? order by seq asc;";
+		String sqlGetOptions = "select column_name, externalfile from option where l_id = (select l_id from question where q_id = ?) order by seq asc";
 		String sqlGetAnOption = "select column_name, externalfile from option where l_id = ? and ovalue = ?;";
 		
 		PreparedStatement pstmtGet = null;
@@ -621,7 +621,9 @@ public class TableManager {
 								ci.property.prop != null && 
 								(ci.property.prop.equals("name") || ci.property.prop.equals("value"))
 								)))) {
-														
+						
+					System.out.println("table is altered");
+					
 					ArrayList<String> columns = new ArrayList<String> ();	// Column names in results table
 					int l_id = 0;											// List ID
 					TableUpdateStatus status = null;
@@ -701,6 +703,8 @@ public class TableManager {
 							qId = ci.property.qId;
 						}
 						
+						System.out.println("qid is: " + qId);
+						
 						if(qId != 0) {
 							QuestionDetails qd = getQuestionDetails(connectionSD, qId);
 	
@@ -727,6 +731,8 @@ public class TableManager {
 							} else {
 								columns.add(qd.columnName);		// Usually this is the case unless the question is a select multiple
 								
+								System.out.println("Adding " + qd.type);
+								
 								if(qd.type.equals("string")) {
 									qd.type = "text";
 								} else if(qd.type.equals("dateTime")) {
@@ -745,7 +751,7 @@ public class TableManager {
 									qd.type = "integer";
 									
 									columns.clear();
-									pstmtGetOptions.setInt(1, l_id);
+									pstmtGetOptions.setInt(1, qId);
 									
 									System.out.println("Get options to add: "+ pstmtGetOptions.toString());
 									ResultSet rsOptions = pstmtGetOptions.executeQuery();
