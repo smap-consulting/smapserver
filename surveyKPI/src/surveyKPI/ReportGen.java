@@ -162,7 +162,7 @@ public class ReportGen extends Application {
 		String basePath = GeneralUtilityMethods.getBasePath(request);
 		
 		int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser(), sId);
-		rxm.create(data, response.getOutputStream(), basePath, oId);
+		rxm.create(sd, request.getRemoteUser(), data, response.getOutputStream(), basePath, oId);
 		
 		responseVal = Response.ok("").build();
 		

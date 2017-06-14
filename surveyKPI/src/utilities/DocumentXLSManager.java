@@ -81,14 +81,23 @@ public class DocumentXLSManager {
 	HashMap<String, String> surveyNames = null;
 	
 	public void create(
+			Connection sd,
+			String remoteUser,
 			ArrayList<KeyValue> data,
 			OutputStream outputStream,
 			String basePath,
 			int oId
 			) throws Exception {
 		
+		FileInputStream templateIS = null;
+		String templateName = "ewarn_report_template.xlsx";
 		File templateFile = GeneralUtilityMethods.getDocumentTemplate(basePath, "ewarn_report_template.xlsx", oId);
-		FileInputStream templateIS = new FileInputStream(templateFile);
+		try {
+			lm.writeLog(sd, 0, remoteUser, "error", "Failed to open template: " + templateName);
+			templateIS = new FileInputStream(templateFile);
+		} catch (Exception e) {
+			throw e;
+		}
 		wb = new XSSFWorkbook(templateIS);
 		templateIS.close();
 		

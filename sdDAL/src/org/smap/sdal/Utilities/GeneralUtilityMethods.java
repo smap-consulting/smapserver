@@ -2621,7 +2621,7 @@ public class GeneralUtilityMethods {
 			
 			parts = input.trim().split("\\s+");
 			for(int i = 0; i < parts.length; i++) {
-				if(parts[i].startsWith("/")) {
+				if(parts[i].startsWith("/") && notInQuotes(output)) {
 					output.append(xpathNameToName(parts[i], xlsName).trim() + " ");
 				} else {
 					output.append(parts[i].trim() + " ");
@@ -4130,5 +4130,22 @@ public class GeneralUtilityMethods {
 	}
 	
 
+	/*
+	 * If there is an odd number of quotation marks
+	 */
+	public static boolean notInQuotes(StringBuffer str) {
+		boolean niq = false;
+		
+		int count = 0;
+		for(int i = 0; i < str.length(); i++) {
+			if(str.charAt(i) == '\'') {
+				count++;
+			}
+		}
+		if ( (count & 1) == 0 ) {
+			niq = true;
+		}
+		return niq;
+	}
 
 }
