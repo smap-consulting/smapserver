@@ -2634,6 +2634,35 @@ public class GeneralUtilityMethods {
 	}
 	
 	/*
+	 * Convert all xPath labels in the supplied string to names
+	 */
+	public static String convertAllXpathLabels(String input, boolean xlsName) {
+		StringBuffer output = new StringBuffer("");
+		String [] parts = null;
+		
+		if(input != null) {
+			
+			parts = input.trim().split("\\s+");
+			for(int i = 0; i < parts.length; i++) {
+				String elem = parts[i].trim();
+				if(elem.equals("<output") && i + 1 < parts.length && parts[i+1].trim().equals("value=\"")) {
+					i++;
+					// discard start of wrapper
+				} else if(elem.equals("\"/>")) {
+					// discard end of wrapper
+				} else if(parts[i].startsWith("/") && notInQuotes(output)) {
+					output.append(xpathNameToName(parts[i], xlsName).trim() + " ");
+				} else {
+					output.append(parts[i].trim() + " ");
+				}
+				
+			}
+		}
+		
+		return output.toString().trim();
+	}
+	
+	/*
 	 * Convert an xpath name to just a name
 	 */
 	public static String xpathNameToName(String xpath, boolean xlsName) {

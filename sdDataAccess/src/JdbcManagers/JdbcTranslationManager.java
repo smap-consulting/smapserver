@@ -30,6 +30,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Logger;
 
+import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.server.entities.Translation;
 
 public class JdbcTranslationManager {
@@ -68,7 +69,9 @@ public class JdbcTranslationManager {
 		pstmt.setString(2, language);
 		pstmt.setString(3, text_id);
 		pstmt.setString(4, type);
-		pstmt.setString(5, value);
+		
+		String noPathValue = GeneralUtilityMethods.convertAllXpathLabels(value, true);
+		pstmt.setString(5, noPathValue);
 		
 		log.info("Write translation: " + pstmt.toString());
 		pstmt.executeUpdate();
