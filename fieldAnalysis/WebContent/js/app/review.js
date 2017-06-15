@@ -311,12 +311,15 @@ function getData() {
 		h = [],
 		idx = -1,
 		$textUpdate = $('#text_update'),
+		otherTargetSelected = $('#other_target_cb').is(':checked');
 		textOtherOption = "";
 	
 	gTextId = $('#text_name option:selected').val();
 	gTextOtherId = $('#target_question_name option:selected').val();
-	
-	textOtherOption = "?targetQuestion=" + gTextOtherId;
+
+	if(otherTargetSelected ) {
+        textOtherOption = "?targetQuestion=" + gTextOtherId;
+    }
 
 	$elem.empty();
 	
