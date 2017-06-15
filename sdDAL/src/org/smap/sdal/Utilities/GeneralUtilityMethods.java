@@ -2643,14 +2643,17 @@ public class GeneralUtilityMethods {
 		if(input != null) {
 			
 			parts = input.trim().split("\\s+");
+			boolean inOutput = false;
 			for(int i = 0; i < parts.length; i++) {
 				String elem = parts[i].trim();
 				if(elem.equals("<output") && i + 1 < parts.length && parts[i+1].trim().equals("value=\"")) {
 					i++;
+					inOutput = true;
 					// discard start of wrapper
 				} else if(elem.equals("\"/>")) {
+					inOutput = false;
 					// discard end of wrapper
-				} else if(parts[i].startsWith("/") && notInQuotes(output)) {
+				} else if(inOutput && parts[i].startsWith("/") && notInQuotes(output)) {
 					output.append(xpathNameToName(parts[i], xlsName).trim() + " ");
 				} else {
 					output.append(parts[i].trim() + " ");
