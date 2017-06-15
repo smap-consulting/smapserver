@@ -274,6 +274,9 @@ $(document).ready(function() {
 			]
 		}
 	);
+
+	 // Initialise other dialogs
+     initialiseDialogs();
 	
 	 /*
 	  * Get the user details so we have the default project
