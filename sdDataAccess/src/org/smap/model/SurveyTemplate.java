@@ -298,7 +298,6 @@ public class SurveyTemplate {
 	}
 
 	public void addIText(String lCode, String id, String type, String value) {
-		
 	
 		HashMap <String, HashMap<String, Translation>> l = translations.get(lCode);
 		

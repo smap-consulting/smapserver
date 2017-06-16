@@ -119,7 +119,6 @@ public class TranslationManager {
 					m.fileName = manifestList.get(i);
 					m.sId = surveyId;
 					
-					System.out.println("Filename: " + m.fileName);
 					if(m.fileName.equals("linked_self")) {
 						m.fileName = "linked_" + surveyIdent;
 					} else if(m.fileName.equals("linked_s_pd_self")) {

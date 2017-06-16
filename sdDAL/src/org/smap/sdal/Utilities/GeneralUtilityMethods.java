@@ -2642,6 +2642,32 @@ public class GeneralUtilityMethods {
 		
 		if(input != null) {
 			
+			int idx = input.indexOf("<output");
+			while(idx >= 0) {
+				
+				output.append(input.substring(0, idx));
+				
+				int idx2 = input.indexOf('/');
+				int idx3 = input.indexOf('"', idx2 + 1);
+				if(idx2 >=0 && idx3 >= 0) {
+					String elem = input.substring(idx2, idx3).trim();
+					output.append(xpathNameToName(elem, xlsName).trim());
+					int idx4 = input.indexOf('>', idx3) + 1;
+					if(idx4 >= 0) {
+						input = input.substring(idx4);
+					} else {
+						input = input.substring(idx3 + 1);
+					}
+				} else {
+					input = input.substring(idx + 1);
+				}
+				idx = input.indexOf("<output");
+			}
+			
+			output.append(input);
+			
+			
+			/*
 			parts = input.trim().split("\\s+");
 			boolean inOutput = false;
 			for(int i = 0; i < parts.length; i++) {
@@ -2657,9 +2683,9 @@ public class GeneralUtilityMethods {
 					output.append(xpathNameToName(parts[i], xlsName).trim() + " ");
 				} else {
 					output.append(parts[i].trim() + " ");
-				}
-				
+				}	
 			}
+			*/
 		}
 		
 		return output.toString().trim();
@@ -3214,8 +3240,6 @@ public class GeneralUtilityMethods {
 				"and o.l_id = q.l_id " +
 				"and q.q_id = ? " +
 				"and externalfile ='false';";
-		
-		System.out.println("Get manifest params, filename: " + filename);
 		
 		try {
 			pstmt = sd.prepareStatement(sql);

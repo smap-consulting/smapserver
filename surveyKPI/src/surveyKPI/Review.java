@@ -1363,7 +1363,7 @@ public class Review extends Application {
 		/*
 		 * If no questions were found that used the selected() or ${..} syntax then try other question names that 
 		 * have a path
-		 */
+		 *
 		if(names.isEmpty()) {
 			if((idx1 = relevance.lastIndexOf('/')) >= 0) {
 				idx2 = relevance.indexOf('\'', idx1);
@@ -1374,6 +1374,7 @@ public class Review extends Application {
 				names.add(kv);
 			}	
 		}
+		*/
 		
 		return names;
 	}

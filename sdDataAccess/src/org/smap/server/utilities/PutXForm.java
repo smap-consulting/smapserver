@@ -101,9 +101,13 @@ public class PutXForm {
     		}
     	}
     	
+    	
     	if(instanceId != null) {
-    		Node topInstance = UtilityMethods.getFirstElement(n);			// According to XForms spec "Instance data always has a single root element"
-    		processCascadingItems(topInstance, instanceId);
+    		Node topInstance = UtilityMethods.getFirstElement(n);	
+    		// According to XForms spec "Instance data always has a single root element", however instances can be specified for files in odk without a root element
+    		if(topInstance != null) {
+    			processCascadingItems(topInstance, instanceId);
+    		}
     	}
     }
     
@@ -569,13 +573,11 @@ public class PutXForm {
     	}
     	
     	// Set the appearance
-    	System.out.println("Process question " +  q.getName() + " : " + q.getType());
     	String appearance = null;
     	if(q.getType().equals("begin group") && isRepeat(n)) {
     		appearance = getRepeatAppearance(n);
     		if(appearance != null) {
 	    		q.setAppearance(appearance);
-				System.out.println("Set repeat appearance of: " + appearance + " for " + q.getName());
     		}
     	} else {
 			Node appNode = nm.getNamedItem("appearance");	
@@ -583,7 +585,6 @@ public class PutXForm {
 			if(appNode != null) {
 				appearance = appNode.getNodeValue();
 				q.setAppearance(appearance);
-				System.out.println("Set appearance of: " + appearance + " for " + q.getName());
 				// Survey level manifests can be set in the appearance attribute
 				template.addManifestFromAppearance(appearance);	
 			}
@@ -643,7 +644,6 @@ public class PutXForm {
     	String formRef = null;
     	String smapFormName = "main";	// Always use main as the top level form name
     	
-    	System.out.println("Creating top level form: " + path);
     	String topFormRef = template.getFirstFormRef();
 		if(topFormRef == null) {
 			//String parentFormName = UtilityMethods.getFirstFromPath(path);

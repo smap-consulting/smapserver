@@ -73,7 +73,7 @@ public class JdbcTranslationManager {
 		String noPathValue = GeneralUtilityMethods.convertAllXpathLabels(value, true);
 		pstmt.setString(5, noPathValue);
 		
-		log.info("Write translation: " + pstmt.toString());
+		//log.info("Write translation: " + pstmt.toString());
 		pstmt.executeUpdate();
 	}
 	
