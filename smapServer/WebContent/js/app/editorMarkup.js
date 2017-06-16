@@ -93,13 +93,15 @@ define([
 				h[++idx] = '<div class="col-xs-8"><div class="row">';
 					
 					// Add question name cell
-					h[++idx] = '<div class="col-xs-12 col-md-3"><input class="qname form-control has_tt" title="Question Name" value="';
-						h[++idx] = question.name;
-						h[++idx] = '" ';
+					h[++idx] = '<div class="col-xs-12 col-md-3"><input class="qname form-control has_tt" title="';
+					h[++idx] = question.name;
+					h[++idx] = '" value="';
+					h[++idx] = question.name;
+					h[++idx] = '" ';
 						
-						if(question.published) {				// Mark disabled if the question has been published
-							h[++idx] = 'readonly="true" ';
-						}
+					if(question.published) {				// Mark disabled if the question has been published
+						h[++idx] = 'readonly="true" ';
+					}
 					h[++idx] = 'type="text"></div>';
 
 					// Add feature property cell
