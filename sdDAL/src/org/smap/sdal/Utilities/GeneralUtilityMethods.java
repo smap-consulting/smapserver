@@ -2647,7 +2647,7 @@ public class GeneralUtilityMethods {
 				
 				output.append(input.substring(0, idx));
 				
-				int idx2 = input.indexOf('/');
+				int idx2 = input.indexOf('/', idx + 1);
 				int idx3 = input.indexOf('"', idx2 + 1);
 				if(idx2 >=0 && idx3 >= 0) {
 					String elem = input.substring(idx2, idx3).trim();
@@ -2656,10 +2656,12 @@ public class GeneralUtilityMethods {
 					if(idx4 >= 0) {
 						input = input.substring(idx4);
 					} else {
-						input = input.substring(idx3 + 1);
+						output.append("error in idx 4");
+						break;
 					}
 				} else {
-					input = input.substring(idx + 1);
+					output.append("error: idx 2:3:" + idx2 + " : " + idx3);
+					break;
 				}
 				idx = input.indexOf("<output");
 			}
