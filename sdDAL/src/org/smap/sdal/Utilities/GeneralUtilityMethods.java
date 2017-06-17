@@ -2635,6 +2635,7 @@ public class GeneralUtilityMethods {
 	
 	/*
 	 * Convert all xPath labels in the supplied string to names
+	 * Xpaths in labels are embedded in <output/> elements
 	 */
 	public static String convertAllXpathLabels(String input, boolean xlsName) {
 		StringBuffer output = new StringBuffer("");
