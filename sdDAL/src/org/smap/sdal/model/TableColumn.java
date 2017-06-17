@@ -21,6 +21,7 @@ public class TableColumn {
 	public boolean isCondition = false;	// For a calculate sql is created from an array of conditions
 	public String startName = null;
 	public String endName = null;
+	public int l_id;
 	
 	// Manage updating of data
 	public boolean readonly;	// Can't be modified by form management

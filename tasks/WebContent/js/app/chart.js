@@ -142,7 +142,7 @@ define([
                 });
 
                 $('#ew_tseries').off().change(function () {
-                   setupChartDialog();
+                   setupChartDialog(undefined, undefined);
                    chartTypeChanged();
                 });
 
@@ -414,7 +414,7 @@ define([
 
                 // Get the array of columns
                 var columnArray = [];
-                if(chart.groups.length === 2) {
+                if(chart.groups.length === 2  && chart.fn === "count") {
                     for(i = 0; i < newData.length; i++) {
                         for(j = 0; j < newData[i].values.length; j++) {
                             var key = newData[i].values[j].key;
@@ -428,6 +428,12 @@ define([
                 // Normalise 2 dimensional array
                 for(i = 0; i < newData.length; i++) {
 
+                    //var choiceLabel = newData[i].key;
+                    //if(chart.groups.length === 1 && (chart.groups[0].type == 'select' || chart.groups[0].type == 'select1')) {
+                    //    choiceLabel = lookupChoiceLabel(chart.groups[0].l_id, newData[i].key);
+                    //} else  if(chart.groups.length === 2 && (chart.groups[1].type == 'select' || chart.groups[1].type == 'select1')) {
+                    //    choiceLabel = lookupChoiceLabel(chart.groups[1].l_id, newData[i].key);
+                    //}
                     var item = {
                         key: newData[i].key,
                         pr: []
@@ -436,7 +442,7 @@ define([
                     if(chart.groups.length === 1 || chart.fn !== "count") {
                         item.pr.push({
                             key: chart.fn,
-                            value: newData[i].values
+                            value: newData[i].value
                         });
                     }
                     if(chart.groups.length === 2) {
@@ -446,7 +452,7 @@ define([
                                 if(newData[i].values[k].key === columnArray[j]) {
                                     item.pr.push({
                                         key: columnArray[j],
-                                        value: newData[i].values[k].values
+                                        value: newData[i].values[k].value
                                     });
                                     hasValue = true;
                                     break;
@@ -485,7 +491,8 @@ define([
          * Generate data suitable for charting from the results
          */
         function processData(results, chart, dataLength) {
-            var i;
+            var i, j,
+                columns = gTasks.cache.surveyConfig[globals.gViewId].columns;
 
             if (chart.tSeries) {
                 return processTimeSeriesData(results, chart, dataLength);
@@ -498,10 +505,12 @@ define([
                     for (i = 0; i < results.length; i++) {
                         var di = {};
                         di.count = 1;
-                        for (var p in results[i]) {
-                            if (results[i].hasOwnProperty(p)) {
-                                di[p] = results[i][p];
+                        for (j = 0; j < columns.length; j++) {
+                            var val = results[i][columns[j].name];
+                            if(columns[j].l_id > 0) {
+                                val = lookupChoiceLabel(columns[j].l_id, val);
                             }
+                            di[columns[j].name] = val;
                         }
                         if (!di._duration) {         // Make sure durations have a number
                             di._duration = 0;
@@ -515,7 +524,7 @@ define([
         }
 
         /*
-         * Process the data according to chart type
+         * Process the the data for display in a time series
          */
         function processTimeSeriesData(results, chart, dataLength) {
 
@@ -678,7 +687,11 @@ define([
             var common = "i,me,my,myself,we,us,our,ours,ourselves,you,your,yours,yourself,yourselves,he,him,his,himself,she,her,hers,herself,it,its,itself,they,them,their,theirs,themselves,what,which,who,whom,whose,this,that,these,those,am,is,are,was,were,be,been,being,have,has,had,having,do,does,did,doing,will,would,should,can,could,ought,i'm,you're,he's,she's,it's,we're,they're,i've,you've,we've,they've,i'd,you'd,he'd,she'd,we'd,they'd,i'll,you'll,he'll,she'll,we'll,they'll,isn't,aren't,wasn't,weren't,hasn't,haven't,hadn't,doesn't,don't,didn't,won't,wouldn't,shan't,shouldn't,can't,cannot,couldn't,mustn't,let's,that's,who's,what's,here's,there's,when's,where's,why's,how's,a,an,the,and,but,if,or,because,as,until,while,of,at,by,for,with,about,against,between,into,through,during,before,after,above,below,to,from,up,upon,down,in,out,on,off,over,under,again,further,then,once,here,there,when,where,why,how,all,any,both,each,few,more,most,other,some,such,no,nor,not,only,own,same,so,than,too,very,say,says,said,shall";
 
             var textArray = results.map(function (d) {
-                return d[chart.groups[0].name];
+                if(chart.groups[0].l_id > 0) {
+                    return lookupChoiceLabel(chart.groups[0].l_id, d[chart.groups[0].name]);
+                } else {
+                    return d[chart.groups[0].name];
+                }
             });
 
             var data = {};
@@ -913,7 +926,8 @@ define([
          */
         function initialiseWidgetDialog() {
 
-            var columns = gTasks.cache.surveyConfig[globals.gViewId].columns;
+            var columns = gTasks.cache.surveyConfig[globals.gViewId].columns,
+                q1, q2;
 
             $('#ew_tseries').prop("checked", gEdChart.tSeries);
             $('#ew_chart_type').val(gEdChart.chart_type);
@@ -922,24 +936,26 @@ define([
             $('#ew_fn').val(gEdChart.fn);
 
             if (gEdChart.groups && gEdChart.groups.length > 0) {
-                $("#ew_question1").val(gEdChart.groups[0].qIdx);
+                q1 = gEdChart.groups[0].qIdx;
+                $("#ew_question1").val(q1);
                 if (gEdChart.groups.length > 1) {
-                    $("#ew_question2").val(gEdChart.groups[1].qIdx);
+                    q2 = gEdChart.groups[1].qIdx;
+                    $("#ew_question2").val(q2);
                 }
             }
             $('#ew_period').val(gEdChart.period);
 
-            setupChartDialog();
+            setupChartDialog(q1, q2);
             addFunctions();
             chartTypeChanged();
 
         }
 
-        function setupChartDialog() {
+        function setupChartDialog(q1, q2) {
 
             setTimeSeries();
             setChartTypes();
-            addQuestions();
+            addQuestions(q1, q2);
             addFunctions();
 
         }
@@ -1068,15 +1084,14 @@ define([
         /*
          * Add questions
          */
-        function addQuestions() {
+        function addQuestions(defValue1, defValue2) {
 
             var tSeries = $('#ew_tseries').prop("checked");
             var columns = gTasks.cache.surveyConfig[globals.gViewId].columns;
             var h = [];
             var idx = -1;
             var i;
-            var defValue1 = $('#ew_question1').val(),
-                defValue2 = $('#ew_question2').val();
+            var defValue;
 
             if(tSeries) {
                 for (i = 0; i < columns.length; i++) {
@@ -1189,7 +1204,8 @@ define([
                         qIdx: qIdx1,
                         type: columns[qIdx1].type,
                         name: columns[qIdx1].name,
-                        dataLabel: columns[qIdx1].humanName
+                        dataLabel: columns[qIdx1].humanName,
+                        l_id: columns[qIdx1].l_id
                     });
                 }
                 if (typeof qIdx2 !== "undefined" && columns && columns[qIdx2]) {		// Question specific
@@ -1198,7 +1214,8 @@ define([
                         qIdx: qIdx2,
                         type: columns[qIdx2].type,
                         name: columns[qIdx2].name,
-                        dataLabel: columns[qIdx2].humanName
+                        dataLabel: columns[qIdx2].humanName,
+                        l_id: columns[qIdx2].l_id
                     });
                 }
 
@@ -1285,6 +1302,32 @@ define([
 
         function enableElem(elem) {
             $('#' + elem).prop('disabled', false);
+        }
+
+        /*
+         * convert a choice name into a choice label
+         */
+        function lookupChoiceLabel(l_id, name) {
+            var choiceLists = gTasks.cache.surveyConfig[globals.gViewId].choiceLists,
+                cl,
+                i, j;
+
+            if(l_id != 0) {
+                for (i = 0; i < choiceLists.length; i++) {
+                    if (choiceLists[i].l_id == l_id) {
+                        cl = choiceLists[i];
+                        for (j = 0; j < cl.choices.length; j++) {
+                            if (cl.choices[j].k == name) {
+                                return cl.choices[j].v;
+                            }
+                        }
+                        break;
+                    }
+                }
+            }
+
+            return name;    // Not found
+
         }
 
     });
