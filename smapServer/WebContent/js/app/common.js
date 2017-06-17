@@ -1018,7 +1018,7 @@ function addHourglass() {
 
 	if(gWait === 0) {
 
-		$("#hour_glass,.hour_glass").show();
+		$("#hour_glass,.hour_glass,.sk-spinner").show();
 	}
 	++gWait;
 }
@@ -1028,7 +1028,7 @@ function removeHourglass() {
 	--gWait;
 	if(gWait === 0) {
 
-		$("#hour_glass,.hour_glass").hide();
+		$("#hour_glass,.hour_glass,.sk-spinner").hide();
 	}
 
 }

@@ -55,10 +55,6 @@
 </head>
 <body>
 
-<audio id="chime">
-    <source src="/images/chime.mp3"></source>
-</audio>
-
 <div id="wrapper">
 
     <nav class="navbar-default navbar-static-side" role="navigation">
@@ -256,6 +252,13 @@
                                         <div id="table-view" class="tab-pane active">
                                             <div class="panel-body">
                                                 <div id="table_content" class="col-md-12 dash_views">
+                                                    <div class="sk-spinner sk-spinner-wave">
+                                                        <div class="sk-rect1"></div>
+                                                        <div class="sk-rect2"></div>
+                                                        <div class="sk-rect3"></div>
+                                                        <div class="sk-rect4"></div>
+                                                        <div class="sk-rect5"></div>
+                                                    </div>
                                                     <div class="table-responsive">
                                                         <table id="trackingTable" class="table table-striped">
                                                         </table>
@@ -369,9 +372,6 @@
     </div>
 
 </div>
-
-
-<img class="hour_glass" src="/images/ajax-loader.gif" style="display:none;" alt="hourglass" height="60" width="60">
 
 <!-- Modal to edit a record -->
 <div id="editRecord" class="modal fade" aria-hidden="true">

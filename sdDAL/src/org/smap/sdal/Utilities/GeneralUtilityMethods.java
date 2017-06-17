@@ -2488,7 +2488,6 @@ public class GeneralUtilityMethods {
 				String label = rsChoices.getString(3);
 				String language = rsChoices.getString(4);
 				
-				System.out.println("xxxx: " + l_id + " : " + language + " : " + name);
 				if(defLang == null) {
 					if(firstLang == null) {
 						firstLang = language;
