@@ -1176,6 +1176,7 @@ define([
                 qIdx2;
 
             var columns = gTasks.cache.surveyConfig[globals.gViewId].columns;
+            var oldWidth = gEdChart.width;
 
             var title = $('#ew_title').val();
             if (!title || title.trim().length === 0) {
@@ -1242,7 +1243,12 @@ define([
                 saveToServer(gCharts);
 
                 $('#editChart').modal("hide");	// All good close the modal
-                refreshChart(gEdChart, false);
+
+                if(gEdChart.width === oldWidth) {
+                    refreshChart(gEdChart, false);
+                } else {
+                    refreshAllCharts(true, false, true);
+                }
 
             } else {
                 $('#chartInfo').show().removeClass('alert-success').addClass('alert-danger').html(errMsg);
