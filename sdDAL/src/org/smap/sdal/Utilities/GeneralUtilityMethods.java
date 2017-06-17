@@ -2164,13 +2164,16 @@ public class GeneralUtilityMethods {
 		}
 		
 		// SQL to get the questions
-		String sqlQuestion1 = "select qname, qtype, "
+		String sqlQuestion1 = "select "
+				+ "qname, "
+				+ "qtype, "
 				+ "column_name, "
 				+ "q_id, "
 				+ "readonly, "
 				+ "source_param, "
 				+ "appearance, "
-				+ "display_name "
+				+ "display_name, "
+				+ "l_id "
 				+ "from question where f_id = ? "
 				+ "and source is not null "
 				+ "and published = 'true' "
@@ -2327,6 +2330,7 @@ public class GeneralUtilityMethods {
 				String source_param = rsQuestions.getString(6);
 				String appearance = rsQuestions.getString(7);
 				String display_name = rsQuestions.getString(8);
+				int l_id = rsQuestions.getInt(9);
 				if(display_name != null && display_name.trim().length() > 0) {
 					question_human_name = display_name;
 				}
@@ -2378,6 +2382,7 @@ public class GeneralUtilityMethods {
 							c.humanName = question_human_name + " - " + rsMultiples.getString(2);
 							c.option_name = rsMultiples.getString(2);
 							c.question_name = question_human_name;
+							c.l_id = l_id;
 							c.qId = qId;
 							c.type = qType;
 							c.readonly = ro;
@@ -2395,6 +2400,7 @@ public class GeneralUtilityMethods {
 					c.type = qType;
 					c.readonly = ro;
 					c.hxlCode = hxlCode;
+					c.l_id = l_id;
 					if(GeneralUtilityMethods.isPropertyType(source_param, question_column_name)) {
 						if(includePreloads) {
 							columnList.add(c);

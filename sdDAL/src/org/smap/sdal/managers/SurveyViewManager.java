@@ -163,6 +163,7 @@ public class SurveyViewManager {
 					tc.hide = hideDefault(c.humanName);
 					tc.filter = c.filter;
 					tc.type = c.type;
+					tc.l_id = c.l_id;
 					for(int j = 0; j < configColumns.size(); j++) {
 						TableColumnConfig tcConfig = configColumns.get(j);
 						if(tcConfig.name.equals(tc.name)) {

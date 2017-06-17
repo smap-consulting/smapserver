@@ -142,7 +142,7 @@ define([
                 });
 
                 $('#ew_tseries').off().change(function () {
-                   setupChartDialog();
+                   setupChartDialog(undefined, undefined);
                    chartTypeChanged();
                 });
 
@@ -429,7 +429,8 @@ define([
                 for(i = 0; i < newData.length; i++) {
 
                     var item = {
-                        key: newData[i].key,
+                        //key: newData[i].key,
+                        key: newData[i].label,       // This needs to be human readable label
                         pr: []
                     };
 
@@ -913,7 +914,8 @@ define([
          */
         function initialiseWidgetDialog() {
 
-            var columns = gTasks.cache.surveyConfig[globals.gViewId].columns;
+            var columns = gTasks.cache.surveyConfig[globals.gViewId].columns,
+                q1, q2;
 
             $('#ew_tseries').prop("checked", gEdChart.tSeries);
             $('#ew_chart_type').val(gEdChart.chart_type);
@@ -922,24 +924,26 @@ define([
             $('#ew_fn').val(gEdChart.fn);
 
             if (gEdChart.groups && gEdChart.groups.length > 0) {
-                $("#ew_question1").val(gEdChart.groups[0].qIdx);
+                q1 = gEdChart.groups[0].qIdx;
+                $("#ew_question1").val(q1);
                 if (gEdChart.groups.length > 1) {
-                    $("#ew_question2").val(gEdChart.groups[1].qIdx);
+                    q2 = gEdChart.groups[1].qIdx;
+                    $("#ew_question2").val(q2);
                 }
             }
             $('#ew_period').val(gEdChart.period);
 
-            setupChartDialog();
+            setupChartDialog(q1, q2);
             addFunctions();
             chartTypeChanged();
 
         }
 
-        function setupChartDialog() {
+        function setupChartDialog(q1, q2) {
 
             setTimeSeries();
             setChartTypes();
-            addQuestions();
+            addQuestions(q1, q2);
             addFunctions();
 
         }
@@ -1068,15 +1072,13 @@ define([
         /*
          * Add questions
          */
-        function addQuestions() {
+        function addQuestions(defValue1, defValue2) {
 
             var tSeries = $('#ew_tseries').prop("checked");
             var columns = gTasks.cache.surveyConfig[globals.gViewId].columns;
             var h = [];
             var idx = -1;
             var i;
-            var defValue1 = $('#ew_question1').val(),
-                defValue2 = $('#ew_question2').val();
 
             if(tSeries) {
                 for (i = 0; i < columns.length; i++) {
