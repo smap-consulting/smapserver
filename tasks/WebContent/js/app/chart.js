@@ -491,7 +491,8 @@ define([
          * Generate data suitable for charting from the results
          */
         function processData(results, chart, dataLength) {
-            var i;
+            var i, j,
+                columns = gTasks.cache.surveyConfig[globals.gViewId].columns;
 
             if (chart.tSeries) {
                 return processTimeSeriesData(results, chart, dataLength);
@@ -504,10 +505,13 @@ define([
                     for (i = 0; i < results.length; i++) {
                         var di = {};
                         di.count = 1;
-                        for (var p in results[i]) {
-                            if (results[i].hasOwnProperty(p)) {
-                                di[p] = results[i][p];
+                        //for (var p in results[i]) {
+                        for (j = 0; j < columns.length; j++) {
+                            var val = results[i][columns[j].name];
+                            if(columns[j].l_id > 0) {
+                                val = lookupChoiceLabel(columns[j].l_id, val);
                             }
+                            di[columns[j].name] = val;
                         }
                         if (!di._duration) {         // Make sure durations have a number
                             di._duration = 0;
@@ -521,7 +525,7 @@ define([
         }
 
         /*
-         * Process the data according to chart type
+         * Process the the data for display in a time series
          */
         function processTimeSeriesData(results, chart, dataLength) {
 
@@ -1084,6 +1088,7 @@ define([
             var h = [];
             var idx = -1;
             var i;
+            var defValue;
 
             if(tSeries) {
                 for (i = 0; i < columns.length; i++) {
