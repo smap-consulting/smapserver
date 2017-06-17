@@ -428,9 +428,14 @@ define([
                 // Normalise 2 dimensional array
                 for(i = 0; i < newData.length; i++) {
 
+                    var choiceLabel = newData[i].key;
+                    if(chart.groups.length === 1 && (chart.groups[0].type == 'select' || chart.groups[0].type == 'select1')) {
+                        choiceLabel = lookupChoiceLabel(chart.groups[0].l_id, newData[i].key);
+                    } else  if(chart.groups.length === 2 && (chart.groups[1].type == 'select' || chart.groups[1].type == 'select1')) {
+                        choiceLabel = lookupChoiceLabel(chart.groups[1].l_id, newData[i].key);
+                    }
                     var item = {
-                        //key: newData[i].key,
-                        key: newData[i].label,       // This needs to be human readable label
+                        key: choiceLabel,
                         pr: []
                     };
 
@@ -1191,7 +1196,8 @@ define([
                         qIdx: qIdx1,
                         type: columns[qIdx1].type,
                         name: columns[qIdx1].name,
-                        dataLabel: columns[qIdx1].humanName
+                        dataLabel: columns[qIdx1].humanName,
+                        l_id: columns[qIdx1].l_id
                     });
                 }
                 if (typeof qIdx2 !== "undefined" && columns && columns[qIdx2]) {		// Question specific
@@ -1200,7 +1206,8 @@ define([
                         qIdx: qIdx2,
                         type: columns[qIdx2].type,
                         name: columns[qIdx2].name,
-                        dataLabel: columns[qIdx2].humanName
+                        dataLabel: columns[qIdx2].humanName,
+                        l_id: columns[qIdx2].l_id
                     });
                 }
 
@@ -1287,6 +1294,32 @@ define([
 
         function enableElem(elem) {
             $('#' + elem).prop('disabled', false);
+        }
+
+        /*
+         * convert a choice name into a choice label
+         */
+        function lookupChoiceLabel(l_id, name) {
+            var choiceLists = gTasks.cache.surveyConfig[globals.gViewId].choiceLists,
+                cl,
+                i, j;
+
+            if(l_id != 0) {
+                for (i = 0; i < choiceLists.length; i++) {
+                    if (choiceLists[i].l_id == l_id) {
+                        cl = choiceLists[i];
+                        for (j = 0; j < cl.choices.length; j++) {
+                            if (cl.choices[j].k == name) {
+                                return cl.choices[j].v;
+                            }
+                        }
+                        break;
+                    }
+                }
+            }
+
+            return name;    // Not found
+
         }
 
     });

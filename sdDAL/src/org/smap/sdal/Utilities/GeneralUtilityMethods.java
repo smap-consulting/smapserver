@@ -30,8 +30,10 @@ import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.smap.sdal.managers.RoleManager;
 import org.smap.sdal.managers.SurveyManager;
 import org.smap.sdal.model.ChangeItem;
+import org.smap.sdal.model.ChoiceList;
 import org.smap.sdal.model.Form;
 import org.smap.sdal.model.KeyValue;
+import org.smap.sdal.model.KeyValueSimp;
 import org.smap.sdal.model.Language;
 import org.smap.sdal.model.LinkedTarget;
 import org.smap.sdal.model.ManifestInfo;
@@ -2420,6 +2422,96 @@ public class GeneralUtilityMethods {
 		
 		
 		return columnList;
+	}
+	
+	/*
+	 * Return a list of choices by list id in a survey
+	 */
+	public static ArrayList<ChoiceList> getChoicesInForm(
+			Connection sd, 
+			int sId,
+			int f_id) throws SQLException {
+		
+		ArrayList<ChoiceList> choiceLists = new ArrayList<ChoiceList> ();
+		
+		// SQL to get the default language
+		String sqlGetDefLang = "select def_lang from survey where s_id = ?";
+		PreparedStatement pstmtDefLang = sd.prepareStatement(sqlGetDefLang);
+		
+		// SQL to get the choices for a survey TODO query
+		String sqlGetChoices = "select o.l_id, "
+				+ "o.ovalue as value, "
+				+ "t.value, "
+				+ "t.language "
+				+ "from option o, translation t, survey s "
+				+ "where s.s_id = ? "
+				+ "and s.s_id = t.s_id "
+				+ "and o.l_id in (select l_id from listname where s_id = ?) "
+				+ "and o.label_id = t.text_id ";
+		
+		String sqlGetChoices2 = "and t.language = ? ";
+		String sqlGetChoices3 = "order by o.l_id, o.seq";
+		PreparedStatement pstmtChoices = null;
+		try {
+			
+			// Get the default lang
+			pstmtDefLang.setInt(1, sId);
+			ResultSet rsDefLang = pstmtDefLang.executeQuery();
+			String defLang = null;
+			if(rsDefLang.next()) {
+				defLang = rsDefLang.getString(1);
+			}
+			
+			if(defLang == null) {
+				pstmtChoices = sd.prepareStatement(sqlGetChoices + sqlGetChoices3);
+			} else {
+				pstmtChoices = sd.prepareStatement(sqlGetChoices + sqlGetChoices2 + sqlGetChoices3);
+			}
+			pstmtChoices.setInt(1, sId);
+			pstmtChoices.setInt(2, sId);
+			if(defLang != null) {
+				pstmtChoices.setString(3, defLang);
+			}
+			
+			log.info("SQL: Get choices:" + pstmtChoices.toString());
+			ResultSet rsChoices = pstmtChoices.executeQuery();
+			
+			/*
+			 * Get columns
+			 */
+			int currentList = 0;
+			String firstLang = null;
+			ChoiceList cl = null;
+			while(rsChoices.next()) {
+				int l_id = rsChoices.getInt(1);
+				String name = rsChoices.getString(2);
+				String label = rsChoices.getString(3);
+				String language = rsChoices.getString(4);
+				
+				System.out.println("xxxx: " + l_id + " : " + language + " : " + name);
+				if(defLang == null) {
+					if(firstLang == null) {
+						firstLang = language;
+					} else if(!firstLang.equals(language)) {
+						continue;  // Only want one language
+					}
+				}
+				
+				if(l_id != currentList) {
+					cl = new ChoiceList(l_id);
+					choiceLists.add(cl);
+					currentList = l_id;
+				}
+				
+				cl.choices.add(new KeyValueSimp(name, label));		
+
+			}
+		} finally {
+			try {if (pstmtDefLang != null) {pstmtDefLang.close();	}} catch (SQLException e) {	}
+			try {if (pstmtChoices != null) {pstmtChoices.close();	}} catch (SQLException e) {	}
+		}
+		
+		return choiceLists;
 	}
 	
 	/*

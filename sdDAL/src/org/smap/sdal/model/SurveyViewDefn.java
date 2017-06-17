@@ -13,6 +13,7 @@ public class SurveyViewDefn {
 	public ArrayList<TableColumn> columns = new ArrayList<TableColumn> ();		// Table
 	public ArrayList<MapLayer> layers = new ArrayList<MapLayer> ();             // Map
 	public ArrayList<ChartDefn> charts = new ArrayList<ChartDefn> ();           // Charts
+	public ArrayList<ChoiceList> choiceLists;           						// Choices
 	
 	public SurveyViewDefn(int v, int s, int m, int q) {
 		viewId = v;

@@ -191,6 +191,11 @@ public class SurveyViewManager {
 			if(managedId > 0) {
 				getDataProcessingConfig(sd, managedId, svd.columns, configColumns, oId);
 			}
+			
+			/*
+			 * Add the choice lists
+			 */
+			svd.choiceLists = GeneralUtilityMethods.getChoicesInForm(sd, sId, f.id);
 		
 				
 		} catch (SQLException e) {
