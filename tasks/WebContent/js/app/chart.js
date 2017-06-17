@@ -414,7 +414,7 @@ define([
 
                 // Get the array of columns
                 var columnArray = [];
-                if(chart.groups.length === 2) {
+                if(chart.groups.length === 2  && chart.fn === "count") {
                     for(i = 0; i < newData.length; i++) {
                         for(j = 0; j < newData[i].values.length; j++) {
                             var key = newData[i].values[j].key;
@@ -436,7 +436,7 @@ define([
                     if(chart.groups.length === 1 || chart.fn !== "count") {
                         item.pr.push({
                             key: chart.fn,
-                            value: newData[i].values
+                            value: newData[i].value
                         });
                     }
                     if(chart.groups.length === 2) {
