@@ -20,6 +20,8 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.time.ZoneId;
 
 
@@ -42,6 +44,7 @@ import org.smap.sdal.model.ChartData;
 import org.smap.sdal.model.ChartRow;
 import org.smap.sdal.model.KeyValue;
 import org.smap.sdal.model.TableColumn;
+
 import org.smap.sdal.model.SurveyViewDefn;
 
 
@@ -63,13 +66,15 @@ public class XLSReportsManager {
 		String human_name;
 		int dataIndex;
 		int colIndex;
+		String type;
 		
-		public Column(ResourceBundle localisation, int dataIndex, String n, int colIndex) {
+		public Column(ResourceBundle localisation, int dataIndex, String n, String type, int colIndex) {
 			this.dataIndex = dataIndex;
 			this.colIndex = colIndex;
 			name = n;
 			//human_name = localisation.getString(n);
 			human_name = n;		// Need to work out how to use translations when the file needs to be imported again
+			this.type = type;
 		}
 		
 		// Return the width of this column
@@ -214,7 +219,7 @@ public class XLSReportsManager {
 				if(record != null) {
 					dataIndex = getDataIndex(record, tc.humanName);
 				}
-				cols.add(new Column(localisation, dataIndex, tc.humanName, colIndex++));
+				cols.add(new Column(localisation, dataIndex, tc.humanName, tc.type, colIndex++));
 			}
 		}
 	
@@ -259,7 +264,7 @@ public class XLSReportsManager {
 	}
 	
 	/*
-	 * Convert a task list array to XLS
+	 * Convert a data sheet for xls export
 	 */
 	private void processDataListForXLS(
 			ArrayList<ArrayList<KeyValue>> dArray, 
@@ -269,9 +274,6 @@ public class XLSReportsManager {
 			ArrayList<Column> cols,
 			String tz,
 			ArrayList<KeyValue> settings) throws IOException {
-
-		ZoneId timeZoneId = ZoneId.of(tz);
-		ZoneId gmtZoneId = ZoneId.of("GMT");	
 		
 		CreationHelper createHelper = wb.getCreationHelper();
 		
@@ -298,8 +300,50 @@ public class XLSReportsManager {
 					}
 					
 				}
+			
+				boolean cellWritten = false;
+				if(col.type.equals("datetime")) {
+	            	DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+	            	try {
+	            		java.util.Date date = dateFormat.parse(value);
+	            		cell.setCellStyle(styles.get("datetime"));
+		            	cell.setCellValue(date);
+		            	cellWritten = true;
+	            	} catch (Exception e) {
+	        			// Ignore
+	        		}
+	            } else if(col.type.equals("date")) {
+	            	DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+	            	try {
+	            		java.util.Date date = dateFormat.parse(value);
+	            		cell.setCellStyle(styles.get("date"));
+		            	cell.setCellValue(date);
+		            	cellWritten = true;
+	            	} catch (Exception e) {
+	        			// Ignore
+	        		}
+	            } 
+	            
+	           	if(!cellWritten) {
+	           		
+	           		// Try to write as number by default
+	           		try {
+	        			double vDouble = Double.parseDouble(value);
+	
+	        			cell.setCellStyle(styles.get("default"));
+	        			cell.setCellValue(vDouble);
+	        			cellWritten = true;
+	        		} catch (Exception e) {
+	        			// Ignore
+	        		}
+	           		
+	        	}
+	           	
+	        	if(!cellWritten) {
+	        		cell.setCellStyle(styles.get("default"));
+	        		cell.setCellValue(value);
+	        	}
 				
-				cell.setCellValue(value);
 	        }	
 		}
 		

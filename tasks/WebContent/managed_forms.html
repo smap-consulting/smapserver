@@ -14,7 +14,7 @@
     <link href="/css/wb/animate.css" rel="stylesheet">
     <link href="/css/wb/style.css" rel="stylesheet">
     <link href="/js/libs/DataTables/datatables.min.css" rel="stylesheet">
-    <link href="/css/bootstrap-toggle.min.css" rel="stylesheet" />
+    <link href="/css/bootstrap-toggle.min.css" rel="stylesheet"/>
     <link href="/css/dataTables.fontAwesome.css" rel="stylesheet">
     <link href="/css/smap-wb.css" rel="stylesheet">
     <link href="/css/charts.css" rel="stylesheet">
@@ -54,10 +54,6 @@
 </head>
 <body>
 
-<audio id="chime">
-    <source src="/images/chime.mp3"></source>
-</audio>
-
 <div id="wrapper">
 
     <nav class="navbar-default navbar-static-side" role="navigation">
@@ -76,20 +72,39 @@
                     <ul class="nav nav-second-level animated fadeInRight m-t-xs">
 
                         <li><a class="lang" data-lang="m_home" href="/?loggedin=yes">home</a></li>
-                        <li class="restrict_role admin_role analyst_role"><a href="/edit.html"><i class="glyphicon glyphicon-edit"></i> <span class="lang" data-lang="c_edit">Edit</span></a></li>
-                        <li class="restrict_role admin_role analyst_role"><a href="/fieldManager/templateManagement.html"><i class="glyphicon glyphicon-wrench"></i><span class="lang" data-lang="m_admin">Admin</span></a></li>
-                        <li class="restrict_role enum_role"><a href="/webForm.html"><i class="glyphicon glyphicon-globe"></i> <span class="nav-label lang" data-lang="m_data_mod">web forms</span></span></a></li>
-                        <li class="restrict_role analyst_role"><a href="/fieldAnalysis/index.html"><i class="glyphicon glyphicon-stats"></i> <span class="nav-label lang" data-lang="m_analysis">Analysis</span></a></li>
-                        <li class="restrict_role admin_role analyst_role"><a href="/tasks/taskManagement.html"><i class="fa fa-tasks"></i> <span class="nav-label lang" data-lang="m_assign">assign</span></a></li>
+                        <li class="restrict_role admin_role analyst_role"><a href="/edit.html"><i
+                                class="glyphicon glyphicon-edit"></i> <span class="lang" data-lang="c_edit">Edit</span></a>
+                        </li>
+                        <li class="restrict_role admin_role analyst_role"><a
+                                href="/fieldManager/templateManagement.html"><i
+                                class="glyphicon glyphicon-wrench"></i><span class="lang"
+                                                                             data-lang="m_admin">Admin</span></a></li>
+                        <li class="restrict_role enum_role"><a href="/webForm.html"><i
+                                class="glyphicon glyphicon-globe"></i> <span class="nav-label lang"
+                                                                             data-lang="m_data_mod">web forms</span></span>
+                        </a></li>
+                        <li class="restrict_role analyst_role"><a href="/fieldAnalysis/index.html"><i
+                                class="glyphicon glyphicon-stats"></i> <span class="nav-label lang"
+                                                                             data-lang="m_analysis">Analysis</span></a>
+                        </li>
+                        <li class="restrict_role admin_role analyst_role"><a href="/tasks/taskManagement.html"><i
+                                class="fa fa-tasks"></i> <span class="nav-label lang" data-lang="m_assign">assign</span></a>
+                        </li>
 
                     </ul>
                 </li>
 
-                <li id="m_duplicates" class="restrict_role admin_role"><a href="/tasks/duplicates.html"><i class="fa fa-filter"></i> <span class="lang" data-lang="mon_dup">dups</span></a></li>
-                <li id="m_web_forms" class="restrict_role enum_role"><a href="/webForm.html"><i class="fa fa-globe" aria-hidden="true"></i><span class="lang" data-lang="m_web_forms">web forms</span></a></li>
-                <li id="m_br" class="restrict_role admin_role analyst_role"><a href="/tasks/browse_results.html"><i class="fa fa-table"></i> <span class="lang" data-lang="m_br">browse</span></a></li>
-                <li id="m_rep" class="restrict_role admin_role analyst_role"><a href="/reports.html"><i class="fa fa-table"></i> <span class="lang" data-lang="m_reports">reports</span></a></li>
-                <li id="m_help"><a href="/mfHelp.html" target="_blank"><i class="fa fa-info-circle"></i> <span class="lang" data-lang="m_help">help</span></a></li>
+                <li id="m_duplicates" class="restrict_role admin_role"><a href="/tasks/duplicates.html"><i
+                        class="fa fa-filter"></i> <span class="lang" data-lang="mon_dup">dups</span></a></li>
+                <li id="m_web_forms" class="restrict_role enum_role"><a href="/webForm.html"><i class="fa fa-globe"
+                                                                                                aria-hidden="true"></i><span
+                        class="lang" data-lang="m_web_forms">web forms</span></a></li>
+                <li id="m_br" class="restrict_role admin_role analyst_role"><a href="/tasks/browse_results.html"><i
+                        class="fa fa-table"></i> <span class="lang" data-lang="m_br">browse</span></a></li>
+                <li id="m_rep" class="restrict_role admin_role analyst_role"><a href="/reports.html"><i
+                        class="fa fa-table"></i> <span class="lang" data-lang="m_reports">reports</span></a></li>
+                <li id="m_help"><a href="/mfHelp.html" target="_blank"><i class="fa fa-info-circle"></i> <span
+                        class="lang" data-lang="m_help">help</span></a></li>
 
             </ul>
         </div>
@@ -163,7 +178,8 @@
                 </div>
                 <div class="col-sm-4">
                     <form role="form" class="form-horizontal heading-element">
-                        <label class="lang col-sm-4 control-label" data-lang="a_from_date" for="filter_from">from</label>
+                        <label class="lang col-sm-4 control-label" data-lang="a_from_date"
+                               for="filter_from">from</label>
                         <div class="col-sm-8">
                             <input type="date" class="hasDatepicker survey_select form-control" id="filter_from">
                         </div>
@@ -188,10 +204,12 @@
                         <div class="ibox-title">
                             <div class="ibox-tools">
                                 <a id="showlayers" style="display:none;">
-                                    <i class="btn btn-info fa fa-align-justify fa-lg"> <span class="nav-label lang" data-lang="d_layers">layers</span></i>
+                                    <i class="btn btn-info fa fa-align-justify fa-lg"> <span class="nav-label lang"
+                                                                                             data-lang="d_layers">layers</span></i>
                                 </a>
                                 <a id="m_add_chart" style="display:none;">
-                                    <i class="btn btn-success fa fa-bar-chart-o fa-lg"> <span class="nav-label lang" data-lang="d_add">add</span></i>
+                                    <i class="btn btn-success fa fa-bar-chart-o fa-lg"> <span class="nav-label lang"
+                                                                                              data-lang="d_add">add</span></i>
                                 </a>
                                 <a class="genfile pdf"><i class="btn btn-danger fa fa-file-pdf-o fa-lg"></i></a>
                                 <a class="genfile xls"><i class="btn btn-success fa fa-file-excel-o fa-lg"></i></a>
@@ -218,13 +236,20 @@
                                         <div id="table-view" class="tab-pane active">
                                             <div class="panel-body">
                                                 <div id="table_content" class="col-md-12 dash_views">
-                                    <div class="table-responsive">
-                                        <table id="trackingTable" class="table table-striped">
-                                        </table>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                                                    <div class="sk-spinner sk-spinner-wave">
+                                                        <div class="sk-rect1"></div>
+                                                        <div class="sk-rect2"></div>
+                                                        <div class="sk-rect3"></div>
+                                                        <div class="sk-rect4"></div>
+                                                        <div class="sk-rect5"></div>
+                                                    </div>
+                                                    <div class="table-responsive">
+                                                        <table id="trackingTable" class="table table-striped">
+                                                        </table>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
                                         <div id="map-view" class="tab-pane">
                                             <div class="panel-body">
                                                 <div class="row">
@@ -233,10 +258,11 @@
                                                             <div class="ibox-title">
                                                                 <h5 class="lang" data-lang="c_map_layers">layers</h5>
                                                                 <a id="m_add_layer" class="pull-right">
-                                                                    <i class="btn btn-success fa fa-bar-map-o fa-lg"> <span class="nav-label lang" data-lang="d_add">add</span></i>
+                                                                    <i class="btn btn-success fa fa-bar-map-o fa-lg">
+                                                                        <span class="nav-label lang" data-lang="d_add">add</span></i>
                                                                 </a>
-                    </div>
-                </div>
+                                                            </div>
+                                                        </div>
                                                         <div id="layerSelect">
                                                             <div class="table-responsive">
                                                                 <table class="table">
@@ -251,7 +277,7 @@
 
                                                                     </tbody>
                                                                 </table>
-            </div>
+                                                            </div>
                                                         </div>
                                                     </div>
                                                     <div id="map_content" class="col-md-12 dash_views">
@@ -318,7 +344,7 @@
                     <div class="sidebar-title">
                         <h3><span class="lang" data-lang="mf_qr">qr</span></h3>
                         <small><i class="fa fa-tim"></i> <span class="lang" data-lang="mf_bc_i"></span></small>
-            </div>
+                    </div>
 
                     <div id="tab-barcode-content"></div>
 
@@ -327,16 +353,13 @@
                             apply
                         </button>
 
-        </div>
-    </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
 </div>
-
-
-<img class="hour_glass" src="/images/ajax-loader.gif" style="display:none;" alt="hourglass" height="60" width="60">
 
 <!-- Modal to edit a record -->
 <div id="editRecord" class="modal fade" aria-hidden="true">
@@ -408,14 +431,14 @@
 
                         <form id="chartForm" role="form" class="form-horizontal">
 
-                                <div class="form-group">
+                            <div class="form-group">
                                 <label class="lang col-sm-2 control-label" data-lang="c_title"
                                        for="ew_title">title</label>
-                                    <div class="col-sm-10">
+                                <div class="col-sm-10">
                                     <input type="text" class="form-control title" id="ew_title">
 
-                                    </div>
                                 </div>
+                            </div>
 
 
                             <div class="form-group">
@@ -424,7 +447,7 @@
                                 <div class="col-sm-1">
                                     <div class="checkbox">
                                         <input type="checkbox" id="ew_tseries">
-                            </div>
+                                    </div>
                                 </div>
 
                                 <div class="tseries_only">
@@ -450,12 +473,15 @@
                                 </div>
                             </div>
 
-                                <div class="form-group">
-                                <label class="col-sm-2 control-label"  for="ew_question1"><span data-lang="c_question" class=""lang>question</span> 1</label>
+                            <div class="form-group">
+                                <label class="col-sm-2 control-label" for="ew_question1"><span data-lang="c_question"
+                                                                                               class=""
+                                                                                               lang>question</span>
+                                    1</label>
                                 <div class="col-sm-4">
                                     <select class="form-control question_req" id="ew_question1">
-                                        </select>
-                                    </div>
+                                    </select>
+                                </div>
 
                                 <label class="lang col-sm-2 control-label" data-lang="a_fn"
                                        for="ew_fn">function</label>
@@ -465,14 +491,15 @@
                                 </div>
                             </div>
 
-                                <div class="form-group">
+                            <div class="form-group">
                                 <label class="col-sm-2 control-label"
-                                       for="ew_question2"><span class="lang" data-lang="c_question">question</span> 2</label>
-                                    <div class="col-sm-10">
+                                       for="ew_question2"><span class="lang" data-lang="c_question">question</span>
+                                    2</label>
+                                <div class="col-sm-10">
                                     <select class="form-control question" id="ew_question2">
-                                        </select>
-                                    </div>
+                                    </select>
                                 </div>
+                            </div>
 
 
                             <div class="form-group">

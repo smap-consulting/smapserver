@@ -108,7 +108,7 @@ public class DocumentXLSManager {
 
 		    AreaReference aref = new AreaReference(aNamedCell.getRefersToFormula());
 		    CellReference[] crefs = aref.getAllReferencedCells();
-		    System.out.println("    xxxxxxx: " + crefs.length + " " + kv.k + " : " + kv.v);
+		  
 		    for (int i = 0; i < crefs.length; i++) {
 		        Sheet s = wb.getSheet(crefs[i].getSheetName());
 		        Row r = sheet.getRow(crefs[i].getRow());

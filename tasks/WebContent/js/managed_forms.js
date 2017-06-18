@@ -1588,7 +1588,7 @@ require([
                         d.choices = [];
                         d.choices.push(d.humanName);
 
-                        select_questions[n[0]] = d[i];
+                        select_questions[n[0]] = d;
                         d.chartQuestion = true;
                     } else {
                         var f = select_questions[n[0]];

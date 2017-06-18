@@ -141,7 +141,6 @@ public class DocumentDataManager {
 				}
 				sql.append("sum(diagnosis__");
 				pstmtGetColNames.setString(1, col);
-				System.out.println("xxxx: " + pstmtGetColNames.toString());
 				ResultSet rs = pstmtGetColNames.executeQuery();
 				if(rs.next()) {
 					sql.append(rs.getString(1));
@@ -167,7 +166,6 @@ public class DocumentDataManager {
 			}
 			
 			pstmt = cResults.prepareStatement(sql.toString());
-			System.out.println("Query: " + pstmt.toString());
 			int idx = 1;
 			if(sqlRestrictToDateRange.trim().length() > 0) {
 				pstmt.setDate(idx++, startDate);
@@ -180,7 +178,7 @@ public class DocumentDataManager {
 				pstmt.setInt(index++, cat.age1);
 				pstmt.setInt(index++,  cat.age2);
 			
-				System.out.println("Get count: " + pstmt.toString());
+				log.info("Get count: " + pstmt.toString());
 				ResultSet rs = pstmt.executeQuery();
 				if(rs.next()) {
 					for(String col : qnames) {
@@ -200,7 +198,6 @@ public class DocumentDataManager {
 						} else {
 							key.append("_a5");
 						}
-						System.out.println("   key: " + key.toString());
 						data.add(new KeyValue(key.toString(), count));
 					}
 				}			
