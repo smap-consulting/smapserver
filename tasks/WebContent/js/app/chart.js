@@ -1117,7 +1117,7 @@ define([
                         h[++idx] = '<option value="';
                         h[++idx] = i;
                         h[++idx] = '">';
-                        h[++idx] = columns[i].humanName;
+                        h[++idx] = columns[i].select_name ? columns[i].select_name : columns[i].humanName;
                         h[++idx] = '</option>';
                     }
                 }
