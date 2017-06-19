@@ -441,17 +441,9 @@ public class SubRelationalDB extends Subscriber {
 					pstmtAddHrk.executeUpdate();
 				}
 				
-				//boolean addPrikey = true;	// Add the primary key if requested
-				//if(hrk != null) {
-				//	if(hrk.contains("${prikey}") || hrk.contains("serial(")) {
-				//		addPrikey = false;			// User had included prikey in the HRK so er don't need to
-				//	}
-				//}
 				String sql = "update " + topLevelTable + " set _hrk = "
 						+ GeneralUtilityMethods.convertAllxlsNamesToQuery(hrk, sId, cMeta);
-				//if(addPrikey) {
-				//	sql += " || '-' || prikey ";
-				//}
+				
 				sql += " where _hrk is null;";
 				pstmtHrk = cResults.prepareStatement(sql);
 				System.out.println("Adding HRK: " + pstmtHrk.toString());
@@ -613,7 +605,8 @@ public class SubRelationalDB extends Subscriber {
 				 */
 				if(columns.size() > 0 || parent_key == 0) {
 					
-					boolean hasUploadTime = GeneralUtilityMethods.hasColumn(cRel, tableName, "_upload_time");		// Latest meta column added
+					boolean hasAltitude = GeneralUtilityMethods.hasColumn(cRel, tableName, "the_geom_alt");				// Latest meta column added
+					boolean hasUploadTime = hasAltitude || GeneralUtilityMethods.hasColumn(cRel, tableName, "_upload_time");		
 					boolean hasVersion = hasUploadTime || GeneralUtilityMethods.hasColumn(cRel, tableName, "_version");
 					boolean hasSurveyNotes = GeneralUtilityMethods.hasColumn(cRel, tableName, "_survey_notes");
 					sql = "INSERT INTO " + tableName + " (parkey";
@@ -633,7 +626,7 @@ public class SubRelationalDB extends Subscriber {
 						}
 					}
 	
-					sql += addSqlColumns(columns);
+					sql += addSqlColumns(columns, hasAltitude);
 					
 					
 					sql += ") VALUES (?";		// parent key
@@ -653,7 +646,7 @@ public class SubRelationalDB extends Subscriber {
 						}
 					}
 					
-					sql += addSqlValues(columns, sName, device, server, false);
+					sql += addSqlValues(columns, sName, device, server, false, hasAltitude);
 					sql += ");";
 					
 					pstmt = cRel.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
@@ -1040,7 +1033,7 @@ public class SubRelationalDB extends Subscriber {
 	/*
 	 * Generate the sql for the column names
 	 */
-	String addSqlColumns(List<IE> columns) {
+	String addSqlColumns(List<IE> columns, boolean hasAltitude) {
 		String sql = "";
 		
 		for(IE col : columns) {
@@ -1058,10 +1051,14 @@ public class SubRelationalDB extends Subscriber {
 			} else if(colType.equals("geopolygon") || colType.equals("geolinestring") || colType.equals("geopoint")
 					|| colType.equals("geoshape") || colType.equals("geotrace")) {
 				// All geospatial columns have the name "the_geom"
-				sql += "," + "the_geom";
+				sql += ",the_geom";
+				if(colType.equals("geopoint") && hasAltitude) {
+					// Geopoint also has altitude and accuracy
+					sql += ",the_geom_alt, the_geom_acc";
+				}
 			} else if(colType.equals("begin group")) {
 				// Non repeating group, process these child columns at the same level as the parent
-				sql += addSqlColumns(col.getQuestions());
+				sql += addSqlColumns(col.getQuestions(), hasAltitude);
 			} else {
 				String colName = col.getColumnName();
 				sql += "," + colName;
@@ -1071,7 +1068,7 @@ public class SubRelationalDB extends Subscriber {
 		return sql;
 	}
 	
-	String addSqlValues(List<IE> columns, String sName, String device, String server, boolean phoneOnly) {
+	String addSqlValues(List<IE> columns, String sName, String device, String server, boolean phoneOnly, boolean hasAltitude) {
 		String sql = "";
 		for(IE col : columns) {
 			boolean colPhoneOnly = phoneOnly || col.isPhoneOnly();	// Set phone only if the group is phone only or just this column
@@ -1089,9 +1086,9 @@ public class SubRelationalDB extends Subscriber {
 				}
 			} else if(colType.equals("begin group")) {
 				// Non repeating group, process these child columns at the same level as the parent
-				sql += addSqlValues(col.getQuestions(), sName, device, server, colPhoneOnly);
+				sql += addSqlValues(col.getQuestions(), sName, device, server, colPhoneOnly, hasAltitude);
 			} else {
-				sql += "," + getDbString(col, sName, device, server, colPhoneOnly);
+				sql += "," + getDbString(col, sName, device, server, colPhoneOnly, hasAltitude);
 			}				
 		}
 		return sql;
@@ -1100,7 +1097,7 @@ public class SubRelationalDB extends Subscriber {
 	/*
 	 * Format the value into a string appropriate to its type
 	 */
-	String getDbString(IE col, String surveyName, String device, String server, boolean phoneOnly) {
+	String getDbString(IE col, String surveyName, String device, String server, boolean phoneOnly, boolean hasAltitude) {
 		
 		String qType = col.getQType();
 		String value = col.getValue();	
@@ -1162,10 +1159,24 @@ public class SubRelationalDB extends Subscriber {
 								+ String.valueOf(Double.parseDouble(params[1])) + ","
 								+ String.valueOf(Double.parseDouble(params[0]))
 								+ "), 4326)";
+						
+						// Add altitude and accuracy
+						if(hasAltitude) {
+							if(params.length > 3) {
+								value += "," + String.valueOf(Double.parseDouble(params[2])) + "," 
+										+ String.valueOf(Double.parseDouble(params[3]));
+							} else {
+								value += "null, null";
+							}
+						}
+
 					} else {
 						System.out.println("Error: Invalid geometry point detected: " + value);
-						value = "null";
+						value = "null, null, null";
 					}
+					
+					
+					
 					
 				} else if(qType.equals("audio") || qType.equals("video") || qType.equals("image")) {
 				

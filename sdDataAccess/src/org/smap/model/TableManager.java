@@ -443,6 +443,7 @@ public class TableManager {
 						// Add geometry columns after the table is created using AddGeometryColumn()
 						GeometryColumn gc = new GeometryColumn(tableName, q.getColumnName(), "POINT");
 						geoms.add(gc);
+						sql += ", the_geom_alt double precision, the_geom_acc double precision";
 						continue;
 					
 					} else if(colType.equals("geopolygon") || colType.equals("geoshape")) {

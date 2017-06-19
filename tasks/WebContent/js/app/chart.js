@@ -129,7 +129,6 @@ define([
             refreshAllCharts: refreshAllCharts,
             addNewChart: addNewChart,
             getXLSData: getXLSData
-
         };
 
         function init(chartView, timingView) {
@@ -176,8 +175,9 @@ define([
 
         /*
          * Get XLS Data from charts
+         * If all data is set true then ignore the current charts and generate counts for all questions
          */
-        function getXLSData() {
+        function getXLSData(alldata) {
 
             var results = globals.gMainTable.rows({
                 order: 'current',  // 'current', 'applied', 'index',  'original'
@@ -188,12 +188,35 @@ define([
             var i,
                 data,
                 chart,
+                chartArray = [],
                 dataLength = results.count(),
                 xlsResponse = [];
 
-            for (i = 0; i < gCharts.length; i++) {
+            if(alldata) {
+                // Create an array of dummy charts that will generate the counts
+                var columns = gTasks.cache.surveyConfig[globals.gViewId].columns;
+                for (i = 0; i < columns.length; i++) {
+                    if (columns[i].chartQuestion) {
+                        chart = {
+                            title: columns[i].select_name ? columns[i].humanName : columns[i].humanName,
+                            tSeries: false,
+                            chart_type: "other",
+                            fn: "count",
+                            groups: [{
+                                name: columns[i].name,
+                                dataLabel: columns[i].humanName
+                            }
+                            ]
+                        }
+                        chartArray.push(chart);
+                    }}
+            } else {
+               chartArray = gCharts;
+            }
 
-                chart = gCharts[i];
+            for (i = 0; i < chartArray.length; i++) {
+
+                chart = chartArray[i];
                 data = processData(results, chart, dataLength);
                 getXlsResponseObject(xlsResponse, chart, data);
 
@@ -1205,7 +1228,7 @@ define([
                         qIdx: qIdx1,
                         type: columns[qIdx1].type,
                         name: columns[qIdx1].name,
-                        dataLabel: columns[qIdx1].humanName,
+                        dataLabel: columns[i].humanName ? columns[i].humanName : columns[qIdx1].humanName,
                         l_id: columns[qIdx1].l_id
                     });
                 }
