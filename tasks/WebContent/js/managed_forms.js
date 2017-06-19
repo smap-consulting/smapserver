@@ -458,7 +458,9 @@ require([
     // Generate a file based on chart data
     $('.genfile').click(function () {
 
-        var format;
+        var format,
+            $this = $(this);
+
         if ($this.hasClass("xls")) {
             format = "xlsx";
         } else if ($this.hasClass("pdf")) {
@@ -479,7 +481,6 @@ require([
      */
     function genFile(alldata, format) {
         var url = "/surveyKPI/tables/generate",
-            $this = $(this),
             filename,
             mime,
             data,

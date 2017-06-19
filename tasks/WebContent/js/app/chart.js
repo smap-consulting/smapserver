@@ -1297,7 +1297,7 @@ define([
                     group = {
                         qIdx: qIdx1,
                         type: columns[qIdx1].type,
-                        name: columns[qIdx1].name,
+                        name: columns[qIdx1].select_name ? columns[qIdx1].select_name : columns[qIdx1].name,
                         dataLabel: columns[qIdx1].select_name ? columns[qIdx1].select_name : columns[qIdx1].humanName,
                         l_id: columns[qIdx1].l_id,
                         choices: columns[qIdx1].choices,
@@ -1311,7 +1311,7 @@ define([
                     group = {
                         qIdx: qIdx2,
                         type: columns[qIdx2].type,
-                        name: columns[qIdx2].name,
+                        name: columns[qIdx2].select_name ? columns[qIdx2].select_name : columns[qIdx2].name,
                         dataLabel: columns[qIdx2].select_name ? columns[qIdx2].select_name : columns[qIdx2].humanName,
                         l_id: columns[qIdx2].l_id,
                         choices: columns[qIdx2].choices,
