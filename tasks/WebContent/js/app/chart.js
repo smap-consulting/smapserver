@@ -197,21 +197,30 @@ define([
                 var columns = gTasks.cache.surveyConfig[globals.gViewId].columns;
                 for (i = 0; i < columns.length; i++) {
                     if (columns[i].chartQuestion) {
+
                         chart = {
-                            title: columns[i].select_name ? columns[i].humanName : columns[i].humanName,
+                            title: columns[i].select_name ? columns[i].select_name : columns[i].humanName,
                             tSeries: false,
                             chart_type: "other",
                             fn: "count",
                             groups: [{
-                                name: columns[i].name,
-                                dataLabel: columns[i].humanName
+                                name: columns[i].select_name ? columns[i].select_name  : columns[i].name,
+                                dataLabel: columns[i].select_name ? columns[i].select_name  : columns[i].humanName,
+                                l_id: columns[i].l_id,
+                                type: columns[i].type
                             }
                             ]
                         }
+
+                        if (columns[i].type === "select") {
+                            chart.groups[0].choiceNames = columns[i].choiceNames;
+                            chart.groups[0].choices = columns[i].choices;
+                        }
                         chartArray.push(chart);
-                    }}
+                    }
+                }
             } else {
-               chartArray = gCharts;
+                chartArray = gCharts;
             }
 
             for (i = 0; i < chartArray.length; i++) {
@@ -759,7 +768,8 @@ define([
                 selM,
                 nonM,
                 row,
-                choiceValues = [];
+                choiceValues = [],
+                val;
 
             // Get index of select multiple
             groups = chart.groups;
@@ -787,7 +797,12 @@ define([
                         row = {
                             count: 1
                         };
-                        row[selM.dataLabel] = choiceValues[j];
+
+                        val = choiceValues[j];
+                        if(selM.l_id > 0) {
+                            val = lookupChoiceLabel(selM.l_id, val);
+                        }
+                        row[selM.dataLabel] = val;
                         if(nonM) {
                             row[nonM.dataLabel] = results[i][nonM.dataLabel];
                         }
