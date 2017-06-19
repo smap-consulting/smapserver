@@ -19,10 +19,14 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 
 package org.smap.sdal.model;
 
+import java.util.ArrayList;
+
 public class ChartItem {
 	public int qIdx;
 	public String type;
 	public String name;
 	public String dataLabel;
 	public int l_id;
+	public ArrayList<String> choices;
+	public ArrayList<String> choiceNames;
 }

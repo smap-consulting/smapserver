@@ -1599,13 +1599,16 @@ require([
 
                         d.select_name = n[0];
                         d.choices = [];
+                        d.choiceNames = [];
                         d.choices.push(d.humanName);
+                        d.choiceNames.push(d.name);
 
                         select_questions[n[0]] = d;
                         d.chartQuestion = true;
                     } else {
                         var f = select_questions[n[0]];
                         f.choices.push(d.humanName);
+                        f.choiceNames.push(d.name);
                         d.chartQuestion = false;
                     }
                 }

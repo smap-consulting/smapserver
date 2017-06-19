@@ -521,6 +521,8 @@ define([
                 return processTimeSeriesData(results, chart, dataLength);
             } else if (chart.chart_type === "wordcloud") {
                 return processWordCloudData(results, chart, dataLength);
+            } else if (chart.groups[0].type === "select" || (chart.groups.length > 1 && chart.groups[1].type === "select")) {
+                return processSelectMultipleData(results, chart, dataLength);
             } else {
                 if (!gTasks.cache.surveyConfig[globals.gViewId].processedData) {
 
@@ -742,6 +744,58 @@ define([
                 }
             }
 
+
+            return data;
+        }
+
+        /*
+         * Process the wordcloud data
+         */
+        function processSelectMultipleData(results, chart, dataLength) {
+
+            var data = [],
+                groups,
+                i, j,
+                selM,
+                nonM,
+                row,
+                choiceValues = [];
+
+            // Get index of select multiple
+            groups = chart.groups;
+            if(chart.groups[0].type == "select") {
+                selM = chart.groups[0];
+                if(chart.groups.length > 0) {
+                    nonM = chart.groups[1];
+                }
+            } else {
+                nonM = chart.groups[0];
+                selM = chart.groups[1];
+            }
+
+            // Get the choice values from the choices which have the question name in them
+            for(i = 0; i < selM.choices.length; i++) {
+                var n = selM.choices[i].split(" - ");
+                choiceValues.push(n[1]);
+            }
+
+
+            for(i = 0; i < results.length; i++) {
+                for(j = 0; j < selM.choiceNames.length; j++) {
+                    if(results[i][selM.choiceNames[j]] == 1) {
+                        // add a row
+                        row = {
+                            count: 1
+                        };
+                        row[selM.dataLabel] = choiceValues[j];
+                        if(nonM) {
+                            row[nonM.dataLabel] = results[i][nonM.dataLabel];
+                        }
+                        data.push(row);
+                    }
+                }
+
+            }
 
             return data;
         }
@@ -1196,7 +1250,8 @@ define([
                 errMsg,
                 i,
                 qIdx1,
-                qIdx2;
+                qIdx2,
+                group;
 
             var columns = gTasks.cache.surveyConfig[globals.gViewId].columns;
             var oldWidth = gEdChart.width;
@@ -1224,23 +1279,31 @@ define([
 
                 if (typeof qIdx1 !== "undefined" && columns && columns[qIdx1]) {		// Question specific
 
-                    gEdChart.groups.push({
+                    group = {
                         qIdx: qIdx1,
                         type: columns[qIdx1].type,
                         name: columns[qIdx1].name,
-                        dataLabel: columns[i].humanName ? columns[i].humanName : columns[qIdx1].humanName,
-                        l_id: columns[qIdx1].l_id
-                    });
+                        dataLabel: columns[qIdx1].select_name ? columns[qIdx1].select_name : columns[qIdx1].humanName,
+                        l_id: columns[qIdx1].l_id,
+                        choices: columns[qIdx1].choices,
+                        choiceNames: columns[qIdx1].choiceNames
+                    };
+
+                    gEdChart.groups.push(group);
                 }
                 if (typeof qIdx2 !== "undefined" && columns && columns[qIdx2]) {		// Question specific
 
-                    gEdChart.groups.push({
+                    group = {
                         qIdx: qIdx2,
                         type: columns[qIdx2].type,
                         name: columns[qIdx2].name,
-                        dataLabel: columns[qIdx2].humanName,
-                        l_id: columns[qIdx2].l_id
-                    });
+                        dataLabel: columns[qIdx2].select_name ? columns[qIdx2].select_name : columns[qIdx2].humanName,
+                        l_id: columns[qIdx2].l_id,
+                        choices: columns[qIdx2].choices,
+                        choiceNames: columns[qIdx2].choiceNames
+                    };
+
+                    gEdChart.groups.push(group);
                 }
 
                 if (gEdChart.tSeries) {
