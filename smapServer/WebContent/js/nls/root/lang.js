@@ -226,6 +226,7 @@ define({
     "c_merge": "Merge",
     "c_discard": "Discard",
     "c_keys": "Keys",
+    "c_counts": "Counts",
 
     // File Types
     "ft": "File Type",

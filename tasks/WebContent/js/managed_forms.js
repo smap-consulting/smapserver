@@ -454,10 +454,30 @@ require([
         }
     }
 
-    /*
-     * Respond to a request to generate a file
-     */
+
+    // Generate a file based on chart data
     $('.genfile').click(function () {
+
+        var format;
+        if ($this.hasClass("xls")) {
+            format = "xlsx";
+        } else if ($this.hasClass("pdf")) {
+            format = "pdf";
+        } else {
+            format = "image";
+        }
+        genFile(false, format);
+    });
+
+    // Generate an xls file of basic counts for all data
+    $('.genxlsfileall').click(function () {
+        genFile(true, "xlsx");
+    });
+
+    /*
+     * Generate a file of data
+     */
+    function genFile(alldata, format) {
         var url = "/surveyKPI/tables/generate",
             $this = $(this),
             filename,
@@ -475,8 +495,7 @@ require([
             colCount = 0,
             colName,
             colValue,
-            i,
-            format;
+            i;
 
         /*
          * Get the settings
@@ -511,22 +530,19 @@ require([
 
         }
 
-
         data = getTableData(globals.gMainTable,
             gTasks.cache.surveyConfig[globals.gViewId].columns);
 
-        if ($this.hasClass("xls")) {
-            filename = title + ".xlsx"
+        if (format = "xlsx") {
+            filename = title + ".xlsx";
             mime = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
-            format = "xlsx";
-        } else if ($this.hasClass("pdf")) {
-            filename = title + ".pdf"
+        } else if (format = "pdf") {
+            filename = title + ".pdf";
             mime = "application/pdf";
-            format = "pdf";
         } else {
+            // image
             filename = title + ".zip"
             mime = "application/zip";
-            format = "image";
         }
 
         if (format !== "image") {
@@ -537,7 +553,7 @@ require([
             }
 
             if (format === "xlsx") {
-                chartData = chart.getXLSData();
+                chartData = chart.getXLSData(alldata);
             }
 
             generateFile(url, filename, format, mime, data, globals.gCurrentSurvey, managedId, title, project, charts, chartData, settings);
@@ -568,7 +584,7 @@ require([
             });
         }
 
-    });
+    }
 
     /*
      * Alerts
@@ -713,9 +729,6 @@ require([
             } else {
                 getSurveyView(0, globals.gCurrentSurvey, 0, 0);
             }
-            //if (!isDuplicates) {
-            //    getReport(gReport);
-            //}
 
             $('.main_survey').html($('#survey_name option:selected').text());
 
