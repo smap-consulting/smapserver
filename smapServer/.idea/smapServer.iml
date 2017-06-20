@@ -1,10 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <module type="WEB_MODULE" version="4">
   <component name="NewModuleRootManager">
-    <content url="file://$MODULE_DIR$">
-      <excludeFolder url="file://$MODULE_DIR$/.tmp" />
-      <excludeFolder url="file://$MODULE_DIR$/temp" />
-      <excludeFolder url="file://$MODULE_DIR$/tmp" />
+    <content url="file://$MODULE_DIR$/..">
+      <excludeFolder url="file://$MODULE_DIR$/../.github" />
+      <excludeFolder url="file://$MODULE_DIR$/../.settings" />
+      <excludeFolder url="file://$MODULE_DIR$/../aws" />
+      <excludeFolder url="file://$MODULE_DIR$/../business" />
+      <excludeFolder url="file://$MODULE_DIR$/../codebook" />
+      <excludeFolder url="file://$MODULE_DIR$/../fieldManager" />
+      <excludeFolder url="file://$MODULE_DIR$/../grammars" />
+      <excludeFolder url="file://$MODULE_DIR$/../koboToolboxApi" />
+      <excludeFolder url="file://$MODULE_DIR$/../notifications" />
+      <excludeFolder url="file://$MODULE_DIR$/../patches" />
+      <excludeFolder url="file://$MODULE_DIR$/../sdDAL" />
+      <excludeFolder url="file://$MODULE_DIR$/../sdDataAccess" />
+      <excludeFolder url="file://$MODULE_DIR$/../subscribers" />
+      <excludeFolder url="file://$MODULE_DIR$/../surveyKPI" />
+      <excludeFolder url="file://$MODULE_DIR$/../surveyMobileAPI" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />

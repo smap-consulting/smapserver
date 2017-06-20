@@ -134,7 +134,6 @@ public class TableReports extends Application {
 			SurveyViewManager qm = new SurveyViewManager();
 			SurveyViewDefn mfc = qm.getSurveyView(sd, cResults, uId, 0, sId, managedId, request.getRemoteUser(), oId, superUser);
 			
-			System.out.println("Data: " + data);
 			// Convert data to an array
 			ArrayList<ArrayList<KeyValue>> dArray = null;
 			if(data != null) {

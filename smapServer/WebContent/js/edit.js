@@ -258,8 +258,8 @@ $(document).ready(function() {
 		updatePulldataView();
 		$('#pulldataModal').modal("show");
 	});
-	
-	$('#m_required').off().click(function() {
+
+    $('#m_required').off().click(function() {
 		if($(this).closest('li').hasClass('disabled')) {
 			bootbox.alert("Cannot set questions required while there are unsaved changes");
 		} else {
@@ -2136,7 +2136,6 @@ function updatePulldataView() {
 		pulldata = gTempPulldata,
 		h = [],
 		idx = -1;
-	
 
 	h[++idx] = '<table class="table">';
 	h[++idx] = '<thead>';
@@ -2160,7 +2159,7 @@ function updatePulldataView() {
 			h[++idx] = i;
 			h[++idx] = '" required class="form-control pd_survey" value="';
 			h[++idx] = pulldata[i].survey;
-			h[++idx] = '"';
+			h[++idx] = '">';
 			h[++idx] = '</td>';
 			
 			// Data Key
@@ -2213,6 +2212,8 @@ function updatePulldataView() {
 	h[++idx] = '</table>';
 
 	$selector.empty().append(h.join(''));
+
+    $('input.pd_survey[data-idx="' + (pulldata.length - 1) +'"]' , $selector).focus();
 
 	$(".rm_pulldata", $selector).click(function(){
 		var idx = $(this).data("idx");
