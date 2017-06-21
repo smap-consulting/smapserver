@@ -226,7 +226,7 @@ public class XFormData {
 			 * if it is not there then attempt to use the deviceId passed as a parameter in the submission
 			 */
 			String masterDeviceId = si.getImei();
-			if(masterDeviceId == null || masterDeviceId.trim().length() == 0) {
+			if(masterDeviceId == null || masterDeviceId.trim().length() == 0 || masterDeviceId.equals("deviceid not found")) {
 				masterDeviceId = deviceId;
 				if(masterDeviceId != null && masterDeviceId.startsWith("android_id")) {
 					masterDeviceId = masterDeviceId.substring(11);

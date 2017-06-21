@@ -94,7 +94,7 @@ public class Upload extends Application {
 			@QueryParam("deviceID") String deviceId,
 			@Context HttpServletRequest request) throws IOException {
 		
-		log.info("New submssion");
+		log.info("New submssion from device: " + deviceId);
 		return submission(request, null, null, deviceId);
 	}
 	
@@ -126,7 +126,7 @@ public class Upload extends Application {
 			@QueryParam("deviceID") String deviceId,
 			@PathParam("key") String key) throws IOException {
 		
-		log.info("New submssion with key");
+		log.info("New submssion with key from device: " + deviceId);
 		return submission(request, null, key, deviceId);
 	}
 	
