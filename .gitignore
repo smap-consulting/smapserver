@@ -31,6 +31,7 @@ smapServer/WebContent/build/css.orig
 combined.min.js
 enketo-core.min.js
 smapServer/WebContent/build
+smapServer/WebContent/build/js/webform-bundle.js
 
 smapServer/.idea/
 tasks/.idea/
