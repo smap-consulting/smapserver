@@ -2215,33 +2215,24 @@ function updatePulldataView() {
 
     $('input.pd_survey[data-idx="' + (pulldata.length - 1) +'"]' , $selector).focus();
 
-	$(".rm_pulldata", $selector).click(function(){
-		var idx = $(this).data("idx");
-		gTempPulldata[idx].deleted = true;
-		updatePulldataView();
-	});
-
 	$(".pd_survey", $selector).change(function(){
 		var idx = $(this).data("idx");
 		gTempPulldata[idx].survey = $(this).val();
-		updatePulldataView();
 	});
 	
 	$(".pd_data_key", $selector).change(function(){
 		var idx = $(this).data("idx");
 		gTempPulldata[idx].data_key = $(this).val();
-		updatePulldataView();
 	});
 	
 	$(".pd_repeats", $selector).change(function(){
 		var idx = $(this).data("idx");
 		gTempPulldata[idx].repeats = $(this).prop('checked');
-		updatePulldataView();
 	});
 
     $(".rm_pulldata", $selector).click(function(){
         var idx = $(this).data("idx");
-        gTempPulldata.slice(idx, 1);
+        gTempPulldata.splice(idx, 1);
         updatePulldataView();
     });
 	

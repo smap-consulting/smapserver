@@ -1,8 +1,5 @@
 #!/bin/sh
 
-# Get latest webformsClient
-cp ~/git/webformsClient/public/build/js/webform-combined.min.js WebContent/build/js/webform-combined.min.js
-
 # Minify
 node tools/r.js -o tools/build.js
 
