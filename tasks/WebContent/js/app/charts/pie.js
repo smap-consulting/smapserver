@@ -45,16 +45,16 @@ define([
 
             if(chart.fn === "count") {
                 p = config.graph.addMeasureAxis("p", "count");
-                series = config.graph.addSeries(chart.groupLabels[0], dimple.plot.pie);
+                series = config.graph.addSeries(chart.groupDataNames[0], dimple.plot.pie);
             } else {
 
                 if(chart.groups[0].type === "duration") {
                     p = config.graph.addMeasureAxis("p", "_duration");
-                    series = config.graph.addSeries(chart.groupLabels[1], dimple.plot.pie);
+                    series = config.graph.addSeries(chart.groupDataNames[1], dimple.plot.pie);
 
                 } else {
-                    p = config.graph.addMeasureAxis("p", chart.groupLabels[0]);
-                    series = config.graph.addSeries(chart.groupLabels[1], dimple.plot.pie);
+                    p = config.graph.addMeasureAxis("p", chart.groupDataNames[0]);
+                    series = config.graph.addSeries(chart.groupDataNames[1], dimple.plot.pie);
                 }
             }
 
@@ -68,7 +68,7 @@ define([
                 series.aggregate = dimple.aggregateMethod.sum;
             }
 
-            p.title = chart.dataLabel + " (" + chart.fn + ")";
+            p.title = chart.dataLabels.join(' / ') + " (" + chart.fn + ")";
 
         }
 

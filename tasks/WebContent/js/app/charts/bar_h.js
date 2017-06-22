@@ -53,36 +53,35 @@ define([
                 if(chart.groups[0].type === "duration") {
                     x = config.graph.addMeasureAxis("x", "_duration");
                 } else {
-                    x = config.graph.addMeasureAxis("x", chart.groupLabels[0]);
+                    x = config.graph.addMeasureAxis("x", chart.groupDataNames[0]);
                 }
             }
-            //x = config.graph.addMeasureAxis("x", "count");
 
             if(chart.tSeries) {
-                labels = chart.groupLabels.unshift("date");
+                labels = chart.groupDataNames.unshift("date");
                 y = config.graph.addCategoryAxis("y", ["date", "group"]);
                 y.addOrderRule("Date");
                 config.graph.addSeries("group", dimple.plot.bar);
             } else {
                 if(chart.fn === "count") {
-                    if(chart.groupLabels.length === 1) {
-                        y = config.graph.addCategoryAxis("y", chart.groupLabels[0]);
+                    if(chart.groupDataNames.length === 1) {
+                        y = config.graph.addCategoryAxis("y", chart.groupDataNames[0]);
                         series = config.graph.addSeries(null, dimple.plot.bar);
                     } else {
-                        y = config.graph.addCategoryAxis("y", chart.groupLabels );
-                        series = config.graph.addSeries(chart.groupLabels[1] , dimple.plot.bar);
+                        y = config.graph.addCategoryAxis("y", chart.groupDataNames );
+                        series = config.graph.addSeries(chart.groupDataNames[1] , dimple.plot.bar);
                     }
                 } else {
 
-                    if(chart.groupLabels.length === 1) {
+                    if(chart.groupDataNames.length === 1) {
                         y = config.graph.addCategoryAxis("y", chart.fn);
                         series = config.graph.addSeries(null, dimple.plot.bar);
                     } else {
-                        y = config.graph.addCategoryAxis("y", chart.groupLabels[1]);
-                        series = config.graph.addSeries(chart.groupLabels[1], dimple.plot.bar);
+                        y = config.graph.addCategoryAxis("y", chart.groupDataNames[1]);
+                        series = config.graph.addSeries(chart.groupDataNames[1], dimple.plot.bar);
                     }
                 }
-                //y = config.graph.addCategoryAxis("y", chart.groupLabels[0]);
+                //y = config.graph.addCategoryAxis("y", chart.groupDataNames[0]);
                 //config.graph.addSeries(null, dimple.plot.bar);
             }
 
@@ -96,6 +95,7 @@ define([
                 series.aggregate = dimple.aggregateMethod.sum;
             }
 
+            y.title = chart.dataLabels.join(' / ');
             x.title = localise.set[chart.fn];
 
         }

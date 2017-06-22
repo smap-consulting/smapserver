@@ -295,10 +295,16 @@ define([
         function updateSingleChart(results, chart, clean) {
 
             if (chart.groups) {
-                chart.groupLabels = chart.groups.map(function (e) {
+                chart.groupDataNames = chart.groups.map(function (e) {
+                    return e.name;
+                });
+                chart.dataLabels = chart.groups.map(function (e) {
                     return e.dataLabel;
                 });
+
             }
+
+
 
             var dataLength = results.count();
             var data = processData(results, chart, dataLength);
