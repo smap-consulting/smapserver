@@ -3,7 +3,6 @@ package surveyKPI;
 import java.io.File;
 import java.io.FileInputStream;
 import java.sql.Connection;
-import java.sql.Date;
 import java.util.ArrayList;
 import java.util.UUID;
 import java.util.logging.Level;
@@ -16,11 +15,8 @@ import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
@@ -30,9 +26,8 @@ import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.managers.LogManager;
-import org.smap.sdal.model.ExchangeFile;
+import org.smap.sdal.model.FileDescription;
 
-import utilities.XLSResultsManager;
 import utilities.ExchangeManager;
 
 /*
@@ -104,15 +99,12 @@ public class SurveyExchange extends Application {
 			 */
 			String basePath = GeneralUtilityMethods.getBasePath(request);
 			String filePath = basePath + "/temp/" + String.valueOf(UUID.randomUUID());	// Use a random sequence to keep survey name unique
-			File folder = new File(filePath);
-			folder.mkdir();
-			
-			
+					
 			/*
 			 * Save the XLS export into the folder
 			 */
 			ExchangeManager xm = new ExchangeManager();
-			ArrayList<ExchangeFile> files = xm.createExchangeFiles(
+			ArrayList<FileDescription> files = xm.createExchangeFiles(
 					sd, 
 					connectionResults,
 					request.getRemoteUser(),
@@ -122,30 +114,8 @@ public class SurveyExchange extends Application {
 					superUser);
 			
 			System.out.println("Created "+ files.size() + "  exchange files");
-			/*
-			 * Save the images into the folder
-			 */
-			/*
-			 * Return the zip file
-			 */
-			ZipOutputStream zos = new ZipOutputStream(response.getOutputStream());
-			byte[] buffer = new byte[1024];
-			for(int i = 0; i < files.size(); i++) {
-				ExchangeFile file = files.get(i);
-				ZipEntry ze= new ZipEntry(file.name);
-	    		zos.putNextEntry(ze);
-	    		FileInputStream in = new FileInputStream(file.path);
-	    		
-	    		int len;
-	    		while ((len = in.read(buffer)) > 0) {
-	    			zos.write(buffer, 0, len);
-	    		}
-
-	    		in.close();
-	    		zos.closeEntry();
-			}
-			zos.close();
 			
+			GeneralUtilityMethods.writeFilesToZipOutputStream(response, files);			
 			responseVal = Response.ok("").build();
 			
 		}  catch (Exception e) {

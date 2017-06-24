@@ -3,6 +3,7 @@ package org.smap.sdal.Utilities;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileFilter;
+import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -22,6 +23,8 @@ import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -31,6 +34,7 @@ import org.smap.sdal.managers.RoleManager;
 import org.smap.sdal.managers.SurveyManager;
 import org.smap.sdal.model.ChangeItem;
 import org.smap.sdal.model.ChoiceList;
+import org.smap.sdal.model.FileDescription;
 import org.smap.sdal.model.Form;
 import org.smap.sdal.model.KeyValue;
 import org.smap.sdal.model.KeyValueSimp;
@@ -4302,6 +4306,29 @@ public class GeneralUtilityMethods {
 			niq = true;
 		}
 		return niq;
+	}
+	
+	/*
+	 * Get zip output stream
+	 */
+	public static void writeFilesToZipOutputStream(HttpServletResponse response, ArrayList<FileDescription> files) throws IOException {
+		ZipOutputStream zos = new ZipOutputStream(response.getOutputStream());
+		byte[] buffer = new byte[1024];
+		for(int i = 0; i < files.size(); i++) {
+			FileDescription file = files.get(i);
+			ZipEntry ze= new ZipEntry(file.name);
+    		zos.putNextEntry(ze);
+    		FileInputStream in = new FileInputStream(file.path);
+    		
+    		int len;
+    		while ((len = in.read(buffer)) > 0) {
+    			zos.write(buffer, 0, len);
+    		}
+
+    		in.close();
+    		zos.closeEntry();
+		}
+		zos.close();
 	}
 
 }

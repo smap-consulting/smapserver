@@ -544,8 +544,10 @@ public class UtilityMethodsEmail {
           } else if (extension.equals("xls")) {
           	ct = "application/vnd.ms-excel";
           } else if (extension.equals("geojson")) {
-            	ct = "application/geojson";
-          } else {
+            ct = "application/geojson";
+          }  else if (extension.equals("zip")) {
+          	ct = "application/octet-stream; charset=UTF-8";
+        } else {
           	ct = "application/octet-stream";
           	log.info("	Info: unrecognised content type for extension " + extension);           
           }

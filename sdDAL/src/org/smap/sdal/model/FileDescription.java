@@ -1,10 +1,10 @@
 package org.smap.sdal.model;
 
-public class ExchangeFile {
+public class FileDescription {
 	public String name;
 	public String path;
 	
-	public ExchangeFile(String n, String p) {
+	public FileDescription(String n, String p) {
 		name = n;
 		path = p;
 	}

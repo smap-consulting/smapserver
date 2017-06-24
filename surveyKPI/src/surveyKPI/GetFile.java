@@ -47,6 +47,7 @@ import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.JsonAuthorisationException;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.Utilities.UtilityMethodsEmail;
+import org.smap.sdal.model.FileDescription;
 
 /*
  * Authorises the user and then
@@ -276,12 +277,13 @@ public class GetFile extends Application {
 		
 		File f = new File(filepath);
 		response.setContentType(UtilityMethodsEmail.getContentType(filename));
+			
 		response.addHeader("Content-Disposition", "attachment; filename=" + filename);
 		response.setContentLength((int) f.length());
-		
+			
 		FileInputStream fis = new FileInputStream(f);
 		OutputStream responseOutputStream = response.getOutputStream();
-		
+			
 		int bytes;
 		while ((bytes = fis.read()) != -1) {
 			responseOutputStream.write(bytes);
@@ -289,6 +291,7 @@ public class GetFile extends Application {
 		responseOutputStream.flush();
 		responseOutputStream.close();
 		fis.close();
+
 
 	}
 	

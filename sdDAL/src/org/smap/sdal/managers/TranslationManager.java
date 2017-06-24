@@ -124,7 +124,7 @@ public class TranslationManager {
 					} else if(m.fileName.equals("linked_s_pd_self")) {
 						m.fileName = "linked_s_pd_" + surveyIdent;
 					}
-					if(m.fileName.endsWith(".csv")) {
+					if(m.fileName.endsWith(".csv") || m.fileName.endsWith(".zip")) {
 						m.type = "csv";
 						UtilityMethodsEmail.getFileUrl(m, surveyIdent, m.fileName, basePath, oId, surveyId);
 					} else {
@@ -194,7 +194,7 @@ public class TranslationManager {
 						m.fileName = "linked_s_pd_" + surveyIdent;
 					}
 					
-					if(!m.fileName.endsWith(".csv")) {
+					if(!m.fileName.endsWith(".csv") && !m.fileName.endsWith(".zip")) {
 						m.type = "linked";
 						manifests.add(m);
 					}

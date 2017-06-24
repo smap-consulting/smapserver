@@ -56,7 +56,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.poi.ss.usermodel.*;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.managers.LogManager;
-import org.smap.sdal.model.ExchangeFile;
+import org.smap.sdal.model.FileDescription;
 import org.smap.sdal.model.Option;
 import org.smap.sdal.model.TableColumn;
 
@@ -98,7 +98,7 @@ public class ExchangeManager {
 	
 	HashMap<String, String> surveyNames = null;
 	
-	public ArrayList<ExchangeFile> createExchangeFiles(
+	public ArrayList<FileDescription> createExchangeFiles(
 			Connection sd, 
 			Connection connectionResults,
 			String user,
@@ -109,12 +109,12 @@ public class ExchangeManager {
 		
 		wb = new SXSSFWorkbook(10);
 		Sheet sheet = null;
-		ArrayList<ExchangeFile> files = new ArrayList<ExchangeFile> ();
+		ArrayList<FileDescription> files = new ArrayList<FileDescription> ();
 			
 		String filename = "data.xlsx";
 		String filePath = dirPath + "/" + filename;
 		OutputStream outputStream = new FileOutputStream(dirPath + "/data.xlsx");
-		files.add(new ExchangeFile(filename, filePath));
+		files.add(new FileDescription(filename, filePath));
 		
 		HashMap<String, String> selMultChoiceNames = new HashMap<String, String> ();
 
@@ -826,7 +826,7 @@ public class ExchangeManager {
 			int dateForm,
 			String basePath,
 			String dirPath,
-			ArrayList<ExchangeFile> files) throws Exception {
+			ArrayList<FileDescription> files) throws Exception {
 		
 		StringBuffer sql = new StringBuffer();
 		PreparedStatement pstmt = null;
@@ -926,7 +926,7 @@ public class ExchangeManager {
 							File dest = new File(newPath);
 							try {
 								FileUtils.copyFile(source, dest);				
-								files.add(new ExchangeFile(value, newPath));
+								files.add(new FileDescription(value, newPath));
 							} catch (Exception e) {
 								log.info("Error: Failed to add file " + source + " to exchange export. " + e.getMessage());
 							}
