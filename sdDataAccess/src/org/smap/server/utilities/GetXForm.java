@@ -296,10 +296,12 @@ public class GetXForm {
 						} else {
 							// The text could be an xml fragment
 							try {
-								xfragDoc = builder.parse(new InputSource(
-										new StringReader(trans.getValueXML(template.getQuestionPaths(), 0))));
-								Element rootFrag = xfragDoc.getDocumentElement();
-								addXmlFrag(outputDoc, valueElement, rootFrag);
+								valueElement.setTextContent(trans.getValueXML(template.getQuestionPaths(), 0));
+						
+								//xfragDoc = builder.parse(new InputSource(
+								//		new StringReader(trans.getValueXML(template.getQuestionPaths(), 0))));
+								//Element rootFrag = xfragDoc.getDocumentElement();
+								//addXmlFrag(outputDoc, valueElement, rootFrag);
 							} catch (Exception e) {
 								e.printStackTrace();
 							}

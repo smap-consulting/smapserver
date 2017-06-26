@@ -32,6 +32,9 @@ import java.util.Locale;
 import java.util.ResourceBundle;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -378,6 +381,14 @@ public class WebForm extends Application{
 			GetXForm xForm = new GetXForm();
 			String formXML = xForm.get(template, true);	
 
+			// Escape quotes within <value> elements
+			
+			//formXML = formXML.replaceAll("&lt;", "<");
+			//formXML = formXML.replaceAll("&gt;", ">");
+			formXML = escapeQuotes(formXML);
+			
+			System.out.println("\n\n" + formXML);
+			
 			// If required get the instance data 
 			String instanceXML = null;
 			String instanceStrToEditId = null;
@@ -699,7 +710,12 @@ public class WebForm extends Application{
 		StringBuffer output = new StringBuffer();
 		
 		output.append(openMain(orgId, minimal, serverData, localisation));
-		output.append(transform(request, formXML, "/XSL/openrosa2html5form.xsl"));
+		String transformed = transform(request, formXML, "/XSL/openrosa2html5form.xsl");
+		transformed = transformed.replaceAll("&gt;", ">");
+		transformed = transformed.replaceAll("&lt;", "<");
+		transformed = transformed.replaceAll("&quot;", "<");
+		System.out.println(transformed);
+		output.append(transformed);
 		if(!minimal) {
 			output.append(closeMain(dataToEditId, surveyClass));
 		}
@@ -1051,5 +1067,40 @@ public class WebForm extends Application{
 		return output.toString();
 	}
 
+	/*
+	 * Escape quotes
+	 */
+	private String escapeQuotes(String input) {
+		StringBuffer output = new StringBuffer("");
+		String replaced;
+		
+		Pattern pattern = Pattern.compile("<value>.*<\\/value>");
+		java.util.regex.Matcher matcher = pattern.matcher(input);
+		int start = 0;
+		while (matcher.find()) {
+			
+			String matched = matcher.group();
+			replaced = matched.replaceAll("\"", "&quot;");
+			
+			// Add any text before the match
+			int startOfGroup = matcher.start();
+			String initial = input.substring(start, startOfGroup).trim();
+			
+			output.append(initial);
+			output.append(replaced);
+
+			// Reset the start
+			start = matcher.end();
+						
+		}
+		
+		// Get the remainder of the string
+		if(start < input.length()) {
+			replaced = input.substring(start).trim();
+			output.append(replaced);
+		}
+		
+		return output.toString();
+	}
 }
 

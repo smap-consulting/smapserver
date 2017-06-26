@@ -86,9 +86,10 @@ public class Translation implements Serializable{
 		return value;
 	}
 	
-	// Return the value embedded in markup
+	// Return the value with XLS names converted into paths
 	public String getValueXML(HashMap<String, String> questionPaths, int f_id) throws Exception {
-		return "<t>" + UtilityMethods.convertAllxlsNames(value, true, questionPaths, f_id) + "</t>";
+		//return "<t>" + UtilityMethods.convertAllxlsNames(value, true, questionPaths, f_id) + "</t>";
+		return UtilityMethods.convertAllxlsNames(value, true, questionPaths, f_id);
 	}
 	
 	public boolean getEnabled() {
@@ -119,6 +120,9 @@ public class Translation implements Serializable{
 	}
 	
 	public void setValue(String value) {
+		// Remove any escaping of XML if this came from an xForm
+		value = value.replaceAll("&lt;", "<");
+		value = value.replaceAll("&gt;", ">");
 		this.value = value;
 	}
 	
