@@ -1,5 +1,6 @@
 package org.smap.server.utilities;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -137,10 +138,11 @@ public class UtilityMethods {
 			HashMap<String, String> questionPaths,
 			int f_id) throws Exception {
 		
+		String frag = null;
+		
 		if(input == null) {
 			return input;
 		}
-		
 		
 		StringBuffer output = new StringBuffer("");
 		
@@ -154,7 +156,10 @@ public class UtilityMethods {
 			
 			// Add any text before the match
 			int startOfGroup = matcher.start();
-			output.append(input.substring(start, startOfGroup));
+			frag = input.substring(start, startOfGroup);
+			frag = frag.replaceAll("<", "&lt;");	// Escape angled brackets
+			frag = frag.replaceAll(">", "&gt;");	// Escape angled brackets
+			output.append(frag);
 			
 			// If for a label, add the wrapping html
 			if(forLabel) {
@@ -209,7 +214,10 @@ public class UtilityMethods {
 		
 		// Get the remainder of the string
 		if(start < input.length()) {
-			output.append(input.substring(start));		
+			frag = input.substring(start);
+			frag = frag.replaceAll("<", "&lt;");	// Escape angled brackets
+			frag = frag.replaceAll(">", "&gt;");	// Escape angled brackets
+			output.append(frag);	
 		}
 		
 		return output.toString().trim();

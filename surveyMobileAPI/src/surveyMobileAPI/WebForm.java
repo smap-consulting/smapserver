@@ -382,12 +382,8 @@ public class WebForm extends Application{
 			String formXML = xForm.get(template, true);	
 
 			// Escape quotes within <value> elements
-			
-			//formXML = formXML.replaceAll("&lt;", "<");
-			//formXML = formXML.replaceAll("&gt;", ">");
 			formXML = escapeQuotes(formXML);
-			
-			System.out.println("\n\n" + formXML);
+			formXML = unescapeEmoji(formXML);
 			
 			// If required get the instance data 
 			String instanceXML = null;
@@ -1081,6 +1077,43 @@ public class WebForm extends Application{
 			
 			String matched = matcher.group();
 			replaced = matched.replaceAll("\"", "&quot;");
+			
+			// Add any text before the match
+			int startOfGroup = matcher.start();
+			String initial = input.substring(start, startOfGroup).trim();
+			
+			output.append(initial);
+			output.append(replaced);
+
+			// Reset the start
+			start = matcher.end();
+						
+		}
+		
+		// Get the remainder of the string
+		if(start < input.length()) {
+			replaced = input.substring(start).trim();
+			output.append(replaced);
+		}
+		
+		return output.toString();
+	}
+	
+	/*
+	 * Remove escaping on hex values (emoji)
+	 */
+	private String unescapeEmoji(String input) {
+		StringBuffer output = new StringBuffer("");
+		String replaced;
+		
+		Pattern pattern = Pattern.compile("&#[0-9]*;");
+		java.util.regex.Matcher matcher = pattern.matcher(input);
+		int start = 0;
+		while (matcher.find()) {
+			
+			String matched = matcher.group();
+			replaced = matched.replaceAll("&#", "");
+			replaced = replaced.replaceAll(";", " ");
 			
 			// Add any text before the match
 			int startOfGroup = matcher.start();
