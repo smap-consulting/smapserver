@@ -15,6 +15,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
@@ -32,6 +33,7 @@ import org.smap.sdal.model.User;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
+import com.itextpdf.text.Anchor;
 import com.itextpdf.text.BadElementException;
 import com.itextpdf.text.BaseColor;
 import com.itextpdf.text.Chunk;
@@ -39,6 +41,7 @@ import com.itextpdf.text.Document;
 import com.itextpdf.text.DocumentException;
 import com.itextpdf.text.Element;
 import com.itextpdf.text.Font;
+import com.itextpdf.text.Font.FontFamily;
 import com.itextpdf.text.FontFactory;
 import com.itextpdf.text.Image;
 import com.itextpdf.text.List;
@@ -100,6 +103,7 @@ public class PDFSurveyManager {
 	public static Font Symbols = null;
 	public static Font defaultFont = null;
 	public static Font defaultFontBold = null;
+	public static Font defaultFontLink = null;
 	public static Font arabicFont = null;
 	public static Font bengaliFont = null;
 	public static Font bengaliFontBold = null;
@@ -142,6 +146,7 @@ public class PDFSurveyManager {
 			Connection cResults,
 			OutputStream outputStream,
 			String basePath, 
+			String serverRoot,
 			String remoteUser,
 			String language, 
 			org.smap.sdal.model.Survey survey,
@@ -157,6 +162,7 @@ public class PDFSurveyManager {
 			language = "none";
 		}
 		
+	
 		User user = null;
 		
 		ServerManager serverManager = new ServerManager();
@@ -202,6 +208,7 @@ public class PDFSurveyManager {
 			bengaliFontBold = FontFactory.getFont("bengalibold", BaseFont.IDENTITY_H, 
 				    BaseFont.EMBEDDED, 10); 
 			
+			defaultFontLink = new Font(FontFamily.HELVETICA, 10, Font.UNDERLINE, BaseColor.BLUE);
 			/*
 			 * Get the results and details of the user that submitted the survey
 			 */
@@ -309,7 +316,11 @@ public class PDFSurveyManager {
 				}
 				
 				for(int i = 0; i < survey.instance.results.size(); i++) {
-					processForm(sd, parser, document, survey.instance.results.get(i), survey, basePath, 
+					processForm(
+							sd, parser, document, survey.instance.results.get(i), 
+							survey, 
+							basePath, 
+							serverRoot,
 							languageIdx,
 							generateBlank,
 							0,
@@ -328,7 +339,10 @@ public class PDFSurveyManager {
 					document.add(new Paragraph("Appendix", defaultFontBold));
 					
 					for(int i = 0; i < survey.instance.results.size(); i++) {
-						processForm(sd, parser, document, survey.instance.results.get(i), survey, basePath, 
+						processForm(
+								sd, parser, document, survey.instance.results.get(i), survey, 
+								basePath, 
+								serverRoot,
 								languageIdx,
 								generateBlank,
 								0,
@@ -677,6 +691,7 @@ public class PDFSurveyManager {
 			ArrayList<Result> record,
 			org.smap.sdal.model.Survey survey,
 			String basePath,
+			String serverRoot,
 			int languageIdx,
 			boolean generateBlank,
 			int depth,
@@ -702,7 +717,13 @@ public class PDFSurveyManager {
 					int blankRepeats = getBlankRepeats(r.appearance);
 					for(int k = 0; k < blankRepeats; k++) {
 						repIndexes[depth] = k;
-						processForm(sd, parser, document, r.subForm.get(0), survey, basePath, languageIdx, 
+						processForm(
+								sd, 
+								parser, 
+								document, r.subForm.get(0), survey, 
+								basePath, 
+								serverRoot,
+								languageIdx, 
 								generateBlank, 
 								depth + 1,
 								k,
@@ -716,7 +737,11 @@ public class PDFSurveyManager {
 						// Maintain array list of parent records in order to look up ${values}
 						parentRecords.add(0, record);		// Push this record in at the beginning of the list as we want to search most recent first
 						repIndexes[depth] = k;
-						processForm(sd, parser, document, r.subForm.get(k), survey, basePath, languageIdx, 
+						processForm(
+								sd, parser, document, r.subForm.get(k), survey, 
+								basePath, 
+								serverRoot,
+								languageIdx, 
 								generateBlank, 
 								depth + 1,
 								k,
@@ -741,7 +766,13 @@ public class PDFSurveyManager {
 						//ignore
 					} else {
 						Row row = prepareRow(record, survey, j, languageIdx, gv, length, appendix, parentRecords);
-						PdfPTable newTable = processRow(sd, parser, row, basePath, generateBlank, depth, repIndexes, gv);
+						PdfPTable newTable = processRow(
+								sd, 
+								parser, 
+								row, 
+								basePath, 
+								serverRoot,
+								generateBlank, depth, repIndexes, gv);
 						
 						newTable.setWidthPercentage(100);
 				        
@@ -823,10 +854,12 @@ public class PDFSurveyManager {
 	/*
 	 * Add the table row to the document
 	 */
-	PdfPTable processRow(Connection sd, 
+	PdfPTable processRow(
+			Connection sd, 
 			Parser parser, 
 			Row row, 
 			String basePath,
+			String serverRoot,
 			boolean generateBlank,
 			int depth,
 			int[] repIndexes,
@@ -848,7 +881,7 @@ public class PDFSurveyManager {
 		int numberItems = row.items.size();
 		for(DisplayItem di : row.items) {
 
-			PdfPCell cell = new PdfPCell(addDisplayItem(sd, parser, di, basePath, generateBlank, gv));
+			PdfPCell cell = new PdfPCell(addDisplayItem(sd, parser, di, basePath, serverRoot, generateBlank, gv));
 			//cell.addElement(addDisplayItem(parser, di, basePath, generateBlank, gv));
 			cell.setBorderColor(BaseColor.LIGHT_GRAY);
 			
@@ -1132,10 +1165,12 @@ public class PDFSurveyManager {
 						di.map = getAppValue(appValues[i]);
 					} else if(appValues[i].startsWith("pdflocation")) {
 						di.location = getAppValue(appValues[i]);			// lon,lat,zoom
-					} else if(appValues[i].startsWith("pdfbarcode")) {
+					} else if(appValues[i].toLowerCase().startsWith("pdfbarcode")) {
 						di.isBarcode = true;		
-					} else if(appValues[i].startsWith("pdfzoom")) {
+					} else if(appValues[i].toLowerCase().startsWith("pdfzoom")) {
 						di.zoom = getAppValue(appValues[i]);		
+					} else if(appValues[i].toLowerCase().startsWith("pdfhyperlink")) {
+						di.isHyperlink = true;		
 					}
 				}
 			}
@@ -1254,10 +1289,12 @@ public class PDFSurveyManager {
 	/*
 	 * Add the question label, hint, and any media
 	 */
-	private PdfPTable addDisplayItem(Connection sd,
+	private PdfPTable addDisplayItem(
+			Connection sd,
 			Parser parser, 
 			DisplayItem di, 
 			String basePath,
+			String serverRoot,
 			boolean generateBlank,
 			GlobalVariables gv) throws BadElementException, MalformedURLException, IOException {
 		
@@ -1326,7 +1363,7 @@ public class PDFSurveyManager {
 		
 		// Set the content of the value cell
 		try {
-			updateValueCell(sd, valueCell, di, generateBlank, basePath, gv);
+			updateValueCell(sd, valueCell, di, generateBlank, basePath, serverRoot, gv);
 		} catch (Exception e) {
 			log.info("Error updating value cell, continuing: " + basePath + " : " + di.value);
 			log.log(Level.SEVERE, "Exception", e);
@@ -1365,11 +1402,13 @@ public class PDFSurveyManager {
 	/*
 	 * Set the contents of the value cell
 	 */
-	private void updateValueCell(Connection sd,
+	private void updateValueCell(
+			Connection sd,
 			PdfPCell valueCell, 
 			DisplayItem di, 
 			boolean generateBlank, 
 			String basePath,
+			String serverRoot,
 			GlobalVariables gv
 			) throws BadElementException, MalformedURLException, IOException, SQLException {
 		
@@ -1380,12 +1419,19 @@ public class PDFSurveyManager {
 			processSelect(valueCell, di, generateBlank, gv);
 		} else if (di.type.equals("image")) {
 			if(di.value != null && !di.value.trim().equals("") && !di.value.trim().equals("Unknown")) {
-				try {
-					Image img = Image.getInstance(basePath + "/" + di.value);
-					valueCell.addElement(img);
-				} catch(Exception e) {
-					log.info("Error: image " + basePath + "/" + di.value + " not added: " + e.getMessage());
-					log.log(Level.SEVERE, "Adding image to pdf", e);
+				if(di.isHyperlink) {
+					Anchor anchor = new Anchor(serverRoot + di.value);
+					anchor.setReference(serverRoot + di.value);
+					          
+					valueCell.addElement(getPara("", di, gv, deps, anchor));
+				} else {
+					try {
+						Image img = Image.getInstance(basePath + "/" + di.value);
+						valueCell.addElement(img);
+					} catch(Exception e) {
+						log.info("Error: image " + basePath + "/" + di.value + " not added: " + e.getMessage());
+						log.log(Level.SEVERE, "Adding image to pdf", e);
+					}
 				}
 
 			} else {
@@ -1399,7 +1445,7 @@ public class PDFSurveyManager {
 			if(img != null) {
 				valueCell.addElement(img);
 			} else {
-				valueCell.addElement(getPara(" ", di, gv, deps));
+				valueCell.addElement(getPara(" ", di, gv, deps, null));
 			}
 		} else if(di.isBarcode) { 
 			BarcodeQRCode qrcode = new BarcodeQRCode(di.value.trim(), 1, 1, null);
@@ -1419,14 +1465,14 @@ public class PDFSurveyManager {
 					}
 				}
 			}
-			valueCell.addElement(getPara(di.value, di, gv, deps));
+			valueCell.addElement(getPara(di.value, di, gv, deps, null));
 
 		}
 		
 
 	}
 	
-	private Paragraph getPara(String value, DisplayItem di, GlobalVariables gv, ArrayList<String> deps) {
+	private Paragraph getPara(String value, DisplayItem di, GlobalVariables gv, ArrayList<String> deps, Anchor anchor) {
 		
 		boolean hasContent = false;
 		Font f = null;
@@ -1461,6 +1507,11 @@ public class PDFSurveyManager {
 				}
 				
 			}
+		}
+		if(anchor != null) {
+			para.setFont(defaultFontLink);
+			para.add(anchor);
+			para.setFont(defaultFontLink);
 		}
 		return para;
 	}
@@ -1557,7 +1608,7 @@ public class PDFSurveyManager {
 			if(GeneralUtilityMethods.isRtlLanguage(stringValue)) {
 				cell.setRunDirection(PdfWriter.RUN_DIRECTION_RTL);
 			}
-			cell.addElement(getPara(stringValue, di, gv, deps));
+			cell.addElement(getPara(stringValue, di, gv, deps, null));
 		}
 
 	}
@@ -1659,6 +1710,7 @@ public class PDFSurveyManager {
 			document.add(para);
 		}
 	}
+	
 }
 
 

@@ -29,6 +29,7 @@ public class DisplayItem {
 	public String location;
 	public String zoom;					// Map zoom
 	public boolean isBarcode = false;
+	public boolean isHyperlink = false;
 	
 	public void debug() {
 		System.out.println("======== Display Item:   width: " + width + "   value: " + value + " text: " + text + " : " + type  );

@@ -110,11 +110,13 @@ public class CreatePDF extends Application {
 			survey = sm.getById(connectionSD, cResults, request.getRemoteUser(), sId, true, basePath, 
 					instanceId, true, generateBlank, true, false, true, "real", superUser, utcOffset, "geojson");
 			
+			String urlprefix = request.getScheme() + "://" + request.getServerName() + "/";
 			pm.createPdf(
 					connectionSD,
 					cResults,
 					response.getOutputStream(),
 					basePath, 
+					urlprefix,
 					request.getRemoteUser(),
 					language, 
 					survey,

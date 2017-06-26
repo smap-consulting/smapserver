@@ -285,9 +285,9 @@ public class SubRelationalDB extends Subscriber {
 				ident = rs.getString(1);
 				instanceId = rs.getString(2);
 				pId = rs.getInt(3);
-			
-			
+					
 				// Apply notifications
+				String urlprefix = "https://" + server + "/";
 				NotificationManager fm = new NotificationManager();
 				fm.notifyForSubmission(
 						sd, 
@@ -300,6 +300,7 @@ public class SubRelationalDB extends Subscriber {
 						"https",
 						server,
 						gBasePath,
+						urlprefix,
 						sId,
 						ident,
 						instanceId,

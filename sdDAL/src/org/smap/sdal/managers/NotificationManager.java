@@ -18,6 +18,8 @@ import java.util.logging.Logger;
 
 import javax.mail.internet.AddressException;
 import javax.mail.internet.InternetAddress;
+import javax.servlet.http.HttpServletRequest;
+
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.UtilityMethodsEmail;
 import org.smap.sdal.model.EmailServer;
@@ -300,6 +302,7 @@ public class NotificationManager {
 			String scheme,
 			String serverName,
 			String basePath,
+			String serverRoot,
 			int sId,
 			String ident,
 			String instanceId,
@@ -431,6 +434,7 @@ public class NotificationManager {
 							cResults,
 							outputStream,
 							basePath, 
+							serverRoot,
 							remoteUser,
 							"none", 
 							survey, 
