@@ -30,7 +30,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -140,6 +141,13 @@ public class MediaInfo {
 		if(folder != null) {
 			log.info("MediaInfo: Getting files from folder: " + folder);
 			ArrayList <File> files = new ArrayList<File> (FileUtils.listFiles(folder, FileFilterUtils.fileFileFilter(), null));
+			
+			// Sort the files alphabetically
+			Collections.sort( files, new Comparator<File>() {
+			    public int compare( File a, File b ) {
+			    	return a.getName().toLowerCase().compareTo(b.getName().toLowerCase());
+			    }
+			} );
 			
 			for(int i = 0; i < files.size(); i++) {
 				MediaItem mi = new MediaItem();
