@@ -707,10 +707,10 @@ public class WebForm extends Application{
 		
 		output.append(openMain(orgId, minimal, serverData, localisation));
 		String transformed = transform(request, formXML, "/XSL/openrosa2html5form.xsl");
+		// Convert escaped XML into HTML
 		transformed = transformed.replaceAll("&gt;", ">");
 		transformed = transformed.replaceAll("&lt;", "<");
-		transformed = transformed.replaceAll("&quot;", "<");
-		System.out.println(transformed);
+		transformed = transformed.replaceAll("&quot;", "\"");
 		output.append(transformed);
 		if(!minimal) {
 			output.append(closeMain(dataToEditId, surveyClass));
@@ -1068,32 +1068,58 @@ public class WebForm extends Application{
 	 */
 	private String escapeQuotes(String input) {
 		StringBuffer output = new StringBuffer("");
-		String replaced;
+		String txt;
 		
 		Pattern pattern = Pattern.compile("<value>.*<\\/value>");
+		Pattern patternOutput = Pattern.compile("<output.*\\/>");
 		java.util.regex.Matcher matcher = pattern.matcher(input);
 		int start = 0;
 		while (matcher.find()) {
 			
 			String matched = matcher.group();
-			replaced = matched.replaceAll("\"", "&quot;");
 			
 			// Add any text before the match
 			int startOfGroup = matcher.start();
-			String initial = input.substring(start, startOfGroup).trim();
+			txt = input.substring(start, startOfGroup);			
+			output.append(txt);
+			start = startOfGroup;
 			
-			output.append(initial);
-			output.append(replaced);
+			/*
+			 * Add the matched section inside a value
+			 * Escape all quotes except those inside an output
+			 */
+			java.util.regex.Matcher matcherOutput = patternOutput.matcher(matched);		// Skip over output definitions			
+			while(matcherOutput.find()) {
+				
+				String matchedOutput = matcherOutput.group();
+				
+				// Add text up to the output escaping quotes
+				int startOfOutputGroup = matcherOutput.start();
+				txt = input.substring(start, start + startOfOutputGroup).replaceAll("\"", "&quot;");
+				output.append(txt);
+				
+				// Add the matched output
+				output.append(matchedOutput);
+			
+				start = start + matcherOutput.end();
+				
+			}
+			
+			// Get the remainder of the string inside the value element
+			if(start < input.length()) {
+				txt = input.substring(start, matcher.end()).replaceAll("\"", "&quot;");
+				output.append(txt);
+			}
 
 			// Reset the start
 			start = matcher.end();
 						
 		}
 		
-		// Get the remainder of the string
+		// Get the remainder of the string outside of the value element
 		if(start < input.length()) {
-			replaced = input.substring(start).trim();
-			output.append(replaced);
+			txt = input.substring(start);
+			output.append(txt);
 		}
 		
 		return output.toString();
