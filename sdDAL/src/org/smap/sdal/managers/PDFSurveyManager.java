@@ -97,6 +97,8 @@ public class PDFSurveyManager {
 	private static Logger log =
 			 Logger.getLogger(PDFSurveyManager.class.getName());
 	
+	LogManager lm = new LogManager();		// Application log
+	
 	public static Font Symbols = null;
 	public static Font defaultFont = null;
 	public static Font defaultFontBold = null;
@@ -214,7 +216,7 @@ public class PDFSurveyManager {
 			if(userName != null) {
 				user = um.getByIdent(sd, userName);
 			}
-				
+			
 			// If a filename was not specified then get one from the survey data
 			// This filename is returned to the calling program so that it can be used as a permanent name for the temporary file created here
 			// If the PDF is to be returned in an http response then the header is set now before writing to the output stream
@@ -317,7 +319,8 @@ public class PDFSurveyManager {
 							repIndexes,
 							gv,
 							false,
-							parentRecords);		
+							parentRecords,
+							remoteUser);		
 				}
 				
 				fillNonTemplateUserDetails(document, user, basePath);
@@ -336,7 +339,8 @@ public class PDFSurveyManager {
 								repIndexes,
 								gv,
 								true, 
-								parentRecords);		
+								parentRecords,
+								remoteUser);		
 					}
 				}
 				
@@ -684,7 +688,8 @@ public class PDFSurveyManager {
 			int[] repIndexes,
 			GlobalVariables gv,
 			boolean appendix,
-			ArrayList<ArrayList<Result>> parentRecords) throws DocumentException, IOException {
+			ArrayList<ArrayList<Result>> parentRecords,
+			String remoteUser) throws DocumentException, IOException {
 		
 		// Check that the depth of repeats hasn't exceeded the maximum
 		if(depth > repIndexes.length - 1) {
@@ -709,7 +714,8 @@ public class PDFSurveyManager {
 								repIndexes,
 								gv,
 								appendix,
-								null);
+								null,
+								remoteUser);
 					}
 				} else {
 					for(int k = 0; k < r.subForm.size(); k++) {
@@ -723,7 +729,8 @@ public class PDFSurveyManager {
 								repIndexes,
 								gv,
 								appendix,
-								parentRecords);
+								parentRecords,
+								remoteUser);
 					} 
 				}
 			} else if(r.qIdx >= 0) {
@@ -741,7 +748,15 @@ public class PDFSurveyManager {
 						//ignore
 					} else {
 						Row row = prepareRow(record, survey, j, languageIdx, gv, length, appendix, parentRecords);
-						PdfPTable newTable = processRow(sd, parser, row, basePath, generateBlank, depth, repIndexes, gv);
+						PdfPTable newTable = processRow(sd, 
+								parser, 
+								row, basePath, 
+								generateBlank, 
+								depth, 
+								repIndexes, 
+								gv, 
+								remoteUser,
+								survey);
 						
 						newTable.setWidthPercentage(100);
 				        
@@ -830,7 +845,9 @@ public class PDFSurveyManager {
 			boolean generateBlank,
 			int depth,
 			int[] repIndexes,
-			GlobalVariables gv) throws BadElementException, MalformedURLException, IOException {
+			GlobalVariables gv,
+			String remoteUser,
+			org.smap.sdal.model.Survey survey) throws BadElementException, MalformedURLException, IOException {
 
 		PdfPTable table = new PdfPTable(depth + NUMBER_TABLE_COLS);	// Add a column for each level of repeats so that the repeat number can be shown
 		
@@ -848,7 +865,7 @@ public class PDFSurveyManager {
 		int numberItems = row.items.size();
 		for(DisplayItem di : row.items) {
 
-			PdfPCell cell = new PdfPCell(addDisplayItem(sd, parser, di, basePath, generateBlank, gv));
+			PdfPCell cell = new PdfPCell(addDisplayItem(sd, parser, di, basePath, generateBlank, gv, remoteUser, survey));
 			//cell.addElement(addDisplayItem(parser, di, basePath, generateBlank, gv));
 			cell.setBorderColor(BaseColor.LIGHT_GRAY);
 			
@@ -1259,7 +1276,9 @@ public class PDFSurveyManager {
 			DisplayItem di, 
 			String basePath,
 			boolean generateBlank,
-			GlobalVariables gv) throws BadElementException, MalformedURLException, IOException {
+			GlobalVariables gv,
+			String remoteUser,
+			org.smap.sdal.model.Survey survey) throws BadElementException, MalformedURLException, IOException {
 		
 		PdfPCell labelCell = new PdfPCell();
 		PdfPCell valueCell = new PdfPCell();
@@ -1310,7 +1329,14 @@ public class PDFSurveyManager {
 		}
 		
 		parser.elements.clear();
-		parser.xmlParser.parse(new StringReader(html.toString()));
+		try {
+			parser.xmlParser.parse(new StringReader(html.toString()));
+		} catch (Exception e) {
+			log.info("Error parsing: " + html.toString() + " : " + e.getMessage());
+			lm.writeLog(sd, survey.getId(), remoteUser, "error", e.getMessage() + " for: " + html.toString());
+			throw e;
+		}
+		
 		for(Element element : parser.elements) {
 			if(textValue != null && textValue.length() > 0) {
 				if(GeneralUtilityMethods.isRtlLanguage(textValue)) {
