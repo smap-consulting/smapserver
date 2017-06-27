@@ -20,6 +20,7 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 package org.smap.server.entities;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.HashMap;
 
 import org.smap.server.utilities.UtilityMethods;
@@ -86,9 +87,24 @@ public class Translation implements Serializable{
 		return value;
 	}
 	
-	// Return the value embedded in markup
+	// Return the value with XLS names converted into paths
 	public String getValueXML(HashMap<String, String> questionPaths, int f_id) throws Exception {
-		return "<t>" + UtilityMethods.convertAllxlsNames(value, true, questionPaths, f_id) + "</t>";
+		
+		/*
+		 * Do our own escaping here
+		 * This method should only be called for labels where the output is stored as content inside an
+		 * XML element. That is not an attribute so we should only need to escape <>&
+		 * The reason for doing this is that ${xlsname} elements are written without escaping whereas all 
+		 * styling elements need to be escaped for use in odk.  Hence we escape before converting the xls name to an 
+		 * output element.
+		 */
+		String frag = value;
+		frag = frag.replaceAll("&", "&amp;");	// Escape angled brackets
+		frag = frag.replaceAll("<", "&lt;");	// Escape angled brackets
+		frag = frag.replaceAll(">", "&gt;");	// Escape angled brackets
+
+		return "<t>" + UtilityMethods.convertAllxlsNames(frag, true, questionPaths, f_id) + "</t>";
+	
 	}
 	
 	public boolean getEnabled() {
@@ -119,6 +135,9 @@ public class Translation implements Serializable{
 	}
 	
 	public void setValue(String value) {
+		// Remove any escaping of XML if this came from an xForm
+		value = value.replaceAll("&lt;", "<");
+		value = value.replaceAll("&gt;", ">");
 		this.value = value;
 	}
 	

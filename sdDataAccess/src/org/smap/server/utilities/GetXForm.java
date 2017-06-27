@@ -296,10 +296,13 @@ public class GetXForm {
 						} else {
 							// The text could be an xml fragment
 							try {
-								xfragDoc = builder.parse(new InputSource(
-										new StringReader(trans.getValueXML(template.getQuestionPaths(), 0))));
+								
+								String v = trans.getValueXML(template.getQuestionPaths(), 0);
+								//valueElement.setTextContent(v);
+								xfragDoc = builder.parse(new InputSource(new StringReader(v)));
 								Element rootFrag = xfragDoc.getDocumentElement();
-								addXmlFrag(outputDoc, valueElement, rootFrag);
+								addXmlFrag(outputDoc, valueElement, rootFrag);				
+								
 							} catch (Exception e) {
 								e.printStackTrace();
 							}
@@ -1545,6 +1548,9 @@ public class GetXForm {
     				String escValue = item.value;
     				if(isWebForms && item.value != null) {
     					escValue = item.value.replace("'", "\\\'");
+    				}
+    				if(!escValue.equals(item.value)) {
+    					System.out.println("Escaped: " + item.value);
     				}
     				childElement.setTextContent(escValue);
         			currentParent.appendChild(childElement);

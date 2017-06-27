@@ -1098,13 +1098,6 @@ public class SurveyTemplate {
 					for(int i = 0; i < dummyTranslations.size(); i++) {
 						Translation trans = dummyTranslations.elementAt(i);
 						tm.write(sId, languages[langIndex], trans.getTextId(), "none", trans.getValue());
-						
-						// Need to copy the translation as there will be one Translation object for every language and we don't want to overwrite
-						//Translation trans = new Translation(dummyTranslations.elementAt(i));
-						//trans.setSurveyId(survey.getId());
-						//trans.setLanguage(languages[langIndex]);
-						//trans.setType("none");	// Default dummy translations to a type of "none"
-						//tPersist.persist(trans);
 					}
 				}
 			} else {
@@ -1113,10 +1106,6 @@ public class SurveyTemplate {
 					Translation trans = dummyTranslations.elementAt(i);
 					tm.write(sId, "default", trans.getTextId(), "none", trans.getValue());
 					
-					//trans.setSurveyId(survey.getId());
-					//trans.setLanguage("default");
-					//trans.setType("none");	// Default dummy translations to a type of "none"
-					//tPersist.persist(trans);
 				}
 			}
 			
