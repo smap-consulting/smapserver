@@ -32,6 +32,9 @@ import java.util.Locale;
 import java.util.ResourceBundle;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -378,6 +381,10 @@ public class WebForm extends Application{
 			GetXForm xForm = new GetXForm();
 			String formXML = xForm.get(template, true);	
 
+			// Escape quotes within <value> elements
+			formXML = escapeQuotes(formXML);
+			formXML = unescapeEmoji(formXML);
+			
 			// If required get the instance data 
 			String instanceXML = null;
 			String instanceStrToEditId = null;
@@ -699,7 +706,12 @@ public class WebForm extends Application{
 		StringBuffer output = new StringBuffer();
 		
 		output.append(openMain(orgId, minimal, serverData, localisation));
-		output.append(transform(request, formXML, "/XSL/openrosa2html5form.xsl"));
+		String transformed = transform(request, formXML, "/XSL/openrosa2html5form.xsl");
+		// Convert escaped XML into HTML
+		transformed = transformed.replaceAll("&gt;", ">");
+		transformed = transformed.replaceAll("&lt;", "<");
+		transformed = transformed.replaceAll("&quot;", "\"");
+		output.append(transformed);
 		if(!minimal) {
 			output.append(closeMain(dataToEditId, surveyClass));
 		}
@@ -1051,5 +1063,103 @@ public class WebForm extends Application{
 		return output.toString();
 	}
 
+	/*
+	 * Escape quotes
+	 */
+	private String escapeQuotes(String input) {
+		StringBuffer output = new StringBuffer("");
+		String txt;
+		
+		Pattern pattern = Pattern.compile("<value>.*<\\/value>");
+		Pattern patternOutput = Pattern.compile("<output.*\\/>");
+		java.util.regex.Matcher matcher = pattern.matcher(input);
+		int start = 0;
+		while (matcher.find()) {
+			
+			String matched = matcher.group();
+			
+			// Add any text before the match
+			int startOfGroup = matcher.start();
+			txt = input.substring(start, startOfGroup);			
+			output.append(txt);
+			start = startOfGroup;
+			
+			/*
+			 * Add the matched section inside a value
+			 * Escape all quotes except those inside an output
+			 */
+			java.util.regex.Matcher matcherOutput = patternOutput.matcher(matched);		// Skip over output definitions			
+			while(matcherOutput.find()) {
+				
+				String matchedOutput = matcherOutput.group();
+				
+				// Add text up to the output escaping quotes
+				int startOfOutputGroup = matcherOutput.start();
+				txt = input.substring(start, start + startOfOutputGroup).replaceAll("\"", "&quot;");
+				output.append(txt);
+				
+				// Add the matched output
+				output.append(matchedOutput);
+			
+				start = start + matcherOutput.end();
+				
+			}
+			
+			// Get the remainder of the string inside the value element
+			if(start < input.length()) {
+				txt = input.substring(start, matcher.end()).replaceAll("\"", "&quot;");
+				output.append(txt);
+			}
+
+			// Reset the start
+			start = matcher.end();
+						
+		}
+		
+		// Get the remainder of the string outside of the value element
+		if(start < input.length()) {
+			txt = input.substring(start);
+			output.append(txt);
+		}
+		
+		return output.toString();
+	}
+	
+	/*
+	 * Remove escaping on hex values (emoji)
+	 */
+	private String unescapeEmoji(String input) {
+		StringBuffer output = new StringBuffer("");
+		String replaced;
+		
+		Pattern pattern = Pattern.compile("&#[0-9]*;");
+		java.util.regex.Matcher matcher = pattern.matcher(input);
+		int start = 0;
+		while (matcher.find()) {
+			
+			String matched = matcher.group();
+			replaced = matched.replaceAll("&#", "");
+			replaced = replaced.replaceAll(";", " ");
+			
+			// Add any text before the match
+			int startOfGroup = matcher.start();
+			String initial = input.substring(start, startOfGroup).trim();
+			
+			output.append(initial);
+			output.append(replaced);
+
+			// Reset the start
+			start = matcher.end();
+						
+		}
+		
+		// Get the remainder of the string
+		if(start < input.length()) {
+			replaced = input.substring(start).trim();
+			output.append(replaced);
+		}
+		
+		return output.toString();
+	}
 }
 

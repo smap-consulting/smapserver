@@ -141,7 +141,6 @@ public class UtilityMethods {
 			return input;
 		}
 		
-		
 		StringBuffer output = new StringBuffer("");
 		
 		Pattern pattern = Pattern.compile("\\$\\{.+?\\}");
@@ -209,7 +208,7 @@ public class UtilityMethods {
 		
 		// Get the remainder of the string
 		if(start < input.length()) {
-			output.append(input.substring(start));		
+			output.append(input.substring(start));	
 		}
 		
 		return output.toString().trim();

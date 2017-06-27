@@ -428,8 +428,8 @@ function setExportControls() {
 		$('.showshape,.showspreadsheet,.showxls,.showthingsat,.showtrail, .showmedia, .showlqas, .showquery, .selectquery').hide();
 		$('.showosm,.showro,.showlang, selectsurvey').show();
 	} else if(format === "shape" || format === "kml" || format === "vrt" || format === "csv") {
-		$('.showspreadsheet,.showxls,.showosm,.showthingsat, .showmedia, .showlqas').hide();
-		$('.showshape,.showro,.showlang, .showquery').show();
+		$('.showspreadsheet,.showxls,.showosm,.showthingsat, .showmedia, .showlqas, .showquery, .selectquery').hide();
+		$('.showshape,.showro,.showlang, .selectsurvey').show();
 	} else if(format === "stata" || format === "spss") {
 		$('.showxls,.showosm,.showthingsat, .showmedia, .showlqas, .showquery, .selectquery').hide();
 		$('.showshape,.showspreadsheet,.showro,.showlang, .selectsurvey').show();
@@ -441,8 +441,8 @@ function setExportControls() {
 		$('.showxls,.showosm,.showro,.showlang,.showthingsat, .showmedia, .showlqas, .showquery, .selectquery').hide();
 		$('.showshape,.showspreadsheet, .selectsurvey').show();
 	} else if(format === "media") {
-		$('.showshape, .showxls,.showosm,.showro,.showlang,.showthingsat,.showmedia, .showlqas, .showquery, .selectsurvey').hide();
-		$('.showspreadsheet,.showmedia, .showlang, selectquery').show();
+		$('.showshape, .showxls,.showosm,.showro,.showlang,.showthingsat,.showmedia, .showlqas, .showquery, .selectquery').hide();
+		$('.showspreadsheet,.showmedia, .showlang, .selectsurvey').show();
 	} else if(format === "lqas") {
 		$('.showshape, .showxls,.showosm,.showro,.showlang,.showthingsat,.showmedia, .showlqas, .showquery, .selectquery').hide();
 		$('.showlqas, .selectsurvey').show();

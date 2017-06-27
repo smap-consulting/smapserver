@@ -113,6 +113,7 @@ public class ExchangeManager {
 			
 		String filename = "data.xlsx";
 		String filePath = dirPath + "/" + filename;
+
 		OutputStream outputStream = new FileOutputStream(dirPath + "/data.xlsx");
 		files.add(new FileDescription(filename, filePath));
 		

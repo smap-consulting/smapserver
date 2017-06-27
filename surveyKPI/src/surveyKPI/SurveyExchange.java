@@ -99,7 +99,10 @@ public class SurveyExchange extends Application {
 			 */
 			String basePath = GeneralUtilityMethods.getBasePath(request);
 			String filePath = basePath + "/temp/" + String.valueOf(UUID.randomUUID());	// Use a random sequence to keep survey name unique
-					
+			File folder = new File(filePath);
+			folder.mkdir();
+
+			
 			/*
 			 * Save the XLS export into the folder
 			 */
