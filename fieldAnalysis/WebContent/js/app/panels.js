@@ -304,7 +304,7 @@ $(document).ready(function() {
 
 function loggedInUserIdentified(projectId) {
 	getPanels(projectId);
-	getQueries(true);		// Get Queries accessible to this user including ones published by others
+	//getQueries(true);		// Get Queries accessible to this user including ones published by others
 }
 
 /*
