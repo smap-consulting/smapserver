@@ -11,6 +11,7 @@ import java.util.logging.Logger;
 
 import org.smap.sdal.managers.PDFTableManager;
 
+import com.itextpdf.text.Anchor;
 import com.itextpdf.text.BadElementException;
 import com.itextpdf.text.DocumentException;
 import com.itextpdf.text.Image;
@@ -22,7 +23,8 @@ public class PdfUtilities {
 	private static Logger log =
 			 Logger.getLogger(PDFTableManager.class.getName());
 	
-	public static void addImageTemplate(AcroFields pdfForm, String fieldName, String basePath, String value) throws IOException, DocumentException {
+	public static void addImageTemplate(AcroFields pdfForm, String fieldName, String basePath, 
+			String value, String serverRoot) throws IOException, DocumentException {
 		PushbuttonField ad = pdfForm.getNewPushbuttonFromField(fieldName);
 		if(ad != null) {
 			ad.setLayout(PushbuttonField.LAYOUT_ICON_ONLY);
@@ -35,7 +37,10 @@ public class PdfUtilities {
 			pdfForm.replacePushbuttonField(fieldName, ad.getField());
 			log.info("Adding image to: " + fieldName);
 		} else {
-			//log.info("Picture field: " + fieldName + " not found");
+			
+			Anchor anchor = new Anchor(serverRoot + value);
+			anchor.setReference(serverRoot + value);
+			pdfForm.setField(fieldName, value);  // set as hyper link
 		}
 	}
 	

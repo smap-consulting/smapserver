@@ -270,7 +270,8 @@ public class PDFSurveyManager {
 				PdfStamper stamper = new PdfStamper(reader, outputStream);
 				int languageIdx = GeneralUtilityMethods.getLanguageIdx(survey, language);
 				for(int i = 0; i < survey.instance.results.size(); i++) {
-					fillTemplate(sd, gv, stamper.getAcroFields(), survey.instance.results.get(i), basePath, null, i, survey, languageIdx);
+					fillTemplate(sd, gv, stamper.getAcroFields(), survey.instance.results.get(i), 
+							basePath, null, i, survey, languageIdx, serverRoot);
 				}
 				if(user != null) {
 					fillTemplateUserDetails(stamper.getAcroFields(), user, basePath);
@@ -438,7 +439,8 @@ public class PDFSurveyManager {
 			String formName,
 			int repeatIndex,
 			org.smap.sdal.model.Survey survey,
-			int languageIdx) throws IOException, DocumentException {
+			int languageIdx,
+			String serverRoot) throws IOException, DocumentException {
 		try {
 			
 			for(Result r : record) {
@@ -463,7 +465,7 @@ public class PDFSurveyManager {
 				 */
 				if(r.type.equals("form")) {
 					for(int k = 0; k < r.subForm.size(); k++) {
-						fillTemplate(sd, gv, pdfForm, r.subForm.get(k), basePath, fieldName, k, survey, languageIdx);
+						fillTemplate(sd, gv, pdfForm, r.subForm.get(k), basePath, fieldName, k, survey, languageIdx, serverRoot);
 					} 
 				} else if(r.type.equals("select1")) {
 					for(Result c : r.choices) {
@@ -514,8 +516,8 @@ public class PDFSurveyManager {
 					
 					Image img = PdfUtilities.getMapImage(sd, di.map, r.value, di.location, di.zoom, gv.mapbox_key);
 					PdfUtilities.addImageTemplate(pdfForm, fieldName, img);
-				} else if(r.type.equals("image")) {
-					PdfUtilities.addImageTemplate(pdfForm, fieldName, basePath, value);
+				} else if(r.type.equals("image") || r.type.equals("video") || r.type.equals("audio")) {
+					PdfUtilities.addImageTemplate(pdfForm, fieldName, basePath, value, serverRoot);
 				} else {				
 					if(hideLabel) {
 						try {
