@@ -1115,7 +1115,6 @@ public class GetXForm {
 
     	BufferedReader br = null;
     	File file = new File(filepath); 	
-    	System.out.println("Getting CSV from file: " + file.getAbsolutePath());
     	
     	try {
 	    	FileReader reader = new FileReader(file);
@@ -1549,9 +1548,7 @@ public class GetXForm {
     				if(isWebForms && item.value != null) {
     					escValue = item.value.replace("'", "\\\'");
     				}
-    				if(!escValue.equals(item.value)) {
-    					System.out.println("Escaped: " + item.value);
-    				}
+    				
     				childElement.setTextContent(escValue);
         			currentParent.appendChild(childElement);
     			}

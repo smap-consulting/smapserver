@@ -515,7 +515,7 @@ CREATE TABLE question (
 										-- If the question hasn't been published then it can be removed from the survey
 	autoplay text,
 	accuracy text,						-- gps accuracy at which a reading is automatically accepted
-	linked_target text;					-- Id of a survey whose hrk is populated here
+	linked_target text					-- Id of a survey whose hrk is populated here
 	);
 ALTER TABLE question OWNER TO ws;
 CREATE INDEX qtext_id_sequence ON question(qtext_id);

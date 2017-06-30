@@ -821,7 +821,7 @@ XSLT Stylesheet that transforms OpenRosa style (X)Forms into valid HTMl5 forms
             </xsl:attribute>
         </xsl:if>
         <xsl:if test="($binding/@required = 'true()') and (not(local-name() = 'bind'))">
-            <xsl:attribute name="required">required</xsl:attribute>
+            <xsl:attribute name="data-required">true()</xsl:attribute>
         </xsl:if>
         <xsl:if test="$binding/@constraint">
             <xsl:attribute name="data-constraint">

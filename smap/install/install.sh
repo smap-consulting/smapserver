@@ -216,7 +216,7 @@ echo 'survey_definitions database does not exist'
 sudo -u postgres createdb -E UTF8 -O ws $sd
 echo "CREATE EXTENSION postgis;" | sudo -u postgres psql -d $sd 
 echo "ALTER TABLE geometry_columns OWNER TO ws; ALTER TABLE spatial_ref_sys OWNER TO ws; ALTER TABLE geography_columns OWNER TO ws;" | sudo -u postgres psql -d $sd
-sudo -u postgres psql -f setupDb.sql -d $sd
+sudo -u postgres psql -f setupDb.sql -d $sd | grep -v "does not exist, skipping"
 else
 echo "==================> $sd database already exists.  Apply patches if necessary, to upgrade it."
 fi
@@ -278,9 +278,11 @@ echo '##### 15. PHP Install Skipped'
 #sudo apt-get install php5 php5-pgsql libapache2-mod-php5 -y
 
 echo '##### 16. Install Python for xls form translations'
+sudo apt-get install gcc -y
+sudo apt-get install libz-dev -y
 sudo apt-get install python-dev -y
 sudo apt-get install libxml2-dev -y
-sudo apt-get install libxslt-dev
+sudo apt-get install libxslt-dev -y
 sudo apt-get install libxslt1-dev -y
 sudo apt-get install git -y
 sudo apt-get install python-setuptools -y

@@ -69,14 +69,13 @@ function initializeMap(idx){
 	map = new OpenLayers.Map("map_panel" + idx, mapOptions);  	
 		
 	// OSM Tile from mapquest
-	arrayOSM = ["https://otile1-s.mqcdn.com/tiles/1.0.0/osm/${z}/${x}/${y}.jpg",
-                 "https://otile2-s.mqcdn.com/tiles/1.0.0/osm/${z}/${x}/${y}.jpg",
-                 "https://otile3-s.mqcdn.com/tiles/1.0.0/osm/${z}/${x}/${y}.jpg",
-                 "https://otile4-s.mqcdn.com/tiles/1.0.0/osm/${z}/${x}/${y}.jpg"];
+	arrayOSM = ["//a.tile.openstreetmap.org/${z}/${x}/${y}.png",
+                 "//b.tile.openstreetmap.org/${z}/${x}/${y}.png",
+                 "//c.tile.openstreetmap.org/${z}/${x}/${y}.png"];
 	
-	arrayHOT = ["http://a.tile.openstreetmap.fr/hot/${z}/${x}/${y}.png",
-               "http://b.tile.openstreetmap.fr/hot/${z}/${x}/${y}.png",
-               "http://c.tile.openstreetmap.fr/hot/${z}/${x}/${y}.png"];
+	arrayHOT = ["//a.tile.openstreetmap.fr/hot/${z}/${x}/${y}.png",
+               "//b.tile.openstreetmap.fr/hot/${z}/${x}/${y}.png",
+               "//c.tile.openstreetmap.fr/hot/${z}/${x}/${y}.png"];
 	
 	  loadEnd = false;
 	  function layerLoadStart(event) {
@@ -89,7 +88,7 @@ function initializeMap(idx){
 	
 	// Add layers
 	//map.addLayer(new OpenLayers.Layer.OSM("OSM", arrayOSM,{numZoomLevels: 20}));
-	map.addLayer(new OpenLayers.Layer.OSM());
+	map.addLayer(new OpenLayers.Layer.OSM("OSM", arrayOSM, {eventListeners: { "loadstart": layerLoadStart,"loadend": layerLoadEnd}, tileOptions: {crossOriginKeyword: null}}));
 	map.addLayer(new OpenLayers.Layer.OSM("HOT", arrayHOT, {eventListeners: { "loadstart": layerLoadStart,"loadend": layerLoadEnd}, tileOptions: {crossOriginKeyword: null}}));
 	
 	if(typeof google != 'undefined' && typeof google.maps != 'undefined') {
