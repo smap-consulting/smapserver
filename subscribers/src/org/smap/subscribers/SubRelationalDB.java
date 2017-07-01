@@ -1167,13 +1167,17 @@ public class SubRelationalDB extends Subscriber {
 								value += "," + String.valueOf(Double.parseDouble(params[2])) + "," 
 										+ String.valueOf(Double.parseDouble(params[3]));
 							} else {
-								value += "null, null";
+								value += ",null, null";
 							}
 						}
 
 					} else {
 						System.out.println("Error: Invalid geometry point detected: " + value);
-						value = "null, null, null";
+						if(hasAltitude) {
+							value = "null, null, null";
+						} else {
+							value = "null";
+						}
 					}
 					
 					
