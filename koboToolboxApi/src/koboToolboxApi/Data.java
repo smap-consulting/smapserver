@@ -576,7 +576,6 @@ public class Data extends Application {
 									coords = new JSONArray();
 								}
 								jr.put(name, coords);
-								jr.put("_geomtype", c.getGeomType());
 					
 							} else {
 								

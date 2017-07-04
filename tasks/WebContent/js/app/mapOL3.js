@@ -273,6 +273,7 @@ define([
             }
 
             gMap.addLayer(gVectorLayers[index]);
+            gMap.getView().fit(gVectorSources[index].getExtent(), gMap.getSize());
         }
 
         function deleteLayer(index) {
@@ -319,7 +320,7 @@ define([
          */
         function getGeoJson(results, layer) {
 
-            var i, j;
+            var i, j, k, m;
 
             var geoJson = {
                 type: "FeatureCollection",
@@ -333,22 +334,49 @@ define([
 
                 if (!results[i]._geolocation) {                      // Invalid Geometry
                     keep = false;
-                } else if (results[i]._geolocation.length < 2) {     // Invalid Geometry
-                    keep = false;
                 } else {
-                    for (j = 1; j < results[i]._geolocation.length; j++) {
-                        if (results[i]._geolocation[j] != 0) {
-                            keep = true;                            // At least one non zero geometry
-                            break;
+                    // Do not show points at 0,0
+                    if(results[i]._geolocation.type === "Point") {
+                        for (j = 1; j < results[i]._geolocation.coordinates.length; j++) {
+                            if (results[i]._geolocation.coordinates[j] != 0) {
+                                keep = true;                            // At least one non zero geometry
+                                break;
+                            }
                         }
+                    } else  if(results[i]._geolocation.type === "LineString") {
+                        for (j = 0; j < results[i]._geolocation.coordinates.length; j++) {
+
+                            for(k = 0; k < results[i]._geolocation.coordinates[j].length; k++) {
+                                if (results[i]._geolocation.coordinates[j][k] != 0) {
+                                    keep = true;                            // At least one non zero geometry
+                                    break;
+                                }
+                            }
+                        }
+                    } else if(results[i]._geolocation.type === "Polygon") {
+                        for (j = 0; j < results[i]._geolocation.coordinates.length; j++) {
+
+                            for(k = 0; k < results[i]._geolocation.coordinates[j].length; k++) {
+                                for(m = 0; m < results[i]._geolocation.coordinates[j][k].length; m++) {
+                                    if (results[i]._geolocation.coordinates[j][k][m] != 0) {
+                                        keep = true;                            // At least one non zero geometry
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+
                     }
+
+
                 }
 
                 if (keep) {
                     geoJson.features.push(
                         {
                             "type": "Feature",
-                            "geometry": {"type": "Point", "coordinates": results[i]._geolocation},
+                            //"geometry": {"type": "Point", "coordinates": results[i]._geolocation},
+                            "geometry": results[i]._geolocation,
                             "properties": {}
                         });
                 }
