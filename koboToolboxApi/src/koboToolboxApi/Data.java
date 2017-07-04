@@ -566,6 +566,7 @@ public class Data extends Application {
 							if(c.isGeometry()) {							
 								// Add Geometry (assume one geometry type per table)
 								String geomValue = rsD.getString(i + 1);	
+								System.out.println("json value: " + geomValue);
 								name = "_geolocation";
 								JSONArray coords = null;
 								if(geomValue != null) {
@@ -575,6 +576,7 @@ public class Data extends Application {
 									coords = new JSONArray();
 								}
 								jr.put(name, coords);
+								jr.put("_geomtype", c.getGeomType());
 					
 							} else {
 								

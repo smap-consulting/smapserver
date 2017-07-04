@@ -57,6 +57,18 @@ public class TableColumn {
 		return geom;
 	}
 	
+	public String getGeomType () {
+		String geomType = null;
+		if(type.equals("geopoint")) { 
+			geomType = "Point"; 
+		} else if(type.equals("geopolygon") || type.equals("geoshape")) {
+			geomType = "Polygon";
+		} else if(type.equals("geolinestring") || type.equals("geotrace")) {
+			geomType = "Linestring";	
+		} 
+		return geomType;
+	}
+	
 	public boolean isCalculate() {
 		boolean isCalculate = false;
 		if(type.equals("calculate")) {
