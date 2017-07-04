@@ -230,6 +230,13 @@ public class QueryGenerator {
 		}
 		
 		/*
+		 * Sort the data by primary key ascending
+		 */
+		shpSqlBuf.append(" order by ");
+		shpSqlBuf.append(form.table);
+		shpSqlBuf.append(".prikey asc");
+		
+		/*
 		 * Prepare the sql string
 		 * Add the parameters to the prepared statement
 		 * Convert back to sql
