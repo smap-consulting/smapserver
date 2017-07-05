@@ -51,7 +51,6 @@ public class EmitNotifications {
 		//create a new SNS client and set endpoint
 		AmazonSNSClient snsClient = new AmazonSNSClient(new ClasspathPropertiesFileCredentialsProvider());		                           
 		snsClient.setRegion(Region.getRegion(Regions.AP_SOUTHEAST_1));	// Singapore
-		//snsClient.setRegion(Region.getRegion(Regions.AP_SOUTHEAST_2));	// Sydney
 		
 		String topic = getTopic(event);
 		
@@ -68,7 +67,6 @@ public class EmitNotifications {
 		String topic = null;
 		
 		if (event == AWS_REGISTER_ORGANISATION) {
-			//topic = "arn:aws:sns:ap-southeast-2:439804189189:register";		// Sydney
 			topic = "arn:aws:sns:ap-southeast-1:439804189189:register";			// Singapore
 			log.info("Publish: register");
 		} else {
