@@ -532,15 +532,21 @@ public class GetXForm {
     				currentParent.appendChild(questionElement);
     				
     				elementStack.push(currentParent);
-					currentParent = questionElement;
+				currentParent = questionElement;
 					
-					// Add a timing element if we have entered the meta group and timing is enabled
-					if(q.getName().equals("meta")) {
-						if(template.getSurvey().getTimingData()) {
-							questionElement = outputDoc.createElement("audit");
-							currentParent.appendChild(questionElement);	
-						}
+				// Add a timing element if we have entered the meta group and timing is enabled
+				if(q.getName().equals("meta")) {
+					if(template.getSurvey().getTimingData()) {
+						questionElement = outputDoc.createElement("audit");
+						currentParent.appendChild(questionElement);	
 					}
+				}
+				
+				// Add a dummy instance element for the table list labels if this is a table list question
+				if(q.isTableList) {
+					Element labelsElement = getTableListLabelsElement(sd, outputDoc, f, q, f.getPath(null));
+					currentParent.appendChild(labelsElement);
+				}
 					
     				
     			} else if(qType.equals("end group")) {	
@@ -636,21 +642,22 @@ public class GetXForm {
     			
     			/*
     			 * Set the parent element according to whether we are entering or leaving a non repeat group
+    			 * Add table list labels if this is a table-list group
     			 */
     			if(qType.equals("end group")) {
     				
-       				currentParent = elementStack.pop();
+       			currentParent = elementStack.pop();
        				
     			} else if (qType.equals("begin group")) {
             		
-       				elementStack.push(currentParent);
+       			elementStack.push(currentParent);
     				currentParent = questionElement;
     				
-  					// Add table list labels
-					if(q.isTableList) {
-						Element labelsElement = populateTableListLabels(sd, outputDoc, f, q, f.getPath(null));
-						currentParent.appendChild(labelsElement);
-					}
+  				// Add table list labels
+				if(q.isTableList) {
+					Element labelsElement = populateTableListLabels(sd, outputDoc, f, q, f.getPath(null));
+					currentParent.appendChild(labelsElement);
+				}
     			}	
     		}
     	}
@@ -945,32 +952,64 @@ public class GetXForm {
     }
     
     /*
-     * Create a labels element for table list groups
+     * Create an instance label element for table list groups
      */
-    public Element populateTableListLabels(Connection sd, Document outputXML, Form f, Question q, String parentXPath) throws Exception {
+    public Element getTableListLabelsElement(Connection sd, Document outputXML, Form f, Question q, String parentXPath) throws Exception {
 
-		Element labelsElement = outputXML.createElement("select1");
-		
-		// Add the reference attribute
-		String path = getQuestionReference(template.getQuestionPaths(), f.getId(), q.getName());
-		labelsElement.setAttribute("ref", path + "_table_list_labels");
-		
-		// Add the appearance
-		labelsElement.setAttribute("appearance", "label");
-		
+    	Element labelsElement = null;		
     	List <Question> questions = f.getQuestions(sd, f.getPath(null));
     	boolean inGroup = false;
     	for(Question qx : questions) {
     		if(qx.getType().equals("begin group") && qx.getName().equals(q.getName())) {
     			inGroup = true;
-    			continue;
+    			continue;			// Skip the begin group question
     		}
     		if(inGroup && qx.getType().equals("end group")) {
     			inGroup = false;
+    			break;				// Must be done
     		}
     		
     		if(inGroup) {    			
     			if(qx.getType().startsWith("select")) {
+    				labelsElement = outputXML.createElement(qx.getName() + "_table_list_labels");
+    				break;		// Only need labels from one of the select questions
+    			}
+    			
+    		}
+    	}
+		
+		return labelsElement;
+    }
+    
+    /*
+     * Create a labels element for table list groups
+     */
+    public Element populateTableListLabels(Connection sd, Document outputXML, Form f, Question q, String parentXPath) throws Exception {
+
+    	Element labelsElement = null;		
+    	List <Question> questions = f.getQuestions(sd, f.getPath(null));
+    	boolean inGroup = false;
+    	for(Question qx : questions) {
+    		if(qx.getType().equals("begin group") && qx.getName().equals(q.getName())) {
+    			inGroup = true;
+    			continue;			// Skip the begin group question
+    		}
+    		if(inGroup && qx.getType().equals("end group")) {
+    			inGroup = false;
+    			break;				// Must be done
+    		}
+    		
+    		if(inGroup) {    			
+    			if(qx.getType().startsWith("select")) {
+    				labelsElement = outputXML.createElement(qx.getType());
+    				
+    				// Add the reference attribute
+    				String path = getQuestionReference(template.getQuestionPaths(), f.getId(), qx.getName());
+    				labelsElement.setAttribute("ref", path + "_table_list_labels");
+    				
+    				// Add the appearance
+    				labelsElement.setAttribute("appearance", "label");
+    				
     				populateOptions(sd, outputXML, labelsElement, qx);
     				break;		// Only need labels from one of the select questions
     			}
