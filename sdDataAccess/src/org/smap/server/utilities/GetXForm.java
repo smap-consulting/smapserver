@@ -956,28 +956,28 @@ public class GetXForm {
      */
     public Element getTableListLabelsElement(Connection sd, Document outputXML, Form f, Question q, String parentXPath) throws Exception {
 
-    	Element labelsElement = null;		
-    	List <Question> questions = f.getQuestions(sd, f.getPath(null));
-    	boolean inGroup = false;
-    	for(Question qx : questions) {
-    		if(qx.getType().equals("begin group") && qx.getName().equals(q.getName())) {
-    			inGroup = true;
-    			continue;			// Skip the begin group question
-    		}
-    		if(inGroup && qx.getType().equals("end group")) {
-    			inGroup = false;
-    			break;				// Must be done
-    		}
-    		
-    		if(inGroup) {    			
-    			if(qx.getType().startsWith("select")) {
-    				labelsElement = outputXML.createElement(qx.getName() + "_table_list_labels");
-    				break;		// Only need labels from one of the select questions
-    			}
-    			
-    		}
-    	}
-		
+	    	Element labelsElement = null;		
+	    	List <Question> questions = f.getQuestions(sd, f.getPath(null));
+	    	boolean inGroup = false;
+	    	for(Question qx : questions) {
+	    		if(qx.getType().equals("begin group") && qx.getName().equals(q.getName())) {
+	    			inGroup = true;
+	    			continue;			// Skip the begin group question
+	    		}
+	    		if(inGroup && qx.getType().equals("end group")) {
+	    			inGroup = false;
+	    			break;				// Must be done
+	    		}
+	    		
+	    		if(inGroup) {    			
+	    			if(qx.getType().startsWith("select")) {
+	    				labelsElement = outputXML.createElement(qx.getName() + "_table_list_labels");
+	    				break;		// Only need labels from one of the select questions
+	    			}
+	    			
+	    		}
+	    	}
+			
 		return labelsElement;
     }
     
