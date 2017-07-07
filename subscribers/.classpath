@@ -13,5 +13,6 @@
 	<classpathentry kind="lib" path="lib/jsr311-api-1.1.1.jar"/>
 	<classpathentry kind="lib" path="lib/gson-2.1.jar"/>
 	<classpathentry kind="lib" path="lib/commons-codec-1.7.jar"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/aws"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
