@@ -187,7 +187,8 @@ public class Survey extends Application {
 						template.readDatabase(sId, false);
 						GetXForm xForm = new GetXForm();
 						
-						String xmlForm = xForm.get(template, false);
+						boolean useNodesets = !type.equals("codebook");		// For codebooks do not create nodesets in the XML
+						String xmlForm = xForm.get(template, false, useNodesets);
 						
 					    // 1. Create the project folder if it does not exist
 					    File folder = new File(folderPath);
