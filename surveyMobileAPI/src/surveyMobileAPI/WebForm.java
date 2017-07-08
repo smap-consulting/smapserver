@@ -379,7 +379,7 @@ public class WebForm extends Application{
 			
 			//template.printModel();	// debug
 			GetXForm xForm = new GetXForm();
-			String formXML = xForm.get(template, true);	
+			String formXML = xForm.get(template, true, true);	
 
 			// Escape quotes within <value> elements
 			formXML = escapeQuotes(formXML);

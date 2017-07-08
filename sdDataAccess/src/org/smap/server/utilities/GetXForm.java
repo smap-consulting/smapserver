@@ -82,7 +82,7 @@ public class GetXForm {
     /*
      * Get the XForm as a string
      */
-    public String get(SurveyTemplate template, boolean isWebForms) {
+    public String get(SurveyTemplate template, boolean isWebForms, boolean useNodesets) {
      	   
        	String response = null;
        	this.template = template;
@@ -112,8 +112,8 @@ public class GetXForm {
   		
     		Element parent;
         	parent = populateRoot(outputXML);
-        	populateHead(sd,outputXML, b, parent, isWebForms);
-        	populateBody(sd, outputXML, parent, isWebForms);
+        	populateHead(sd,outputXML, b, parent, isWebForms, useNodesets);
+        	populateBody(sd, outputXML, parent, isWebForms, useNodesets);
 
     		// Write the survey to a string and return it to the calling program
         	Transformer transformer = TransformerFactory.newInstance().newTransformer();
@@ -161,7 +161,7 @@ public class GetXForm {
      * @param outputXML
      */
     public void populateHead(Connection sd, Document outputDoc, DocumentBuilder documentBuilder, 
-    		Element parent, boolean isWebForms) throws Exception {
+    		Element parent, boolean isWebForms, boolean useNodesets) throws Exception {
 
     	Survey s = template.getSurvey();
     	
@@ -182,7 +182,7 @@ public class GetXForm {
     	
     	Element instanceElement = outputDoc.createElement("instance");
     	modelElement.appendChild(instanceElement); 	
-    	populateInstance(sd, outputDoc, instanceElement, isWebForms);
+    	populateInstance(sd, outputDoc, instanceElement, isWebForms, useNodesets);
     	
     	if(template.hasCascade()) {
     		
@@ -218,7 +218,7 @@ public class GetXForm {
 	    	
     	// Add forms to bind elements
 	    if(firstForm != null) {		
-	    	populateForm(sd, outputDoc, modelElement, BIND, firstForm, isWebForms);
+	    	populateForm(sd, outputDoc, modelElement, BIND, firstForm, isWebForms, useNodesets);
 	    } 	 
 
     }
@@ -414,7 +414,7 @@ public class GetXForm {
     /*
      * Populate the Instance element starting with the top level form
      */
-    public void populateInstance(Connection sd, Document outputDoc, Element parent, boolean isWebForms) throws Exception {
+    public void populateInstance(Connection sd, Document outputDoc, Element parent, boolean isWebForms, boolean useNodesets) throws Exception {
     	
     	if(firstForm != null) {
     		Element formElement = outputDoc.createElement(firstForm.getName());
@@ -423,7 +423,7 @@ public class GetXForm {
     		if(!isWebForms) {
     			formElement.setAttribute("project", String.valueOf(template.getProject().getName()));
     		}
-    		populateForm(sd, outputDoc, formElement, INSTANCE, firstForm, isWebForms); 	// Process the top level form
+    		populateForm(sd, outputDoc, formElement, INSTANCE, firstForm, isWebForms, useNodesets); 	// Process the top level form
     		parent.appendChild(formElement);   		
     	}
     }
@@ -441,7 +441,8 @@ public class GetXForm {
  
     
     public void populateBody(Connection sd, Document outputDoc, Element parent,
-    		boolean isWebForms) throws Exception {
+    		boolean isWebForms,
+    		boolean useNodesets) throws Exception {
     	Element bodyElement = outputDoc.createElement("h:body");
     	
     	log.info("Populate body:" + bodyElement.toString());
@@ -455,7 +456,7 @@ public class GetXForm {
     		gSurveyClass = surveyClass;
     	}
        	if(firstForm != null) {
-    		populateForm(sd, outputDoc, bodyElement, BODY, firstForm, isWebForms); 		// Process the top level form
+    		populateForm(sd, outputDoc, bodyElement, BODY, firstForm, isWebForms, useNodesets); 		// Process the top level form
     	}
     	
     	parent.appendChild(bodyElement);
@@ -473,7 +474,8 @@ public class GetXForm {
     public void populateForm(Connection sd, Document outputDoc, Element parentElement, 
     		int location, 
     		Form f,
-    		boolean isWebForms) throws Exception {
+    		boolean isWebForms,
+    		boolean useNodesets) throws Exception {
 
     	Element currentParent = parentElement;
        	Stack<Element> elementStack = new Stack<Element>();	// Store the elements for non repeat groups
@@ -522,7 +524,7 @@ public class GetXForm {
     				
     				Element formElement_template = outputDoc.createElement(subForm.getName());
     				formElement_template.setAttribute("jr:template", "");
-    				populateForm(sd, outputDoc, formElement_template, INSTANCE, subForm, isWebForms);	
+    				populateForm(sd, outputDoc, formElement_template, INSTANCE, subForm, isWebForms, useNodesets);	
     				currentParent.appendChild(formElement_template);
     				
     			} else if(qType.equals("begin group")) {
@@ -532,15 +534,21 @@ public class GetXForm {
     				currentParent.appendChild(questionElement);
     				
     				elementStack.push(currentParent);
-					currentParent = questionElement;
+				currentParent = questionElement;
 					
-					// Add a timing element if we have entered the meta group and timing is enabled
-					if(q.getName().equals("meta")) {
-						if(template.getSurvey().getTimingData()) {
-							questionElement = outputDoc.createElement("audit");
-							currentParent.appendChild(questionElement);	
-						}
+				// Add a timing element if we have entered the meta group and timing is enabled
+				if(q.getName().equals("meta")) {
+					if(template.getSurvey().getTimingData()) {
+						questionElement = outputDoc.createElement("audit");
+						currentParent.appendChild(questionElement);	
 					}
+				}
+				
+				// Add a dummy instance element for the table list labels if this is a table list question
+				if(q.isTableList) {
+					Element labelsElement = getTableListLabelsElement(sd, outputDoc, f, q, f.getPath(null));
+					currentParent.appendChild(labelsElement);
+				}
 					
     				
     			} else if(qType.equals("end group")) {	
@@ -568,7 +576,7 @@ public class GetXForm {
        				
 					// Process sub form
        				Form subForm = template.getSubForm(f,q);
-    				populateForm(sd, outputDoc, currentParent, BIND, subForm, isWebForms);
+    				populateForm(sd, outputDoc, currentParent, BIND, subForm, isWebForms, useNodesets);
     				if(subForm.getRepeats(true, template.getQuestionPaths()) != null) {
     					// Add the calculation for repeat count
     					questionElement = populateBindQuestion(outputDoc, f, q, f.getPath(null), true);
@@ -623,12 +631,12 @@ public class GetXForm {
     				}
     				groupElement.appendChild(repeatElement);
     				   				
-    				populateForm(sd, outputDoc, repeatElement, BODY, subForm, isWebForms);
+    				populateForm(sd, outputDoc, repeatElement, BODY, subForm, isWebForms, useNodesets);
 
     			} else {	// Add question to output
     				if(q.isVisible()) {
     					
-    					questionElement = populateBodyQuestion(sd, outputDoc, f, q, f.getPath(null));	
+    					questionElement = populateBodyQuestion(sd, outputDoc, f, q, f.getPath(null), useNodesets);	
     					currentParent.appendChild(questionElement);
 
     				}
@@ -636,21 +644,22 @@ public class GetXForm {
     			
     			/*
     			 * Set the parent element according to whether we are entering or leaving a non repeat group
+    			 * Add table list labels if this is a table-list group
     			 */
     			if(qType.equals("end group")) {
     				
-       				currentParent = elementStack.pop();
+       			currentParent = elementStack.pop();
        				
     			} else if (qType.equals("begin group")) {
             		
-       				elementStack.push(currentParent);
+       			elementStack.push(currentParent);
     				currentParent = questionElement;
     				
-  					// Add table list labels
-					if(q.isTableList) {
-						Element labelsElement = populateTableListLabels(sd, outputDoc, f, q, f.getPath(null));
-						currentParent.appendChild(labelsElement);
-					}
+  				// Add table list labels
+				if(q.isTableList) {
+					Element labelsElement = populateTableListLabels(sd, outputDoc, f, q, f.getPath(null));
+					currentParent.appendChild(labelsElement);
+				}
     			}	
     		}
     	}
@@ -662,17 +671,18 @@ public class GetXForm {
     public void createRepeatingGroup(Connection sd, Document outputXML, Element parent, Form subF, int location, 
     		String parentXPath, 
     		Question parentQuestion,
-    		boolean isWebForms) throws Exception {
+    		boolean isWebForms,
+    		boolean useNodesets) throws Exception {
 
 		if(location == INSTANCE) {
 			
 			Element subFormParent = outputXML.createElement(parentQuestion.getName());
-			populateForm(sd, outputXML, subFormParent, location, subF, isWebForms);
+			populateForm(sd, outputXML, subFormParent, location, subF, isWebForms, useNodesets);
 			parent.appendChild(subFormParent);
 			
 		} else if(location == BIND) {
 			
-			populateForm(sd, outputXML, parent, location, subF, isWebForms);
+			populateForm(sd, outputXML, parent, location, subF, isWebForms, useNodesets);
 			
 		} else {		// BODY
 			
@@ -689,7 +699,7 @@ public class GetXForm {
 			repeatElement.setAttribute("nodeset", subF.getPath(null));
 			subFormParent.appendChild(repeatElement);
 			
-			populateForm(sd, outputXML, repeatElement, location, subF, isWebForms);
+			populateForm(sd, outputXML, repeatElement, location, subF, isWebForms, useNodesets);
 			parent.appendChild(subFormParent);
 			
 		}
@@ -801,7 +811,7 @@ public class GetXForm {
      * @param f
      * @param q
      */
-    public Element populateBodyQuestion(Connection sd, Document outputXML, Form f, Question q, String parentXPath) throws Exception {
+    public Element populateBodyQuestion(Connection sd, Document outputXML, Form f, Question q, String parentXPath, boolean useNodesets) throws Exception {
 
 		Element questionElement = null;
 		Survey s = template.getSurvey();
@@ -917,24 +927,26 @@ public class GetXForm {
 		}
 		
 		boolean cascade = false;
-		String nodeset = q.getNodeset(true, false, template.getQuestionPaths(), embedExternalSearch);
-		
-		// Add the itemset
-		if(nodeset != null && 
-				(!GeneralUtilityMethods.isExternalChoices(q.getAppearance(true, template.getQuestionPaths())) || embedExternalSearch)) {
-			cascade = true;
-			Element isElement = outputXML.createElement("itemset");
-			isElement.setAttribute("nodeset", nodeset);			
-		
-			Element vElement = outputXML.createElement("value");
-			vElement.setAttribute("ref", q.getNodesetValue());
-			Element lElement = outputXML.createElement("label");
-			lElement.setAttribute("ref", q.getNodesetLabel());
+		if(useNodesets) {
+			String nodeset = q.getNodeset(true, false, template.getQuestionPaths(), embedExternalSearch);
 			
-			isElement.appendChild(vElement);
-			isElement.appendChild(lElement);
-			questionElement.appendChild(isElement);
+			// Add the itemset
+			if(nodeset != null && 
+					(!GeneralUtilityMethods.isExternalChoices(q.getAppearance(true, template.getQuestionPaths())) || embedExternalSearch)) {
+				cascade = true;
+				Element isElement = outputXML.createElement("itemset");
+				isElement.setAttribute("nodeset", nodeset);			
 			
+				Element vElement = outputXML.createElement("value");
+				vElement.setAttribute("ref", q.getNodesetValue());
+				Element lElement = outputXML.createElement("label");
+				lElement.setAttribute("ref", q.getNodesetLabel());
+				
+				isElement.appendChild(vElement);
+				isElement.appendChild(lElement);
+				questionElement.appendChild(isElement);
+				
+			}
 		}
 		
 		// If this is a choice question and it doesn't store it's items in itemset, then add the items
@@ -945,32 +957,64 @@ public class GetXForm {
     }
     
     /*
+     * Create an instance label element for table list groups
+     */
+    public Element getTableListLabelsElement(Connection sd, Document outputXML, Form f, Question q, String parentXPath) throws Exception {
+
+	    	Element labelsElement = null;		
+	    	List <Question> questions = f.getQuestions(sd, f.getPath(null));
+	    	boolean inGroup = false;
+	    	for(Question qx : questions) {
+	    		if(qx.getType().equals("begin group") && qx.getName().equals(q.getName())) {
+	    			inGroup = true;
+	    			continue;			// Skip the begin group question
+	    		}
+	    		if(inGroup && qx.getType().equals("end group")) {
+	    			inGroup = false;
+	    			break;				// Must be done
+	    		}
+	    		
+	    		if(inGroup) {    			
+	    			if(qx.getType().startsWith("select")) {
+	    				labelsElement = outputXML.createElement(qx.getName() + "_table_list_labels");
+	    				break;		// Only need labels from one of the select questions
+	    			}
+	    			
+	    		}
+	    	}
+			
+		return labelsElement;
+    }
+    
+    /*
      * Create a labels element for table list groups
      */
     public Element populateTableListLabels(Connection sd, Document outputXML, Form f, Question q, String parentXPath) throws Exception {
 
-		Element labelsElement = outputXML.createElement("select1");
-		
-		// Add the reference attribute
-		String path = getQuestionReference(template.getQuestionPaths(), f.getId(), q.getName());
-		labelsElement.setAttribute("ref", path + "_table_list_labels");
-		
-		// Add the appearance
-		labelsElement.setAttribute("appearance", "label");
-		
+    	Element labelsElement = null;		
     	List <Question> questions = f.getQuestions(sd, f.getPath(null));
     	boolean inGroup = false;
     	for(Question qx : questions) {
     		if(qx.getType().equals("begin group") && qx.getName().equals(q.getName())) {
     			inGroup = true;
-    			continue;
+    			continue;			// Skip the begin group question
     		}
     		if(inGroup && qx.getType().equals("end group")) {
     			inGroup = false;
+    			break;				// Must be done
     		}
     		
     		if(inGroup) {    			
     			if(qx.getType().startsWith("select")) {
+    				labelsElement = outputXML.createElement(qx.getType());
+    				
+    				// Add the reference attribute
+    				String path = getQuestionReference(template.getQuestionPaths(), f.getId(), qx.getName());
+    				labelsElement.setAttribute("ref", path + "_table_list_labels");
+    				
+    				// Add the appearance
+    				labelsElement.setAttribute("appearance", "label");
+    				
     				populateOptions(sd, outputXML, labelsElement, qx);
     				break;		// Only need labels from one of the select questions
     			}
