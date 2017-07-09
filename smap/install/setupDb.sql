@@ -91,7 +91,8 @@ create TABLE server (
 	email_port integer,
 	version text,
 	mapbox_default text,
-	google_key text
+	google_key text,
+	sms_url text
 	);
 ALTER TABLE server OWNER TO ws;
 

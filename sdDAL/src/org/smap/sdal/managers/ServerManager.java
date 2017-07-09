@@ -73,7 +73,8 @@ public class ServerManager {
 				+ "email_port,"
 				+ "version,"
 				+ "mapbox_default,"
-				+ "google_key "
+				+ "google_key,"
+				+ "sms_url "
 				+ "from server;";
 		PreparedStatement pstmt = null;
 		ServerData data = new ServerData();
@@ -90,6 +91,7 @@ public class ServerManager {
 				data.version = rs.getString("version");
 				data.mapbox_default = rs.getString("mapbox_default");
 				data.google_key = rs.getString("google_key");
+				data.sms_url = rs.getString("sms_url");
 			}
 	
 		}  catch (Exception e) {

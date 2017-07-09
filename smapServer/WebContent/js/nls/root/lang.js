@@ -69,6 +69,7 @@ define({
     "c_user": "User",
     "c_projects": "Projects",
     "c_email": "Email",
+    "c_sms": "SMS",
     "c_twitter": "Twitter",
     "c_lang": "Language",
     "c_langs": "Languages",
@@ -651,6 +652,7 @@ define({
     "n_pdfp": "PDF (Portrait)",
     "n_pdfl": "PDF (Landscape)",
     "n_eq": "Email Question",
+    "n_smsq": "SMS Question",
     "n_share": "Get link",
 
     // Roles

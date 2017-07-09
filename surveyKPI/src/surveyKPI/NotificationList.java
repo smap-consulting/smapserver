@@ -88,19 +88,10 @@ public class NotificationList extends Application {
 	
 	@Path("/{projectId}")
 	@GET
-	public Response getForms(@Context HttpServletRequest request,
+	public Response getNotifications(@Context HttpServletRequest request,
 			@PathParam("projectId") int projectId) { 
 		
-		ResponseBuilder builder = Response.ok();
 		Response response = null;
-		
-		try {
-		    Class.forName("org.postgresql.Driver");	 
-		} catch (ClassNotFoundException e) {
-			log.log(Level.SEVERE,"Survey: Error: Can't find PostgreSQL JDBC Driver", e);
-		    response = Response.serverError().entity("Survey: Error: Can't find PostgreSQL JDBC Driver").build();
-		    return response;
-		}
 		
 		// Authorisation - Access
 		Connection connectionSD = SDDataSource.getConnection("surveyKPI-Notifications");
@@ -131,6 +122,39 @@ public class NotificationList extends Application {
 		return response;
 
 	}
+	
+	@Path("/types")
+	@GET
+	public Response getTypes(@Context HttpServletRequest request) { 
+		
+		ResponseBuilder builder = Response.ok();
+		Response response = null;
+		
+		// No Authorisation required
+		
+		Connection connectionSD = SDDataSource.getConnection("surveyKPI-NotificationTypes");	
+		
+		try {
+			NotificationManager fm = new NotificationManager();
+			ArrayList<String> tList = fm.getNotificationTypes(connectionSD);
+			
+			Gson gson = new GsonBuilder().disableHtmlEscaping().create();
+			String resp = gson.toJson(tList);
+			response = Response.ok(resp).build();
+			
+		} catch (SQLException e) {
+			log.log(Level.SEVERE,"No data available", e);
+		    response = Response.serverError().entity("No data available").build();
+		} finally {
+			
+			SDDataSource.closeConnection("surveyKPI-NotificationTypes", connectionSD);
+			
+		}
+
+		return response;
+
+	}
+	
 	
 	/*
 	 * Get remote surveys that can be used as the target of a forward

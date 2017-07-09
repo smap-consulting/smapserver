@@ -771,4 +771,6 @@ create TABLE report (
 	);
 ALTER TABLE report OWNER TO ws;
 
+-- Upgrade to 17.06
+alter table server add column sms_url text;
 

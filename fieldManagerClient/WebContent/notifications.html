@@ -129,8 +129,7 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 						<label class="lang col-sm-2 control-label" data-lang="c_target" for="target">Target</label>
 						<div class="col-sm-10">
 							<select class="form-control" id="target">
-								<option value="email" class="lang" data-lang="c_email">email</option>
-								<option value="forward" class="lang" data-lang="c_forward">forward</option>
+
 							</select>
 						</div>
 					</div>
@@ -140,7 +139,7 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 							<select id="survey" class="survey_select form-control"></select>
 						</div>
 					</div>  
-					<div id="forward_options" style="display:none;">
+					<div class="forward_options" style="display:none;">
 						<div class="form-group">
 							<label for="fwd_host" data-lang="c_host" class="lang col-sm-2 control-label">Host</label>
 							<div class="col-sm-10">
@@ -171,18 +170,20 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 							</div>
 						</div>
 					</div>
-					<div id="email_options" style="display:none;">
-						<div class="form-group">
-							<label class="lang col-sm-2 control-label" data-lang="c_attach" for="attach">Attach</label>
-							<div class="col-sm-10">
-								<select class="form-control" id="email_attach">
-									<option value="none" class="lang" data-lang="c_none">none</option>
-									<option value="webform" class="lang" data-lang="n_wf">web form</option>
-									<option value="pdf" class="lang" data-lang="n_pdfp">pdf p</option>
-									<option value="pdf_landscape" class="lang" data-lang="n_pdfl">pdf l</option>
-								</select>
-							</div>
+					<div class="form-group email_options sms_options">
+						<label class="lang col-sm-2 control-label" data-lang="c_attach" for="email_attach">Attach</label>
+						<div class="col-sm-10">
+							<select class="form-control" id="email_attach">
+								<option value="none" class="lang" data-lang="c_none">none</option>
+								<option value="webform" class="lang" data-lang="n_wf">web form</option>
+								<option value="pdf" class="lang" data-lang="n_pdfp">pdf p</option>
+								<option value="pdf_landscape" class="lang" data-lang="n_pdfl">pdf l</option>
+							</select>
 						</div>
+					</div>
+
+					<div class="email_options" style="display:none;">
+
 						<div class="form-group" data-toggle="tooltip"  data-container="body" title="Comma separated list of email addresses">
 							<label for="notify_emails" data-lang="c_email" class="lang col-sm-2 control-label">Email</label>
 							<div class="col-sm-10">
@@ -205,6 +206,28 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 							<label for="email_content" data-lang="c_content" class="lang col-sm-2 control-label">content</label>
 							<div class="col-sm-10">
 								<textarea id="email_content" class="labelProp form-control" placeholder="Email content"></textarea>
+							</div>
+						</div>
+					</div>
+
+					<div class="sms_options" style="display:none;">
+						<div class="form-group" data-toggle="tooltip"  data-container="body" title="Comma separated list of email addresses">
+							<label for="notify_sms" data-lang="c_sms" class="lang col-sm-2 control-label">SMS</label>
+							<div class="col-sm-10">
+								<input type="tel" id="notify_sms" class="form-control" required multiple placeholder="SMS Number">
+							</div>
+						</div>
+						<div class="form-group" data-toggle="tooltip"  data-container="body" title="Question that will contain the SMS numbers to use">
+							<label for="sms_question" class="col-sm-2 control-label lang" data-lang="n_smsq">sms question</label>
+							<div class="col-sm-10">
+								<select class="selected_question form-control" id="sms_question"></select>
+							</div>
+						</div>
+
+						<div class="form-group" data-toggle="tooltip"  data-container="body" title="SMS content.">
+							<label for="sms_content" data-lang="c_content" class="lang col-sm-2 control-label">content</label>
+							<div class="col-sm-10">
+								<textarea id="sms_content" class="labelProp form-control" placeholder="SMS content"></textarea>
 							</div>
 						</div>
 					</div>

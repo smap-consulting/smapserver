@@ -89,9 +89,6 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 
  ******************************************************************************/
 
-/*
- * Manage the table that stores details on the forwarding of data onto other systems
- */
 public class TextManager {
 	
 	private static Logger log =
@@ -106,8 +103,7 @@ public class TextManager {
 	}
 
 	/*
-	 * Call this function to create a PDF
-	 * Return a suggested name for the PDF file derived from the results
+	 * Create the text output for an email message
 	 */
 	public ArrayList<String> createTextOutput(
 			Connection sd,
@@ -118,14 +114,6 @@ public class TextManager {
 			org.smap.sdal.model.Survey survey,
 			int utcOffset,
 			String language) {		
-		
-		User user = null;
-		
-		ServerManager serverManager = new ServerManager();
-		ServerData serverData = serverManager.getServer(sd);
-		
-		UserManager um = new UserManager();
-		int [] repIndexes = new int[20];		// Assume repeats don't go deeper than 20 levels
 
 		try {
 			
@@ -296,8 +284,10 @@ public class TextManager {
 					
 					for(int i = 0; i < text.size(); i++) {
 						String s = text.get(i);
-						s = s.replaceAll("\\$\\{" + fieldName + "\\}", value);
-						text.set(i, s);
+						if(s != null) {
+							s = s.replaceAll("\\$\\{" + fieldName + "\\}", value);
+							text.set(i, s);
+						}
 					}
 				} 
 				
@@ -316,123 +306,6 @@ public class TextManager {
 			name = formName + "\\[" + index + "\\]." + qName;
 		}
 		return name;
-	}
-	
-	private class UserSettings {
-		String title;
-		String license;
-	}
-	
-	/*
-	 * Fill the template with data from the survey
-	 */
-	private static void fillTemplateUserDetails(AcroFields pdfForm, User user, String basePath) throws IOException, DocumentException {
-		try {
-					
-			pdfForm.setField("user_name", user.name);
-			pdfForm.setField("user_company", user.company_name);
-
-			/*
-			 * User configurable data TODO This should be an array of key value pairs
-			 * As interim use a hard coded class to hold the data
-			 */
-			String settings = user.settings;
-			Type type = new TypeToken<UserSettings>(){}.getType();
-			Gson gson=  new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
-			UserSettings us = gson.fromJson(settings, type);
-			
-			if(us != null) {
-				pdfForm.setField("user_title", us.title);
-				pdfForm.setField("user_license", us.license);
-				
-				PushbuttonField ad = pdfForm.getNewPushbuttonFromField("user_signature");
-				if(ad != null) {
-					ad.setLayout(PushbuttonField.LAYOUT_ICON_ONLY);
-					ad.setProportionalIcon(true);
-					String filename = null;
-					try {
-						filename = basePath + "/media/users/" + user.id + "/sig/"  + user.signature;
-						ad.setImage(Image.getInstance(filename));
-					} catch (Exception e) {
-						log.info("Error: Failed to add signature " + filename + " to pdf");
-					}
-					pdfForm.replacePushbuttonField("user_signature", ad.getField());
-				} else {
-					//log.info("Picture field: user_signature not found");
-				}
-			}
-				
-		} catch (Exception e) {
-			log.log(Level.SEVERE, "Error filling template", e);
-		}
-	}
-
-
-	
-	/*
-	 * Convert the results  and survey definition arrays to display items
-	 */
-	ArrayList<DisplayItem> convertChoiceListToDisplayItems(
-			org.smap.sdal.model.Survey survey, 
-			org.smap.sdal.model.Question question,
-			ArrayList<Result> choiceResults,
-			int languageIdx) {
-		
-		ArrayList<DisplayItem> diList = null;
-		if(choiceResults != null) {
-			diList = new ArrayList<DisplayItem>();
-			for(Result r : choiceResults) {
-
-				Option option = survey.optionLists.get(r.listName).options.get(r.cIdx);
-				Label label = option.labels.get(languageIdx);
-				DisplayItem di = new DisplayItem();
-				di.text = label.text == null ? "" : label.text;
-				di.name = r.name;
-				di.type = "choice";
-				di.isSet = r.isSet;
-				diList.add(di);
-			}
-		}
-		return diList;
-	}
-
-	/*
-	 * Get the value of a select question
-	 */
-	String getSelectValue(boolean isSelectMultiple, DisplayItem di, ArrayList<String> deps) {
-		StringBuffer sb = new StringBuffer("");
-		
-		for(DisplayItem aChoice : di.choices) {
-			
-			if(isSelectMultiple) {
-				if(aChoice.isSet) {
-				
-					if(deps == null || (aChoice.name != null && !aChoice.name.trim().toLowerCase().equals("other"))) {
-						if(sb.length() > 0) {
-							sb.append(", ");
-						}
-						sb.append(aChoice.text);
-					}
-					
-				} 
-			} else {
-				if(aChoice.isSet) {
-					
-					if(deps == null || (aChoice.name != null && !aChoice.name.trim().toLowerCase().equals("other"))) {
-						if(sb.length() > 0) {
-							sb.append(", ");
-						}
-						sb.append(aChoice.text);
-					}
-
-				}
-			}
-
-			
-		}
-			
-		return sb.toString();
-		
 	}
 	
 

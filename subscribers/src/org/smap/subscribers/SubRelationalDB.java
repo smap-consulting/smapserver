@@ -256,9 +256,7 @@ public class SubRelationalDB extends Subscriber {
 	private void applyNotifications(int ueId, String remoteUser, String server, int sId) {
 		
 		PreparedStatement pstmtGetUploadEvent = null;
-		PreparedStatement pstmtGetNotifications = null;
-		PreparedStatement pstmtUpdateUploadEvent = null;
-		PreparedStatement pstmtNotificationLog = null;
+		
 		
 		Connection sd = null;
 		Connection cResults = null;
@@ -292,9 +290,6 @@ public class SubRelationalDB extends Subscriber {
 				fm.notifyForSubmission(
 						sd, 
 						cResults,
-						pstmtGetNotifications, 
-						pstmtUpdateUploadEvent, 
-						pstmtNotificationLog, 
 						ueId, 
 						remoteUser, 
 						"https",
@@ -325,9 +320,6 @@ public class SubRelationalDB extends Subscriber {
 		} finally {
 			
 			try {if (pstmtGetUploadEvent != null) {pstmtGetUploadEvent.close();}} catch (SQLException e) {}
-			try {if (pstmtGetNotifications != null) {pstmtGetNotifications.close();}} catch (SQLException e) {}
-			try {if (pstmtUpdateUploadEvent != null) {pstmtUpdateUploadEvent.close();}} catch (SQLException e) {}
-			try {if (pstmtNotificationLog != null) {pstmtNotificationLog.close();}} catch (SQLException e) {}
 			
 			try {
 				if (sd != null) {

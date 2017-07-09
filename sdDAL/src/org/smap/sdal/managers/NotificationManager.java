@@ -245,6 +245,37 @@ public class NotificationManager {
 	}
 	
 	/*
+	 * Get all Notifications that are accessible by the requesting user and in a specific project
+	 */
+	public ArrayList<String> getNotificationTypes(Connection sd) throws SQLException {
+		
+		ArrayList<String> types = new ArrayList<>();
+		PreparedStatement pstmt = null;
+		
+		String sql = "select s.sms_url "
+				+ "from server s";
+		
+		types.add("email");
+		types.add("forward");
+		try {
+		
+			pstmt = sd.prepareStatement(sql);	 			
+			ResultSet rs = pstmt.executeQuery();
+			if(rs.next()) {
+				String smsUrl = rs.getString("sms_url");
+				if(smsUrl != null) {
+					types.add("sms");
+				}
+			}
+		} finally {
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+		}
+
+		return types;
+		
+	}
+	
+	/*
 	 * Delete the notification
 	 */
 	public void deleteNotification(Connection sd, PreparedStatement pstmt,
@@ -294,9 +325,6 @@ public class NotificationManager {
 	public void notifyForSubmission(
 			Connection sd, 
 			Connection cResults,
-			PreparedStatement pstmtGetNotifications, 
-			PreparedStatement pstmtUpdateUploadEvent, 
-			PreparedStatement pstmtNotificationLog,
 			int ue_id,
 			String remoteUser,
 			String scheme,
@@ -319,272 +347,319 @@ public class NotificationManager {
 		 */
 		
 		ResultSet rsNotifications = null;		
+		PreparedStatement pstmtGetNotifications = null;
+		PreparedStatement pstmtUpdateUploadEvent = null;
+		PreparedStatement pstmtNotificationLog = null;
+		PreparedStatement pstmtGetSMSUrl = null;
 		
-		log.info("notifyForSubmission:: " + ue_id);
-		
-		String sqlGetNotifications = "select n.target, n.notify_details " +
-				" from forward n " +
-				" where n.s_id = ? " + 
-				" and n.target != 'forward'";
-		try {if (pstmtGetNotifications != null) { pstmtGetNotifications.close();}} catch (SQLException e) {}
-		pstmtGetNotifications = sd.prepareStatement(sqlGetNotifications);
-		
-		String sqlUpdateUploadEvent = "update upload_event set notifications_applied = 'true' where ue_id = ?; ";
-		try {if (pstmtUpdateUploadEvent != null) { pstmtUpdateUploadEvent.close();}} catch (SQLException e) {}
-		pstmtUpdateUploadEvent = sd.prepareStatement(sqlUpdateUploadEvent);
-		
-		String sqlNotificationLog = "insert into notification_log " +
-				"(o_id, p_id, s_id, notify_details, status, status_details, event_time) " +
-				"values( ?, ?,?, ?, ?, ?, now()); ";
-		try {if (pstmtNotificationLog != null) { pstmtNotificationLog.close();}} catch (SQLException e) {}
-		pstmtNotificationLog = sd.prepareStatement(sqlNotificationLog);
-
-		// Localisation
-		Organisation organisation = UtilityMethodsEmail.getOrganisationDefaults(sd, null, remoteUser);
-		Locale locale = new Locale(organisation.locale);
-		ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
-		
-		// Time Zone
-		int utcOffset = 0;	
-		LocalDateTime dt = LocalDateTime.now();
-		if(organisation.timeZone != null) {
-			try {
-				ZoneId zone = ZoneId.of(organisation.timeZone);
-			    ZonedDateTime zdt = dt.atZone(zone);
-			    ZoneOffset offset = zdt.getOffset();
-			    utcOffset = offset.getTotalSeconds() / 60;
-			} catch (Exception e) {
-				log.log(Level.SEVERE, e.getMessage(), e);
-			}
-		}
-		
-		pstmtGetNotifications.setInt(1, sId);
-		log.info("Get notifications:: " + pstmtGetNotifications.toString());
-		rsNotifications = pstmtGetNotifications.executeQuery();
-		while(rsNotifications.next()) {
-			boolean writeToMonitor = true;
-			log.info("++++++ Notification: " + rsNotifications.getString(1) + " " + rsNotifications.getString(2));
-			String target = rsNotifications.getString(1);
-			String notifyDetailsString = rsNotifications.getString(2);
-			NotifyDetails nd = new Gson().fromJson(notifyDetailsString, NotifyDetails.class);
+		try {
+			log.info("notifyForSubmission:: " + ue_id);
 			
-			/*
-			 * Create the document
-			 */
-			String docURL = null;
-			String filePath = null;
-			String filename = "instance";
-			String logContent = null;
+			String sqlGetNotifications = "select n.target, n.notify_details " +
+					" from forward n " +
+					" where n.s_id = ? " + 
+					" and n.target != 'forward'";
+			pstmtGetNotifications = sd.prepareStatement(sqlGetNotifications);
 			
-			/*
-			 * Get survey details
-			 */
-			PDFSurveyManager pm = new PDFSurveyManager();
-			SurveyManager sm = new SurveyManager();
-			org.smap.sdal.model.Survey survey = null;
-			boolean generateBlank =  (instanceId == null) ? true : false;	// If false only show selected options
-			boolean superUser = GeneralUtilityMethods.isSuperUser(sd, remoteUser);
-			survey = sm.getById(sd, cResults, remoteUser, sId, true, basePath, 
-					instanceId, true, generateBlank, true, false, true, "real", superUser, utcOffset, "geojson");
-
-			/*
-			 * Add details from the survey to the subject and email content
-			 */
-			nd.subject = sm.fillStringTemplate(survey, nd.subject);
-			nd.content = sm.fillStringTemplate(survey, nd.content);
-			TextManager tm = new TextManager();
-			ArrayList<String> text = new ArrayList<> ();
-			text.add(nd.subject);
-			text.add(nd.content);
-			tm.createTextOutput(sd,
-						cResults,
-						text,
-						basePath, 
-						remoteUser,
-						survey,
-						utcOffset,
-						"none");
-			nd.subject = text.get(0);
-			nd.content = text.get(1);
+			String sqlUpdateUploadEvent = "update upload_event set notifications_applied = 'true' where ue_id = ?; ";
+			pstmtUpdateUploadEvent = sd.prepareStatement(sqlUpdateUploadEvent);
 			
-			if(nd.attach != null && !nd.attach.equals("none")) {
-				System.out.println("Attaching link to email: " + nd.attach);
-				
-				if(nd.attach.startsWith("pdf")) {
-					docURL = null;
-					
-					// Create temporary PDF and get file name
-					filePath = basePath + "/temp/" + String.valueOf(UUID.randomUUID()) + ".pdf";
-					FileOutputStream outputStream = null;
-					try {
-						outputStream = new FileOutputStream(filePath); 
-					} catch (Exception e) {
-						log.log(Level.SEVERE, "Error creating temporary PDF file", e);
-					}
-										
-					// Split orientation from nd.attach
-					boolean landscape = false;
-					if(nd.attach != null && nd.attach.startsWith("pdf")) {
-						landscape = nd.attach.equals("pdf_landscape");
-						nd.attach = "pdf";
-					}
-
-					filename = pm.createPdf(
-							sd,
-							cResults,
-							outputStream,
-							basePath, 
-							serverRoot,
-							remoteUser,
-							"none", 
-							survey, 
-							generateBlank,
-							null,
-							landscape,
-							null,
-							utcOffset);
-					
-					logContent = filePath;
-					
-				} else {
-					docURL = "/webForm/" + ident +
-							"?datakey=instanceid&datakeyvalue=" + instanceId;
-					logContent = docURL;
+			String sqlNotificationLog = "insert into notification_log " +
+					"(o_id, p_id, s_id, notify_details, status, status_details, event_time) " +
+					"values( ?, ?,?, ?, ?, ?, now()); ";
+			try {if (pstmtNotificationLog != null) { pstmtNotificationLog.close();}} catch (SQLException e) {}
+			pstmtNotificationLog = sd.prepareStatement(sqlNotificationLog);
+	
+			// Localisation
+			Organisation organisation = UtilityMethodsEmail.getOrganisationDefaults(sd, null, remoteUser);
+			Locale locale = new Locale(organisation.locale);
+			ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
+			
+			// Time Zone
+			int utcOffset = 0;	
+			LocalDateTime dt = LocalDateTime.now();
+			if(organisation.timeZone != null) {
+				try {
+					ZoneId zone = ZoneId.of(organisation.timeZone);
+				    ZonedDateTime zdt = dt.atZone(zone);
+				    ZoneOffset offset = zdt.getOffset();
+				    utcOffset = offset.getTotalSeconds() / 60;
+				} catch (Exception e) {
+					log.log(Level.SEVERE, e.getMessage(), e);
 				}
-			} 
+			}
 			
-			System.out.println("Subject: " + nd.subject);
-			System.out.println("Content: " + nd.content);
+			pstmtGetNotifications.setInt(1, sId);
+			log.info("Get notifications:: " + pstmtGetNotifications.toString());
+			rsNotifications = pstmtGetNotifications.executeQuery();
+			while(rsNotifications.next()) {
+				boolean writeToMonitor = true;
+				log.info("++++++ Notification: " + rsNotifications.getString(1) + " " + rsNotifications.getString(2));
+				String target = rsNotifications.getString(1);
+				String notifyDetailsString = rsNotifications.getString(2);
+				NotifyDetails nd = new Gson().fromJson(notifyDetailsString, NotifyDetails.class);
 				
-			/*
-			 * Send document to target
-			 */
-			String status = "success";				// Notification log
-			String notify_details = null;			// Notification log
-			String error_details = null;			// Notification log
-			if(target.equals("email")) {
-				EmailServer emailServer = UtilityMethodsEmail.getSmtpHost(sd, null, remoteUser);
-				if(emailServer.smtpHost != null && emailServer.smtpHost.trim().length() > 0) {
-					ArrayList<String> emailList = null;
-					log.info("Email question: " + nd.emailQuestion);
-					if(nd.emailQuestion > 0) {
-						emailList = GeneralUtilityMethods.getResponseForQuestion(sd, cResults, sId, nd.emailQuestion, instanceId);
+				/*
+				 * Create the document
+				 */
+				String docURL = null;
+				String filePath = null;
+				String filename = "instance";
+				String logContent = null;
+				
+				/*
+				 * Get survey details
+				 */
+				PDFSurveyManager pm = new PDFSurveyManager();
+				SurveyManager sm = new SurveyManager();
+				org.smap.sdal.model.Survey survey = null;
+				boolean generateBlank =  (instanceId == null) ? true : false;	// If false only show selected options
+				boolean superUser = GeneralUtilityMethods.isSuperUser(sd, remoteUser);
+				survey = sm.getById(sd, cResults, remoteUser, sId, true, basePath, 
+						instanceId, true, generateBlank, true, false, true, "real", superUser, utcOffset, "geojson");
+	
+				/*
+				 * Add details from the survey to the subject and email content
+				 */
+				nd.subject = sm.fillStringTemplate(survey, nd.subject);
+				nd.content = sm.fillStringTemplate(survey, nd.content);
+				TextManager tm = new TextManager();
+				ArrayList<String> text = new ArrayList<> ();
+				text.add(nd.subject);
+				text.add(nd.content);
+				tm.createTextOutput(sd,
+							cResults,
+							text,
+							basePath, 
+							remoteUser,
+							survey,
+							utcOffset,
+							"none");
+				nd.subject = text.get(0);
+				nd.content = text.get(1);
+				
+				if(nd.attach != null && !nd.attach.equals("none")) {
+					System.out.println("Attaching link to email: " + nd.attach);
+					
+					if(nd.attach.startsWith("pdf")) {
+						docURL = null;
+						
+						// Create temporary PDF and get file name
+						filePath = basePath + "/temp/" + String.valueOf(UUID.randomUUID()) + ".pdf";
+						FileOutputStream outputStream = null;
+						try {
+							outputStream = new FileOutputStream(filePath); 
+						} catch (Exception e) {
+							log.log(Level.SEVERE, "Error creating temporary PDF file", e);
+						}
+											
+						// Split orientation from nd.attach
+						boolean landscape = false;
+						if(nd.attach != null && nd.attach.startsWith("pdf")) {
+							landscape = nd.attach.equals("pdf_landscape");
+							nd.attach = "pdf";
+						}
+	
+						filename = pm.createPdf(
+								sd,
+								cResults,
+								outputStream,
+								basePath, 
+								serverRoot,
+								remoteUser,
+								"none", 
+								survey, 
+								generateBlank,
+								null,
+								landscape,
+								null,
+								utcOffset);
+						
+						logContent = filePath;
+						
 					} else {
-						emailList = new ArrayList<String> ();
+						docURL = "/webForm/" + ident +
+								"?datakey=instanceid&datakeyvalue=" + instanceId;
+						logContent = docURL;
+					}
+				} 
+					
+				/*
+				 * Send document to target
+				 */
+				String status = "success";				// Notification log
+				String notify_details = null;			// Notification log
+				String error_details = null;				// Notification log
+				if(target.equals("email")) {
+					EmailServer emailServer = UtilityMethodsEmail.getSmtpHost(sd, null, remoteUser);
+					if(emailServer.smtpHost != null && emailServer.smtpHost.trim().length() > 0) {
+						ArrayList<String> emailList = null;
+						log.info("Email question: " + nd.emailQuestion);
+						if(nd.emailQuestion > 0) {
+							emailList = GeneralUtilityMethods.getResponseForQuestion(sd, cResults, sId, nd.emailQuestion, instanceId);
+						} else {
+							emailList = new ArrayList<String> ();
+						}
+						
+						// Add the static emails to the per question emails
+						for(String email : nd.emails) {
+							if(email.length() > 0) {
+								log.info("Adding static email: " + email); 
+								emailList.add(email);
+							}
+						}
+								
+						// Convert emails into a comma separated string
+						String emails = "";
+						for(String email : emailList) {		
+							if(isValidEmail(email)) {
+								if(emails.length() > 0) {
+									emails += ",";
+								}
+								emails += email;
+							} else {
+								log.info("Email Notifications: Discarding invalid email: " + email);
+							}
+						}
+							
+						if(emails.trim().length() > 0) {
+							log.info("userevent: " + remoteUser + " sending email of '" + logContent + "' to " + emails);
+							
+							// Set the subject
+							String subject = "";
+							if(nd.subject != null && nd.subject.trim().length() > 0) {
+								subject = nd.subject;
+							} else {
+								if(serverName != null && serverName.contains("smap")) {
+									subject = "Smap ";
+								}
+								subject += localisation.getString("c_notify");
+							}
+							
+							String from = "smap";
+							if(nd.from != null && nd.from.trim().length() > 0) {
+								from = nd.from;
+							}
+							String content = null;
+							if(nd.content != null && nd.content.trim().length() > 0) {
+								content = nd.content;
+							} else {
+								content = organisation.default_email_content;
+							}
+							
+							notify_details = "Sending email to: " + emails + " containing link " + logContent;
+							
+							log.info("+++ emailing to: " + emails + " docUrl: " + logContent + 
+									" from: " + from + 
+									" subject: " + subject +
+									" smtp_host: " + emailServer.smtpHost +
+									" email_domain: " + emailServer.emailDomain);
+							try {
+								EmailManager em = new EmailManager();
+								
+								em.sendEmail(
+										emails, 
+										null, 
+										"notify", 
+										subject, 
+										content,
+										from,		
+										null, 
+										null, 
+										null, 
+										docURL, 
+										filePath,
+										filename,
+										organisation.getAdminEmail(), 
+										emailServer,
+										scheme,
+										serverName,
+										localisation);
+							} catch(Exception e) {
+								status = "error";
+								error_details = e.getMessage();
+							}
+						} else {
+							log.log(Level.INFO, "Info: List of email recipients is empty");
+							lm.writeLog(sd, sId, "subscriber", "email", localisation.getString("email_nr"));
+							writeToMonitor = false;
+						}
+					} else {
+						status = "error";
+						error_details = "smtp_host not set";
+						log.log(Level.SEVERE, "Error: Attempt to do email notification but email server not set");
 					}
 					
-					// Add the static emails to the per question emails
-					for(String email : nd.emails) {
-						if(email.length() > 0) {
-							log.info("Adding static email: " + email); 
-							emailList.add(email);
-						}
+				} else if(target.equals("sms")) {   // SMS URL notiifcation - SMS message is posted to an arbitrary URL 
+	
+					// Get the URL to use in sending the SMS
+					String sql = "select s.sms_url "
+							+ "from server s";
+					
+					String sms_url = null;
+					pstmtGetSMSUrl = sd.prepareStatement(sql);
+					ResultSet rs = pstmtGetSMSUrl.executeQuery();
+					if(rs.next()) {
+						sms_url = rs.getString("sms_url");	
 					}
-							
-					// Convert emails into a comma separated string
-					String emails = "";
-					for(String email : emailList) {		
-						if(isValidEmail(email)) {
-							if(emails.length() > 0) {
-								emails += ",";
+					
+					if(sms_url != null) {
+						ArrayList<String> smsList = null;
+						log.info("SMS question: " + nd.emailQuestion);
+						if(nd.emailQuestion > 0) {
+							smsList = GeneralUtilityMethods.getResponseForQuestion(sd, cResults, sId, nd.emailQuestion, instanceId);
+						} else {
+							smsList = new ArrayList<String> ();
+						}
+						
+						// Add the static sms numbers to the per question sms numbers
+						for(String sms : nd.emails) {
+							if(sms.length() > 0) {
+								log.info("Adding static sms: " + sms); 
+								smsList.add(sms);
 							}
-							emails += email;
-						} else {
-							log.info("Email Notifications: Discarding invalid email: " + email);
-						}
-					}
-						
-					if(emails.trim().length() > 0) {
-						log.info("userevent: " + remoteUser + " sending email of '" + logContent + "' to " + emails);
-						
-						// Set the subject
-						String subject = "";
-						if(nd.subject != null && nd.subject.trim().length() > 0) {
-							subject = nd.subject;
-						} else {
-							if(serverName != null && serverName.contains("smap")) {
-								subject = "Smap ";
-							}
-							subject += localisation.getString("c_notify");
 						}
 						
-						String from = "smap";
-						if(nd.from != null && nd.from.trim().length() > 0) {
-							from = nd.from;
-						}
-						String content = null;
-						if(nd.content != null && nd.content.trim().length() > 0) {
-							content = nd.content;
-						} else {
-							content = organisation.default_email_content;
-						}
-						
-						notify_details = "Sending email to: " + emails + " containing link " + logContent;
-						
-						log.info("+++ emailing to: " + emails + " docUrl: " + logContent + 
-								" from: " + from + 
-								" subject: " + subject +
-								" smtp_host: " + emailServer.smtpHost +
-								" email_domain: " + emailServer.emailDomain);
-						try {
-							EmailManager em = new EmailManager();
+						SMSManager smsUrlMgr = new SMSManager();
+						for(String sms : smsList) {
 							
-							em.sendEmail(
-									emails, 
-									null, 
-									"notify", 
-									subject, 
-									content,
-									from,		
-									null, 
-									null, 
-									null, 
-									docURL, 
-									filePath,
-									filename,
-									organisation.getAdminEmail(), 
-									emailServer,
-									scheme,
-									serverName,
-									localisation);
-						} catch(Exception e) {
-							status = "error";
-							error_details = e.getMessage();
+							log.info("userevent: " + remoteUser + " sending sms of '" + nd.content + "' to " + sms);
+							smsUrlMgr.sendSMSUrl(sms_url, sms, nd.content);
+							
 						}
 					} else {
-						log.log(Level.INFO, "Info: List of email recipients is empty");
-						lm.writeLog(sd, sId, "subscriber", "email", localisation.getString("email_nr"));
-						writeToMonitor = false;
+						log.log(Level.SEVERE, "Error: Attempt to do SMS notification but SMS URL not set");
 					}
+	
+					
 				} else {
 					status = "error";
-					error_details = "smtp_host not set";
-					log.log(Level.SEVERE, "Error: Attempt to do email notification but email server not set");
+					error_details = "Invalid target" + target;
+					log.log(Level.SEVERE, "Error: Invalid target" + target);
 				}
 				
-			} else {
-				status = "error";
-				error_details = "Invalid target" + target;
-				log.log(Level.SEVERE, "Error: Invalid target" + target);
+				// Write log message
+				if(writeToMonitor) {
+					pstmtNotificationLog.setInt(1, organisation.id);
+					pstmtNotificationLog.setInt(2, pId);
+					pstmtNotificationLog.setInt(3, sId);
+					pstmtNotificationLog.setString(4, notify_details);
+					pstmtNotificationLog.setString(5, status);
+					pstmtNotificationLog.setString(6, error_details);
+					pstmtNotificationLog.executeUpdate();
+				}
 			}
-			
-			// Write log message
-			if(writeToMonitor) {
-				pstmtNotificationLog.setInt(1, organisation.id);
-				pstmtNotificationLog.setInt(2, pId);
-				pstmtNotificationLog.setInt(3, sId);
-				pstmtNotificationLog.setString(4, notify_details);
-				pstmtNotificationLog.setString(5, status);
-				pstmtNotificationLog.setString(6, error_details);
-				pstmtNotificationLog.executeUpdate();
-			}
+				
+			/*
+			 * Update upload event to record application of notifications
+			 */
+			pstmtUpdateUploadEvent.setInt(1, ue_id);
+			pstmtUpdateUploadEvent.executeUpdate();
+		} finally {
+			try {if (pstmtGetNotifications != null) {pstmtGetNotifications.close();}} catch (SQLException e) {}
+			try {if (pstmtUpdateUploadEvent != null) {pstmtUpdateUploadEvent.close();}} catch (SQLException e) {}
+			try {if (pstmtNotificationLog != null) {pstmtNotificationLog.close();}} catch (SQLException e) {}
 		}
-			
-		/*
-		 * Update upload event to record application of notifications
-		 */
-		pstmtUpdateUploadEvent.setInt(1, ue_id);
-		pstmtUpdateUploadEvent.executeUpdate();
 			
 	}
 	

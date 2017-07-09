@@ -9,4 +9,5 @@ public class ServerData {
 	public String version;
 	public String mapbox_default;
 	public String google_key;
+	public String sms_url;
 }
