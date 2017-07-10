@@ -646,7 +646,7 @@ public class NotificationManager {
 							writeToMonitor = false;
 						}
 						
-						notify_details = "Sending sms to: " + smsList.toString() + " containing link " + logContent;
+						notify_details = "Sending sms to: " + smsList.toString() + ((logContent == null || logContent.equals("null")) ? "" :" containing link " + logContent);
 						
 					} else {
 						status = "error";
