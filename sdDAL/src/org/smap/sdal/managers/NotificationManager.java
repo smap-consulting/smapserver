@@ -10,6 +10,7 @@ import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Locale;
 import java.util.ResourceBundle;
 import java.util.UUID;
@@ -353,6 +354,8 @@ public class NotificationManager {
 		PreparedStatement pstmtGetSMSUrl = null;
 		
 		try {
+			HashMap<String, String> sentEndPoints = new HashMap<> ();
+			
 			log.info("notifyForSubmission:: " + ue_id);
 			
 			String sqlGetNotifications = "select n.target, n.notify_details " +
@@ -511,14 +514,19 @@ public class NotificationManager {
 								
 						// Convert emails into a comma separated string
 						String emails = "";
-						for(String email : emailList) {		
-							if(isValidEmail(email)) {
-								if(emails.length() > 0) {
-									emails += ",";
+						for(String email : emailList) {	
+							if(sentEndPoints.get(email) == null) {
+								if(isValidEmail(email)) {
+									if(emails.length() > 0) {
+										emails += ",";
+									}
+									emails += email;
+								} else {
+									log.info("Email Notifications: Discarding invalid email: " + email);
 								}
-								emails += email;
+								sentEndPoints.put(email, email);
 							} else {
-								log.info("Email Notifications: Discarding invalid email: " + email);
+								log.info("Duplicate email: " + email);
 							}
 						}
 							
@@ -591,7 +599,7 @@ public class NotificationManager {
 					}
 					
 				} else if(target.equals("sms")) {   // SMS URL notiifcation - SMS message is posted to an arbitrary URL 
-	
+					
 					// Get the URL to use in sending the SMS
 					String sql = "select s.sms_url "
 							+ "from server s";
@@ -620,14 +628,29 @@ public class NotificationManager {
 							}
 						}
 						
-						SMSManager smsUrlMgr = new SMSManager();
-						for(String sms : smsList) {
-							
-							log.info("userevent: " + remoteUser + " sending sms of '" + nd.content + "' to " + sms);
-							smsUrlMgr.sendSMSUrl(sms_url, sms, nd.content);
-							
+						if(smsList.size() > 0) {
+							SMSManager smsUrlMgr = new SMSManager();
+							for(String sms : smsList) {
+								
+								if(sentEndPoints.get(sms) == null) {
+									log.info("userevent: " + remoteUser + " sending sms of '" + nd.content + "' to " + sms);
+									smsUrlMgr.sendSMSUrl(sms_url, sms, nd.content);
+									sentEndPoints.put(sms, sms);
+								} else {
+									log.info("Duplicate phone number: " + sms);
+								}
+								
+							} 
+						} else {
+							log.info("No phone numbers to send to");
+							writeToMonitor = false;
 						}
+						
+						notify_details = "Sending sms to: " + smsList.toString() + " containing link " + logContent;
+						
 					} else {
+						status = "error";
+						error_details = "SMS URL not set";
 						log.log(Level.SEVERE, "Error: Attempt to do SMS notification but SMS URL not set");
 					}
 	
