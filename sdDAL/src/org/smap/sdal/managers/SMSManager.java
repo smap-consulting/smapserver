@@ -67,10 +67,12 @@ public class SMSManager {
 
 	
 	// Send an email
-	public void sendSMSUrl( 
+	public String sendSMSUrl( 
 			String url, 
 			String number, 
 			String content) throws Exception  {
+		
+		String responseBody = null;
 		
 		if(!isValidPhoneNumber(number)) {
 			throw new Exception("Invalid phone number: " + number);
@@ -82,7 +84,7 @@ public class SMSManager {
 				
 			url = url.replaceAll("\\$\\{phone\\}", URLEncoder.encode(number, "UTF-8"));
 			url = url.replaceAll("\\$\\{msg\\}", URLEncoder.encode(content, "UTF-8"));
-				
+			
 			HttpGet httpget = new HttpGet(url);
 			log.info("Executing SMS request " + httpget.getRequestLine());
 			
@@ -102,13 +104,14 @@ public class SMSManager {
 
 	            };
 	            
-	            String responseBody = httpclient.execute(httpget, responseHandler);
+	            responseBody = httpclient.execute(httpget, responseHandler);
 	            log.info("Sent SMS: " + responseBody);
 			 
 		} finally {
 			httpclient.close();
 		}
 		
+		return responseBody;
 	}
 	
 	/*

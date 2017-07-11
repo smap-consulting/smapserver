@@ -613,6 +613,7 @@ public class NotificationManager {
 					
 					if(sms_url != null) {
 						ArrayList<String> smsList = null;
+						ArrayList<String> responseList = new ArrayList<> ();
 						log.info("SMS question: " + nd.emailQuestion);
 						if(nd.emailQuestion > 0) {
 							smsList = GeneralUtilityMethods.getResponseForQuestion(sd, cResults, sId, nd.emailQuestion, instanceId);
@@ -634,7 +635,7 @@ public class NotificationManager {
 								
 								if(sentEndPoints.get(sms) == null) {
 									log.info("userevent: " + remoteUser + " sending sms of '" + nd.content + "' to " + sms);
-									smsUrlMgr.sendSMSUrl(sms_url, sms, nd.content);
+									responseList.add(smsUrlMgr.sendSMSUrl(sms_url, sms, nd.content));
 									sentEndPoints.put(sms, sms);
 								} else {
 									log.info("Duplicate phone number: " + sms);
@@ -646,7 +647,9 @@ public class NotificationManager {
 							writeToMonitor = false;
 						}
 						
-						notify_details = "Sending sms to: " + smsList.toString() + ((logContent == null || logContent.equals("null")) ? "" :" containing link " + logContent);
+						notify_details = "Sending sms " + smsList.toString() 
+								+ ((logContent == null || logContent.equals("null")) ? "" :" containing link " + logContent)
+								+ " with response " + responseList.toString();
 						
 					} else {
 						status = "error";
