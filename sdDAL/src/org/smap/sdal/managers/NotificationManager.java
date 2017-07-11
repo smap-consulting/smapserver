@@ -354,7 +354,6 @@ public class NotificationManager {
 		PreparedStatement pstmtGetSMSUrl = null;
 		
 		try {
-			HashMap<String, String> sentEndPoints = new HashMap<> ();
 			
 			log.info("notifyForSubmission:: " + ue_id);
 			
@@ -397,6 +396,7 @@ public class NotificationManager {
 			rsNotifications = pstmtGetNotifications.executeQuery();
 			while(rsNotifications.next()) {
 				boolean writeToMonitor = true;
+				HashMap<String, String> sentEndPoints = new HashMap<> ();
 				log.info("++++++ Notification: " + rsNotifications.getString(1) + " " + rsNotifications.getString(2));
 				String target = rsNotifications.getString(1);
 				String notifyDetailsString = rsNotifications.getString(2);
