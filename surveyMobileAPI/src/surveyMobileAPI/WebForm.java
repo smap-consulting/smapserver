@@ -705,6 +705,9 @@ public class WebForm extends Application{
 		transformed = transformed.replaceAll("&lt;", "<");
 		transformed = transformed.replaceAll("&quot;", "\"");
 		
+		System.out.println("----------------");
+		System.out.println(transformed);
+		System.out.println("----------------");
 		/*
 		 * Hack
 		 * Add fix up issues due to the obsolete XSLT 
