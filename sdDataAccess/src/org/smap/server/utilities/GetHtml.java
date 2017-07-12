@@ -22,6 +22,7 @@ import java.util.Stack;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -41,7 +42,10 @@ import org.smap.sdal.Utilities.CSVParser;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
+import org.smap.sdal.managers.SurveyManager;
 import org.smap.sdal.managers.TranslationManager;
+import org.smap.sdal.model.Language;
+import org.smap.sdal.model.LinkedSurvey;
 import org.smap.sdal.model.ManifestValue;
 import org.smap.server.entities.Form;
 import org.smap.server.entities.Option;
@@ -64,6 +68,7 @@ public class GetHtml {
 	private int BIND = 2;
 	private int BODY = 3;
 	private Form firstForm;
+	org.smap.sdal.model.Survey survey = null;
 	SurveyTemplate template = null;
 	private String gInstanceId = null;
 	private String gSurveyClass = null;
@@ -80,14 +85,19 @@ public class GetHtml {
 	/*
 	 * Get the Html as a string
 	 */
-	public String get(SurveyTemplate template) {
+	public String get(HttpServletRequest request, int sId, boolean superUser) {
 
 		String response = null;
-		this.template = template;
 
-		Connection sd = null;
+		// Get the base path
+		String basePath = GeneralUtilityMethods.getBasePath(request);
+		Connection sd = SDDataSource.getConnection("Get Html");
+		SurveyManager sm = new SurveyManager();
+
 		try {
-			sd = SDDataSource.getConnection("getHtml");
+
+			survey = sm.getById(sd, null, request.getRemoteUser(), sId, true, basePath, null, false, false, true, true,
+					false, "internal", superUser, 0, null);
 
 			log.info("Getting survey as Html-------------------------------");
 			// Create a new XML Document
@@ -97,13 +107,6 @@ public class GetHtml {
 
 			Writer outWriter = new StringWriter();
 			Result outStream = new StreamResult(outWriter);
-
-			// Get the first form
-			String firstFormRef = template.getFirstFormRef();
-			if (firstFormRef == null) {
-				log.log(Level.SEVERE, "Error: First Form Reference is null");
-			}
-			firstForm = template.getForm(firstFormRef);
 
 			Element parent;
 			parent = populateRoot(outputHtml);
@@ -436,10 +439,45 @@ public class GetHtml {
 		bodyElement.setAttribute("novalidate", "novalidate");
 		bodyElement.setAttribute("autocomplete", "off");
 		bodyElement.setAttribute("class", "or clearfix");
-		bodyElement.setAttribute("id", template.getSurvey().getIdent());
-		
+		bodyElement.setAttribute("id", survey.getIdent());
+
+		populateForm(sd, outputDoc, bodyElement);
 		parent.appendChild(bodyElement);
 	}
+
+	private void populateForm(Connection sd, Document outputDoc, Element parent) {
+
+		// logo
+		Element bodyElement = outputDoc.createElement("section");
+		bodyElement.setAttribute("class", "form-logo");
+		parent.appendChild(bodyElement);
+
+		// title
+		bodyElement = outputDoc.createElement("h3");
+		bodyElement.setAttribute("id", "form-title");
+		bodyElement.setTextContent(survey.getDisplayName());
+		parent.appendChild(bodyElement);
+
+		// Languages
+		bodyElement = outputDoc.createElement("select");
+		bodyElement.setAttribute("id", "form-languages");
+		bodyElement.setAttribute("style", "display:none;");
+		bodyElement.setAttribute("data-default-lang", survey.def_lang);
+		populateLanguageChoices(sd, outputDoc, bodyElement);
+		parent.appendChild(bodyElement);
+
+	}
+
+	private void populateLanguageChoices(Connection sd, Document outputDoc, Element parent) {
+		Element bodyElement = null;
+		for(Language lang : survey.languages) {
+			bodyElement = outputDoc.createElement("option");
+			bodyElement.setAttribute("value", lang.name);
+			bodyElement.setTextContent(lang.name);
+			parent.appendChild(bodyElement);
+		}
+	}
+
 
 
 	public void populateForm(Connection sd, Document outputDoc, Element parentElement, int location, Form f,

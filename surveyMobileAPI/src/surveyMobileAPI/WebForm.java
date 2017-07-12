@@ -707,7 +707,7 @@ public class WebForm extends Application{
 		//String transformed = transform(request, formXML, "/XSL/openrosa2html5form.xsl");
 		
 		GetHtml getHtml = new GetHtml();
-		String html = getHtml.get(template);
+		String html = getHtml.get(request, template.getSurvey().getId(), false);
 		output.append(html);
 		
 		System.out.println(html);
