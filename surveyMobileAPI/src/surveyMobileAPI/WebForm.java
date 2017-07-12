@@ -423,59 +423,54 @@ public class WebForm extends Application{
     					formXML = formXML.replaceAll("jr://" + type + "/" + name, url);
     				}
     			}
-			}
-    		
+			}  		
 			
 			// Convert to HTML / Json
-    		if(mimeType.equals("json")) {
-    			
-    			jr.surveyData.modelStr = getModelStr(request, formXML).toString();
-    			if(instanceXML != null) {
-    				jr.surveyData.instanceStrToEdit = instanceXML.replace("\n", "").replace("\r", "");
-    			}
-    			jr.surveyData.instanceStrToEditId = instanceStrToEditId;
+			if (mimeType.equals("json")) {
 
-    			// Add the assignment id if this was set
-    			if(assignmentId != 0) {
-    				jr.surveyData.assignmentId = assignmentId;
-    			}
-    			
-    			// Add access key for authentication
-    			if(accessKey != null) {
-    				jr.surveyData.accessKey = accessKey;
-    			}
-    			
-    			// Add survey class's - used for paging
-    			jr.surveyData.surveyClass = xForm.getSurveyClass();
-    			
-    			jr.main = addMain(request, formXML, instanceStrToEditId, 
-    					orgId, true, surveyClass, serverData, localisation).toString();
-    				
-    			if(callback != null) {
-    				outputString.append(callback + " (");
-    			}
-    			Gson gsonResp = new GsonBuilder().disableHtmlEscaping().create();
+				jr.surveyData.modelStr = getModelStr(request, formXML).toString();
+				if (instanceXML != null) {
+					jr.surveyData.instanceStrToEdit = instanceXML.replace("\n", "").replace("\r", "");
+				}
+				jr.surveyData.instanceStrToEditId = instanceStrToEditId;
+
+				// Add the assignment id if this was set
+				if (assignmentId != 0) {
+					jr.surveyData.assignmentId = assignmentId;
+				}
+
+				// Add access key for authentication
+				if (accessKey != null) {
+					jr.surveyData.accessKey = accessKey;
+				}
+
+				// Add survey class's - used for paging
+				jr.surveyData.surveyClass = xForm.getSurveyClass();
+
+				jr.main = addMain(request, formXML, instanceStrToEditId, orgId, true, surveyClass, serverData,
+						localisation).toString();
+
+				if (callback != null) {
+					outputString.append(callback + " (");
+				}
+				Gson gsonResp = new GsonBuilder().disableHtmlEscaping().create();
 				outputString.append(gsonResp.toJson(jr));
-				if(callback != null) {
+				if (callback != null) {
 					outputString.append(")");
 				}
-    		} else {
-    			outputString.append(addDocument(request, formXML, instanceXML, instanceStrToEditId, 
-    					assignmentId, 
-    					survey.surveyClass, 
-    					orgId, 
-    					accessKey,
-    					serverData,
-    					localisation));
-    		}
-    		
-    		/*
-			 * Fix issue with itemsets not having images replaces
-			 * TODO The best approach is probably to replace XSL with POJ rather than attempting complex text replacement
+			} else {
+				outputString.append(addDocument(request, formXML, instanceXML, instanceStrToEditId, assignmentId,
+						survey.surveyClass, orgId, accessKey, serverData, localisation));
+			}
+
+			/*
+			 * TODO Fix issue with itemsets not having images. The best approach is
+			 * probably to replace XSL with POJ rather than attempting complex text
+			 * replacement
 			 */
 			String respString = outputString.toString();
 			response = Response.status(Status.OK).entity(respString).build();
-    		
+
 			log.info("userevent: " + user + " : webForm : " + formIdent);	
 			
 
@@ -709,6 +704,13 @@ public class WebForm extends Application{
 		transformed = transformed.replaceAll("&gt;", ">");
 		transformed = transformed.replaceAll("&lt;", "<");
 		transformed = transformed.replaceAll("&quot;", "\"");
+		
+		/*
+		 * Hack
+		 * Add fix up issues due to the obsolete XSLT 
+		 */
+		//transformed = fixXsltIssues(transformed);
+		
 		output.append(transformed);
 		if(!minimal) {
 			output.append(closeMain(dataToEditId, surveyClass));
@@ -1157,6 +1159,65 @@ public class WebForm extends Application{
 			output.append(replaced);
 		}
 		
+		return output.toString();
+	}
+	
+	/*
+	 * Fix:
+	 *  1. Add or-repeat-info div's after repeat sections
+	 */
+	private String fixXsltIssues(String input) {
+		
+		System.out.println("++++++ Fix ups");
+		if(input == null) {
+			return null;
+		} else if(input.trim().length() == 0) {
+			return null;
+		}	
+		
+		StringBuffer output = new StringBuffer("");
+		String item;
+		
+		Pattern pattern = Pattern.compile("or-repeat[^-][\\S\\s]*?<\\/section>");
+		java.util.regex.Matcher matcher = pattern.matcher(input);
+		int start = 0;
+		while (matcher.find()) {
+			
+			String matched = matcher.group();
+			
+			// Add any text before the match
+			int startOfGroup = matcher.start();
+			item = input.substring(start, startOfGroup).trim();
+			output.append(item);
+			
+			// Add the match
+			output.append(matched);
+			
+			// Get the reference
+			int idx = matched.indexOf("name=");
+			int idx2 = matched.indexOf("\"", idx + 1);
+			int idx3 = matched.indexOf("\"", idx2 + 1);
+			String ref = matched.substring(idx2 + 1, idx3);
+			
+			// Add or-repeat-info section
+			output.append("<div class=\"or-repeat-info\" data-name=\"");
+			output.append(ref);
+			output.append("\"></div></section>");
+
+			// Reset the start
+			start = matcher.end();
+						
+		}
+		
+		// Get the remainder of the string
+		if(start < input.length()) {
+			item = input.substring(start).trim();
+			output.append(item);
+		}
+		
+		System.out.println("================================================");
+		System.out.println(output.toString());
+		System.out.println("================================================");
 		return output.toString();
 	}
 }
