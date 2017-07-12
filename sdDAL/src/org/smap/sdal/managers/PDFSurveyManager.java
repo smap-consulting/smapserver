@@ -89,9 +89,6 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 
  ******************************************************************************/
 
-/*
- * Manage the table that stores details on the forwarding of data onto other systems
- */
 public class PDFSurveyManager {
 	
 	private static Logger log =

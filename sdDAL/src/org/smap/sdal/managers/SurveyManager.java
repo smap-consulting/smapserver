@@ -2626,11 +2626,13 @@ public class SurveyManager {
 
 				boolean hasColumns = false;
 				for(Option option : options) {
-					if(hasColumns) {
-						sqlSelect += ",";
+					if(option.published) {
+						if(hasColumns) {
+							sqlSelect += ",";
+						}
+						sqlSelect += q.columnName + "__" + option.columnName; 
+						hasColumns = true;
 					}
-					sqlSelect += q.columnName + "__" + option.columnName; 
-					hasColumns = true;
 				}
 				sqlSelect += " from " + form.tableName + " where prikey=" + priKey + ";";
 	
@@ -2649,12 +2651,14 @@ public class SurveyManager {
 		    	int oIdx = -1;
 		    	for(Option option : options) {
 		    		oIdx++;
-		    		String opt = q.columnName + "__" + option.columnName;
 		    		boolean optSet = false;
-		    		if(resultSetOptions != null) {
-		    			optSet = resultSetOptions.getBoolean(opt);
-		    		}
-			    	nr.choices.add(new Result(option.value, "choice", null, optSet, fIdx, qIdx, oIdx, listName, appearance)); 
+		    		if(option.published) {
+			    		String opt = q.columnName + "__" + option.columnName;
+			    		if(resultSetOptions != null) {
+			    			optSet = resultSetOptions.getBoolean(opt);
+			    		}
+		    		} 
+				nr.choices.add(new Result(option.value, "choice", null, optSet, fIdx, qIdx, oIdx, listName, appearance)); 
 
 		    		
 				}
