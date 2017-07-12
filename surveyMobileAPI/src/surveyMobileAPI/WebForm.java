@@ -68,6 +68,7 @@ import org.smap.sdal.managers.TranslationManager;
 import org.smap.sdal.model.ManifestValue;
 import org.smap.sdal.model.ServerData;
 import org.smap.sdal.model.Survey;
+import org.smap.server.utilities.GetHtml;
 import org.smap.server.utilities.GetXForm;
 
 import com.google.gson.Gson;
@@ -448,7 +449,7 @@ public class WebForm extends Application{
 				jr.surveyData.surveyClass = xForm.getSurveyClass();
 
 				jr.main = addMain(request, formXML, instanceStrToEditId, orgId, true, surveyClass, serverData,
-						localisation).toString();
+						localisation, template).toString();
 
 				if (callback != null) {
 					outputString.append(callback + " (");
@@ -460,7 +461,7 @@ public class WebForm extends Application{
 				}
 			} else {
 				outputString.append(addDocument(request, formXML, instanceXML, instanceStrToEditId, assignmentId,
-						survey.surveyClass, orgId, accessKey, serverData, localisation));
+						survey.surveyClass, orgId, accessKey, serverData, localisation, template));
 			}
 
 			/*
@@ -495,7 +496,8 @@ public class WebForm extends Application{
 			int orgId,
 			String accessKey,
 			ServerData serverData,
-			ResourceBundle localisation) 
+			ResourceBundle localisation,
+			SurveyTemplate template) 
 			throws UnsupportedEncodingException, TransformerFactoryConfigurationError, TransformerException {
 	
 		StringBuffer output = new StringBuffer();
@@ -512,7 +514,7 @@ public class WebForm extends Application{
 		output.append(addHead(request, formXML, instanceXML, dataToEditId, assignmentId, surveyClass, 
 				accessKey,
 				serverData));
-		output.append(addBody(request, formXML, dataToEditId, orgId, surveyClass, localisation));
+		output.append(addBody(request, formXML, dataToEditId, orgId, surveyClass, localisation, template));
 
 		output.append("</html>\n");			
 		return output;
@@ -670,12 +672,13 @@ public class WebForm extends Application{
 			String dataToEditId, 
 			int orgId,
 			String surveyClass,
-			ResourceBundle localisation) throws UnsupportedEncodingException, TransformerFactoryConfigurationError, TransformerException {
+			ResourceBundle localisation,
+			SurveyTemplate template) throws UnsupportedEncodingException, TransformerFactoryConfigurationError, TransformerException {
 		StringBuffer output = new StringBuffer();
 		
 		output.append("<body class='clearfix edit'>");
 		output.append(getAside());
-		output.append(addMain(request, formXML, dataToEditId, orgId, false, surveyClass, null, localisation));
+		output.append(addMain(request, formXML, dataToEditId, orgId, false, surveyClass, null, localisation, template));
 		output.append(getDialogs());
 		
 		// Webforms script
@@ -695,26 +698,28 @@ public class WebForm extends Application{
 			boolean minimal,
 			String surveyClass,
 			ServerData serverData,
-			ResourceBundle localisation) throws UnsupportedEncodingException, TransformerFactoryConfigurationError, TransformerException {
-		StringBuffer output = new StringBuffer();
+			ResourceBundle localisation,
+			SurveyTemplate template) throws UnsupportedEncodingException, TransformerFactoryConfigurationError, TransformerException {
 		
+		StringBuffer output = new StringBuffer();		
 		output.append(openMain(orgId, minimal, serverData, localisation));
-		String transformed = transform(request, formXML, "/XSL/openrosa2html5form.xsl");
+		
+		//String transformed = transform(request, formXML, "/XSL/openrosa2html5form.xsl");
+		
+		GetHtml getHtml = new GetHtml();
+		String html = getHtml.get(template);
+		output.append(html);
+		
+		System.out.println(html);
+		
+		
+		
 		// Convert escaped XML into HTML
-		transformed = transformed.replaceAll("&gt;", ">");
-		transformed = transformed.replaceAll("&lt;", "<");
-		transformed = transformed.replaceAll("&quot;", "\"");
+		//transformed = transformed.replaceAll("&gt;", ">");
+		//transformed = transformed.replaceAll("&lt;", "<");
+		//transformed = transformed.replaceAll("&quot;", "\"");
 		
-		/*
-		 * Hack
-		 * Add fix up issues due to the obsolete XSLT 
-		 */
-		//transformed = fixXsltIssues(transformed);
-		
-		output.append(transformed);
-		if(!minimal) {
-			output.append(closeMain(dataToEditId, surveyClass));
-		}
+	
 		
 		return output;
 	}
