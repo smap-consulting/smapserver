@@ -566,8 +566,6 @@ button {
 
 .note input[readonly]:not([type=radio]):not([type=checkbox]):not(.widget), .note textarea[readonly] {
   display: none; }
-  .note input[readonly]:not([type=radio]):not([type=checkbox]):not(.widget).has-value, .note textarea[readonly].has-value {
-    display: block; }
 
 .note strong {
   font-size: inherit; }
@@ -714,25 +712,6 @@ legend .required {
   left: auto;
   right: -10px; }
 
-.required-subtle {
-  -webkit-transition: all 1s ease-out;
-  transition: all 1s ease-out;
-  float: right;
-  margin-top: 4px;
-  color: #a94442;
-  font-size: 0.8em; }
-  @media screen and (max-width: 500px) {
-    .required-subtle {
-      font-size: 0.5em; } }
-
-.or[dir="rtl"] .required-subtle {
-  float: left; }
-
-.focus .required-subtle {
-  -webkit-transition: all 1s ease-out;
-  transition: all 1s ease-out;
-  color: #333333; }
-
 .disabled, :disabled {
   opacity: 0.5; }
 
@@ -864,8 +843,6 @@ legend .required {
     position: relative; }
     .btn-group > .btn:hover, .btn-group > .btn:focus, .btn-group > .btn:active, .btn-group > .btn.active {
       z-index: 2; }
-    .btn-group > .btn:focus {
-      outline: none; }
 
 .btn-group .dropdown-toggle:active,
 .btn-group.open .dropdown-toggle {
@@ -880,84 +857,6 @@ legend .required {
 
 .btn .caret {
   margin-left: 0; }
-
-.caret {
-  display: inline-block;
-  width: 0;
-  height: 0;
-  margin-left: 2px;
-  vertical-align: middle;
-  border-top: 4px solid;
-  border-right: 4px solid transparent;
-  border-left: 4px solid transparent; }
-
-.dropdown-toggle:focus {
-  outline: 0; }
-
-.dropdown-menu {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  z-index: 1000;
-  display: none;
-  float: left;
-  min-width: 160px;
-  padding: 5px 0;
-  margin: 2px 0 0;
-  list-style: none;
-  font-size: 15px;
-  background-color: white;
-  border: 1px solid rgba(0, 0, 0, 0.15);
-  border-radius: 4px;
-  -webkit-box-shadow: 0 6px 12px rgba(0, 0, 0, 0.175);
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.175);
-  background-clip: padding-box; }
-  .dropdown-menu.pull-right {
-    right: 0;
-    left: auto; }
-  .dropdown-menu .divider {
-    height: 1px;
-    margin: 8px 0;
-    overflow: hidden;
-    background-color: #e5e5e5; }
-  .dropdown-menu > li > a {
-    display: block;
-    padding: 3px 20px;
-    clear: both;
-    font-weight: normal;
-    line-height: 1.25;
-    color: #333333;
-    white-space: nowrap; }
-
-.or[dir="rtl"] .dropdown-menu {
-  right: 0; }
-
-.dropdown-menu > li > a:hover, .dropdown-menu > li > a:focus {
-  text-decoration: none;
-  color: #262626;
-  background-color: whitesmoke; }
-
-.dropdown-menu > .active > a, .dropdown-menu > .active > a:hover, .dropdown-menu > .active > a:focus {
-  color: white;
-  text-decoration: none;
-  outline: 0;
-  background-color: #ce4f07; }
-
-.dropdown-menu > .disabled > a, .dropdown-menu > .disabled > a:hover, .dropdown-menu > .disabled > a:focus {
-  color: #999999; }
-
-.dropdown-menu > .disabled > a:hover, .dropdown-menu > .disabled > a:focus {
-  text-decoration: none;
-  background-color: transparent;
-  background-image: none;
-  filter: progid:DXImageTransform.Microsoft.gradient(enabled = false);
-  cursor: not-allowed; }
-
-.open > .dropdown-menu {
-  display: block; }
-
-.open > a {
-  outline: 0; }
 
 .mobileselect {
   margin-left: 10px; }
@@ -2480,165 +2379,144 @@ table th[class*="col-"] {
   background-color: #e8e8e8; }
 
 /*!
- * Timepicker Component for Twitter Bootstrap
+ * Timepicker
  *
- * Copyright 2013 Joris de Wit
+ * Forked from https://github.com/jdewit/bootstrap-timepicker: 
+ * 
+ * Copyright 2013 Joris de Wit and timepicker contributors
  *
  * Contributors https://github.com/jdewit/bootstrap-timepicker/graphs/contributors
+ * Contributors https://github.com/enketo/timepicker-basic/graphs/contributors
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
-.bootstrap-timepicker {
+.timepicker {
   position: relative; }
+  .timepicker.pull-right .timepicker-widget.dropdown-menu {
+    left: auto;
+    right: 0; }
+    .timepicker.pull-right .timepicker-widget.dropdown-menu:before {
+      left: auto;
+      right: 12px; }
+    .timepicker.pull-right .timepicker-widget.dropdown-menu:after {
+      left: auto;
+      right: 13px; }
+  .timepicker .input-group-addon {
+    cursor: pointer; }
+    .timepicker .input-group-addon i {
+      display: inline-block;
+      width: 16px;
+      height: 16px; }
 
-.bootstrap-timepicker.pull-right .bootstrap-timepicker-widget.dropdown-menu {
-  left: auto;
-  right: 0; }
-
-.bootstrap-timepicker.pull-right .bootstrap-timepicker-widget.dropdown-menu:before {
-  left: auto;
-  right: 12px; }
-
-.bootstrap-timepicker.pull-right .bootstrap-timepicker-widget.dropdown-menu:after {
-  left: auto;
-  right: 13px; }
-
-.bootstrap-timepicker .input-group-addon {
-  cursor: pointer; }
-
-.bootstrap-timepicker .input-group-addon i {
-  display: inline-block;
-  width: 16px;
-  height: 16px; }
-
-.bootstrap-timepicker-widget.dropdown-menu {
+.timepicker-widget.dropdown-menu {
   padding: 4px; }
+  .timepicker-widget.dropdown-menu.open {
+    display: inline-block; }
+  .timepicker-widget.dropdown-menu:before {
+    border-bottom: 7px solid rgba(0, 0, 0, 0.2);
+    border-left: 7px solid transparent;
+    border-right: 7px solid transparent;
+    content: "";
+    display: inline-block;
+    position: absolute; }
+  .timepicker-widget.dropdown-menu:after {
+    border-bottom: 6px solid #FFFFFF;
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    content: "";
+    display: inline-block;
+    position: absolute; }
 
-.bootstrap-timepicker-widget.dropdown-menu.open {
-  display: inline-block; }
-
-.bootstrap-timepicker-widget.dropdown-menu:before {
-  border-bottom: 7px solid rgba(0, 0, 0, 0.2);
-  border-left: 7px solid transparent;
-  border-right: 7px solid transparent;
-  content: "";
-  display: inline-block;
-  position: absolute; }
-
-.bootstrap-timepicker-widget.dropdown-menu:after {
-  border-bottom: 6px solid #FFFFFF;
-  border-left: 6px solid transparent;
-  border-right: 6px solid transparent;
-  content: "";
-  display: inline-block;
-  position: absolute; }
-
-.bootstrap-timepicker-widget.timepicker-orient-left:before {
+.timepicker-widget.timepicker-orient-left:before {
   left: 6px; }
 
-.bootstrap-timepicker-widget.timepicker-orient-left:after {
+.timepicker-widget.timepicker-orient-left:after {
   left: 7px; }
 
-.bootstrap-timepicker-widget.timepicker-orient-right:before {
+.timepicker-widget.timepicker-orient-right:before {
   right: 6px; }
 
-.bootstrap-timepicker-widget.timepicker-orient-right:after {
+.timepicker-widget.timepicker-orient-right:after {
   right: 7px; }
 
-.bootstrap-timepicker-widget.timepicker-orient-top:before {
+.timepicker-widget.timepicker-orient-top:before {
   top: -7px; }
 
-.bootstrap-timepicker-widget.timepicker-orient-top:after {
+.timepicker-widget.timepicker-orient-top:after {
   top: -6px; }
 
-.bootstrap-timepicker-widget.timepicker-orient-bottom:before {
+.timepicker-widget.timepicker-orient-bottom:before {
   bottom: -7px;
   border-bottom: 0;
   border-top: 7px solid #999; }
 
-.bootstrap-timepicker-widget.timepicker-orient-bottom:after {
+.timepicker-widget.timepicker-orient-bottom:after {
   bottom: -6px;
   border-bottom: 0;
   border-top: 6px solid #ffffff; }
 
-.bootstrap-timepicker-widget a.btn,
-.bootstrap-timepicker-widget input {
+.timepicker-widget a.btn, .timepicker-widget input {
   border-radius: 4px; }
 
-.bootstrap-timepicker-widget table {
+.timepicker-widget table {
   width: 100%;
   margin: 0; }
-
-.bootstrap-timepicker-widget table td {
-  text-align: center;
-  height: 30px;
-  margin: 0;
-  padding: 2px; }
-
-.bootstrap-timepicker-widget table td:not(.separator) {
-  min-width: 30px; }
-
-.bootstrap-timepicker-widget table td span {
-  width: 100%; }
-
-.bootstrap-timepicker-widget table td a {
-  border: 1px transparent solid;
-  width: 100%;
-  display: inline-block;
-  margin: 0;
-  padding: 8px 0;
-  outline: 0;
-  color: #333; }
-
-.bootstrap-timepicker-widget table td a:hover {
-  text-decoration: none;
-  background-color: #eee;
-  -webkit-border-radius: 4px;
-  -moz-border-radius: 4px;
-  border-radius: 4px;
-  border-color: #ddd; }
-
-.bootstrap-timepicker-widget table td a i {
-  margin-top: 2px;
-  font-size: 18px; }
-
-.bootstrap-timepicker-widget table td input {
-  width: 25px;
-  margin: 0;
-  text-align: center; }
-
-.bootstrap-timepicker-widget .modal-content {
-  padding: 4px; }
-
-@media (min-width: 767px) {
-  .bootstrap-timepicker-widget.modal {
-    width: 200px;
-    margin-left: -100px; } }
+  .timepicker-widget table td {
+    text-align: center;
+    height: 30px;
+    margin: 0;
+    padding: 2px; }
+    .timepicker-widget table td:not(.separator) {
+      min-width: 30px; }
+    .timepicker-widget table td span {
+      width: 100%; }
+    .timepicker-widget table td a {
+      border: 1px transparent solid;
+      width: 100%;
+      display: inline-block;
+      margin: 0;
+      padding: 8px 0;
+      outline: 0;
+      color: #333; }
+      .timepicker-widget table td a:hover {
+        text-decoration: none;
+        background-color: #eee;
+        -webkit-border-radius: 4px;
+        -moz-border-radius: 4px;
+        border-radius: 4px;
+        border-color: #ddd; }
+      .timepicker-widget table td a i {
+        margin-top: 2px;
+        font-size: 18px; }
+    .timepicker-widget table td input {
+      width: 25px;
+      margin: 0;
+      text-align: center; }
 
 @media (max-width: 767px) {
-  .bootstrap-timepicker {
+  .timepicker {
     width: 100%; }
-  .bootstrap-timepicker .dropdown-menu {
-    width: 100%; } }
+    .timepicker .dropdown-menu {
+      width: 100%; } }
 
-.bootstrap-timepicker input[type="text"] {
+.timepicker input[type="text"] {
   display: inline-block;
   width: 180px; }
 
-.bootstrap-timepicker-widget.dropdown-menu input {
+.timepicker-widget.dropdown-menu input {
   width: 50px;
   margin: 0 auto; }
 
-.bootstrap-timepicker-widget table td span {
+.timepicker-widget table td span {
   width: 12px; }
 
-.bootstrap-timepicker-widget table td a i {
+.timepicker-widget table td a i {
   width: 11px;
   height: 17px;
   display: inline-block; }
 
-.datetimepicker .date, .datetimepicker .bootstrap-timepicker {
+.datetimepicker .date, .datetimepicker .timepicker {
   margin-right: 10px;
   display: inline-block; }
 
@@ -2648,7 +2526,7 @@ table th[class*="col-"] {
 .or[dir="rtl"] .datetimepicker .date {
   margin-right: 0; }
 
-.touch .bootstrap-timepicker-widget.dropdown-menu input {
+.touch .timepicker-widget.dropdown-menu input {
   width: 50px;
   margin: 0 auto; }
 
@@ -3941,6 +3819,38 @@ legend .btn-comment .icon, legend .btn-comment .enketo-geopoint-marker, legend .
   margin-left: 0;
   margin-right: 20px; }
 
+.or-appearance-image-map img {
+  visibility: hidden; }
+
+.or-appearance-image-map .option-wrapper {
+  display: none; }
+
+.or-appearance-image-map .image-map svg:not([or-readonly]) path[id]:hover {
+  opacity: 0.5; }
+
+.image-map svg {
+  width: 100%;
+  height: auto; }
+  .image-map svg[or-readonly] {
+    opacity: 0.75; }
+  .image-map svg path[id][or-selected] {
+    fill: #ce4f07;
+    stroke: #ce4f07; }
+
+.image-map__ui {
+  height: 2em;
+  width: 100%;
+  text-align: center;
+  font-weight: normal; }
+  .image-map__ui__tooltip {
+    display: inline-block;
+    background: #fee5d6;
+    padding: 2px 8px;
+    color: #555555;
+    border-radius: 2px; }
+    .image-map__ui__tooltip:empty {
+      padding: 0; }
+
 /*!
  * Slider for Bootstrap
  *
@@ -4127,6 +4037,81 @@ legend .btn-comment .icon, legend .btn-comment .enketo-geopoint-marker, legend .
   .form-footer {
     margin: 20px -20px -20px -20px; } }
 
+.caret {
+  display: inline-block;
+  width: 0;
+  height: 0;
+  margin-left: 2px;
+  vertical-align: middle;
+  border-top: 4px solid;
+  border-right: 4px solid transparent;
+  border-left: 4px solid transparent; }
+
+.dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 1000;
+  display: none;
+  float: left;
+  min-width: 160px;
+  padding: 5px 0;
+  margin: 2px 0 0;
+  list-style: none;
+  font-size: 15px;
+  background-color: white;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  border-radius: 4px;
+  -webkit-box-shadow: 0 6px 12px rgba(0, 0, 0, 0.175);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.175);
+  background-clip: padding-box; }
+  .dropdown-menu.pull-right {
+    right: 0;
+    left: auto; }
+  .dropdown-menu .divider {
+    height: 1px;
+    margin: 8px 0;
+    overflow: hidden;
+    background-color: #e5e5e5; }
+  .dropdown-menu > li > a {
+    display: block;
+    padding: 3px 20px;
+    clear: both;
+    font-weight: normal;
+    line-height: 1.25;
+    color: #333333;
+    white-space: nowrap; }
+
+.or[dir="rtl"] .dropdown-menu {
+  right: 0; }
+
+.dropdown-menu > li > a:hover, .dropdown-menu > li > a:focus {
+  text-decoration: none;
+  color: #262626;
+  background-color: whitesmoke; }
+
+.dropdown-menu > .active > a, .dropdown-menu > .active > a:hover, .dropdown-menu > .active > a:focus {
+  color: white;
+  text-decoration: none;
+  outline: 0;
+  background-color: #ce4f07; }
+
+.dropdown-menu > .disabled > a, .dropdown-menu > .disabled > a:hover, .dropdown-menu > .disabled > a:focus {
+  color: #999999; }
+
+.dropdown-menu > .disabled > a:hover, .dropdown-menu > .disabled > a:focus {
+  text-decoration: none;
+  background-color: transparent;
+  background-image: none;
+  filter: progid:DXImageTransform.Microsoft.gradient(enabled = false);
+  cursor: not-allowed; }
+
+.open > .dropdown-menu {
+  display: block; }
+
+.open > a {
+  outline: 0; }
+
 input[type=text], input[type=password], input[type=url], input[type=email], input[type=file], input[type=date], input[type=time], input[type=datetime], input[type=number], select, textarea {
   display: block;
   height: 34px;
@@ -4299,6 +4284,10 @@ input[type="checkbox"] {
       outline: 0;
       -webkit-box-shadow: 0 0 0 1px #66afe9, 0 0 8px rgba(102, 175, 233, 0.6);
       box-shadow: 0 0 0 1px #66afe9, 0 0 8px rgba(102, 175, 233, 0.6); }
+
+@-moz-document url-prefix() {
+  .question input[type=checkbox]:checked {
+    background-image: radial-gradient(4px, #f76411 0%, #f76411 99%, transparent 100%); } }
 
 .touch .question.simple-select .option-wrapper .option-label {
   margin-left: 35px; }

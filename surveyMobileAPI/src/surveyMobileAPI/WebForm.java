@@ -546,8 +546,6 @@ public class WebForm extends Application{
 			output.append("<link type='text/css' href='/build/css/grid.css' media='all' rel='stylesheet' />\n");
 			output.append("<link type='text/css' href='/build/css/grid-print.css' media='print' rel='stylesheet'/>\n");	
 		} else {
-			//output.append("<link type='text/css' href='/build/css/plain.css' media='all' rel='stylesheet' />\n");	
-			//output.append("<link type='text/css' href='/build/css/plain-print.css' media='all' rel='stylesheet' />\n");
 			output.append("<link type='text/css' href='/build/css/formhub.css' media='all' rel='stylesheet' />\n");			
 			output.append("<link type='text/css' href='/build/css/formhub-print.css' media='print' rel='stylesheet'/>\n");
 		}
