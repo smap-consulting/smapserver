@@ -353,7 +353,7 @@ public class GetHtml {
 					preloadElement.setAttribute("name", paths.get(getRefName(q.name, form)));
 					try {
 						preloadElement.setAttribute("data-calculate", 
-								UtilityMethods.convertAllxlsNames(q.calculation, false, paths, form.id));
+								UtilityMethods.convertAllxlsNames(q.calculation, false, paths, form.id, true));
 					} catch (Exception e) {
 						log.log(Level.SEVERE, e.getMessage(), e);
 					}
@@ -399,12 +399,17 @@ public class GetHtml {
 		bodyElement.setAttribute("type", getInputType(q));
 		bodyElement.setAttribute("name", paths.get(getRefName(q.name, form)));
 		bodyElement.setAttribute("data-type-xml", getXmlType(q));
+		
+		// image specific
+		if(q.type.equals("image")) {
+			bodyElement.setAttribute("accept", "image/*");
+		}
 
 		// constraint
 		if (q.constraint != null && q.constraint.trim().length() > 0) {
 			try {
 				bodyElement.setAttribute("data-constraint", 
-						UtilityMethods.convertAllxlsNames(q.constraint, false, paths, form.id));
+						UtilityMethods.convertAllxlsNames(q.constraint, false, paths, form.id, true));
 			} catch (Exception e) {
 				log.log(Level.SEVERE, e.getMessage(), e);
 			}
@@ -414,7 +419,7 @@ public class GetHtml {
 		if (q.relevant != null && q.relevant.trim().length() > 0) {
 			try {
 				bodyElement.setAttribute("data-relevant", 
-						UtilityMethods.convertAllxlsNames(q.relevant, false, paths, form.id));
+						UtilityMethods.convertAllxlsNames(q.relevant, false, paths, form.id, true));
 			} catch (Exception e) {
 				log.log(Level.SEVERE, e.getMessage(), e);
 			}
@@ -464,7 +469,7 @@ public class GetHtml {
 				
 				String label = o.labels.get(idx).text;
 				try {
-					label = UtilityMethods.convertAllxlsNames(o.labels.get(idx).text, true, paths, form.id);
+					label = UtilityMethods.convertAllxlsNames(o.labels.get(idx).text, true, paths, form.id, true);
 				} catch (Exception e) {
 					log.log(Level.SEVERE, e.getMessage(), e);
 				}
@@ -534,7 +539,7 @@ public class GetHtml {
 			
 			String label = q.labels.get(idx).text;
 			try {
-				label = UtilityMethods.convertAllxlsNames(q.labels.get(idx).text, true, paths, form.id);
+				label = UtilityMethods.convertAllxlsNames(q.labels.get(idx).text, true, paths, form.id, true);
 			} catch (Exception e) {
 				log.log(Level.SEVERE, e.getMessage(), e);
 			}
@@ -567,6 +572,12 @@ public class GetHtml {
 			type = "radio";
 		} else if (q.type.equals("select")) {
 			type = "checkbox";
+		} else if (q.type.equals("geopoint") || q.type.equals("geoshape") || q.type.equals("geotrace")) {
+			type = "text";
+		} else if (q.type.equals("image") || q.type.equals("audio") || q.type.equals("video")) {
+			type = "file";
+		} else if (q.type.equals("date")) {
+			type = "date";
 		} else {
 			log.info("#### unknown type: " + q.type + " for question " + q.name);
 			type = "text";
@@ -582,6 +593,8 @@ public class GetHtml {
 		String type = null;
 		if (q.type.equals("calculate")) {
 			type = "string";
+		} else if (q.type.equals("image") || q.type.equals("audio") || q.type.equals("video")) { 
+			type = "binary";
 		} else {
 			type = q.type;
 		}

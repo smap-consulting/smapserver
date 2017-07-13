@@ -771,7 +771,7 @@ public class GetXForm {
 		// Add calculate
 		String calculate = null;
 		if(q.getName().equals("instanceName")) {
-			calculate = UtilityMethods.convertAllxlsNames(template.getSurvey().getInstanceName(), false, template.getQuestionPaths(),f.getId());	
+			calculate = UtilityMethods.convertAllxlsNames(template.getSurvey().getInstanceName(), false, template.getQuestionPaths(),f.getId(), false);	
 			if(calculate == null) {
 				calculate = q.getCalculate(true, template.getQuestionPaths(), template.getXFormFormName());	// Allow for legacy forms that were loaded before the instance name was set in the survey table
 			}

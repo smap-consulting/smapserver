@@ -135,7 +135,8 @@ public class UtilityMethods {
 			String input, 
 			boolean forLabel,
 			HashMap<String, String> questionPaths,
-			int f_id) throws Exception {
+			int f_id,
+			boolean webform) throws Exception {
 		
 		if(input == null) {
 			return input;
@@ -157,7 +158,11 @@ public class UtilityMethods {
 			
 			// If for a label, add the wrapping html
 			if(forLabel) {
-				output.append("<output value=\"");
+				if(webform) {
+					output.append("<span class=\"or-output\" data-value=\""); 
+				} else {
+					output.append("<output value=\"");
+				}
 			}
 			
 			// Make sure there is a space before the match
@@ -191,7 +196,11 @@ public class UtilityMethods {
 			
 			// If for a label close the wrapping html
 			if(forLabel) {
-				output.append(" \"/>");
+				if(webform) {
+					output.append(" \"/></span>");
+				} else {
+					output.append(" \"/>");
+				}
 			}
 			
 			// Reset the start

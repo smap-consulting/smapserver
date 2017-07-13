@@ -103,7 +103,7 @@ public class Translation implements Serializable{
 		frag = frag.replaceAll("<", "&lt;");	// Escape angled brackets
 		frag = frag.replaceAll(">", "&gt;");	// Escape angled brackets
 
-		return "<t>" + UtilityMethods.convertAllxlsNames(frag, true, questionPaths, f_id) + "</t>";
+		return "<t>" + UtilityMethods.convertAllxlsNames(frag, true, questionPaths, f_id, false) + "</t>";
 	
 	}
 	

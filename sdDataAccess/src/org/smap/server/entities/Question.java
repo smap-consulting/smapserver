@@ -238,7 +238,7 @@ public class Question {
 		}
 		
 		if(convertToXPath) {
-			v = UtilityMethods.convertAllxlsNames(v, false, questionPaths, f_id);
+			v = UtilityMethods.convertAllxlsNames(v, false, questionPaths, f_id, false);
 		} else {
 			v = GeneralUtilityMethods.convertAllXpathNames(v, true);
 		}
@@ -253,7 +253,7 @@ public class Question {
 		}
 		
 		if(convertToXPath) {
-			v = UtilityMethods.convertAllxlsNames(v, false, questionPaths, f_id);
+			v = UtilityMethods.convertAllxlsNames(v, false, questionPaths, f_id, false);
 		} else {
 			v = GeneralUtilityMethods.convertAllXpathNames(v, true);
 		}
@@ -269,7 +269,7 @@ public class Question {
 		}
 		
 		if(convertToXPath) {
-			v = UtilityMethods.convertAllxlsNames(v, false, questionPaths, f_id);
+			v = UtilityMethods.convertAllxlsNames(v, false, questionPaths, f_id, false);
 		} else {
 			v = GeneralUtilityMethods.convertAllXpathNames(v, true);
 		}
@@ -290,7 +290,7 @@ public class Question {
 		String v = appearance;
 		
 		if(convertToXPath) {
-			v = UtilityMethods.convertAllxlsNames(v, false, questionPaths, f_id);
+			v = UtilityMethods.convertAllxlsNames(v, false, questionPaths, f_id, false);
 		} else {
 			v = GeneralUtilityMethods.convertAllXpathNames(v, true);
 		}
@@ -339,7 +339,7 @@ public class Question {
 		}		
 		
 		if(convertToXPath) {
-			v = UtilityMethods.convertAllxlsNames(v, false, questionPaths, f_id);
+			v = UtilityMethods.convertAllxlsNames(v, false, questionPaths, f_id, false);
 		} else if(convertToXLSName) {
 			v = GeneralUtilityMethods.convertAllXpathNames(v, true);
 		}
