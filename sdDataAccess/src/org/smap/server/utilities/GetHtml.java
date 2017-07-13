@@ -3,6 +3,7 @@ package org.smap.server.utilities;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.sql.Connection;
+import java.util.ArrayList;
 import java.util.logging.Logger;
 
 import javax.servlet.http.HttpServletRequest;
@@ -19,6 +20,7 @@ import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.managers.SurveyManager;
 import org.smap.sdal.model.Form;
+import org.smap.sdal.model.Label;
 import org.smap.sdal.model.Language;
 import org.smap.sdal.model.Question;
 import org.smap.sdal.model.Survey;
@@ -34,6 +36,7 @@ import org.w3c.dom.Element;
 public class GetHtml {
 	
 	Survey survey = null;
+	int languageIndex = 0;
 	
 	private static Logger log = Logger.getLogger(GetHtml.class.getName());
 
@@ -128,6 +131,7 @@ public class GetHtml {
 		// logo
 		Element bodyElement = outputDoc.createElement("section");
 		bodyElement.setAttribute("class", "form-logo");
+		bodyElement.setTextContent(" ");			// Set a dummy value a enketo does not understand empty sections
 		parent.appendChild(bodyElement);
 
 		// title
@@ -159,11 +163,18 @@ public class GetHtml {
 
 	private void populateLanguageChoices(Document outputDoc, Element parent) {
 		Element bodyElement = null;
+		int idx = 0;
 		for(Language lang : survey.languages) {
 			bodyElement = outputDoc.createElement("option");
 			bodyElement.setAttribute("value", lang.name);
 			bodyElement.setTextContent(lang.name);
 			parent.appendChild(bodyElement);
+			
+			// Save the index of the default language
+			if(lang.name.equals(survey.def_lang)) {
+				languageIndex = idx;
+			}
+			idx++;
 		}
 	}
 
@@ -186,20 +197,44 @@ public class GetHtml {
 					System.out.println("        ==== Group Question");
 				} else if(q.isPreload()) { 
 					System.out.println("        ==== Preload Question");
-					// Ignore preloads for the moment
+					// Ignore pre-loads for the moment
 				} else if(q.inMeta) {
 					// Ignore meta questions for the moment
 				} else {
-					System.out.println("        ==== Add label: " + q.name);
+					System.out.println("        ==== Add normal question: " + q.name);
+					
+					// Label
 					bodyElement = outputDoc.createElement("label");
 					bodyElement.setAttribute("class", "question" + (q.isSelect() ? "" : " non-select"));
+					addLabelContents(outputDoc, bodyElement, q);				
 					parent.appendChild(bodyElement);
+					
 				}
 			}
 		}
 	}
 
 
-	
+	/*
+	 * Add the contents of a label
+	 */
+	private void addLabelContents(Document outputDoc, Element parent, Question q) {
+		
+		// span
+		Element bodyElement = outputDoc.createElement("span");
+		bodyElement.setAttribute("lang", survey.def_lang);
+		bodyElement.setAttribute("class", "question-label active");
+		bodyElement.setAttribute("data-itext-id", q.text_id);
+		bodyElement.setTextContent(q.labels.get(languageIndex).text);
+		parent.appendChild(bodyElement);
+		
+		// input
+		bodyElement = outputDoc.createElement("input");
+		bodyElement.setAttribute("type", "text");			// TODO other types
+		bodyElement.setAttribute("name", q.name);			// TODO set path?
+		bodyElement.setAttribute("data-type-xml", "string");	// TODO other types
+		parent.appendChild(bodyElement);
+	}
 
+	
 }
