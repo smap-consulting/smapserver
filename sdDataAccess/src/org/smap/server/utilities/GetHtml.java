@@ -4,6 +4,7 @@ import java.io.StringWriter;
 import java.io.Writer;
 import java.sql.Connection;
 import java.util.ArrayList;
+import java.util.Stack;
 import java.util.logging.Logger;
 
 import javax.servlet.http.HttpServletRequest;
@@ -34,10 +35,10 @@ import org.w3c.dom.Element;
  *   languages (HashMap)-> translation id's (HashMap)-> translation types (HashMap) -> translation element (String)
  */
 public class GetHtml {
-	
+
 	Survey survey = null;
 	int languageIndex = 0;
-	
+
 	private static Logger log = Logger.getLogger(GetHtml.class.getName());
 
 	/*
@@ -101,17 +102,18 @@ public class GetHtml {
 	public Element populateRoot(Document outputDoc) {
 
 		Element rootElement = outputDoc.createElement("root");
-		rootElement.setAttribute("xmlns:ev", "http://www.w3.org/2001/xml-events");
-		rootElement.setAttribute("xmlns:h", "http://www.w3.org/1999/xhtml");
-		rootElement.setAttribute("xmlns:jr", "http://openrosa.org/javarosa");
-		rootElement.setAttribute("xmlns:xsd", "http://www.w3.org/2001/XMLSchema");
-		rootElement.setAttribute("xmlns:xf", "http://www.w3.org/2002/xforms");
-		rootElement.setAttribute("xmlns:xalan", "http://xml.apache.org/xalan\"");
+		/*
+		 * rootElement.setAttribute("xmlns:ev", "http://www.w3.org/2001/xml-events");
+		 * rootElement.setAttribute("xmlns:h", "http://www.w3.org/1999/xhtml");
+		 * rootElement.setAttribute("xmlns:jr", "http://openrosa.org/javarosa");
+		 * rootElement.setAttribute("xmlns:xsd", "http://www.w3.org/2001/XMLSchema");
+		 * rootElement.setAttribute("xmlns:xf", "http://www.w3.org/2002/xforms");
+		 * rootElement.setAttribute("xmlns:xalan", "http://xml.apache.org/xalan\"");
+		 */
 		outputDoc.appendChild(rootElement);
 
 		return rootElement;
 	}
-
 
 	public void createForm(Document outputDoc, Element parent, boolean isWebForms, boolean useNodesets)
 			throws Exception {
@@ -131,7 +133,7 @@ public class GetHtml {
 		// logo
 		Element bodyElement = outputDoc.createElement("section");
 		bodyElement.setAttribute("class", "form-logo");
-		bodyElement.setTextContent(" ");			// Set a dummy value a enketo does not understand empty sections
+		bodyElement.setTextContent(" "); // Set a dummy value a enketo does not understand empty sections
 		parent.appendChild(bodyElement);
 
 		// title
@@ -143,35 +145,34 @@ public class GetHtml {
 		// Languages
 		bodyElement = outputDoc.createElement("select");
 		bodyElement.setAttribute("id", "form-languages");
-		if(survey.languages == null || survey.languages.size() == 0) {
+		if (survey.languages == null || survey.languages.size() == 0) {
 			bodyElement.setAttribute("style", "display:none;");
 		}
 		bodyElement.setAttribute("data-default-lang", survey.def_lang);
 		populateLanguageChoices(outputDoc, bodyElement);
 		parent.appendChild(bodyElement);
-		
+
 		// Questions
 		System.out.println("==== Questions");
-		for(Form form : survey.forms) {
-			if(form.parentform == 0) {	// Start with top level form
+		for (Form form : survey.forms) {
+			if (form.parentform == 0) { // Start with top level form
 				processQuestions(outputDoc, parent, form);
 			}
 		}
-		
 
 	}
 
 	private void populateLanguageChoices(Document outputDoc, Element parent) {
 		Element bodyElement = null;
 		int idx = 0;
-		for(Language lang : survey.languages) {
+		for (Language lang : survey.languages) {
 			bodyElement = outputDoc.createElement("option");
 			bodyElement.setAttribute("value", lang.name);
 			bodyElement.setTextContent(lang.name);
 			parent.appendChild(bodyElement);
-			
+
 			// Save the index of the default language
-			if(lang.name.equals(survey.def_lang)) {
+			if (lang.name.equals(survey.def_lang)) {
 				languageIndex = idx;
 			}
 			idx++;
@@ -179,62 +180,91 @@ public class GetHtml {
 	}
 
 	/*
-	 * Process the main block of questions
-	 * Skip over:
-	 *   - preloads
-	 *   - meta group
+	 * Process the main block of questions Skip over: - preloads - meta group
 	 */
 	private void processQuestions(Document outputDoc, Element parent, Form form) {
-		
+
 		System.out.println("==== Process Questions");
-		
+
 		Element bodyElement = null;
-		for(Question q : form.questions) {
-			
-			if(q.isValid()) {
-				System.out.println("    ==== Valid Question: " + q.name);
-				if(q.isGroup()) {
+		Element currentParent = parent;
+		Stack<Element> elementStack = new Stack<Element>();	// Store the elements for non repeat groups
+		
+		for (Question q : form.questions) {
+
+			System.out.println("    ==== Question: " + q.name + " : " + q.inMeta);
+			if(!q.inMeta && !q.name.equals("meta_groupEnd")) {		// ignore meta for the moment
+				if (q.type.equals("end group")) {
+					currentParent = elementStack.pop();
+					
+				} else if (q.type.equals("begin group")) {
 					System.out.println("        ==== Group Question");
-				} else if(q.isPreload()) { 
+					elementStack.push(currentParent);
+					currentParent = addGroupWrapper(outputDoc, currentParent, q, false);
+					
+				} else if (q.type.equals("begin repeat")) {
+					System.out.println("        ==== Repeat Question");
+					
+				} else if (q.isPreload()) {
 					System.out.println("        ==== Preload Question");
 					// Ignore pre-loads for the moment
-				} else if(q.inMeta) {
+					
+				} else if (q.inMeta) {
 					// Ignore meta questions for the moment
+					
 				} else {
 					System.out.println("        ==== Add normal question: " + q.name);
-					
+	
 					// Label
 					bodyElement = outputDoc.createElement("label");
 					bodyElement.setAttribute("class", "question" + (q.isSelect() ? "" : " non-select"));
-					addLabelContents(outputDoc, bodyElement, q);				
-					parent.appendChild(bodyElement);
-					
+					addLabelContents(outputDoc, bodyElement, q);
+					currentParent.appendChild(bodyElement);
+	
 				}
 			}
 		}
-	}
 
+	}
 
 	/*
 	 * Add the contents of a label
 	 */
 	private void addLabelContents(Document outputDoc, Element parent, Question q) {
-		
+
 		// span
-		Element bodyElement = outputDoc.createElement("span");
-		bodyElement.setAttribute("lang", survey.def_lang);
-		bodyElement.setAttribute("class", "question-label active");
-		bodyElement.setAttribute("data-itext-id", q.text_id);
-		bodyElement.setTextContent(q.labels.get(languageIndex).text);
-		parent.appendChild(bodyElement);
+		Element bodyElement = null;
+		int idx = 0;
+		for (Language lang : survey.languages) {
+			bodyElement = outputDoc.createElement("span");
+			bodyElement.setAttribute("lang", lang.name);
+			bodyElement.setAttribute("class", "question-label" + (lang.name.equals(survey.def_lang) ? " active" : ""));
+			bodyElement.setAttribute("data-itext-id", q.text_id);
+			bodyElement.setTextContent(q.labels.get(idx).text);
+			parent.appendChild(bodyElement);
+			idx++;
+		}
 		
+
 		// input
 		bodyElement = outputDoc.createElement("input");
-		bodyElement.setAttribute("type", "text");			// TODO other types
-		bodyElement.setAttribute("name", q.name);			// TODO set path?
-		bodyElement.setAttribute("data-type-xml", "string");	// TODO other types
+		bodyElement.setAttribute("type", "text"); // TODO other types
+		bodyElement.setAttribute("name", q.name); // TODO set path?
+		bodyElement.setAttribute("data-type-xml", "string"); // TODO other types
 		parent.appendChild(bodyElement);
 	}
 
-	
+	/*
+	 * Add a wrapper for a group then return the new parent
+	 */
+	private Element addGroupWrapper(Document outputDoc, Element parent, Question q, boolean repeat) {
+		Element bodyElement = outputDoc.createElement("section");
+		bodyElement.setAttribute("class", "or-group");
+		if (!repeat) {
+			bodyElement.setAttribute("name", q.name);
+		}
+		parent.appendChild(bodyElement);
+		return bodyElement;
+	}
+
 }

@@ -158,28 +158,6 @@ public class Question {
 	}
 	
 	/*
-	 * Return true if this is a valid question
-	 */
-	public boolean isValid() {
-		boolean isValid = true;
-		if(type.equals("end group")) {
-			isValid = false;
-		}
-		return isValid;
-	}
-	
-	/*
-	 * Return true if this is a group or repeat question
-	 */
-	public boolean isGroup() {
-		boolean isGroup = false;
-		if(type.equals("begin repeat") || type.equals("begin group")) {
-			isGroup = true;
-		}
-		return isGroup;
-	}
-	
-	/*
 	 * Return true if this is a preload question
 	 */
 	public boolean isPreload() {
