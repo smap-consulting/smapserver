@@ -163,7 +163,8 @@ public class GetHtml {
 		// Questions
 		for (Form form : survey.forms) {
 			if (form.parentform == 0) { // Start with top level form
-				processQuestions(outputDoc, parent, form, "/");
+				addPaths(form, "/");
+				processQuestions(outputDoc, parent, form);
 				processPreloads(outputDoc, parent, form);
 				processCalculations(outputDoc, parent, form);
 				break;
@@ -190,13 +191,10 @@ public class GetHtml {
 	}
 
 	/*
-	 * Process the main block of questions Skip over: - preloads - meta group
+	 * Associate question names with their paths
 	 */
-	private void processQuestions(Document outputDoc, Element parent, Form form, String pathStem) {
+	private void addPaths(Form form, String pathStem) {
 
-		Element bodyElement = null;
-		Element currentParent = parent;
-		Stack<Element> elementStack = new Stack<>(); // Store the elements for non repeat groups
 		Stack<String> pathStack = new Stack<>(); // Store the paths as we go in and out of groups
 
 		pathStem = pathStem + form.name + "/";
@@ -210,12 +208,46 @@ public class GetHtml {
 				if (q.type.equals("end group")) {
 
 					pathStem = pathStack.pop();
-					currentParent = elementStack.pop();
 
 				} else if (q.type.equals("begin group")) {
 
 					pathStack.push(pathStem);
 					pathStem = pathStem + q.name + "/";
+
+				} else if (q.type.equals("begin repeat")) {
+
+
+					for (Form subForm : survey.forms) {
+						if (subForm.parentQuestion == q.id) { // continue with next form
+							addPaths(subForm, pathStem);
+							break;
+						}
+					}
+
+				} 
+			}
+		}
+
+	}
+	
+	/*
+	 * Process the main block of questions Skip over: - preloads - meta group
+	 */
+	private void processQuestions(Document outputDoc, Element parent, Form form) {
+
+		Element bodyElement = null;
+		Element currentParent = parent;
+		Stack<Element> elementStack = new Stack<>(); // Store the elements for non repeat groups
+		Stack<String> pathStack = new Stack<>(); // Store the paths as we go in and out of groups
+
+		for (Question q : form.questions) {
+
+			if (!q.inMeta && !q.name.equals("meta_groupEnd") && !q.isPreload() && !q.type.equals("calculate")) {
+				if (q.type.equals("end group")) {
+
+					currentParent = elementStack.pop();
+
+				} else if (q.type.equals("begin group")) {
 
 					elementStack.push(currentParent);
 					currentParent = addGroupWrapper(outputDoc, currentParent, q, false, form);
@@ -225,7 +257,7 @@ public class GetHtml {
 					elementStack.push(currentParent);
 					currentParent = addGroupWrapper(outputDoc, currentParent, q, true, form);
 
-					addRepeat(outputDoc, currentParent, q, pathStem, form);
+					addRepeat(outputDoc, currentParent, q, form);
 
 					// repeat into
 					Element repeatInfo = outputDoc.createElement("div");
@@ -342,7 +374,7 @@ public class GetHtml {
 
 		// legend
 		Element bodyElement = outputDoc.createElement("legend");
-		addLabels(outputDoc, bodyElement, q);
+		addLabels(outputDoc, bodyElement, q, form);
 		parent.appendChild(bodyElement);
 
 		Element optionWrapperElement = outputDoc.createElement("div");
@@ -360,7 +392,7 @@ public class GetHtml {
 	private void addLabelContents(Document outputDoc, Element parent, Question q, Form form) {
 
 		// span
-		addLabels(outputDoc, parent, q);
+		addLabels(outputDoc, parent, q, form);
 
 		// input
 		Element bodyElement = outputDoc.createElement("input");
@@ -411,13 +443,13 @@ public class GetHtml {
 		optionElement.setAttribute("data-value-ref", "name");
 		optionElement.setAttribute("data-label-type", "itext");
 		optionElement.setAttribute("data-label-ref", "itextId");
-		addOptionLabels(outputDoc, optionElement, q);
+		addOptionLabels(outputDoc, optionElement, q, form);
 
 		parent.appendChild(optionElement);
 
 	}
 
-	private void addOptionLabels(Document outputDoc, Element parent, Question q) {
+	private void addOptionLabels(Document outputDoc, Element parent, Question q, Form form) {
 
 		ArrayList<Option> options = survey.optionLists.get(q.list_name).options;
 		for (Option o : options) {
@@ -429,7 +461,14 @@ public class GetHtml {
 				bodyElement.setAttribute("class",
 						"option-label" + (lang.name.equals(survey.def_lang) ? " active" : ""));
 				bodyElement.setAttribute("data-itext-id", o.text_id);
-				bodyElement.setTextContent(o.labels.get(idx).text);
+				
+				String label = o.labels.get(idx).text;
+				try {
+					label = UtilityMethods.convertAllxlsNames(o.labels.get(idx).text, true, paths, form.id);
+				} catch (Exception e) {
+					log.log(Level.SEVERE, e.getMessage(), e);
+				}
+				bodyElement.setTextContent(label);
 				parent.appendChild(bodyElement);
 				idx++;
 			}
@@ -452,7 +491,7 @@ public class GetHtml {
 		if (!repeat) {
 			groupElement.setAttribute("name", paths.get(getRefName(q.name, form)));
 		}
-		addGroupTitle(outputDoc, groupElement, q);
+		addGroupTitle(outputDoc, groupElement, q, form);
 		parent.appendChild(groupElement);
 		return groupElement;
 	}
@@ -460,7 +499,7 @@ public class GetHtml {
 	/*
 	 * Add a wrapper for a repeat then return the new parent
 	 */
-	private void addRepeat(Document outputDoc, Element parent, Question q, String path, Form form) {
+	private void addRepeat(Document outputDoc, Element parent, Question q, Form form) {
 
 		Element bodyElement = outputDoc.createElement("section");
 		bodyElement.setAttribute("class", "or-repeat");
@@ -469,7 +508,7 @@ public class GetHtml {
 		// Process sub form
 		for (Form subForm : survey.forms) {
 			if (subForm.parentQuestion == q.id) { // continue with next form
-				processQuestions(outputDoc, bodyElement, subForm, path);
+				processQuestions(outputDoc, bodyElement, subForm);
 				break;
 			}
 		}
@@ -478,13 +517,13 @@ public class GetHtml {
 
 	}
 
-	private void addGroupTitle(Document outputDoc, Element parent, Question q) {
+	private void addGroupTitle(Document outputDoc, Element parent, Question q, Form form) {
 		Element bodyElement = outputDoc.createElement("h4");
-		addLabels(outputDoc, bodyElement, q);
+		addLabels(outputDoc, bodyElement, q, form);
 		parent.appendChild(bodyElement);
 	}
 
-	private void addLabels(Document outputDoc, Element parent, Question q) {
+	private void addLabels(Document outputDoc, Element parent, Question q, Form form) {
 		int idx = 0;
 		Element bodyElement = null;
 		for (Language lang : survey.languages) {
@@ -492,7 +531,14 @@ public class GetHtml {
 			bodyElement.setAttribute("lang", lang.name);
 			bodyElement.setAttribute("class", "question-label" + (lang.name.equals(survey.def_lang) ? " active" : ""));
 			bodyElement.setAttribute("data-itext-id", q.text_id);
-			bodyElement.setTextContent(q.labels.get(idx).text);
+			
+			String label = q.labels.get(idx).text;
+			try {
+				label = UtilityMethods.convertAllxlsNames(q.labels.get(idx).text, true, paths, form.id);
+			} catch (Exception e) {
+				log.log(Level.SEVERE, e.getMessage(), e);
+			}
+			bodyElement.setTextContent(label);
 			parent.appendChild(bodyElement);
 			idx++;
 		}
