@@ -719,7 +719,11 @@ public class WebForm extends Application{
 		//transformed = transformed.replaceAll("&lt;", "<");
 		//transformed = transformed.replaceAll("&quot;", "\"");
 		
-	
+
+		
+		if(!minimal) {
+			output.append(closeMain(dataToEditId, surveyClass));
+		}
 		
 		return output;
 	}

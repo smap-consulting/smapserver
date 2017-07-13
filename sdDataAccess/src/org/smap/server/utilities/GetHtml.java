@@ -4,6 +4,7 @@ import java.io.StringWriter;
 import java.io.Writer;
 import java.sql.Connection;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Stack;
 import java.util.logging.Logger;
 
@@ -40,6 +41,7 @@ public class GetHtml {
 
 	Survey survey = null;
 	int languageIndex = 0;
+	HashMap<String, String> paths = new HashMap<> ();		// Keep paths out of the survey model and instead store them here
 
 	private static Logger log = Logger.getLogger(GetHtml.class.getName());
 
@@ -123,7 +125,8 @@ public class GetHtml {
 		Element bodyElement = outputDoc.createElement("form");
 		bodyElement.setAttribute("novalidate", "novalidate");
 		bodyElement.setAttribute("autocomplete", "off");
-		bodyElement.setAttribute("class", "or clearfix");
+		bodyElement.setAttribute("class", "or clearfix" + (survey.surveyClass != null ? (" " + survey.surveyClass) : ""));
+		bodyElement.setAttribute("dir", "ltr");
 		bodyElement.setAttribute("id", survey.getIdent());
 
 		populateForm(outputDoc, bodyElement);
@@ -141,6 +144,7 @@ public class GetHtml {
 		// title
 		bodyElement = outputDoc.createElement("h3");
 		bodyElement.setAttribute("id", "form-title");
+		bodyElement.setAttribute("dir", "auto");
 		bodyElement.setTextContent(survey.getDisplayName());
 		parent.appendChild(bodyElement);
 
@@ -155,10 +159,11 @@ public class GetHtml {
 		parent.appendChild(bodyElement);
 
 		// Questions
-		System.out.println("==== Questions");
 		for (Form form : survey.forms) {
 			if (form.parentform == 0) { // Start with top level form
-				processQuestions(outputDoc, parent, form);
+				processQuestions(outputDoc, parent, form, "/");
+				processPreloads(outputDoc, parent, form);
+				processCalculations(outputDoc, parent, form);
 				break;
 			}
 		}
@@ -185,20 +190,31 @@ public class GetHtml {
 	/*
 	 * Process the main block of questions Skip over: - preloads - meta group
 	 */
-	private void processQuestions(Document outputDoc, Element parent, Form form) {
+	private void processQuestions(Document outputDoc, Element parent, Form form, String pathStem) {
 
 		Element bodyElement = null;
 		Element currentParent = parent;
-		Stack<Element> elementStack = new Stack<Element>(); // Store the elements for non repeat groups
+		Stack<Element> elementStack = new Stack<>(); 	// Store the elements for non repeat groups
+		Stack<String> pathStack = new Stack<>(); 		// Store the paths as we go in and out of groups
 
+		pathStem = pathStem + form.name + "/";
+		System.out.println("Path: " + pathStem);
+		
 		for (Question q : form.questions) {
 
-			if (!q.inMeta && !q.name.equals("meta_groupEnd")) { // ignore meta for the moment
+			paths.put(q.name, pathStem + q.name);	// Save the path
+			
+			if (!q.inMeta && !q.name.equals("meta_groupEnd") && !q.isPreload()) { 
 				if (q.type.equals("end group")) {
+					
+					pathStem = pathStack.pop();
 					currentParent = elementStack.pop();
 
 				} else if (q.type.equals("begin group")) {
 
+					pathStack.push(pathStem);
+					pathStem = pathStem + q.name + "/";
+					
 					elementStack.push(currentParent);
 					currentParent = addGroupWrapper(outputDoc, currentParent, q, false);
 
@@ -207,22 +223,16 @@ public class GetHtml {
 					elementStack.push(currentParent);
 					currentParent = addGroupWrapper(outputDoc, currentParent, q, true);
 
-					addRepeat(outputDoc, currentParent, q);
+					addRepeat(outputDoc, currentParent, q, pathStem);
 
 					// repeat into
 					Element repeatInfo = outputDoc.createElement("div");
 					repeatInfo.setAttribute("class", "or-repeat-info");
-					repeatInfo.setAttribute("data-name", q.name);
+					repeatInfo.setAttribute("data-name", paths.get(q.name));
 					currentParent.appendChild(repeatInfo);
 
 					// Exit the group
 					currentParent = elementStack.pop();
-
-				} else if (q.isPreload()) {
-					// Ignore pre-loads for the moment
-
-				} else if (q.inMeta) {
-					// Ignore meta questions for the moment
 
 				} else if (q.isSelect()) {
 
@@ -247,6 +257,75 @@ public class GetHtml {
 				}
 			}
 		}
+
+	}
+	
+	/*
+	 * Process the main block of questions
+	 * Preloads are only in the top level form 
+	 */
+	private void processPreloads(Document outputDoc, Element parent, Form form) {
+
+		Element preloadElement = null;
+		Element bodyElement = outputDoc.createElement("fieldset");
+		bodyElement.setAttribute("style", "display:none;");
+		bodyElement.setAttribute("id", "or-preload-items");
+
+		for (Question q : form.questions) {
+
+			if (q.isPreload() && !q.inMeta) { 				
+					preloadElement = outputDoc.createElement("label");	
+					preloadElement.setAttribute("class", "calculation non-select");
+					bodyElement.appendChild(preloadElement);
+					
+					preloadElement = outputDoc.createElement("input");
+					preloadElement.setAttribute("type", "hidden");
+					preloadElement.setAttribute("name", paths.get(q.name));
+					preloadElement.setAttribute("data-preload", q.source);
+					preloadElement.setAttribute("data-preload-params", q.source_param);
+					preloadElement.setAttribute("data-type-xml", getXmlType(q));
+					bodyElement.appendChild(preloadElement);
+			}
+		}
+		parent.appendChild(bodyElement);
+
+	}
+	
+	/*
+	 * Process the main block of questions
+	 * Preloads are only in the top level form 
+	 */
+	private void processCalculations(Document outputDoc, Element parent, Form form) {
+
+		Element preloadElement = null;
+		Element bodyElement = outputDoc.createElement("fieldset");
+		bodyElement.setAttribute("style", "display:none;");
+		bodyElement.setAttribute("id", "or-calculated-items");
+
+		for (Question q : form.questions) {
+			
+			if (q.type.equals("calculate")) {
+				if(q.source_param != null && q.source_param.equals("deviceid")) {
+					// Add a calculate for the device
+					q.calculation = "'webform'";
+				}
+				
+				if(q.calculation != null && q.calculation.trim().length() > 0) {
+					preloadElement = outputDoc.createElement("label");	
+					preloadElement.setAttribute("class", "calculation non-select");
+					bodyElement.appendChild(preloadElement);
+					
+					preloadElement = outputDoc.createElement("input");
+					preloadElement.setAttribute("type", "hidden");
+					preloadElement.setAttribute("name", paths.get(q.name));
+					preloadElement.setAttribute("data-calculate", q.calculation);
+					preloadElement.setAttribute("data-type-xml", getXmlType(q));
+					bodyElement.appendChild(preloadElement);
+				}
+			}
+			
+		}
+		parent.appendChild(bodyElement);
 
 	}
 
@@ -280,9 +359,9 @@ public class GetHtml {
 
 		// input
 		Element bodyElement = outputDoc.createElement("input");
-		bodyElement.setAttribute("type", getInputType(q)); // TODO other types
-		bodyElement.setAttribute("name", q.name); // TODO set path?
-		bodyElement.setAttribute("data-type-xml", q.type); // TODO other types
+		bodyElement.setAttribute("type", getInputType(q)); 
+		bodyElement.setAttribute("name", paths.get(q.name)); 
+		bodyElement.setAttribute("data-type-xml", getXmlType(q)); 
 		parent.appendChild(bodyElement);
 	}
 
@@ -298,8 +377,8 @@ public class GetHtml {
 
 		Element inputElement = outputDoc.createElement("input");
 		inputElement.setAttribute("type", getInputType(q));
-		inputElement.setAttribute("data-name", q.name);
-		inputElement.setAttribute("data-type-xml", q.type);
+		inputElement.setAttribute("data-name", paths.get(q.name));
+		inputElement.setAttribute("data-type-xml", getXmlType(q));
 		bodyElement.appendChild(inputElement);
 
 		parent.appendChild(bodyElement);
@@ -343,7 +422,7 @@ public class GetHtml {
 		Element groupElement = outputDoc.createElement("section");
 		groupElement.setAttribute("class", "or-group");
 		if (!repeat) {
-			groupElement.setAttribute("name", q.name);
+			groupElement.setAttribute("name", paths.get(q.name));
 		}
 		addGroupTitle(outputDoc, groupElement, q);
 		parent.appendChild(groupElement);
@@ -353,16 +432,16 @@ public class GetHtml {
 	/*
 	 * Add a wrapper for a repeat then return the new parent
 	 */
-	private void addRepeat(Document outputDoc, Element parent, Question q) {
+	private void addRepeat(Document outputDoc, Element parent, Question q, String path) {
 
 		Element bodyElement = outputDoc.createElement("section");
 		bodyElement.setAttribute("class", "or-repeat");
-		bodyElement.setAttribute("name", q.name);
+		bodyElement.setAttribute("name", paths.get(q.name));
 
 		// Process sub form
 		for (Form subForm : survey.forms) {
 			if (subForm.parentQuestion == q.id) { // continue with next form
-				processQuestions(outputDoc, bodyElement, subForm);
+				processQuestions(outputDoc, bodyElement, subForm, path);
 				break;
 			}
 		}
@@ -408,6 +487,20 @@ public class GetHtml {
 		} else {
 			log.info("#### unknown type: " + q.type + " for question " + q.name);
 			type = "text";
+		}
+		return type;
+	}
+	
+	/*
+	 * Return the input type required by enketo
+	 */
+	private String getXmlType(Question q) {
+
+		String type = null;
+		if (q.type.equals("calculate")) {
+			type = "string";
+		} else {
+			type = q.type;
 		}
 		return type;
 	}
