@@ -708,19 +708,14 @@ public class WebForm extends Application{
 		
 		GetHtml getHtml = new GetHtml();
 		String html = getHtml.get(request, template.getSurvey().getId(), false);
-		output.append(html);
-		
-		System.out.println(html);
-		
-		
 		
 		// Convert escaped XML into HTML
-		//transformed = transformed.replaceAll("&gt;", ">");
-		//transformed = transformed.replaceAll("&lt;", "<");
-		//transformed = transformed.replaceAll("&quot;", "\"");
-		
-
-		
+		html = html.replaceAll("&gt;", ">");
+		html = html.replaceAll("&lt;", "<");
+		html = html.replaceAll("&quot;", "\"");
+		System.out.println(html);
+		output.append(html);
+	
 		if(!minimal) {
 			output.append(closeMain(dataToEditId, surveyClass));
 		}
