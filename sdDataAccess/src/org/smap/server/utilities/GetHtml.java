@@ -272,7 +272,13 @@ public class GetHtml {
 
 					// fieldset
 					bodyElement = outputDoc.createElement("fieldset");
-					bodyElement.setAttribute("class", "question");
+					
+					if(q.appearance.contains("likert")) {
+						bodyElement.setAttribute("class", "question likert");		// TODO
+					} else {
+						bodyElement.setAttribute("class", "question simple-select");	
+					}
+					
 
 					Element extraFieldsetElement = outputDoc.createElement("fieldset");
 					bodyElement.appendChild(extraFieldsetElement);
@@ -460,6 +466,7 @@ public class GetHtml {
 		inputElement.setAttribute("type", getInputType(q));
 		inputElement.setAttribute("data-name", paths.get(getRefName(q.name, form)));
 		inputElement.setAttribute("data-type-xml", getXmlType(q));
+		inputElement.setAttribute("value", "");
 		bodyElement.appendChild(inputElement);
 
 		parent.appendChild(bodyElement);
@@ -469,6 +476,7 @@ public class GetHtml {
 		optionElement.setAttribute("data-value-ref", "name");
 		optionElement.setAttribute("data-label-type", "itext");
 		optionElement.setAttribute("data-label-ref", "itextId");
+		
 		addOptionLabels(outputDoc, optionElement, q, form);
 
 		parent.appendChild(optionElement);
@@ -553,6 +561,8 @@ public class GetHtml {
 		int idx = 0;
 		Element bodyElement = null;
 		for (Language lang : survey.languages) {
+			
+			// Label
 			bodyElement = outputDoc.createElement("span");
 			bodyElement.setAttribute("lang", lang.name);
 			bodyElement.setAttribute("class", "question-label" + (lang.name.equals(survey.def_lang) ? " active" : ""));
@@ -566,6 +576,26 @@ public class GetHtml {
 			}
 			bodyElement.setTextContent(label);
 			parent.appendChild(bodyElement);
+			
+			// HINT
+			//<span lang="language" class="or-hint active" data-itext-id="/main/q1:hint">Try to answer this</span>
+			String hint = q.labels.get(idx).hint;
+			if(hint != null && hint.trim().length() > 0) {
+				bodyElement = outputDoc.createElement("span");
+				bodyElement.setAttribute("lang", lang.name);
+				bodyElement.setAttribute("class", "or-hint" + (lang.name.equals(survey.def_lang) ? " active" : ""));
+				bodyElement.setAttribute("data-itext-id", q.hint_id);
+				
+				
+				try {
+					label = UtilityMethods.convertAllxlsNames(q.labels.get(idx).hint, true, paths, form.id, true);
+				} catch (Exception e) {
+					log.log(Level.SEVERE, e.getMessage(), e);
+				}
+				bodyElement.setTextContent(hint);
+				parent.appendChild(bodyElement);
+			}
+			
 			idx++;
 		}
 
