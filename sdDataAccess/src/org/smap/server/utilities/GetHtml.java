@@ -464,6 +464,7 @@ public class GetHtml {
 
 		Element inputElement = outputDoc.createElement("input");
 		inputElement.setAttribute("type", getInputType(q));
+		inputElement.setAttribute("name", paths.get(getRefName(q.name, form)));
 		inputElement.setAttribute("data-name", paths.get(getRefName(q.name, form)));
 		inputElement.setAttribute("data-type-xml", getXmlType(q));
 		inputElement.setAttribute("value", "");
