@@ -420,7 +420,11 @@ public class GetHtml {
 	 */
 	private Element addGroupWrapper(Document outputDoc, Element parent, Question q, boolean repeat) {
 		Element groupElement = outputDoc.createElement("section");
-		groupElement.setAttribute("class", "or-group");
+		if(hasLabel(q)) {
+			groupElement.setAttribute("class", "or-group");
+		} else {
+			groupElement.setAttribute("class", "or-group-data");
+		}
 		if (!repeat) {
 			groupElement.setAttribute("name", paths.get(q.name));
 		}
@@ -503,6 +507,29 @@ public class GetHtml {
 			type = q.type;
 		}
 		return type;
+	}
+	
+	/*
+	 * Returns true if the question has any label - text, image, audio or video
+	 */
+	private boolean hasLabel(Question q) {
+		boolean hasLabel = false;
+		
+		for (int i = 0; i < survey.languages.size(); i++) {
+			if(q.labels.get(i) != null) {
+				Label l = q.labels.get(i);
+				if((l.text != null && l.text.trim().length() > 0) ||
+						l.image != null ||
+						l.video != null ||
+						l.audio != null) {
+					hasLabel = true;
+					break;
+				}
+			}
+			
+		}
+		return hasLabel;
+		
 	}
 
 }
