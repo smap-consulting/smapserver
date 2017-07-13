@@ -5,6 +5,8 @@ import java.util.Collection;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.smap.sdal.Utilities.GeneralUtilityMethods;
+
 import com.itextpdf.text.BaseColor;
 
 /*
@@ -153,6 +155,42 @@ public class Question {
 		
 		
 		return newPage;
+	}
+	
+	/*
+	 * Return true if this is a valid question
+	 */
+	public boolean isValid() {
+		boolean isValid = true;
+		if(type.equals("end group")) {
+			isValid = false;
+		}
+		return isValid;
+	}
+	
+	/*
+	 * Return true if this is a group or repeat question
+	 */
+	public boolean isGroup() {
+		boolean isGroup = false;
+		if(type.equals("begin repeat") || type.equals("begin group")) {
+			isGroup = true;
+		}
+		return isGroup;
+	}
+	
+	/*
+	 * Return true if this is a preload question
+	 */
+	public boolean isPreload() {
+		return GeneralUtilityMethods.isPropertyType(source_param, columnName);
+	}
+	
+	/*
+	 * Return true if this is a select question
+	 */
+	public boolean isSelect() {
+		return type.startsWith("select");
 	}
 	
 }
