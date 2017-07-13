@@ -789,7 +789,8 @@ public class SurveyManager {
 				q.constraint = GeneralUtilityMethods.convertAllXpathNames(rsGetQuestions.getString(12), true);
 				q.constraint_msg = rsGetQuestions.getString(13);
 				q.required_msg = rsGetQuestions.getString(14);
-				q.choice_filter = GeneralUtilityMethods.getChoiceFilterFromNodeset(rsGetQuestions.getString(15), true);
+				q.nodeset = rsGetQuestions.getString(15);	// Used when writing to HTML
+				q.choice_filter = GeneralUtilityMethods.getChoiceFilterFromNodeset(q.nodeset, true);
 				
 				q.relevant = GeneralUtilityMethods.convertAllXpathNames(rsGetQuestions.getString(16), true);
 				q.visible = rsGetQuestions.getBoolean(17);

@@ -23,6 +23,8 @@ import org.smap.sdal.managers.SurveyManager;
 import org.smap.sdal.model.Form;
 import org.smap.sdal.model.Label;
 import org.smap.sdal.model.Language;
+import org.smap.sdal.model.Option;
+import org.smap.sdal.model.OptionList;
 import org.smap.sdal.model.Question;
 import org.smap.sdal.model.Survey;
 import org.w3c.dom.Document;
@@ -187,24 +189,24 @@ public class GetHtml {
 
 		Element bodyElement = null;
 		Element currentParent = parent;
-		Stack<Element> elementStack = new Stack<Element>();	// Store the elements for non repeat groups
-		
+		Stack<Element> elementStack = new Stack<Element>(); // Store the elements for non repeat groups
+
 		for (Question q : form.questions) {
 
-			if(!q.inMeta && !q.name.equals("meta_groupEnd")) {		// ignore meta for the moment
+			if (!q.inMeta && !q.name.equals("meta_groupEnd")) { // ignore meta for the moment
 				if (q.type.equals("end group")) {
 					currentParent = elementStack.pop();
-					
+
 				} else if (q.type.equals("begin group")) {
 
 					elementStack.push(currentParent);
 					currentParent = addGroupWrapper(outputDoc, currentParent, q, false);
-					
+
 				} else if (q.type.equals("begin repeat")) {
-					
+
 					elementStack.push(currentParent);
 					currentParent = addGroupWrapper(outputDoc, currentParent, q, true);
-								
+
 					addRepeat(outputDoc, currentParent, q);
 
 					// repeat into
@@ -212,28 +214,60 @@ public class GetHtml {
 					repeatInfo.setAttribute("class", "or-repeat-info");
 					repeatInfo.setAttribute("data-name", q.name);
 					currentParent.appendChild(repeatInfo);
-					
+
 					// Exit the group
 					currentParent = elementStack.pop();
-					
+
 				} else if (q.isPreload()) {
 					// Ignore pre-loads for the moment
-					
+
 				} else if (q.inMeta) {
 					// Ignore meta questions for the moment
+
+				} else if (q.isSelect()) {
+
+					// fieldset
+					bodyElement = outputDoc.createElement("fieldset");
+					bodyElement.setAttribute("class", "question");
 					
+					Element extraFieldsetElement = outputDoc.createElement("fieldset");
+					bodyElement.appendChild(extraFieldsetElement);
+					
+					addSelectContents(outputDoc, extraFieldsetElement, q);
+					currentParent.appendChild(bodyElement);
+
 				} else {
-	
-					// Label
+
+					// Non select question
 					bodyElement = outputDoc.createElement("label");
-					bodyElement.setAttribute("class", "question" + (q.isSelect() ? "" : " non-select"));
+					bodyElement.setAttribute("class", "question non-select");
 					addLabelContents(outputDoc, bodyElement, q);
 					currentParent.appendChild(bodyElement);
-	
+
 				}
 			}
 		}
 
+	}
+
+	/*
+	 * Add the contents of a label
+	 */
+	private void addSelectContents(Document outputDoc, Element parent, Question q) {
+
+		// legend
+		Element bodyElement = outputDoc.createElement("legend");
+		addLabels(outputDoc, bodyElement, q);
+		parent.appendChild(bodyElement);
+		
+		Element optionWrapperElement = outputDoc.createElement("div");
+		optionWrapperElement.setAttribute("class", "option-wrapper");
+		
+		// options
+		addOptions(outputDoc, optionWrapperElement, q);
+		parent.appendChild(optionWrapperElement);
+
+		
 	}
 
 	/*
@@ -248,10 +282,60 @@ public class GetHtml {
 		Element bodyElement = outputDoc.createElement("input");
 		bodyElement.setAttribute("type", getInputType(q)); // TODO other types
 		bodyElement.setAttribute("name", q.name); // TODO set path?
-		bodyElement.setAttribute("data-type-xml", getDataType(q)); // TODO other types
+		bodyElement.setAttribute("data-type-xml", q.type); // TODO other types
 		parent.appendChild(bodyElement);
 	}
 
+	/*
+	 * Add the contents of a label
+	 */
+	private void addOptions(Document outputDoc, Element parent, Question q) {
+
+		// label
+		Element bodyElement = outputDoc.createElement("label");
+		bodyElement.setAttribute("class", "itemset-template");
+		bodyElement.setAttribute("data-items-path", q.nodeset);
+
+		Element inputElement = outputDoc.createElement("input");
+		inputElement.setAttribute("type", getInputType(q));
+		inputElement.setAttribute("data-name", q.name);
+		inputElement.setAttribute("data-type-xml", q.type);
+		bodyElement.appendChild(inputElement);
+
+		parent.appendChild(bodyElement);
+		
+		Element optionElement = outputDoc.createElement("span");
+		optionElement.setAttribute("class", "itemset-labels");
+		optionElement.setAttribute("data-value-ref", "name");
+		optionElement.setAttribute("data-label-type", "itext");
+		optionElement.setAttribute("data-label-ref", "itextId");
+		addOptionLabels(outputDoc, optionElement, q);
+		
+		parent.appendChild(optionElement);
+
+	}
+
+	private void addOptionLabels(Document outputDoc, Element parent, Question q) {
+		
+		ArrayList<Option> options = survey.optionLists.get(q.list_name).options;
+		for(Option o : options) {
+			int idx = 0;
+			Element bodyElement = null;
+			for (Language lang : survey.languages) {
+				bodyElement = outputDoc.createElement("span");
+				bodyElement.setAttribute("lang", lang.name);
+				bodyElement.setAttribute("class", "option-label" + (lang.name.equals(survey.def_lang) ? " active" : ""));
+				bodyElement.setAttribute("data-itext-id", o.text_id);
+				bodyElement.setTextContent(o.labels.get(idx).text);
+				parent.appendChild(bodyElement);
+				idx++;
+			}
+			
+			parent.appendChild(bodyElement);
+		}
+	
+	}
+	
 	/*
 	 * Add a wrapper for a group then return the new parent
 	 */
@@ -262,15 +346,15 @@ public class GetHtml {
 			groupElement.setAttribute("name", q.name);
 		}
 		addGroupTitle(outputDoc, groupElement, q);
-		parent.appendChild(groupElement);		
+		parent.appendChild(groupElement);
 		return groupElement;
 	}
-	
+
 	/*
 	 * Add a wrapper for a repeat then return the new parent
 	 */
 	private void addRepeat(Document outputDoc, Element parent, Question q) {
-		
+
 		Element bodyElement = outputDoc.createElement("section");
 		bodyElement.setAttribute("class", "or-repeat");
 		bodyElement.setAttribute("name", q.name);
@@ -282,17 +366,17 @@ public class GetHtml {
 				break;
 			}
 		}
-		
+
 		parent.appendChild(bodyElement);
 
 	}
-	
+
 	private void addGroupTitle(Document outputDoc, Element parent, Question q) {
 		Element bodyElement = outputDoc.createElement("h4");
 		addLabels(outputDoc, bodyElement, q);
 		parent.appendChild(bodyElement);
 	}
-	
+
 	private void addLabels(Document outputDoc, Element parent, Question q) {
 		int idx = 0;
 		Element bodyElement = null;
@@ -306,36 +390,24 @@ public class GetHtml {
 			idx++;
 		}
 	}
-	
+
 	/*
 	 * Return the input type required by enketo
 	 */
 	private String getInputType(Question q) {
-		
+
 		String type = null;
-		if(q.type.equals("int")) {
+		if (q.type.equals("int")) {
 			type = "number";
-		} else if(q.type.equals("string")) {
+		} else if (q.type.equals("string")) {
 			type = "text";
+		} else if (q.type.equals("select1")) {
+			type = "radio";
+		} else if (q.type.equals("select")) {
+			type = "checkbox";
 		} else {
 			log.info("#### unknown type: " + q.type + " for question " + q.name);
 			type = "text";
-		}
-		return type;
-	}
-	
-	/*
-	 * Return the data type required by enketo
-	 */
-	private String getDataType(Question q) {
-		
-		String type = null;
-		if(q.type.equals("int")) {
-			type = "int";
-		} else if(q.type.equals("string")) {
-			type = "string";
-		} else {
-			type = "string";
 		}
 		return type;
 	}

@@ -57,6 +57,7 @@ public class Question {
 	public int linked_survey;
 	public String linked_target;			//sId::qId of the target to link to
 	public ArrayList<Label> labels = new ArrayList<Label> ();
+	public String nodeset;
 	
 	private static Logger log =
 			 Logger.getLogger(Question.class.getName());
