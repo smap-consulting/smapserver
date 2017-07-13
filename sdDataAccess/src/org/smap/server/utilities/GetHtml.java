@@ -284,7 +284,14 @@ public class GetHtml {
 
 					// Non select question
 					bodyElement = outputDoc.createElement("label");
-					bodyElement.setAttribute("class", "question non-select" +
+					
+					String type = null;
+					if(q.type.equals("note") || (q.type.equals("text") && q.readonly)) {
+						type = "note";
+					} else {
+						type = "question";
+					}
+					bodyElement.setAttribute("class", type + " non-select" +
 							(q.relevant != null && q.relevant.trim().length() > 0 ? " or-branch pre-init" : ""));
 					addLabelContents(outputDoc, bodyElement, q, form);
 					currentParent.appendChild(bodyElement);
@@ -400,11 +407,25 @@ public class GetHtml {
 		bodyElement.setAttribute("name", paths.get(getRefName(q.name, form)));
 		bodyElement.setAttribute("data-type-xml", getXmlType(q));
 		
-		// image specific
-		if(q.type.equals("image")) {
+		// media specific
+		if (q.type.equals("image")) {
 			bodyElement.setAttribute("accept", "image/*");
+		} else if (q.type.equals("audio")) {
+			bodyElement.setAttribute("accept", "audio/*");
+		} else if (q.type.equals("video")) {
+			bodyElement.setAttribute("accept", "video/*");
 		}
 
+		// note and read only specific
+		if (q.type.equals("note") || q.readonly) {
+			bodyElement.setAttribute("readonly", "readonly");
+		}
+
+		// decimal
+		if(q.type.equals("decimal")) {
+			bodyElement.setAttribute("step", "any");
+		}
+		
 		// constraint
 		if (q.constraint != null && q.constraint.trim().length() > 0) {
 			try {
@@ -578,6 +599,14 @@ public class GetHtml {
 			type = "file";
 		} else if (q.type.equals("date")) {
 			type = "date";
+		}  else if (q.type.equals("dateTime")) {
+			type = "datetime";
+		} else if (q.type.equals("time")) {
+			type = "time";
+		} else if (q.type.equals("note")) {
+			type = "text";
+		} else if (q.type.equals("decimal")) {
+			type = "number";
 		} else {
 			log.info("#### unknown type: " + q.type + " for question " + q.name);
 			type = "text";
@@ -595,6 +624,8 @@ public class GetHtml {
 			type = "string";
 		} else if (q.type.equals("image") || q.type.equals("audio") || q.type.equals("video")) { 
 			type = "binary";
+		} else if(q.type.equals("note")) { 
+			type = "string";
 		} else {
 			type = q.type;
 		}
