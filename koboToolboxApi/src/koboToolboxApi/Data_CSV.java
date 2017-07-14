@@ -214,8 +214,9 @@ public class Data_CSV extends Application {
 					outWriter.print(columnHeadings.toString() + "\n");
 					
 					String sqlGetData = "select " + columnSelect.toString() + " from " + table_name
-							+ " where prikey >= ?"
-							+ " order by prikey asc;";
+							+ " where prikey >= ? "
+							+ "and _bad = 'false' "
+							+ "order by prikey asc;";
 					
 					pstmtGetData = cResults.prepareStatement(sqlGetData);
 					pstmtGetData.setInt(1, start);
