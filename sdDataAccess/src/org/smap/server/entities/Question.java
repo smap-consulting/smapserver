@@ -315,43 +315,16 @@ public class Question {
 		return relativePath;
 	}
 	
-	public String getNodeset(boolean convertToXPath, boolean convertToXLSName, HashMap<String, String> questionPaths, boolean embedExternalSearch) throws Exception {
-		
-		String v = nodeset;
-		
-		if(embedExternalSearch) {
-			// Potentially add a filter using the appearance value to the nodeset
-			String filterQuestion = GeneralUtilityMethods.getFirstSearchQuestionFromAppearance(appearance);
-			
-			if(filterQuestion != null) {
-				System.out.println("Add filter from: " + appearance + " to: " + nodeset);
-				if(v != null) {
-					// First remove any filter added through setting of choice_filter this is incompatible with the use of search()
-					int idx = v.indexOf('[');
-					if (idx >= 0) {
-						v = v.substring(0, idx);
-					}
-				
-					v += "[ _smap_cascade = " + filterQuestion + " ]";
-				}
-			}
-	
-		}		
-		
-		if(convertToXPath) {
-			v = UtilityMethods.convertAllxlsNames(v, false, questionPaths, f_id, false);
-		} else if(convertToXLSName) {
-			v = GeneralUtilityMethods.convertAllXpathNames(v, true);
-		}
-		return v;
-	}
-	
 	public String getNodesetValue() {
 		return nodeset_value;
 	}
 	
 	public String getNodesetLabel() {
 		return nodeset_label;
+	}
+	
+	public String getNodeset() {
+		return nodeset;
 	}
 	
 	public String getAutoPlay() {

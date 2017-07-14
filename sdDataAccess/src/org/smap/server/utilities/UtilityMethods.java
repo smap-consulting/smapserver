@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 import org.smap.model.IE;
+import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.server.entities.Option;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -221,6 +222,46 @@ public class UtilityMethods {
 		}
 		
 		return output.toString().trim();
+	}
+	
+	/*
+	 * Get a nodeset from the nodeset value stored in the database and the appearance of a question
+	 */
+    public static String getNodeset(boolean convertToXPath, 
+    		boolean convertToXLSName, 
+    		HashMap<String, String> questionPaths, 
+    		boolean embedExternalSearch,
+    		String nodeset,
+    		String appearance,
+    		int f_id) throws Exception {
+		
+		String v = nodeset;
+		
+		if(embedExternalSearch) {
+			// Potentially add a filter using the appearance value to the nodeset
+			String filterQuestion = GeneralUtilityMethods.getFirstSearchQuestionFromAppearance(appearance);
+			
+			if(filterQuestion != null) {
+				System.out.println("Add filter from: " + appearance + " to: " + nodeset);
+				if(v != null) {
+					// First remove any filter added through setting of choice_filter this is incompatible with the use of search()
+					int idx = v.indexOf('[');
+					if (idx >= 0) {
+						v = v.substring(0, idx);
+					}
+				
+					v += "[ _smap_cascade = " + filterQuestion + " ]";
+				}
+			}
+	
+		}		
+		
+		if(convertToXPath) {
+			v = convertAllxlsNames(v, false, questionPaths, f_id, false);
+		} else if(convertToXLSName) {
+			v = GeneralUtilityMethods.convertAllXpathNames(v, true);
+		}
+		return v;
 	}
 	
 }

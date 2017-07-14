@@ -61,7 +61,7 @@ public class GetHtml {
 		try {
 
 			survey = sm.getById(sd, null, request.getRemoteUser(), sId, true, basePath, null, false, false, true, true,
-					false, "internal", superUser, 0, null);
+					false, "real", superUser, 0, null);
 
 			log.info("Getting survey as Html-------------------------------");
 			// Create a new XML Document
@@ -467,7 +467,21 @@ public class GetHtml {
 		// label
 		Element bodyElement = outputDoc.createElement("label");
 		bodyElement.setAttribute("class", "itemset-template");
-		bodyElement.setAttribute("data-items-path", q.nodeset);
+		
+		String nodeset = q.nodeset;
+		try {
+			// Attempt to get the full nodeset incorporating any external filters
+			nodeset = UtilityMethods.getNodeset(true, 
+					false, 
+					paths, 
+					true,
+					q.nodeset,
+					q.appearance,
+					form.id);
+		} catch (Exception e) {
+			log.log(Level.SEVERE, e.getMessage(), e);
+		}
+		bodyElement.setAttribute("data-items-path", nodeset);
 
 		Element inputElement = outputDoc.createElement("input");
 		inputElement.setAttribute("type", getInputType(q));

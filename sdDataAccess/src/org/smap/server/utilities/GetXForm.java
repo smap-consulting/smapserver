@@ -928,8 +928,14 @@ public class GetXForm {
 		
 		boolean cascade = false;
 		if(useNodesets) {
-			String nodeset = q.getNodeset(true, false, template.getQuestionPaths(), embedExternalSearch);
-			
+			//String nodeset = q.getNodeset(true, false, template.getQuestionPaths(), embedExternalSearch);
+			String nodeset = UtilityMethods.getNodeset(true, 
+					false, 
+					template.getQuestionPaths(), 
+					embedExternalSearch,
+					q.getNodeset(),
+					q.getAppearance(false, null),
+					q.getFormId());
 			// Add the itemset
 			if(nodeset != null && 
 					(!GeneralUtilityMethods.isExternalChoices(q.getAppearance(true, template.getQuestionPaths())) || embedExternalSearch)) {
