@@ -309,8 +309,6 @@ require([
 
             updateVisibleColumns(config.columns);
             saveConfig(config);
-            //chart.setChartList();
-            //chart.refreshCharts();
 
         });
 
@@ -1570,7 +1568,7 @@ require([
             select_questions = {};
 
         /*
-         * Add an indicator to coulumns if they can be used as a chart question
+         * Add an indicator to columns if they can be used as a chart question
          * Merge choices in select multiples
          */
 
@@ -1613,9 +1611,19 @@ require([
                         d.chartQuestion = false;
                     }
                 }
+            } else if(d.type === "dateTime" || d.type === "date") {
+
+                    h[++idx] = '<option value="';
+                    h[++idx] = i;
+                    h[++idx] = '">';
+                    h[++idx] = columns[i].humanName;
+                    h[++idx] = '</option>';
             }
 
+
         }
+        
+        $('#date_question').empty().html(h.join(''));
 
 
 
