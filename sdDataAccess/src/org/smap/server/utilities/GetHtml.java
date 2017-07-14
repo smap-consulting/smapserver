@@ -407,7 +407,9 @@ public class GetHtml {
 		// span
 		addLabels(outputDoc, parent, q, form);
 
-		// input
+		/*
+		 * Input
+		 */
 		Element bodyElement = outputDoc.createElement("input");
 		bodyElement.setAttribute("type", getInputType(q));
 		bodyElement.setAttribute("name", paths.get(getRefName(q.name, form)));
@@ -425,6 +427,11 @@ public class GetHtml {
 		// note and read only specific
 		if (q.type.equals("note") || q.readonly) {
 			bodyElement.setAttribute("readonly", "readonly");
+		}
+		
+		// Required - note allow required on read only questions to support form level validation trick
+		if(q.required) {
+			bodyElement.setAttribute("data-required", "true()");
 		}
 
 		// decimal
@@ -606,6 +613,25 @@ public class GetHtml {
 			bodyElement.setAttribute("lang", "");
 			bodyElement.setAttribute("class", "or-constraint-msg active");
 			bodyElement.setTextContent(q.constraint_msg);
+			parent.appendChild(bodyElement);
+		}
+		
+		// Required
+		if(q.required) {
+			bodyElement = outputDoc.createElement("span");
+			bodyElement.setAttribute("class", "required");
+			bodyElement.setTextContent("*");
+			parent.appendChild(bodyElement);
+			
+			// Message
+			bodyElement = outputDoc.createElement("span");
+			bodyElement.setAttribute("class", "or-required-msg active");
+			bodyElement.setAttribute("data-i18n", "constraint.required");
+			if(q.required_msg != null && q.required_msg.trim().length() > 0) {
+				bodyElement.setTextContent(q.required_msg);
+			} else {
+				bodyElement.setTextContent("This field is required");
+			}
 			parent.appendChild(bodyElement);
 		}
 	}
