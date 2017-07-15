@@ -102,7 +102,7 @@ public class FormXML extends Application{
 			template.readDatabase(survey.id, false);
 			//template.printModel();	// debug
 			GetXForm xForm = new GetXForm();
-			response = xForm.get(template, false, true);
+			response = xForm.get(template, false, true, false);
 			log.info("userevent: " + user + " : download survey : " + templateName);		
 		
 		} catch (Exception e) {
@@ -158,7 +158,7 @@ public class FormXML extends Application{
 			template.readDatabase(survey.id, false);
 			//template.printModel();	// debug
 			GetXForm xForm = new GetXForm();
-			response = xForm.get(template, false, true);
+			response = xForm.get(template, false, true, false);
 			log.info("userevent Temporary User: " + tempUser + " : download survey : " + templateName);		
 		
 		} catch (Exception e) {

@@ -32,7 +32,6 @@ import java.util.Locale;
 import java.util.ResourceBundle;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.servlet.http.HttpServletRequest;
@@ -100,6 +99,14 @@ public class WebForm extends Application {
 		SurveyData surveyData = new SurveyData();
 		String main;
 	}
+	
+	// Globals
+	private ServerData serverData = null;
+	private List<ManifestValue> manifestList = null;
+	private String mimeType = null;
+	private JsonResponse jr = null;
+	SurveyTemplate template = null;
+	ResourceBundle localisation = null;
 
 	/*
 	 * Get instance data Respond with JSON
@@ -196,7 +203,8 @@ public class WebForm extends Application {
 			throw new JsonAuthorisationException();
 		}
 
-		return getWebform(request, "json", formIdent, datakey, datakeyvalue, assignmentId, callback, user, false, false,
+		mimeType = "json";
+		return getWebform(request, formIdent, datakey, datakeyvalue, assignmentId, callback, user, false, false,
 				false);
 	}
 
@@ -209,15 +217,14 @@ public class WebForm extends Application {
 			@QueryParam("datakeyvalue") String datakeyvalue, @QueryParam("assignment_id") int assignmentId,
 			@QueryParam("callback") String callback) throws IOException {
 
-		String type = "html";
+		mimeType = "html";
 		if (callback != null) {
 			// I guess they really want JSONP
-			type = "json";
+			mimeType = "json";
 
 		}
-		log.info("Requesting " + type);
 
-		return getWebform(request, type, formIdent, datakey, datakeyvalue, assignmentId, callback,
+		return getWebform(request, formIdent, datakey, datakeyvalue, assignmentId, callback,
 				request.getRemoteUser(), false, true, false);
 	}
 
@@ -234,25 +241,24 @@ public class WebForm extends Application {
 			@QueryParam("datakeyvalue") String datakeyvalue, @QueryParam("assignment_id") int assignmentId,
 			@QueryParam("callback") String callback) throws IOException {
 
-		String type = "html";
+		mimeType = "html";
 		if (callback != null) {
 			// I guess they really want JSONP
-			type = "json";
+			mimeType = "json";
 
 		}
-		return getWebform(request, type, formIdent, datakey, datakeyvalue, assignmentId, callback, tempUser, false,
+		return getWebform(request, formIdent, datakey, datakeyvalue, assignmentId, callback, tempUser, false,
 				true, true);
 	}
 
 	/*
 	 * Get the response as either HTML or JSON
 	 */
-	private Response getWebform(HttpServletRequest request, String mimeType, String formIdent, String datakey,
+	private Response getWebform(HttpServletRequest request, String formIdent, String datakey,
 			String datakeyvalue, int assignmentId, String callback, String user, boolean simplifyMedia,
 			boolean isWebForm, boolean isTemporaryUser) {
 
 		Response response = null;
-		JsonResponse jr = null;
 
 		log.info("webForm:" + formIdent + " datakey:" + datakey + " datakeyvalue:" + datakeyvalue + "assignmentId:"
 				+ assignmentId);
@@ -267,18 +273,29 @@ public class WebForm extends Application {
 		int orgId = 0;
 		String accessKey = null;
 		String requester = "surveyMobileAPI-getWebForm";
-		ResourceBundle localisation = null;
 		boolean superUser = false;
 
-		// Authorisation
+		/*
+		 * Get the media manifest so we can set the url's of media files used the form
+		 * Also get the google api key
+		 */
+		String basePath = GeneralUtilityMethods.getBasePath(request);
+		requester = "surveyMobileAPI-getWebForm2";
+		TranslationManager translationMgr = new TranslationManager();
+		ServerManager sm = new ServerManager();
+		StringBuffer outputString = new StringBuffer();
+
+		
 		if (user != null) {
+			
+			// Authorisation
 			Connection connectionSD = SDDataSource.getConnection(requester);
 			if (isTemporaryUser) {
 				a.isValidTemporaryUser(connectionSD, user);
 			}
 			a.isAuthorised(connectionSD, user);
-			SurveyManager sm = new SurveyManager();
-			survey = sm.getSurveyId(connectionSD, formIdent); // Get the survey id from the templateName / key
+			SurveyManager surveyManager = new SurveyManager();
+			survey = surveyManager.getSurveyId(connectionSD, formIdent); // Get the survey id from the templateName / key
 			if (survey == null) {
 				throw new NotFoundException();
 			}
@@ -286,10 +303,10 @@ public class WebForm extends Application {
 				superUser = GeneralUtilityMethods.isSuperUser(connectionSD, request.getRemoteUser());
 			} catch (Exception e) {
 			}
-			a.isValidSurvey(connectionSD, user, survey.id, false, superUser); // Validate that the user can access this
-																				// survey
+			a.isValidSurvey(connectionSD, user, survey.id, false, superUser); // Validate that the user has access																			
 			a.isBlocked(connectionSD, survey.id, false); // Validate that the survey is not blocked
-
+			// End Authorisation
+			
 			// Get the organisation id and an access key to upload the results of this form
 			// (used from iPhones which do not do authentication on POSTs)
 			try {
@@ -300,6 +317,10 @@ public class WebForm extends Application {
 				Locale locale = new Locale(
 						GeneralUtilityMethods.getUserLanguage(connectionSD, request.getRemoteUser()));
 				localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
+				
+				manifestList = translationMgr.getManifestBySurvey(connectionSD, user, survey.id, basePath, formIdent);
+				serverData = sm.getServer(connectionSD);
+				
 			} catch (Exception e) {
 				log.log(Level.SEVERE, "WebForm", e);
 			} finally {
@@ -308,53 +329,20 @@ public class WebForm extends Application {
 		} else {
 			throw new AuthorisationException();
 		}
-		// End Authorisation
-
-		StringBuffer outputString = new StringBuffer();
-		ServerData serverData = null;
 
 		// Generate the web form
 		try {
 
-			/*
-			 * Get the media manifest so we can set the url's of media files used the form
-			 * Also get the google api key
-			 */
-			String basePath = GeneralUtilityMethods.getBasePath(request);
-			requester = "surveyMobileAPI-getWebForm2";
-			TranslationManager translationMgr = new TranslationManager();
-			ServerManager sm = new ServerManager();
-			Connection connectionSD = SDDataSource.getConnection(requester);
-			List<ManifestValue> manifestList = null;
-			try {
-				manifestList = translationMgr.getManifestBySurvey(connectionSD, user, survey.id, basePath, formIdent);
-
-				serverData = sm.getServer(connectionSD);
-
-			} catch (Exception e) {
-				log.log(Level.SEVERE, e.getMessage(), e);
-			} finally {
-				SDDataSource.closeConnection(requester, connectionSD);
-			}
-
 			// Get the XML of the Form
-			SurveyTemplate template = new SurveyTemplate();
+			template = new SurveyTemplate();
 			template.readDatabase(survey.id, true);
 			String surveyClass = template.getSurveyClass();
-
-			// template.printModel(); // debug
-			GetXForm xForm = new GetXForm();
-			String formXML = xForm.get(template, true, true);
-
-			// Escape quotes within <value> elements
-			formXML = escapeQuotes(formXML);
-			formXML = unescapeEmoji(formXML);
 
 			// If required get the instance data
 			String instanceXML = null;
 			String instanceStrToEditId = null;
 			if (datakey != null && datakeyvalue != null) {
-				xForm = new GetXForm();
+				GetXForm xForm = new GetXForm();
 				instanceXML = xForm.getInstance(survey.id, formIdent, template, datakey, datakeyvalue, 0, simplifyMedia,
 						isWebForm);
 				instanceStrToEditId = xForm.getInstanceId();
@@ -365,33 +353,10 @@ public class WebForm extends Application {
 				jr.manifestList = new ArrayList<ManifestValue>();
 			}
 
-			for (int i = 0; i < manifestList.size(); i++) {
-				log.info(manifestList.get(i).fileName + " : " + manifestList.get(i).url + " : "
-						+ manifestList.get(i).type);
-				String type = manifestList.get(i).type;
-				String name = manifestList.get(i).fileName;
-				String url = manifestList.get(i).url;
-				if (type.equals("image")) {
-					type = "images";
-				}
-				if (url != null) {
-					if (mimeType.equals("json")) {
-						ManifestValue mv = new ManifestValue(); // Create a new version of the manifest to send to a
-																// client that doesn't have unneeded data
-						mv.type = type;
-						mv.fileName = name;
-						mv.url = url;
-						jr.manifestList.add(mv);
-					} else {
-						formXML = formXML.replaceAll("jr://" + type + "/" + name, url);
-					}
-				}
-			}
-
 			// Convert to HTML / Json
 			if (mimeType.equals("json")) {
 
-				jr.surveyData.modelStr = getModelStr(request, formXML).toString();
+				jr.surveyData.modelStr = getModelStr(request);
 				if (instanceXML != null) {
 					jr.surveyData.instanceStrToEdit = instanceXML.replace("\n", "").replace("\r", "");
 				}
@@ -408,10 +373,10 @@ public class WebForm extends Application {
 				}
 
 				// Add survey class's - used for paging
-				jr.surveyData.surveyClass = xForm.getSurveyClass();
+				jr.surveyData.surveyClass = survey.surveyClass;
+				//jr.surveyData.surveyClass = xForm.getSurveyClass();
 
-				jr.main = addMain(request, formXML, instanceStrToEditId, orgId, true, surveyClass, serverData,
-						localisation, template).toString();
+				jr.main = addMain(request, instanceStrToEditId, orgId, true, surveyClass).toString();
 
 				if (callback != null) {
 					outputString.append(callback + " (");
@@ -422,8 +387,8 @@ public class WebForm extends Application {
 					outputString.append(")");
 				}
 			} else {
-				outputString.append(addDocument(request, formXML, instanceXML, instanceStrToEditId, assignmentId,
-						survey.surveyClass, orgId, accessKey, serverData, localisation, template));
+				outputString.append(addDocument(request, instanceXML, instanceStrToEditId, assignmentId,
+						survey.surveyClass, orgId, accessKey));
 			}
 
 			/*
@@ -446,9 +411,8 @@ public class WebForm extends Application {
 	/*
 	 * Add the HTML
 	 */
-	private StringBuffer addDocument(HttpServletRequest request, String formXML, String instanceXML,
-			String dataToEditId, int assignmentId, String surveyClass, int orgId, String accessKey,
-			ServerData serverData, ResourceBundle localisation, SurveyTemplate template)
+	private StringBuffer addDocument(HttpServletRequest request, String instanceXML,
+			String dataToEditId, int assignmentId, String surveyClass, int orgId, String accessKey)
 			throws UnsupportedEncodingException, TransformerFactoryConfigurationError, TransformerException {
 
 		StringBuffer output = new StringBuffer();
@@ -463,8 +427,8 @@ public class WebForm extends Application {
 		output.append(">\n");
 
 		output.append(
-				addHead(request, formXML, instanceXML, dataToEditId, assignmentId, surveyClass, accessKey, serverData));
-		output.append(addBody(request, formXML, dataToEditId, orgId, surveyClass, localisation, template));
+				addHead(request, instanceXML, dataToEditId, assignmentId, surveyClass, accessKey));
+		output.append(addBody(request, dataToEditId, orgId, surveyClass));
 
 		output.append("</html>\n");
 		return output;
@@ -473,8 +437,8 @@ public class WebForm extends Application {
 	/*
 	 * Add the head section
 	 */
-	private StringBuffer addHead(HttpServletRequest request, String formXML, String instanceXML, String dataToEditId,
-			int assignmentId, String surveyClass, String accessKey, ServerData serverData)
+	private StringBuffer addHead(HttpServletRequest request, String instanceXML, String dataToEditId,
+			int assignmentId, String surveyClass, String accessKey)
 			throws UnsupportedEncodingException, TransformerFactoryConfigurationError, TransformerException {
 
 		StringBuffer output = new StringBuffer();
@@ -515,7 +479,7 @@ public class WebForm extends Application {
 		output.append("<![endif]-->\n");
 
 		output.append("<script src='/js/libs/modernizr.js'></script>");
-		output.append(addData(request, formXML, instanceXML, dataToEditId, assignmentId, accessKey));
+		output.append(addData(request, instanceXML, dataToEditId, assignmentId, accessKey));
 		// Add the google API key
 		output.append("<script>");
 		output.append("window.smapConfig = {};");
@@ -533,7 +497,7 @@ public class WebForm extends Application {
 	/*
 	 * Add the data
 	 */
-	private StringBuffer addData(HttpServletRequest request, String formXML, String instanceXML, String dataToEditId,
+	private StringBuffer addData(HttpServletRequest request, String instanceXML, String dataToEditId,
 			int assignmentId, String accessKey)
 			throws UnsupportedEncodingException, TransformerFactoryConfigurationError, TransformerException {
 
@@ -547,7 +511,7 @@ public class WebForm extends Application {
 		// Data model
 
 		output.append("surveyData.modelStr='");
-		output.append(getModelStr(request, formXML));
+		output.append(getModelStr(request));
 		output.append("';\n");
 
 		// Instance Data
@@ -593,38 +557,38 @@ public class WebForm extends Application {
 	/*
 	 * Get the model string
 	 */
-	private StringBuffer getModelStr(HttpServletRequest request, String formXML)
+	private String getModelStr(HttpServletRequest request)
 			throws UnsupportedEncodingException, TransformerFactoryConfigurationError, TransformerException {
 
-		StringBuffer output = new StringBuffer();
+		GetXForm xForm = new GetXForm();
+		String model = xForm.get(template, true, true, true);
+		
+		//String dataDoc = transform(request, formXML, "/XSL/openrosa2xmlmodel.xsl").replace("\n", "").replace("\r", "");
 
-		String dataDoc = transform(request, formXML, "/XSL/openrosa2xmlmodel.xsl").replace("\n", "").replace("\r", "");
+		// We only want the model - remove any XML preanble
+		int modelIdx = model.indexOf("<model>");
+		model = model.substring(modelIdx);
+		
+		model = model.replace("\n", "");
+		model = model.replace("\r", "");
 
-		// We only want the model
-		int modelIdx = dataDoc.indexOf("<model>");
-		int rootIdx = dataDoc.lastIndexOf("</root>");
-		if (modelIdx >= 0 && rootIdx >= 0) {
-			dataDoc = dataDoc.substring(modelIdx, rootIdx);
-		} else {
-			log.info("Error: Invalid model: " + dataDoc);
-		}
-		output.append(dataDoc.replace("\n", "").replace("\r", ""));
-
-		return output;
+		System.out.println("Model: " + model);
+		
+		return model;
 
 	}
 
 	/*
 	 * Add the body
 	 */
-	private StringBuffer addBody(HttpServletRequest request, String formXML, String dataToEditId, int orgId,
-			String surveyClass, ResourceBundle localisation, SurveyTemplate template)
+	private StringBuffer addBody(HttpServletRequest request, String dataToEditId, int orgId,
+			String surveyClass)
 			throws UnsupportedEncodingException, TransformerFactoryConfigurationError, TransformerException {
 		StringBuffer output = new StringBuffer();
 
 		output.append("<body class='clearfix edit'>");
 		output.append(getAside());
-		output.append(addMain(request, formXML, dataToEditId, orgId, false, surveyClass, null, localisation, template));
+		output.append(addMain(request, dataToEditId, orgId, false, surveyClass));
 		output.append(getDialogs());
 
 		// Webforms script
@@ -638,13 +602,12 @@ public class WebForm extends Application {
 	/*
 	 * Get the "Main" element of an enketo form
 	 */
-	private StringBuffer addMain(HttpServletRequest request, String formXML, String dataToEditId, int orgId,
-			boolean minimal, String surveyClass, ServerData serverData, ResourceBundle localisation,
-			SurveyTemplate template)
+	private StringBuffer addMain(HttpServletRequest request, String dataToEditId, int orgId,
+			boolean minimal, String surveyClass)
 			throws UnsupportedEncodingException, TransformerFactoryConfigurationError, TransformerException {
 
 		StringBuffer output = new StringBuffer();
-		output.append(openMain(orgId, minimal, serverData, localisation));
+		output.append(openMain(orgId, minimal));
 
 		// String transformed = transform(request, formXML,
 		// "/XSL/openrosa2html5form.xsl");
@@ -656,7 +619,31 @@ public class WebForm extends Application {
 		html = html.replaceAll("&gt;", ">");
 		html = html.replaceAll("&lt;", "<");
 		html = html.replaceAll("&quot;", "\"");
-		System.out.println(html);
+		
+		for (int i = 0; i < manifestList.size(); i++) {
+			log.info(manifestList.get(i).fileName + " : " + manifestList.get(i).url + " : "
+					+ manifestList.get(i).type);
+			String type = manifestList.get(i).type;
+			String name = manifestList.get(i).fileName;
+			String url = manifestList.get(i).url;
+			if (type.equals("image")) {
+				type = "images";
+			}
+			System.out.println("Manifest: " + name);
+			if (url != null) {
+				if (mimeType.equals("json")) {
+					ManifestValue mv = new ManifestValue(); // Create a new version of the manifest to send to a
+															// client that doesn't have unneeded data
+					mv.type = type;
+					mv.fileName = name;
+					mv.url = url;
+					jr.manifestList.add(mv);
+				} else {
+					html = html.replaceAll("jr://" + type + "/" + name, url);
+				}
+			}
+		}
+		//System.out.println(html);
 		output.append(html);
 
 		if (!minimal) {
@@ -849,7 +836,7 @@ public class WebForm extends Application {
 		return output;
 	}
 
-	private StringBuffer openMain(int orgId, boolean minimal, ServerData serverData, ResourceBundle localisation) {
+	private StringBuffer openMain(int orgId, boolean minimal) {
 		StringBuffer output = new StringBuffer();
 
 		output.append("<div class='main'>\n");
@@ -969,14 +956,14 @@ public class WebForm extends Application {
 			template.readDatabase(survey.id, false);
 
 			// template.printModel(); // debug
-			GetXForm xForm = new GetXForm();
+			//GetXForm xForm = new GetXForm();
 			// String formXML = xForm.get(template);
 
 			// If required get the instance data
 			String instanceXML = null;
 			String dataKey = "instanceid";
 
-			xForm = new GetXForm();
+			GetXForm xForm = new GetXForm();
 			instanceXML = xForm.getInstance(survey.id, formIdent, template, dataKey, updateid, 0, simplifyMedia, false);
 
 			SurveyData sd = new SurveyData();
