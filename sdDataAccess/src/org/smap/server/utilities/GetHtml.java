@@ -45,7 +45,8 @@ public class GetHtml {
 	Survey survey = null;
 	int languageIndex = 0;
 	HashMap<String, String> paths = new HashMap<>(); // Keep paths out of the survey model and instead store them here
-
+	Document outputDoc = null;
+	
 	private static Logger log = Logger.getLogger(GetHtml.class.getName());
 
 	/*
@@ -69,15 +70,15 @@ public class GetHtml {
 			// Create a new XML Document
 			DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
 			DocumentBuilder b = dbf.newDocumentBuilder();
-			Document outputHtml = b.newDocument();
+			outputDoc = b.newDocument();
 
 			Writer outWriter = new StringWriter();
 			Result outStream = new StreamResult(outWriter);
 
 			Element parent;
-			parent = populateRoot(outputHtml);
+			parent = populateRoot();
 			// populateHead(sd, outputHtml, b, parent);
-			createForm(outputHtml, parent, true, true);
+			createForm(parent, true, true);
 
 			// Write the survey to a string and return it to the calling program
 			Transformer transformer = TransformerFactory.newInstance().newTransformer();
@@ -85,7 +86,7 @@ public class GetHtml {
 			transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
 			transformer.setOutputProperty(OutputKeys.METHOD, "html");
 
-			DOMSource source = new DOMSource(outputHtml);
+			DOMSource source = new DOMSource(outputDoc);
 			transformer.transform(source, outStream);
 
 			response = outWriter.toString();
@@ -106,7 +107,7 @@ public class GetHtml {
 	 * 
 	 * @param outputDoc
 	 */
-	public Element populateRoot(Document outputDoc) {
+	public Element populateRoot() {
 
 		Element rootElement = outputDoc.createElement("root");
 		/*
@@ -122,7 +123,7 @@ public class GetHtml {
 		return rootElement;
 	}
 
-	public void createForm(Document outputDoc, Element parent, boolean isWebForms, boolean useNodesets)
+	public void createForm(Element parent, boolean isWebForms, boolean useNodesets)
 			throws Exception {
 
 		Element bodyElement = outputDoc.createElement("form");
@@ -133,11 +134,11 @@ public class GetHtml {
 		bodyElement.setAttribute("dir", "ltr");
 		bodyElement.setAttribute("id", survey.getIdent());
 
-		populateForm(outputDoc, bodyElement);
+		populateForm(bodyElement);
 		parent.appendChild(bodyElement);
 	}
 
-	private void populateForm(Document outputDoc, Element parent) throws Exception {
+	private void populateForm(Element parent) throws Exception {
 
 		// logo
 		Element bodyElement = outputDoc.createElement("section");
@@ -159,23 +160,23 @@ public class GetHtml {
 			bodyElement.setAttribute("style", "display:none;");
 		}
 		bodyElement.setAttribute("data-default-lang", survey.def_lang);
-		populateLanguageChoices(outputDoc, bodyElement);
+		populateLanguageChoices(bodyElement);
 		parent.appendChild(bodyElement);
 
 		// Questions
 		for (Form form : survey.forms) {
 			if (form.parentform == 0) { // Start with top level form
 				addPaths(form, "/");
-				processQuestions(outputDoc, parent, form);
-				processPreloads(outputDoc, parent, form);
-				processCalculations(outputDoc, parent, form);
+				processQuestions(parent, form);
+				processPreloads(parent, form);
+				processCalculations(parent, form);
 				break;
 			}
 		}
 
 	}
 
-	private void populateLanguageChoices(Document outputDoc, Element parent) {
+	private void populateLanguageChoices(Element parent) {
 		Element bodyElement = null;
 		int idx = 0;
 		for (Language lang : survey.languages) {
@@ -231,12 +232,11 @@ public class GetHtml {
 	/*
 	 * Process the main block of questions Skip over: - preloads - meta group
 	 */
-	private void processQuestions(Document outputDoc, Element parent, Form form) throws Exception {
+	private void processQuestions(Element parent, Form form) throws Exception {
 
 		Element bodyElement = null;
 		Element currentParent = parent;
 		Stack<Element> elementStack = new Stack<>(); // Store the elements for non repeat groups
-		Stack<String> pathStack = new Stack<>(); // Store the paths as we go in and out of groups
 
 		for (Question q : form.questions) {
 
@@ -248,14 +248,14 @@ public class GetHtml {
 				} else if (q.type.equals("begin group")) {
 
 					elementStack.push(currentParent);
-					currentParent = addGroupWrapper(outputDoc, currentParent, q, false, form);
+					currentParent = addGroupWrapper(currentParent, q, false, form);
 
 				} else if (q.type.equals("begin repeat")) {
 
 					elementStack.push(currentParent);
-					currentParent = addGroupWrapper(outputDoc, currentParent, q, true, form);
+					currentParent = addGroupWrapper(currentParent, q, true, form);
 
-					Form repeatForm = addRepeat(outputDoc, currentParent, q, form);
+					addRepeat(currentParent, q, form);
 
 					// repeat into
 					Element repeatInfo = outputDoc.createElement("div");
@@ -281,7 +281,7 @@ public class GetHtml {
 					Element extraFieldsetElement = outputDoc.createElement("fieldset");
 					bodyElement.appendChild(extraFieldsetElement);
 
-					addSelectContents(outputDoc, extraFieldsetElement, q, form);
+					addSelectContents(extraFieldsetElement, q, form);
 					currentParent.appendChild(bodyElement);
 
 				} else {
@@ -290,7 +290,7 @@ public class GetHtml {
 					bodyElement = outputDoc.createElement("label");
 					setQuestionClass(q, bodyElement);
 
-					addLabelContents(outputDoc, bodyElement, q, form);
+					addLabelContents(bodyElement, q, form);
 					currentParent.appendChild(bodyElement);
 
 				}
@@ -343,7 +343,7 @@ public class GetHtml {
 	/*
 	 * Process the main block of questions Preloads are only in the top level form
 	 */
-	private void processPreloads(Document outputDoc, Element parent, Form form) {
+	private void processPreloads(Element parent, Form form) {
 
 		Element preloadLabel = null;
 		Element preloadInput = null;
@@ -374,7 +374,7 @@ public class GetHtml {
 	/*
 	 * Process the main block of questions Preloads are only in the top level form
 	 */
-	private void processCalculations(Document outputDoc, Element parent, Form form) throws Exception {
+	private void processCalculations(Element parent, Form form) throws Exception {
 
 		Element calculationLabel = null;
 		Element calculationInput = null;
@@ -414,18 +414,18 @@ public class GetHtml {
 	/*
 	 * Add the contents of a select
 	 */
-	private void addSelectContents(Document outputDoc, Element parent, Question q, Form form) {
+	private void addSelectContents(Element parent, Question q, Form form) throws Exception {
 
 		// legend
 		Element bodyElement = outputDoc.createElement("legend");
-		addLabels(outputDoc, bodyElement, q, form);
+		addLabels(bodyElement, q, form);
 		parent.appendChild(bodyElement);
 
 		Element optionWrapperElement = outputDoc.createElement("div");
 		optionWrapperElement.setAttribute("class", "option-wrapper");
 
 		// options
-		addOptions(outputDoc, optionWrapperElement, q, form);
+		addOptions(optionWrapperElement, q, form);
 		parent.appendChild(optionWrapperElement);
 
 	}
@@ -433,10 +433,10 @@ public class GetHtml {
 	/*
 	 * Add the contents of a label
 	 */
-	private void addLabelContents(Document outputDoc, Element parent, Question q, Form form) {
+	private void addLabelContents(Element parent, Question q, Form form) {
 
 		// span
-		addLabels(outputDoc, parent, q, form);
+		addLabels(parent, q, form);
 
 		/*
 		 * Input
@@ -494,21 +494,16 @@ public class GetHtml {
 		parent.appendChild(bodyElement);
 	}
 
-	private void addOptions(Document outputDoc, Element parent, Question q, Form form) {
+	private void addOptions(Element parent, Question q, Form form) throws Exception {
 
-		// label
+		// Itemset Template
 		Element bodyElement = outputDoc.createElement("label");
 		bodyElement.setAttribute("class", "itemset-template");
-
-		String nodeset = q.nodeset;
-		try {
-			// Attempt to get the full nodeset incorporating any external filters
-			nodeset = UtilityMethods.getNodeset(true, false, paths, true, q.nodeset, q.appearance, form.id);
-		} catch (Exception e) {
-			log.log(Level.SEVERE, e.getMessage(), e);
-		}
+		// Attempt to get the full nodeset incorporating any external filters
+		String nodeset = UtilityMethods.getNodeset(true, false, paths, true, q.nodeset, q.appearance, form.id);
 		bodyElement.setAttribute("data-items-path", nodeset);
-
+		parent.appendChild(bodyElement);
+		
 		Element inputElement = outputDoc.createElement("input");
 		inputElement.setAttribute("type", getInputType(q));
 		inputElement.setAttribute("name", paths.get(getRefName(q.name, form)));
@@ -517,21 +512,20 @@ public class GetHtml {
 		inputElement.setAttribute("value", "");
 		bodyElement.appendChild(inputElement);
 
-		parent.appendChild(bodyElement);
-
+		// Itemset labels
 		Element optionElement = outputDoc.createElement("span");
 		optionElement.setAttribute("class", "itemset-labels");
 		optionElement.setAttribute("data-value-ref", "name");
 		optionElement.setAttribute("data-label-type", "itext");
 		optionElement.setAttribute("data-label-ref", "itextId");
 
-		addOptionLabels(outputDoc, optionElement, q, form);
+		addOptionLabels(optionElement, q, form);
 
 		parent.appendChild(optionElement);
 
 	}
 
-	private void addOptionLabels(Document outputDoc, Element parent, Question q, Form form) {
+	private void addOptionLabels(Element parent, Question q, Form form) {
 
 		ArrayList<Option> options = survey.optionLists.get(q.list_name).options;
 		for (Option o : options) {
@@ -552,6 +546,9 @@ public class GetHtml {
 				}
 				bodyElement.setTextContent(label);
 				parent.appendChild(bodyElement);
+				
+				addMedia(parent, o.labels.get(idx), lang, o.text_id);
+				
 				idx++;
 			}
 
@@ -563,14 +560,14 @@ public class GetHtml {
 	/*
 	 * Add a wrapper for a group then return the new parent
 	 */
-	private Element addGroupWrapper(Document outputDoc, Element parent, Question q, boolean repeat, Form form) {
+	private Element addGroupWrapper(Element parent, Question q, boolean repeat, Form form) {
 		Element groupElement = outputDoc.createElement("section");
 		setQuestionClass(q, groupElement);
 
 		if (!repeat) {
 			groupElement.setAttribute("name", paths.get(getRefName(q.name, form)));
 		}
-		addGroupTitle(outputDoc, groupElement, q, form);
+		addGroupTitle(groupElement, q, form);
 		parent.appendChild(groupElement);
 		return groupElement;
 	}
@@ -578,7 +575,7 @@ public class GetHtml {
 	/*
 	 * Add a wrapper for a repeat then return the new parent
 	 */
-	private Form addRepeat(Document outputDoc, Element parent, Question q, Form form) throws Exception {
+	private Form addRepeat(Element parent, Question q, Form form) throws Exception {
 
 		Form newForm = null;
 
@@ -589,7 +586,7 @@ public class GetHtml {
 		// Process sub form
 		for (Form subForm : survey.forms) {
 			if (subForm.parentQuestion == q.id) { // continue with next form
-				processQuestions(outputDoc, bodyElement, subForm);
+				processQuestions(bodyElement, subForm);
 				newForm = subForm;
 				break;
 			}
@@ -601,13 +598,13 @@ public class GetHtml {
 
 	}
 
-	private void addGroupTitle(Document outputDoc, Element parent, Question q, Form form) {
+	private void addGroupTitle(Element parent, Question q, Form form) {
 		Element bodyElement = outputDoc.createElement("h4");
-		addLabels(outputDoc, bodyElement, q, form);
+		addLabels(bodyElement, q, form);
 		parent.appendChild(bodyElement);
 	}
 
-	private void addLabels(Document outputDoc, Element parent, Question q, Form form) {
+	private void addLabels(Element parent, Question q, Form form) {
 		int idx = 0;
 		Element bodyElement = null;
 		for (Language lang : survey.languages) {
@@ -620,9 +617,6 @@ public class GetHtml {
 
 			String label = q.labels.get(idx).text;
 			try {
-				// for(int i = 0; i < label.length(); i++) {
-				// System.out.println(" - " + String.format("%04x", (int) label.charAt(i)));
-				// }
 				label = UtilityMethods.convertAllxlsNames(label, true, paths, form.id, true);
 				label = convertMarkdown(label);
 
@@ -633,8 +627,6 @@ public class GetHtml {
 			parent.appendChild(bodyElement);
 
 			// Hint
-			// <span lang="language" class="or-hint active"
-			// data-itext-id="/main/q1:hint">Try to answer this</span>
 			String hint = q.labels.get(idx).hint;
 			if (hint != null && hint.trim().length() > 0) {
 				bodyElement = outputDoc.createElement("span");
@@ -651,43 +643,8 @@ public class GetHtml {
 				parent.appendChild(bodyElement);
 			}
 
-			// Image
-			// <img lang="language" class="active"
-			// src="/surveyKPI/file/landslide.jpg/organisation" alt="image">
-			String image = q.labels.get(idx).image;
-			if (image != null && image.trim().length() > 0) {
-				bodyElement = outputDoc.createElement("img");
-				bodyElement.setAttribute("lang", lang.name);
-				bodyElement.setAttribute("class", (lang.name.equals(survey.def_lang) ? " active" : ""));
-				bodyElement.setAttribute("src", "jr://images/" + image);
-				bodyElement.setAttribute("alt", "image");
+			addMedia(parent, q.labels.get(idx), lang, q.text_id);
 
-				parent.appendChild(bodyElement);
-			}
-
-			// Audio
-			String audio = q.labels.get(idx).audio;
-			if (audio != null && image.trim().length() > 0) {
-				bodyElement = outputDoc.createElement("audio");
-				bodyElement.setAttribute("lang", lang.name);
-				bodyElement.setAttribute("class", (lang.name.equals(survey.def_lang) ? " active" : ""));
-				bodyElement.setAttribute("src", "jr://audio/" + audio);
-				bodyElement.setAttribute("alt", "audio");
-
-				parent.appendChild(bodyElement);
-			}
-
-			// Video
-			String video = q.labels.get(idx).video;
-			if (audio != null && image.trim().length() > 0) {
-				bodyElement = outputDoc.createElement("video");
-				bodyElement.setAttribute("lang", lang.name);
-				bodyElement.setAttribute("class", (lang.name.equals(survey.def_lang) ? " active" : ""));
-				bodyElement.setAttribute("src", "jr://video/" + video);
-				bodyElement.setAttribute("alt", "video");
-
-				parent.appendChild(bodyElement);
-			}
 
 			idx++;
 		}
@@ -721,6 +678,52 @@ public class GetHtml {
 		}
 	}
 
+	/*
+	 * Add media
+	 */
+	private void addMedia(Element parent, Label label, Language lang, String textId) {
+		
+		Element bodyElement = null;
+		
+		// Image
+		String image = label.image;
+		if (image != null && image.trim().length() > 0) {
+			bodyElement = outputDoc.createElement("img");
+			bodyElement.setAttribute("lang", lang.name);
+			bodyElement.setAttribute("class", (lang.name.equals(survey.def_lang) ? " active" : ""));
+			bodyElement.setAttribute("src", "jr://images/" + image);
+			bodyElement.setAttribute("alt", "image");
+			bodyElement.setAttribute("data-itext-id", textId);
+
+			parent.appendChild(bodyElement);
+		}
+
+		// Audio
+		String audio = label.audio;
+		if (audio != null && image.trim().length() > 0) {
+			bodyElement = outputDoc.createElement("audio");
+			bodyElement.setAttribute("lang", lang.name);
+			bodyElement.setAttribute("class", (lang.name.equals(survey.def_lang) ? " active" : ""));
+			bodyElement.setAttribute("src", "jr://audio/" + audio);
+			bodyElement.setAttribute("alt", "audio");
+			bodyElement.setAttribute("data-itext-id", textId);
+
+			parent.appendChild(bodyElement);
+		}
+
+		// Video
+		String video = label.video;
+		if (audio != null && image.trim().length() > 0) {
+			bodyElement = outputDoc.createElement("video");
+			bodyElement.setAttribute("lang", lang.name);
+			bodyElement.setAttribute("class", (lang.name.equals(survey.def_lang) ? " active" : ""));
+			bodyElement.setAttribute("src", "jr://video/" + video);
+			bodyElement.setAttribute("alt", "video");
+			bodyElement.setAttribute("data-itext-id", textId);
+
+			parent.appendChild(bodyElement);
+		}
+	}
 	/*
 	 * Return the input type required by enketo
 	 */
