@@ -599,7 +599,7 @@ public class GetHtml {
 			bodyElement.setTextContent(label);
 			parent.appendChild(bodyElement);
 			
-			// HINT
+			// Hint
 			//<span lang="language" class="or-hint active" data-itext-id="/main/q1:hint">Try to answer this</span>
 			String hint = q.labels.get(idx).hint;
 			if(hint != null && hint.trim().length() > 0) {
@@ -615,6 +615,43 @@ public class GetHtml {
 					log.log(Level.SEVERE, e.getMessage(), e);
 				}
 				bodyElement.setTextContent(hint);
+				parent.appendChild(bodyElement);
+			}
+			
+			// Image
+			//<img lang="language" class="active" src="/surveyKPI/file/landslide.jpg/organisation" alt="image">
+			String image = q.labels.get(idx).image;
+			if(image != null && image.trim().length() > 0) {
+				bodyElement = outputDoc.createElement("img");
+				bodyElement.setAttribute("lang", lang.name);
+				bodyElement.setAttribute("class", (lang.name.equals(survey.def_lang) ? " active" : ""));
+				bodyElement.setAttribute("src", "jr://images/" + image);
+				bodyElement.setAttribute("alt", "image");
+			
+				parent.appendChild(bodyElement);
+			}
+			
+			// Audio
+			String audio = q.labels.get(idx).audio;
+			if(audio != null && image.trim().length() > 0) {
+				bodyElement = outputDoc.createElement("audio");
+				bodyElement.setAttribute("lang", lang.name);
+				bodyElement.setAttribute("class", (lang.name.equals(survey.def_lang) ? " active" : ""));
+				bodyElement.setAttribute("src", "jr://audio/" + audio);
+				bodyElement.setAttribute("alt", "audio");
+			
+				parent.appendChild(bodyElement);
+			}
+			
+			// Video
+			String video = q.labels.get(idx).video;
+			if(audio != null && image.trim().length() > 0) {
+				bodyElement = outputDoc.createElement("video");
+				bodyElement.setAttribute("lang", lang.name);
+				bodyElement.setAttribute("class", (lang.name.equals(survey.def_lang) ? " active" : ""));
+				bodyElement.setAttribute("src", "jr://video/" + video);
+				bodyElement.setAttribute("alt", "video");
+			
 				parent.appendChild(bodyElement);
 			}
 			
