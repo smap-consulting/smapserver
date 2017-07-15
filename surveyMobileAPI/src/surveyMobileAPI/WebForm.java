@@ -571,8 +571,6 @@ public class WebForm extends Application {
 		
 		model = model.replace("\n", "");
 		model = model.replace("\r", "");
-
-		System.out.println("Model: " + model);
 		
 		return model;
 
@@ -1061,98 +1059,5 @@ public class WebForm extends Application {
 		return output.toString();
 	}
 
-	/*
-	 * Remove escaping on hex values (emoji)
-	 */
-	private String unescapeEmoji(String input) {
-		StringBuffer output = new StringBuffer("");
-		String replaced;
 
-		Pattern pattern = Pattern.compile("&#[0-9]*;");
-		java.util.regex.Matcher matcher = pattern.matcher(input);
-		int start = 0;
-		while (matcher.find()) {
-
-			String matched = matcher.group();
-			replaced = matched.replaceAll("&#", "");
-			replaced = replaced.replaceAll(";", " ");
-
-			// Add any text before the match
-			int startOfGroup = matcher.start();
-			String initial = input.substring(start, startOfGroup).trim();
-
-			output.append(initial);
-			output.append(replaced);
-
-			// Reset the start
-			start = matcher.end();
-
-		}
-
-		// Get the remainder of the string
-		if (start < input.length()) {
-			replaced = input.substring(start).trim();
-			output.append(replaced);
-		}
-
-		return output.toString();
-	}
-
-	/*
-	 * Fix: 1. Add or-repeat-info div's after repeat sections
-	 */
-	private String fixXsltIssues(String input) {
-
-		System.out.println("++++++ Fix ups");
-		if (input == null) {
-			return null;
-		} else if (input.trim().length() == 0) {
-			return null;
-		}
-
-		StringBuffer output = new StringBuffer("");
-		String item;
-
-		Pattern pattern = Pattern.compile("or-repeat[^-][\\S\\s]*?<\\/section>");
-		java.util.regex.Matcher matcher = pattern.matcher(input);
-		int start = 0;
-		while (matcher.find()) {
-
-			String matched = matcher.group();
-
-			// Add any text before the match
-			int startOfGroup = matcher.start();
-			item = input.substring(start, startOfGroup).trim();
-			output.append(item);
-
-			// Add the match
-			output.append(matched);
-
-			// Get the reference
-			int idx = matched.indexOf("name=");
-			int idx2 = matched.indexOf("\"", idx + 1);
-			int idx3 = matched.indexOf("\"", idx2 + 1);
-			String ref = matched.substring(idx2 + 1, idx3);
-
-			// Add or-repeat-info section
-			output.append("<div class=\"or-repeat-info\" data-name=\"");
-			output.append(ref);
-			output.append("\"></div></section>");
-
-			// Reset the start
-			start = matcher.end();
-
-		}
-
-		// Get the remainder of the string
-		if (start < input.length()) {
-			item = input.substring(start).trim();
-			output.append(item);
-		}
-
-		System.out.println("================================================");
-		System.out.println(output.toString());
-		System.out.println("================================================");
-		return output.toString();
-	}
 }
