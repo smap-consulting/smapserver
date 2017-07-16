@@ -448,6 +448,9 @@ button {
     color: #333333;
     opacity: 0.5; }
 
+.btn-default.dropdown-toggle {
+  padding: 7px 15px; }
+
 /** hide stuff **/
 .or [lang]:not(.active), .or-option-translations, .or-appearance-page-break, .or-constraint-msg, .or-required-msg,
 .option-wrapper .itemset-template, .itemset-labels, .or-hint.or-form-print, .or-hint.or-form-print.active {

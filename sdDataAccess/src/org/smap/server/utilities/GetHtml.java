@@ -273,16 +273,25 @@ public class GetHtml {
 				} else if (q.isSelect()) {
 
 					/*
-					 * Fieldset
+					 * Create fieldSet or Label depending on the attributes
 					 */
-					bodyElement = outputDoc.createElement("fieldset");
-					setQuestionClass(q, bodyElement);
-
-					Element extraFieldsetElement = outputDoc.createElement("fieldset");
-					bodyElement.appendChild(extraFieldsetElement);
-
-					addSelectContents(extraFieldsetElement, q, form);
-					currentParent.appendChild(bodyElement);
+					if(minSelect(q.appearance)) {
+						bodyElement = outputDoc.createElement("label");
+						setQuestionClass(q, bodyElement);
+						
+						addMinimalSelectContents(bodyElement, q, form);
+						currentParent.appendChild(bodyElement);
+						
+					} else {
+						bodyElement = outputDoc.createElement("fieldset");
+						setQuestionClass(q, bodyElement);
+	
+						Element extraFieldsetElement = outputDoc.createElement("fieldset");
+						bodyElement.appendChild(extraFieldsetElement);
+	
+						addSelectContents(extraFieldsetElement, q, form);
+						currentParent.appendChild(bodyElement);
+					}
 
 				} else {
 
@@ -320,7 +329,7 @@ public class GetHtml {
 
 		if (!q.isSelect()) {
 			classVal.append(" non-select");
-		} else if (!q.appearance.contains("likert")) {
+		} else if (!q.appearance.contains("likert") && !minSelect(q.appearance)) {
 			classVal.append(" simple-select");
 		}
 
@@ -413,6 +422,58 @@ public class GetHtml {
 
 	/*
 	 * Add the contents of a select
+	 *   - minimal
+	 *   - autocomplete
+	 *   - search
+	 */
+	private void addMinimalSelectContents(Element parent, Question q, Form form) throws Exception {
+
+		// Add select
+		Element selectElement = outputDoc.createElement("select");
+		parent.appendChild(selectElement);
+		selectElement.setAttribute("name", paths.get(getRefName(q.name, form)));
+		selectElement.setAttribute("data-name", paths.get(getRefName(q.name, form)));
+		selectElement.setAttribute("data-type-xml", q.type);
+		selectElement.setAttribute("style", "display:none;");
+		if(q.type.equals("select")) {
+			selectElement.setAttribute("multiple", "multiple");
+		}
+
+		// Add template option
+		Element templateElement = outputDoc.createElement("option");
+		selectElement.appendChild(templateElement);
+		templateElement.setAttribute("class", "itemset-template");
+		templateElement.setAttribute("data-items-path", getNodeset(q, form));
+		templateElement.setAttribute("data-type-xml", q.type);
+		templateElement.setAttribute("style", "display:none;");
+		templateElement.setAttribute("value", "");
+		templateElement.setTextContent("...");
+		if(q.type.equals("select")) {
+			templateElement.setAttribute("multiple", "multiple");
+		}
+		
+		// Option translations section
+		// <span class="or-option-translations" style="display:none;">
+		Element otElement = outputDoc.createElement("span");
+		parent.appendChild(otElement);
+		otElement.setAttribute("class",  "or-option-translations");
+		otElement.setAttribute("style", "display:none;");
+	
+		// Itemset labels
+		Element optionElement = outputDoc.createElement("span");
+		parent.appendChild(optionElement);
+		optionElement.setAttribute("class", "itemset-labels");
+		optionElement.setAttribute("data-value-ref", "name");
+		optionElement.setAttribute("data-label-type", "itext");
+		optionElement.setAttribute("data-label-ref", "itextId");
+
+		addOptionLabels(optionElement, q, form);
+
+	}
+	
+	/*
+	 * Add the contents of a minimal select
+	 * 
 	 */
 	private void addSelectContents(Element parent, Question q, Form form) throws Exception {
 
@@ -499,9 +560,8 @@ public class GetHtml {
 		// Itemset Template
 		Element bodyElement = outputDoc.createElement("label");
 		bodyElement.setAttribute("class", "itemset-template");
-		// Attempt to get the full nodeset incorporating any external filters
-		String nodeset = UtilityMethods.getNodeset(true, false, paths, true, q.nodeset, q.appearance, form.id);
-		bodyElement.setAttribute("data-items-path", nodeset);
+		
+		bodyElement.setAttribute("data-items-path", getNodeset(q, form));
 		parent.appendChild(bodyElement);
 		
 		Element inputElement = outputDoc.createElement("input");
@@ -871,5 +931,20 @@ public class GetHtml {
 
 		return output.toString();
 	}
+	
+	private boolean minSelect(String appearance) {
+		
+		if(appearance.contains("minimal") || appearance.contains("autocomplete") || appearance.contains("search") ) {
+			return true;
+		} else {
+			return false;
+		}
+	}
 
+	/*
+	 * Attempt to get the full nodeset incorporating any external filters
+	 */
+	private String getNodeset(Question q, Form form) throws Exception {
+		return UtilityMethods.getNodeset(true, false, paths, true, q.nodeset, q.appearance, form.id);
+	}
 }
