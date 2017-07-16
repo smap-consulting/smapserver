@@ -357,10 +357,11 @@ public class NotificationManager {
 			
 			log.info("notifyForSubmission:: " + ue_id);
 			
-			String sqlGetNotifications = "select n.target, n.notify_details " +
-					" from forward n " +
-					" where n.s_id = ? " + 
-					" and n.target != 'forward'";
+			String sqlGetNotifications = "select n.target, n.notify_details "
+					+ "from forward n "
+					+ "where n.s_id = ? " 
+					+ "and n.target != 'forward' "
+					+ "and n.enabled = 'true'";
 			pstmtGetNotifications = sd.prepareStatement(sqlGetNotifications);
 			
 			String sqlUpdateUploadEvent = "update upload_event set notifications_applied = 'true' where ue_id = ?; ";
@@ -598,7 +599,7 @@ public class NotificationManager {
 						log.log(Level.SEVERE, "Error: Attempt to do email notification but email server not set");
 					}
 					
-				} else if(target.equals("sms")) {   // SMS URL notiifcation - SMS message is posted to an arbitrary URL 
+				} else if(target.equals("sms")) {   // SMS URL notification - SMS message is posted to an arbitrary URL 
 					
 					// Get the URL to use in sending the SMS
 					String sql = "select s.sms_url "

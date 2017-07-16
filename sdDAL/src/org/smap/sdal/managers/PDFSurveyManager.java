@@ -196,6 +196,8 @@ public class PDFSurveyManager {
 			
 			Symbols = FontFactory.getFont("Symbols", BaseFont.IDENTITY_H, 
 				    BaseFont.EMBEDDED, 12); 
+			defaultFontLink = FontFactory.getFont("Symbols", BaseFont.IDENTITY_H, 
+				    BaseFont.EMBEDDED, 12); 
 			defaultFont = FontFactory.getFont("notosans", BaseFont.IDENTITY_H, 
 				    BaseFont.EMBEDDED, 10); 
 			defaultFontBold = FontFactory.getFont("notosansbold", BaseFont.IDENTITY_H, 
@@ -207,7 +209,8 @@ public class PDFSurveyManager {
 			bengaliFontBold = FontFactory.getFont("bengalibold", BaseFont.IDENTITY_H, 
 				    BaseFont.EMBEDDED, 10); 
 			
-			defaultFontLink = new Font(FontFamily.HELVETICA, 10, Font.UNDERLINE, BaseColor.BLUE);
+			defaultFontLink.setColor(BaseColor.BLUE);
+
 			/*
 			 * Get the results and details of the user that submitted the survey
 			 */
@@ -268,7 +271,7 @@ public class PDFSurveyManager {
 				int languageIdx = GeneralUtilityMethods.getLanguageIdx(survey, language);
 				for(int i = 0; i < survey.instance.results.size(); i++) {
 					fillTemplate(sd, gv, stamper.getAcroFields(), survey.instance.results.get(i), 
-							basePath, null, i, survey, languageIdx, serverRoot);
+							basePath, null, i, survey, languageIdx, serverRoot, stamper);
 				}
 				if(user != null) {
 					fillTemplateUserDetails(stamper.getAcroFields(), user, basePath);
@@ -437,7 +440,8 @@ public class PDFSurveyManager {
 			int repeatIndex,
 			org.smap.sdal.model.Survey survey,
 			int languageIdx,
-			String serverRoot) throws IOException, DocumentException {
+			String serverRoot,
+			PdfStamper stamper) throws IOException, DocumentException {
 		try {
 			
 			for(Result r : record) {
@@ -462,7 +466,7 @@ public class PDFSurveyManager {
 				 */
 				if(r.type.equals("form")) {
 					for(int k = 0; k < r.subForm.size(); k++) {
-						fillTemplate(sd, gv, pdfForm, r.subForm.get(k), basePath, fieldName, k, survey, languageIdx, serverRoot);
+						fillTemplate(sd, gv, pdfForm, r.subForm.get(k), basePath, fieldName, k, survey, languageIdx, serverRoot, stamper);
 					} 
 				} else if(r.type.equals("select1")) {
 					for(Result c : r.choices) {
@@ -512,9 +516,9 @@ public class PDFSurveyManager {
 				} else if(r.type.equals("geopoint") || r.type.equals("geoshape") || r.type.equals("geotrace") || r.type.startsWith("geopolygon_") || r.type.startsWith("geolinestring_")) {
 					
 					Image img = PdfUtilities.getMapImage(sd, di.map, r.value, di.location, di.zoom, gv.mapbox_key);
-					PdfUtilities.addImageTemplate(pdfForm, fieldName, img);
+					PdfUtilities.addMapImageTemplate(pdfForm, fieldName, img);
 				} else if(r.type.equals("image") || r.type.equals("video") || r.type.equals("audio")) {
-					PdfUtilities.addImageTemplate(pdfForm, fieldName, basePath, value, serverRoot);
+					PdfUtilities.addImageTemplate(pdfForm, fieldName, basePath, value, serverRoot, stamper, defaultFontLink);
 				} else {				
 					if(hideLabel) {
 						try {
@@ -528,7 +532,7 @@ public class PDFSurveyManager {
 					        Image qrcodeImage = qrcode.getImage();
 					        qrcodeImage.setAbsolutePosition(10,500);
 					        qrcodeImage.scalePercent(200);
-					        PdfUtilities.addImageTemplate(pdfForm, fieldName, qrcodeImage);
+					        PdfUtilities.addMapImageTemplate(pdfForm, fieldName, qrcodeImage);
 						} else {
 							pdfForm.setField(fieldName, value);
 						}
@@ -543,7 +547,7 @@ public class PDFSurveyManager {
 			        Image qrcodeImage = qrcode.getImage();
 			        qrcodeImage.setAbsolutePosition(10,500);
 			        qrcodeImage.scalePercent(200);
-			        PdfUtilities.addImageTemplate(pdfForm, fieldNameQR, qrcodeImage);
+			        PdfUtilities.addMapImageTemplate(pdfForm, fieldNameQR, qrcodeImage);
 				}
 				
 			}

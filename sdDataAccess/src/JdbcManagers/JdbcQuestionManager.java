@@ -34,6 +34,7 @@ import org.smap.server.entities.Form;
 import org.smap.server.entities.Option;
 import org.smap.server.entities.Question;
 import org.smap.server.utilities.GetXForm;
+import org.smap.server.utilities.UtilityMethods;
 import org.w3c.dom.Element;
 
 public class JdbcQuestionManager {
@@ -160,7 +161,14 @@ public class JdbcQuestionManager {
 		String nodeset_label = null;
 		if(q.getType().startsWith("select")) {
 			
-			nodeset = q.getNodeset(false, true, null, false);
+			//nodeset = q.getNodeset(false, true, null, false);
+			nodeset = UtilityMethods.getNodeset(false, 
+					true, 
+					null, 
+					false,
+					q.getNodeset(),
+					q.getAppearance(false, null),
+					q.getFormId());
 			if(nodeset == null || nodeset.trim().length() == 0) {
 				// the remaining item list values TODO is there an issue with this??????
 				nodeset = GeneralUtilityMethods.getNodesetFromChoiceFilter(null, q.getListName());

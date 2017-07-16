@@ -569,7 +569,11 @@ define(['jquery','localise', 'common', 'globals',  'tablesorter', 'bootstrap'],
 
             for(i = 0; i < data.length; i++) {
 
-                h[++idx] = '<tr>';
+                h[++idx] = '<tr';
+                if(!data[i].enabled) {
+                    h[++idx] = ' class="disabled"';
+                }
+                h[++idx] = '>';
 
                 // survey
                 h[++idx] = '<td>';

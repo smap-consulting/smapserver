@@ -13,9 +13,15 @@ import org.smap.sdal.managers.PDFTableManager;
 
 import com.itextpdf.text.Anchor;
 import com.itextpdf.text.BadElementException;
+import com.itextpdf.text.BaseColor;
 import com.itextpdf.text.DocumentException;
+import com.itextpdf.text.Font;
+import com.itextpdf.text.FontFactory;
 import com.itextpdf.text.Image;
+import com.itextpdf.text.Rectangle;
 import com.itextpdf.text.pdf.AcroFields;
+import com.itextpdf.text.pdf.ColumnText;
+import com.itextpdf.text.pdf.PdfStamper;
 import com.itextpdf.text.pdf.PushbuttonField;
 
 public class PdfUtilities {
@@ -24,7 +30,7 @@ public class PdfUtilities {
 			 Logger.getLogger(PDFTableManager.class.getName());
 	
 	public static void addImageTemplate(AcroFields pdfForm, String fieldName, String basePath, 
-			String value, String serverRoot) throws IOException, DocumentException {
+			String value, String serverRoot, PdfStamper stamper, Font Symbols) throws IOException, DocumentException {
 		PushbuttonField ad = pdfForm.getNewPushbuttonFromField(fieldName);
 		if(ad != null) {
 			ad.setLayout(PushbuttonField.LAYOUT_ICON_ONLY);
@@ -38,13 +44,25 @@ public class PdfUtilities {
 			log.info("Adding image to: " + fieldName);
 		} else {
 			
+			String imageUrl = serverRoot + value;
+			System.out.println("Image URL: " + imageUrl);
+			Rectangle targetPosition = pdfForm.getFieldPositions(fieldName).get(0).position;
+		    Font fontNormal = FontFactory.getFont("Courier", 8, Font.UNDERLINE, BaseColor.BLUE);
+		    Anchor url = new Anchor("\uf08e", Symbols);
+		    url.setReference(imageUrl);
+		    ColumnText data = new ColumnText(stamper.getOverContent(1));
+		    data.setSimpleColumn(url, targetPosition.getLeft(), targetPosition.getBottom(), targetPosition.getRight(), targetPosition.getTop(), 0,0);
+		    data.go();
+		    
+		    /*
 			Anchor anchor = new Anchor(serverRoot + value);
 			anchor.setReference(serverRoot + value);
-			pdfForm.setField(fieldName, value);  // set as hyper link
+			pdfForm.setField(fieldName, anchor.toString());  // set as hyper link
+			*/
 		}
 	}
 	
-	public static void addImageTemplate(AcroFields pdfForm, String fieldName, Image img) throws IOException, DocumentException {
+	public static void addMapImageTemplate(AcroFields pdfForm, String fieldName, Image img) throws IOException, DocumentException {
 		
 		PushbuttonField ad = pdfForm.getNewPushbuttonFromField(fieldName);
 		if(ad != null) {

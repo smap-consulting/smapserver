@@ -5,6 +5,8 @@ import java.util.Collection;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.smap.sdal.Utilities.GeneralUtilityMethods;
+
 import com.itextpdf.text.BaseColor;
 
 /*
@@ -55,6 +57,7 @@ public class Question {
 	public int linked_survey;
 	public String linked_target;			//sId::qId of the target to link to
 	public ArrayList<Label> labels = new ArrayList<Label> ();
+	public String nodeset;
 	
 	private static Logger log =
 			 Logger.getLogger(Question.class.getName());
@@ -153,6 +156,20 @@ public class Question {
 		
 		
 		return newPage;
+	}
+	
+	/*
+	 * Return true if this is a preload question
+	 */
+	public boolean isPreload() {
+		return GeneralUtilityMethods.isPropertyType(source_param, columnName);
+	}
+	
+	/*
+	 * Return true if this is a select question
+	 */
+	public boolean isSelect() {
+		return type.startsWith("select");
 	}
 	
 }
