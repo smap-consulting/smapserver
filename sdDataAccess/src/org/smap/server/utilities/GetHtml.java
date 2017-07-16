@@ -262,8 +262,8 @@ public class GetHtml {
 					repeatInfo.setAttribute("class", "or-repeat-info");
 					repeatInfo.setAttribute("data-name", paths.get(getRefName(q.name, form)));
 					if (q.calculation != null && q.calculation.trim().length() > 0) {
-						repeatInfo.setAttribute("data-repeat-count",
-								UtilityMethods.convertAllxlsNames(q.calculation, false, paths, form.id, true));
+						repeatInfo.setAttribute("data-repeat-count", paths.get(getRefName(q.name, form)) + "_count");
+						
 					}
 					currentParent.appendChild(repeatInfo);
 
@@ -317,7 +317,7 @@ public class GetHtml {
 
 		if (q.type.equals("note") || (q.type.equals("text") && q.readonly)) {
 			classVal.append("note");
-		} else if (q.type.equals("begin group")) {
+		} else if (q.type.equals("begin group") || q.type.equals("begin repeat")) {
 			if (hasLabel(q)) {
 				classVal.append("or-group");
 			} else {
@@ -325,13 +325,14 @@ public class GetHtml {
 			}
 		} else {
 			classVal.append("question");
+			if (!q.isSelect()) {
+				classVal.append(" non-select");
+			} else if (!q.appearance.contains("likert") && !minSelect(q.appearance)) {
+				classVal.append(" simple-select");
+			}
 		}
 
-		if (!q.isSelect()) {
-			classVal.append(" non-select");
-		} else if (!q.appearance.contains("likert") && !minSelect(q.appearance)) {
-			classVal.append(" simple-select");
-		}
+
 
 		// Mark the question as a branch if it has a relevance
 		if (q.relevant != null && q.relevant.trim().length() > 0) {
@@ -622,13 +623,13 @@ public class GetHtml {
 	 */
 	private Element addGroupWrapper(Element parent, Question q, boolean repeat, Form form) {
 		Element groupElement = outputDoc.createElement("section");
+		parent.appendChild(groupElement);
 		setQuestionClass(q, groupElement);
 
 		if (!repeat) {
 			groupElement.setAttribute("name", paths.get(getRefName(q.name, form)));
 		}
 		addGroupTitle(groupElement, q, form);
-		parent.appendChild(groupElement);
 		return groupElement;
 	}
 

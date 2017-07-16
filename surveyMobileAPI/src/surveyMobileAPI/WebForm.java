@@ -641,7 +641,7 @@ public class WebForm extends Application {
 				}
 			}
 		}
-		//System.out.println(html);
+		System.out.println(html);
 		output.append(html);
 
 		if (!minimal) {
@@ -649,36 +649,6 @@ public class WebForm extends Application {
 		}
 
 		return output;
-	}
-
-	/*
-	 * Transform the XML defintion into HTML using enketo style sheets
-	 */
-	private String transform(HttpServletRequest request, String formXML, String xslt)
-			throws UnsupportedEncodingException, TransformerFactoryConfigurationError, TransformerException {
-
-		InputStream xmlStream = new ByteArrayInputStream(formXML.getBytes("UTF-8"));
-		StreamSource source = new StreamSource(xmlStream);
-
-		StringWriter writer = new StringWriter();
-		StreamResult output = new StreamResult(writer);
-
-		StreamSource styleSource = new StreamSource(request.getServletContext().getResourceAsStream(xslt));
-
-		TransformerFactory tf = TransformerFactory.newInstance("org.apache.xalan.processor.TransformerFactoryImpl",
-				null);
-		// tf.setAttribute(TransformerFactoryImpl.FEATURE_SOURCE_LOCATION,
-		// Boolean.TRUE);
-		tf.setAttribute(TransformerFactoryImpl.FEATURE_OPTIMIZE, Boolean.FALSE);
-
-		Transformer transformer = tf.newTransformer(styleSource);
-		// transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-		transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
-		transformer.setOutputProperty(OutputKeys.METHOD, "xml");
-
-		transformer.transform(source, output);
-
-		return writer.toString();
 	}
 
 	/*
