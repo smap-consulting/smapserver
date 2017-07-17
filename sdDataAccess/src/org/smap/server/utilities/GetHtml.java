@@ -541,7 +541,7 @@ public class GetHtml {
 	/*
 	 * Add the contents of a label
 	 */
-	private void addLabelContents(Element parent, Question q, Form form) {
+	private void addLabelContents(Element parent, Question q, Form form) throws Exception {
 
 		// span
 		addLabels(parent, q, form);
@@ -581,22 +581,14 @@ public class GetHtml {
 
 		// constraint
 		if (q.constraint != null && q.constraint.trim().length() > 0) {
-			try {
-				bodyElement.setAttribute("data-constraint",
+			bodyElement.setAttribute("data-constraint",
 						UtilityMethods.convertAllxlsNames(q.constraint, false, paths, form.id, true));
-			} catch (Exception e) {
-				log.log(Level.SEVERE, e.getMessage(), e);
-			}
 		}
 
 		// relevant
 		if (q.relevant != null && q.relevant.trim().length() > 0) {
-			try {
-				bodyElement.setAttribute("data-relevant",
-						UtilityMethods.convertAllxlsNames(q.relevant, false, paths, form.id, true));
-			} catch (Exception e) {
-				log.log(Level.SEVERE, e.getMessage(), e);
-			}
+			bodyElement.setAttribute("data-relevant",
+						UtilityMethods.convertAllxlsNames(q.relevant, false, paths, form.id, true));	
 		}
 
 		parent.appendChild(bodyElement);
@@ -618,6 +610,10 @@ public class GetHtml {
 			inputElement.setAttribute("data-name", paths.get(getRefName(q.name, form)));
 			inputElement.setAttribute("data-type-xml", getXmlType(q));
 			inputElement.setAttribute("value", "");
+			if (q.relevant != null && q.relevant.trim().length() > 0) {
+				inputElement.setAttribute("data-relevant",
+							UtilityMethods.convertAllxlsNames(q.relevant, false, paths, form.id, true));	
+			}
 
 			// Itemset labels
 			Element optionElement = outputDoc.createElement("span");
