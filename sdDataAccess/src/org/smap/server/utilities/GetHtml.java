@@ -46,7 +46,7 @@ public class GetHtml {
 	int languageIndex = 0;
 	HashMap<String, String> paths = new HashMap<>(); // Keep paths out of the survey model and instead store them here
 	Document outputDoc = null;
-	
+
 	private static Logger log = Logger.getLogger(GetHtml.class.getName());
 
 	/*
@@ -63,7 +63,7 @@ public class GetHtml {
 
 		try {
 
-			survey = sm.getById(sd, null, request.getRemoteUser(), sId, true, basePath, null, false, false, true, true,
+			survey = sm.getById(sd, null, request.getRemoteUser(), sId, true, basePath, null, false, false, true, false,
 					false, "real", superUser, 0, null);
 
 			log.info("Getting survey as Html-------------------------------");
@@ -123,8 +123,7 @@ public class GetHtml {
 		return rootElement;
 	}
 
-	public void createForm(Element parent, boolean isWebForms, boolean useNodesets)
-			throws Exception {
+	public void createForm(Element parent, boolean isWebForms, boolean useNodesets) throws Exception {
 
 		Element bodyElement = outputDoc.createElement("form");
 		bodyElement.setAttribute("novalidate", "novalidate");
@@ -263,7 +262,7 @@ public class GetHtml {
 					repeatInfo.setAttribute("data-name", paths.get(getRefName(q.name, form)));
 					if (q.calculation != null && q.calculation.trim().length() > 0) {
 						repeatInfo.setAttribute("data-repeat-count", paths.get(getRefName(q.name, form)) + "_count");
-						
+
 					}
 					currentParent.appendChild(repeatInfo);
 
@@ -275,20 +274,24 @@ public class GetHtml {
 					/*
 					 * Create fieldSet or Label depending on the attributes
 					 */
-					if(minSelect(q.appearance)) {
+					if (minSelect(q.appearance)) {
 						bodyElement = outputDoc.createElement("label");
 						setQuestionClass(q, bodyElement);
-						
-						addMinimalSelectContents(bodyElement, q, form);
+
+						if (hasNodeset(q, form)) {
+							addMinimalSelectContentsItemset(bodyElement, q, form);
+						} else {
+							addMinimalSelectContents(bodyElement, q, form);
+						}
 						currentParent.appendChild(bodyElement);
-						
+
 					} else {
 						bodyElement = outputDoc.createElement("fieldset");
 						setQuestionClass(q, bodyElement);
-	
+
 						Element extraFieldsetElement = outputDoc.createElement("fieldset");
 						bodyElement.appendChild(extraFieldsetElement);
-	
+
 						addSelectContents(extraFieldsetElement, q, form);
 						currentParent.appendChild(bodyElement);
 					}
@@ -331,8 +334,6 @@ public class GetHtml {
 				classVal.append(" simple-select");
 			}
 		}
-
-
 
 		// Mark the question as a branch if it has a relevance
 		if (q.relevant != null && q.relevant.trim().length() > 0) {
@@ -394,7 +395,14 @@ public class GetHtml {
 
 		for (Question q : form.questions) {
 
-			if (q.calculation != null && q.calculation.trim().length() > 0) {
+			String calculation = null;
+			if (q.name.equals("instanceName")) {
+				calculation = survey.instanceNameDefn;
+			} else {
+				calculation = q.calculation;
+			}
+
+			if (calculation != null && calculation.trim().length() > 0) {
 
 				calculationLabel = outputDoc.createElement("label");
 				calculationLabel.setAttribute("class", "calculation non-select");
@@ -409,10 +417,10 @@ public class GetHtml {
 					calculationInput.setAttribute("name", paths.get(getRefName(q.name, form)));
 				}
 
-				calculationInput.setAttribute("data-calculate", " " +
-						UtilityMethods.convertAllxlsNames(q.calculation, false, paths, form.id, true) + " ");
+				calculationInput.setAttribute("data-calculate",
+						" " + UtilityMethods.convertAllxlsNames(calculation, false, paths, form.id, true) + " ");
 
-				calculationInput.setAttribute("data-type-xml", "string"); // Always string for calculate
+				calculationInput.setAttribute("data-type-xml", "string"); // Always use string for calculate
 				calculationLabel.appendChild(calculationInput);
 			}
 
@@ -422,44 +430,83 @@ public class GetHtml {
 	}
 
 	/*
-	 * Add the contents of a select
-	 *   - minimal
-	 *   - autocomplete
-	 *   - search
+	 * Add the contents of a select that does not have nodesets - minimal -
+	 * autocomplete - search
 	 */
 	private void addMinimalSelectContents(Element parent, Question q, Form form) throws Exception {
+
+		// Add labels
+		addLabels(parent, q, form);
+
+		Element textElement = null;
+		// Add input / select
+		if (q.type.equals("select")) {
+			textElement = outputDoc.createElement("select");
+			textElement.setAttribute("multiple", "multiple");
+		} else {
+			textElement = outputDoc.createElement("input");
+			textElement.setAttribute("type", "text");
+			textElement.setAttribute("data-name", paths.get(getRefName(q.name, form)));
+			textElement.setAttribute("list", "list" + q.l_id);
+		}
+		parent.appendChild(textElement);
+		textElement.setAttribute("name", paths.get(getRefName(q.name, form)));
+		textElement.setAttribute("data-type-xml", q.type);
+
+		// Add data list
+		if (q.type.equals("select1")) {
+			Element dlElement = outputDoc.createElement("datalist");
+			textElement.appendChild(dlElement);
+			dlElement.setAttribute("id", "list" + q.l_id);
+			addDataList(dlElement, q, form);
+		} else {
+			addDataList(textElement, q, form);
+		}
+
+		// Option translations section
+		Element otElement = outputDoc.createElement("span");
+		parent.appendChild(otElement);
+		otElement.setAttribute("class", "or-option-translations");
+		otElement.setAttribute("style", "display:none;");
+		addOptionTranslations(otElement, q, form);
+
+	}
+
+	/*
+	 * Add the contents of a select that has nodesets - minimal - autocomplete -
+	 * search
+	 */
+	private void addMinimalSelectContentsItemset(Element parent, Question q, Form form) throws Exception {
+
+		// Add labels
+		addLabels(parent, q, form);
 
 		// Add select
 		Element selectElement = outputDoc.createElement("select");
 		parent.appendChild(selectElement);
 		selectElement.setAttribute("name", paths.get(getRefName(q.name, form)));
 		selectElement.setAttribute("data-name", paths.get(getRefName(q.name, form)));
-		selectElement.setAttribute("data-type-xml", q.type);
-		selectElement.setAttribute("style", "display:none;");
-		if(q.type.equals("select")) {
+		if (q.type.equals("select")) {
 			selectElement.setAttribute("multiple", "multiple");
 		}
+		selectElement.setAttribute("data-type-xml", q.type);
+		selectElement.setAttribute("style", "display:none;");
 
 		// Add template option
 		Element templateElement = outputDoc.createElement("option");
 		selectElement.appendChild(templateElement);
 		templateElement.setAttribute("class", "itemset-template");
 		templateElement.setAttribute("data-items-path", getNodeset(q, form));
-		templateElement.setAttribute("data-type-xml", q.type);
-		templateElement.setAttribute("style", "display:none;");
 		templateElement.setAttribute("value", "");
 		templateElement.setTextContent("...");
-		if(q.type.equals("select")) {
-			templateElement.setAttribute("multiple", "multiple");
-		}
-		
+
 		// Option translations section
 		// <span class="or-option-translations" style="display:none;">
 		Element otElement = outputDoc.createElement("span");
 		parent.appendChild(otElement);
-		otElement.setAttribute("class",  "or-option-translations");
+		otElement.setAttribute("class", "or-option-translations");
 		otElement.setAttribute("style", "display:none;");
-	
+
 		// Itemset labels
 		Element optionElement = outputDoc.createElement("span");
 		parent.appendChild(optionElement);
@@ -471,25 +518,24 @@ public class GetHtml {
 		addOptionLabels(optionElement, q, form);
 
 	}
-	
+
 	/*
-	 * Add the contents of a minimal select
+	 * Add the contents of a normal select that has a nodeset
 	 * 
 	 */
 	private void addSelectContents(Element parent, Question q, Form form) throws Exception {
 
 		// legend
 		Element bodyElement = outputDoc.createElement("legend");
-		addLabels(bodyElement, q, form);
 		parent.appendChild(bodyElement);
+		addLabels(bodyElement, q, form);
 
 		Element optionWrapperElement = outputDoc.createElement("div");
+		parent.appendChild(optionWrapperElement);
 		optionWrapperElement.setAttribute("class", "option-wrapper");
 
 		// options
 		addOptions(optionWrapperElement, q, form);
-		parent.appendChild(optionWrapperElement);
-
 	}
 
 	/*
@@ -559,41 +605,65 @@ public class GetHtml {
 	private void addOptions(Element parent, Question q, Form form) throws Exception {
 
 		// Itemset Template
-		Element bodyElement = outputDoc.createElement("label");
-		bodyElement.setAttribute("class", "itemset-template");
-		
-		bodyElement.setAttribute("data-items-path", getNodeset(q, form));
-		parent.appendChild(bodyElement);
-		
-		Element inputElement = outputDoc.createElement("input");
-		inputElement.setAttribute("type", getInputType(q));
-		inputElement.setAttribute("name", paths.get(getRefName(q.name, form)));
-		inputElement.setAttribute("data-name", paths.get(getRefName(q.name, form)));
-		inputElement.setAttribute("data-type-xml", getXmlType(q));
-		inputElement.setAttribute("value", "");
-		bodyElement.appendChild(inputElement);
+		if (hasNodeset(q, form)) {
+			Element labelElement = outputDoc.createElement("label");
+			parent.appendChild(labelElement);
+			labelElement.setAttribute("class", "itemset-template");
+			labelElement.setAttribute("data-items-path", getNodeset(q, form));
 
-		// Itemset labels
-		Element optionElement = outputDoc.createElement("span");
-		optionElement.setAttribute("class", "itemset-labels");
-		optionElement.setAttribute("data-value-ref", "name");
-		optionElement.setAttribute("data-label-type", "itext");
-		optionElement.setAttribute("data-label-ref", "itextId");
+			Element inputElement = outputDoc.createElement("input");
+			labelElement.appendChild(inputElement);
+			inputElement.setAttribute("type", getInputType(q));
+			inputElement.setAttribute("name", paths.get(getRefName(q.name, form)));
+			inputElement.setAttribute("data-name", paths.get(getRefName(q.name, form)));
+			inputElement.setAttribute("data-type-xml", getXmlType(q));
+			inputElement.setAttribute("value", "");
 
-		addOptionLabels(optionElement, q, form);
+			// Itemset labels
+			Element optionElement = outputDoc.createElement("span");
+			parent.appendChild(optionElement);
+			optionElement.setAttribute("class", "itemset-labels");
+			optionElement.setAttribute("data-value-ref", "name");
+			optionElement.setAttribute("data-label-type", "itext");
+			optionElement.setAttribute("data-label-ref", "itextId");
 
-		parent.appendChild(optionElement);
+			addOptionLabels(optionElement, q, form);
+
+		} else {
+			addOptionLabels(parent, q, form);
+		}
 
 	}
 
-	private void addOptionLabels(Element parent, Question q, Form form) {
+	private void addOptionLabels(Element parent, Question q, Form form) throws Exception {
+
+		boolean hasNodeset = hasNodeset(q, form);
+		Element labelElement = null;
 
 		ArrayList<Option> options = survey.optionLists.get(q.list_name).options;
 		for (Option o : options) {
+			if (!hasNodeset) {
+				labelElement = outputDoc.createElement("label");
+				parent.appendChild(labelElement);
+				labelElement.setAttribute("class", "");
+
+				Element inputElement = outputDoc.createElement("input");
+				labelElement.appendChild(inputElement);
+				inputElement.setAttribute("type", getInputType(q));
+				inputElement.setAttribute("name", paths.get(getRefName(q.name, form)));
+				inputElement.setAttribute("value", o.value);
+				inputElement.setAttribute("data-type-xml", q.type);
+
+			}
 			int idx = 0;
 			Element bodyElement = null;
 			for (Language lang : survey.languages) {
 				bodyElement = outputDoc.createElement("span");
+				if (hasNodeset) {
+					parent.appendChild(bodyElement);
+				} else {
+					labelElement.appendChild(bodyElement);
+				}
 				bodyElement.setAttribute("lang", lang.name);
 				bodyElement.setAttribute("class",
 						"option-label" + (lang.name.equals(survey.def_lang) ? " active" : ""));
@@ -606,14 +676,12 @@ public class GetHtml {
 					log.log(Level.SEVERE, e.getMessage(), e);
 				}
 				bodyElement.setTextContent(label);
-				parent.appendChild(bodyElement);
-				
+
 				addMedia(parent, o.labels.get(idx), lang, o.text_id);
-				
+
 				idx++;
 			}
 
-			parent.appendChild(bodyElement);
 		}
 
 	}
@@ -621,10 +689,15 @@ public class GetHtml {
 	/*
 	 * Add a wrapper for a group then return the new parent
 	 */
-	private Element addGroupWrapper(Element parent, Question q, boolean repeat, Form form) {
+	private Element addGroupWrapper(Element parent, Question q, boolean repeat, Form form) throws Exception {
 		Element groupElement = outputDoc.createElement("section");
 		parent.appendChild(groupElement);
 		setQuestionClass(q, groupElement);
+
+		if (q.relevant != null && q.relevant.trim().length() > 0) {
+			groupElement.setAttribute("data-relevant",
+					UtilityMethods.convertAllxlsNames(q.relevant, false, paths, form.id, true));
+		}
 
 		if (!repeat) {
 			groupElement.setAttribute("name", paths.get(getRefName(q.name, form)));
@@ -706,7 +779,6 @@ public class GetHtml {
 
 			addMedia(parent, q.labels.get(idx), lang, q.text_id);
 
-
 			idx++;
 		}
 
@@ -743,9 +815,9 @@ public class GetHtml {
 	 * Add media
 	 */
 	private void addMedia(Element parent, Label label, Language lang, String textId) {
-		
+
 		Element bodyElement = null;
-		
+
 		// Image
 		String image = label.image;
 		if (image != null && image.trim().length() > 0) {
@@ -785,6 +857,7 @@ public class GetHtml {
 			parent.appendChild(bodyElement);
 		}
 	}
+
 	/*
 	 * Return the input type required by enketo
 	 */
@@ -869,31 +942,36 @@ public class GetHtml {
 
 	private String convertMarkdown(String in) {
 
-		// Test for links
-		StringBuffer out = new StringBuffer();
-		String pattern = "\\[([^]]*)\\]\\(([^\\s^\\)]*)[\\s\\)]"; // from https://stackoverflow.com/a/40178293/1867651
-		Pattern r = Pattern.compile(pattern);
-		Matcher m = r.matcher(in);
+		if (in != null) {
+			// Test for links
+			StringBuffer out = new StringBuffer();
+			String pattern = "\\[([^]]*)\\]\\(([^\\s^\\)]*)[\\s\\)]"; // from
+																		// https://stackoverflow.com/a/40178293/1867651
+			Pattern r = Pattern.compile(pattern);
+			Matcher m = r.matcher(in);
 
-		int start = 0;
-		while (m.find()) {
-			if (m.start() > start) {
-				out.append(in.substring(start, m.start()));
+			int start = 0;
+			while (m.find()) {
+				if (m.start() > start) {
+					out.append(in.substring(start, m.start()));
+				}
+				out.append("<a href =\"");
+				out.append(m.group(2));
+				out.append("\" target=\"_blank\">");
+				out.append(m.group(1));
+				out.append("</a>");
+
+				start = m.end() + 1;
 			}
-			out.append("<a href =\"");
-			out.append(m.group(2));
-			out.append("\" target=\"_blank\">");
-			out.append(m.group(1));
-			out.append("</a>");
 
-			start = m.end() + 1;
+			if (start < in.length()) {
+				out.append(in.substring(start));
+			}
+			return out.toString();
+		} else {
+			return in;
 		}
 
-		if (start < in.length()) {
-			out.append(in.substring(start));
-		}
-
-		return out.toString();
 	}
 
 	/*
@@ -932,10 +1010,10 @@ public class GetHtml {
 
 		return output.toString();
 	}
-	
+
 	private boolean minSelect(String appearance) {
-		
-		if(appearance.contains("minimal") || appearance.contains("autocomplete") || appearance.contains("search") ) {
+
+		if (appearance.contains("minimal") || appearance.contains("autocomplete") || appearance.contains("search")) {
 			return true;
 		} else {
 			return false;
@@ -947,5 +1025,59 @@ public class GetHtml {
 	 */
 	private String getNodeset(Question q, Form form) throws Exception {
 		return UtilityMethods.getNodeset(true, false, paths, true, q.nodeset, q.appearance, form.id);
+	}
+
+	/*
+	 * Return true if this question has a nodeset
+	 */
+	private boolean hasNodeset(Question q, Form form) throws Exception {
+
+		if (q.nodeset == null || q.nodeset.trim().length() == 0) {
+			return false;
+		} else {
+			return true;
+		}
+
+	}
+
+	private void addDataList(Element parent, Question q, Form form) throws Exception {
+
+		ArrayList<Option> options = survey.optionLists.get(q.list_name).options;
+
+		Element bodyElement = outputDoc.createElement("option"); // No selection value
+		parent.appendChild(bodyElement);
+		bodyElement.setAttribute("value", "");
+		bodyElement.setTextContent("...");
+		for (Option o : options) {
+
+			bodyElement = outputDoc.createElement("option");
+			parent.appendChild(bodyElement);
+			bodyElement.setAttribute("value", o.value);
+			String label = UtilityMethods.convertAllxlsNames(o.labels.get(languageIndex).text, true, paths, form.id,
+					true);
+			bodyElement.setTextContent(label);
+		}
+
+	}
+
+	private void addOptionTranslations(Element parent, Question q, Form form) throws Exception {
+
+		ArrayList<Option> options = survey.optionLists.get(q.list_name).options;
+		for (Option o : options) {
+			int idx = 0;
+			Element bodyElement = null;
+			for (Language lang : survey.languages) {
+				bodyElement = outputDoc.createElement("span");
+				parent.appendChild(bodyElement);
+				bodyElement.setAttribute("lang", lang.name);
+				bodyElement.setAttribute("data-option-value", o.value);
+				String label = UtilityMethods.convertAllxlsNames(o.labels.get(idx).text, true, paths, form.id, true);
+				bodyElement.setTextContent(label);
+
+				idx++;
+			}
+
+		}
+
 	}
 }
