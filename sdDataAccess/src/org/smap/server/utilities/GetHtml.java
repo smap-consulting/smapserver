@@ -447,7 +447,7 @@ public class GetHtml {
 			textElement = outputDoc.createElement("input");
 			textElement.setAttribute("type", "text");
 			textElement.setAttribute("data-name", paths.get(getRefName(q.name, form)));
-			textElement.setAttribute("list", "list" + q.l_id);
+			textElement.setAttribute("list", q.list_name);
 		}
 		parent.appendChild(textElement);
 		textElement.setAttribute("name", paths.get(getRefName(q.name, form)));
@@ -457,7 +457,7 @@ public class GetHtml {
 		if (q.type.equals("select1")) {
 			Element dlElement = outputDoc.createElement("datalist");
 			textElement.appendChild(dlElement);
-			dlElement.setAttribute("id", "list" + q.l_id);
+			dlElement.setAttribute("id", q.list_name);
 			addDataList(dlElement, q, form);
 		} else {
 			addDataList(textElement, q, form);

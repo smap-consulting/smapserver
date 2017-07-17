@@ -19,10 +19,7 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 
 package surveyMobileAPI;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -45,15 +42,8 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
-import javax.xml.transform.OutputKeys;
-import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.TransformerFactoryConfigurationError;
-import javax.xml.transform.stream.StreamResult;
-import javax.xml.transform.stream.StreamSource;
-
-import org.apache.xalan.processor.TransformerFactoryImpl;
 import org.smap.model.SurveyTemplate;
 import org.smap.sdal.Utilities.AuthorisationException;
 import org.smap.sdal.Utilities.Authorise;
@@ -627,7 +617,7 @@ public class WebForm extends Application {
 			if (type.equals("image")) {
 				type = "images";
 			}
-			System.out.println("Manifest: " + name);
+			
 			if (url != null) {
 				if (mimeType.equals("json")) {
 					ManifestValue mv = new ManifestValue(); // Create a new version of the manifest to send to a
@@ -641,7 +631,7 @@ public class WebForm extends Application {
 				}
 			}
 		}
-		System.out.println(html);
+		log.info("weform html: " + html);
 		output.append(html);
 
 		if (!minimal) {

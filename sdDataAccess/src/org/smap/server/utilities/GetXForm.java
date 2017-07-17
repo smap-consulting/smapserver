@@ -136,10 +136,7 @@ public class GetXForm {
 			transformer.transform(source, outStream);
 
 			response = outWriter.toString();
-
-			System.out.println("model");
-			System.out.println(response);
-
+			
 		} catch (Exception e) {
 			response = e.getMessage();
 			e.printStackTrace();
