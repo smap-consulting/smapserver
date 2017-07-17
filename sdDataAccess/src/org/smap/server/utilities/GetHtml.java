@@ -699,9 +699,8 @@ public class GetHtml {
 					UtilityMethods.convertAllxlsNames(q.relevant, false, paths, form.id, true));
 		}
 
-		if (!repeat) {
-			groupElement.setAttribute("name", paths.get(getRefName(q.name, form)));
-		}
+		groupElement.setAttribute("name", paths.get(getRefName(q.name, form)));
+
 		addGroupTitle(groupElement, q, form);
 		return groupElement;
 	}
