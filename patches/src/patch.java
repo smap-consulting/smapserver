@@ -89,13 +89,19 @@ public class patch {
 			//np.apply(testRun, connectionResults);
 
 			// Add _modified, _complete to all surveys
-			AddModifiedComplete mc = new AddModifiedComplete();
-			mc.apply(testRun, connectionSD, connectionResults);
+			//AddModifiedComplete mc = new AddModifiedComplete();
+			//mc.apply(testRun, connectionSD, connectionResults);
 			
 			// Populate column_name with clean names
 			//System.out.println("Patching column names");
 			//ColumnNames cn = new ColumnNames();
 			//cn.apply(testRun, connectionSD);
+			
+			// Add stress test data for mobile clinic
+			System.out.println("Adding stress test data for clinics");
+			ClinicTestData ctd = new ClinicTestData();
+			ctd.apply(connectionSD, connectionResults);
+			
 			
 			
 		} catch (Exception e) {

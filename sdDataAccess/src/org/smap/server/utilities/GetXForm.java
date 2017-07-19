@@ -81,7 +81,7 @@ public class GetXForm {
 	/*
 	 * Get the XForm as a string
 	 */
-	public String get(SurveyTemplate template, boolean isWebForms, boolean useNodesets, boolean modelInstanceOnly) {
+	public String get(SurveyTemplate template, boolean isWebForms, boolean useNodesets, boolean modelInstanceOnly) throws Exception {
 
 		// Set Globals
 		this.modelInstanceOnly = modelInstanceOnly;
@@ -137,9 +137,6 @@ public class GetXForm {
 
 			response = outWriter.toString();
 			
-		} catch (Exception e) {
-			response = e.getMessage();
-			e.printStackTrace();
 		} finally {
 			SDDataSource.closeConnection("getXForm", sd);
 		}
@@ -1229,7 +1226,7 @@ public class GetXForm {
 							elem.setTextContent(values[i]);
 							item.appendChild(elem);
 						} catch (Exception e) {
-							throw new Exception ("Error: Invalid name for a column header: " + cols[i]);
+							throw new Exception ("Error: Invalid name (" +  cols[i] + ") for a column header in CSV file " + file.getName());
 						}
 					}
 				}

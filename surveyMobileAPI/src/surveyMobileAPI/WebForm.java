@@ -403,7 +403,7 @@ public class WebForm extends Application {
 	 */
 	private StringBuffer addDocument(HttpServletRequest request, String instanceXML,
 			String dataToEditId, int assignmentId, String surveyClass, int orgId, String accessKey)
-			throws UnsupportedEncodingException, TransformerFactoryConfigurationError, TransformerException {
+			throws TransformerFactoryConfigurationError, Exception {
 
 		StringBuffer output = new StringBuffer();
 
@@ -429,7 +429,7 @@ public class WebForm extends Application {
 	 */
 	private StringBuffer addHead(HttpServletRequest request, String instanceXML, String dataToEditId,
 			int assignmentId, String surveyClass, String accessKey)
-			throws UnsupportedEncodingException, TransformerFactoryConfigurationError, TransformerException {
+			throws TransformerFactoryConfigurationError, Exception {
 
 		StringBuffer output = new StringBuffer();
 
@@ -489,7 +489,7 @@ public class WebForm extends Application {
 	 */
 	private StringBuffer addData(HttpServletRequest request, String instanceXML, String dataToEditId,
 			int assignmentId, String accessKey)
-			throws UnsupportedEncodingException, TransformerFactoryConfigurationError, TransformerException {
+			throws TransformerFactoryConfigurationError, Exception {
 
 		StringBuffer output = new StringBuffer();
 
@@ -548,7 +548,7 @@ public class WebForm extends Application {
 	 * Get the model string
 	 */
 	private String getModelStr(HttpServletRequest request)
-			throws UnsupportedEncodingException, TransformerFactoryConfigurationError, TransformerException {
+			throws TransformerFactoryConfigurationError, Exception {
 
 		GetXForm xForm = new GetXForm();
 		String model = xForm.get(template, true, true, true);
@@ -557,10 +557,13 @@ public class WebForm extends Application {
 
 		// We only want the model - remove any XML preanble
 		int modelIdx = model.indexOf("<model>");
-		model = model.substring(modelIdx);
 		
-		model = model.replace("\n", "");
-		model = model.replace("\r", "");
+		if(modelIdx > 0) {
+			model = model.substring(modelIdx);
+			
+			model = model.replace("\n", "");
+			model = model.replace("\r", "");
+		} 
 		
 		return model;
 
