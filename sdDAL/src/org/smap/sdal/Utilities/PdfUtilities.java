@@ -37,22 +37,26 @@ public class PdfUtilities {
 			ad.setProportionalIcon(true);
 			try {
 				ad.setImage(Image.getInstance(basePath + "/" + value));
+				pdfForm.replacePushbuttonField(fieldName, ad.getField());
 			} catch (Exception e) {
 				log.info("Error: Failed to add image " + basePath + "/" + value + " to pdf: " + e.getMessage());
 			}
-			pdfForm.replacePushbuttonField(fieldName, ad.getField());
+			
 			log.info("Adding image to: " + fieldName);
 		} else {
 			
 			String imageUrl = serverRoot + value;
-			System.out.println("Image URL: " + imageUrl);
-			Rectangle targetPosition = pdfForm.getFieldPositions(fieldName).get(0).position;
-		    Font fontNormal = FontFactory.getFont("Courier", 8, Font.UNDERLINE, BaseColor.BLUE);
-		    Anchor url = new Anchor("\uf08e", Symbols);
-		    url.setReference(imageUrl);
-		    ColumnText data = new ColumnText(stamper.getOverContent(1));
-		    data.setSimpleColumn(url, targetPosition.getLeft(), targetPosition.getBottom(), targetPosition.getRight(), targetPosition.getTop(), 0,0);
-		    data.go();
+			try {
+				Rectangle targetPosition = pdfForm.getFieldPositions(fieldName).get(0).position;
+			    Font fontNormal = FontFactory.getFont("Courier", 8, Font.UNDERLINE, BaseColor.BLUE);
+			    Anchor url = new Anchor("\uf08e", Symbols);
+			    url.setReference(imageUrl);
+			    ColumnText data = new ColumnText(stamper.getOverContent(1));
+			    data.setSimpleColumn(url, targetPosition.getLeft(), targetPosition.getBottom(), targetPosition.getRight(), targetPosition.getTop(), 0,0);
+			    data.go();
+			} catch (Exception e) {
+				log.info("Field not found for: " + fieldName);
+			}
 		    
 		    /*
 			Anchor anchor = new Anchor(serverRoot + value);

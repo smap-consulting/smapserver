@@ -566,8 +566,8 @@ define({
     "ed_dt": "Date and Time",
     "ed_t": "Time",
     "ed_dec": "Decimal",
-    "ed_gps_line": "GPS LIne",
-    "ed_gps_area": "GPS LIne",
+    "ed_gps_line": "GPS Line",
+    "ed_gps_area": "GPS Area",
     "ed_ack": "Acknowledge",
 
 
