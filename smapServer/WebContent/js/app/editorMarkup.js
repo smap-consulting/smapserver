@@ -377,12 +377,14 @@ define([
 		var i,
 			types = globals.model.qTypes,
 			h = [],
-			idx = -1;
+			idx = -1,
+			name;
 	
 		for(i = 0; i < types.length; i++) {
 			if(types[i].type === type) {
+				name = localise.set[types[i].trans];
 				h[++idx] = '<span class="has_tt" title="Question type: ';
-				h[++idx] = types[i].name;
+				h[++idx] = name;
 				h[++idx] = '">';
 				if(types[i].glyphicon) {
 					h[++idx] = '<span class="glyphicon glyphicon-';

@@ -331,6 +331,7 @@ define(function () {
 
         this.qTypes = [{
             name: "Text",
+            trans: "rev_text",
             type: "string",
             glyphicon: "font",
             canSelect: true,
@@ -341,6 +342,7 @@ define(function () {
             {
                 name: "Note",
                 type: "note",
+                trans: "c_note",
                 glyphicon: "pencil",
                 canSelect: true,
                 visible: true,
@@ -349,6 +351,7 @@ define(function () {
             {
                 name: "Select One",
                 type: "select1",
+                trans: "ed_s1",
                 image: "/images/select1_64.png",
                 canSelect: true,
                 visible: true,
@@ -358,6 +361,7 @@ define(function () {
             {
                 name: "Select Multiple",
                 type: "select",
+                trans: "ed_s",
                 image: "/images/select_64.png",
                 canSelect: true,
                 visible: true,
@@ -366,6 +370,7 @@ define(function () {
             {
                 name: "Form",
                 type: "begin repeat",
+                trans: "c_form",
                 glyphicon: "repeat",
                 canSelect: true,
                 visible: true,
@@ -374,6 +379,7 @@ define(function () {
             {
                 name: "Group",
                 type: "begin group",
+                trans: "sr_g",
                 glyphicon: "folder-open",
                 canSelect: true,
                 visible: true,
@@ -382,6 +388,7 @@ define(function () {
             {
                 name: "Image",
                 type: "image",
+                trans: "ed_image",
                 glyphicon: "camera",
                 canSelect: true,
                 visible: true,
@@ -390,6 +397,7 @@ define(function () {
             {
                 name: "Integer",
                 type: "int",
+                trans: "ed_int",
                 text: "#",
                 canSelect: true,
                 visible: true,
@@ -398,6 +406,7 @@ define(function () {
             {
                 name: "GPS Point",
                 type: "geopoint",
+                trans: "ed_gps",
                 glyphicon: "map-marker",
                 canSelect: true,
                 visible: true,
@@ -406,6 +415,7 @@ define(function () {
             {
                 name: "Calculation",
                 type: "calculate",
+                trans: "ed_calc",
                 calculation: true,
                 image: "/images/calc_64.png",
                 canSelect: true,
@@ -415,6 +425,7 @@ define(function () {
             {
                 name: "Audio",
                 type: "audio",
+                trans: "ed_audio",
                 glyphicon: "volume-up",
                 canSelect: true,
                 visible: true,
@@ -423,6 +434,7 @@ define(function () {
             {
                 name: "Video",
                 type: "video",
+                trans: "ed_video",
                 glyphicon: "facetime-video",
                 canSelect: true,
                 visible: true,
@@ -431,6 +443,7 @@ define(function () {
             {
                 name: "Barcode",
                 type: "barcode",
+                trans: "ed_bc",
                 glyphicon: "barcode",
                 canSelect: true,
                 visible: true,
@@ -439,6 +452,7 @@ define(function () {
             {
                 name: "Date",
                 type: "date",
+                trans: "c_date",
                 glyphicon: "calendar",
                 canSelect: true,
                 visible: true,
@@ -447,6 +461,7 @@ define(function () {
             {
                 name: "Date and Time",
                 type: "dateTime",
+                trans: "ed_dt",
                 glyphicon: "calendar",
                 canSelect: true,
                 visible: true,
@@ -455,6 +470,7 @@ define(function () {
             {
                 name: "Time",
                 type: "time",
+                trans: "ed_t",
                 glyphicon: "time",
                 canSelect: true,
                 visible: true,
@@ -463,6 +479,7 @@ define(function () {
             {
                 name: "Decimal",
                 type: "decimal",
+                trans: "ed_dec",
                 text: "#.#",
                 canSelect: true,
                 visible: true,
@@ -471,6 +488,7 @@ define(function () {
             {
                 name: "GPS Line",
                 type: "geotrace",
+                trans: "ed_gps_line",
                 image: "/images/linestring_64.png",
                 canSelect: true,
                 visible: true,
@@ -479,7 +497,17 @@ define(function () {
             {
                 name: "GPS Area",
                 type: "geoshape",
+                trans: "ed_gps_area",
                 image: "/images/polygon_64.png",
+                canSelect: true,
+                visible: true,
+                source: "user"
+            },
+            {
+                name: "Acknowledge",
+                type: "acknowledge",
+                trans: "ed_ack",
+                text: "OK",
                 canSelect: true,
                 visible: true,
                 source: "user"

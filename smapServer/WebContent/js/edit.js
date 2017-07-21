@@ -700,13 +700,15 @@ function setupQuestionTypes($elem, columns, draggable, currentType) {
 		types = globals.model.qTypes,
 		h = [],
 		idx = -1,
-		count;
+		count,
+		name;
 	
 	h[++idx] = '<div class="row margin-bottom">';
 	for(i = 0; i < types.length; i++) {
 		
 		if(types[i].canSelect && isCompatible(types[i].compatTypes, currentType) ) {
-			
+
+			name = localise.set[types[i].trans];
 			h[++idx] = '<div class="col-xs-12 ';
 			h[++idx] = columns === 1 ? '" ' : 'col-md-6" ';
 			h[++idx] = ' style="height:65px;">';	
@@ -730,7 +732,7 @@ function setupQuestionTypes($elem, columns, draggable, currentType) {
 				h[++idx] = types[i].text; 
 				h[++idx] = '</span><br/>';
 			}
-			h[++idx] = types[i].name;
+			h[++idx] = name;
 			h[++idx] = '</button>';
 			h[++idx] = '</div>';		// End col
 

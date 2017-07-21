@@ -554,6 +554,22 @@ define({
     "ed_ogl": "Only location questions can have a name of 'the_geom'",
     "ed_ns": "Add a new survey using the 'File' menu before adding questions",
     "ed_kp": "Key Policy",
+    "ed_s1": "Select One",
+    "ed_s": "Select Multiple",
+    "ed_image": "Image",
+    "ed_int": "Integer",
+    "ed_gps": "GPS Point",
+    "ed_calc": "Calculation",
+    "ed_audio": "Audio",
+    "ed_video": "Vidoe",
+    "ed_bc": "Barcode",
+    "ed_dt": "Date and Time",
+    "ed_t": "Time",
+    "ed_dec": "Decimal",
+    "ed_gps_line": "GPS LIne",
+    "ed_gps_area": "GPS LIne",
+    "ed_ack": "Acknowledge",
+
 
     // Managed Forms
     "mf_fd": "Form Data",
