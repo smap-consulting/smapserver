@@ -59,6 +59,8 @@ public class Question {
 	public ArrayList<Label> labels = new ArrayList<Label> ();
 	public String nodeset;
 	
+	public boolean isTableList = false;	// Temporary flag used during HTML generation
+	
 	private static Logger log =
 			 Logger.getLogger(Question.class.getName());
 
@@ -171,5 +173,9 @@ public class Question {
 	public boolean isSelect() {
 		return type.startsWith("select");
 	}
+	
+	/*
+	 * Set the appearance
+	 */
 	
 }

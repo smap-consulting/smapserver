@@ -531,6 +531,7 @@ public class GetXForm {
 					String appearance = q.getAppearance(false, null);
 					if (appearance != null && appearance.contains("table-list")) {
 						q.isTableList = true;
+						gInTableList = true;
 						q.setAppearance(appearance.replace("table-list", "field-list"));
 					}
 				}

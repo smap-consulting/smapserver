@@ -5,6 +5,7 @@ import java.io.Writer;
 import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Stack;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -46,6 +47,7 @@ public class GetHtml {
 	int languageIndex = 0;
 	HashMap<String, String> paths = new HashMap<>(); // Keep paths out of the survey model and instead store them here
 	Document outputDoc = null;
+	private boolean gInTableList = false;
 
 	private static Logger log = Logger.getLogger(GetHtml.class.getName());
 
@@ -239,6 +241,22 @@ public class GetHtml {
 
 		for (Question q : form.questions) {
 
+			// Add a marker if this is a table list group
+			if (q.type.equals("begin group")) {
+				if (q.isTableList) {
+					gInTableList = true;
+				} else {
+					String appearance = q.appearance;
+					if (appearance != null && appearance.contains("table-list")) {
+						q.isTableList = true;
+						gInTableList = true;
+						q.appearance = appearance.replace("table-list", "field-list");
+					}
+				}
+			} else if (q.type.equals("end group")) {
+				gInTableList = false;
+			}
+
 			if (!q.inMeta && !q.name.equals("meta_groupEnd") && !q.isPreload() && !q.type.equals("calculate")) {
 				if (q.type.equals("end group")) {
 
@@ -248,6 +266,22 @@ public class GetHtml {
 
 					elementStack.push(currentParent);
 					currentParent = addGroupWrapper(currentParent, q, false, form);
+
+					// Add a dummy instance element for the table list labels if this is a table
+					// list question
+					if (q.isTableList) {
+
+						// Get one of the select questions to provide the labels
+						Question qLabel = getTableListLabelQuestion(q, form);
+
+						bodyElement = outputDoc.createElement("fieldset");
+						bodyElement.setAttribute("class", "question simple-select or-appearance-label");
+						Element extraFieldsetElement = outputDoc.createElement("fieldset");
+						bodyElement.appendChild(extraFieldsetElement);
+
+						addSelectContents(extraFieldsetElement, qLabel, form, true);
+						currentParent.appendChild(bodyElement);
+					}
 
 				} else if (q.type.equals("begin repeat")) {
 
@@ -271,6 +305,19 @@ public class GetHtml {
 
 				} else if (q.isSelect()) {
 
+					if (gInTableList) {
+						if (q.appearance == null) {
+							q.appearance = "";
+						}
+						if (!q.appearance.contains("field-list")) {
+							q.appearance = q.appearance.trim();
+							if (q.appearance.length() > 0) {
+								q.appearance += " ";
+							}
+							q.appearance += "list-nolabel";
+						}
+					}
+
 					/*
 					 * Create fieldSet or Label depending on the attributes
 					 */
@@ -292,7 +339,7 @@ public class GetHtml {
 						Element extraFieldsetElement = outputDoc.createElement("fieldset");
 						bodyElement.appendChild(extraFieldsetElement);
 
-						addSelectContents(extraFieldsetElement, q, form);
+						addSelectContents(extraFieldsetElement, q, form, false);
 						currentParent.appendChild(bodyElement);
 					}
 
@@ -515,7 +562,7 @@ public class GetHtml {
 		optionElement.setAttribute("data-label-type", "itext");
 		optionElement.setAttribute("data-label-ref", "itextId");
 
-		addOptionLabels(optionElement, q, form);
+		addOptionLabels(optionElement, q, form, true);
 
 	}
 
@@ -523,19 +570,22 @@ public class GetHtml {
 	 * Add the contents of a normal select that has a nodeset
 	 * 
 	 */
-	private void addSelectContents(Element parent, Question q, Form form) throws Exception {
+	private void addSelectContents(Element parent, Question q, Form form, boolean tableList)
+			throws Exception {
 
 		// legend
 		Element bodyElement = outputDoc.createElement("legend");
 		parent.appendChild(bodyElement);
-		addLabels(bodyElement, q, form);
+		if (!tableList) {
+			addLabels(bodyElement, q, form);
+		}
 
 		Element optionWrapperElement = outputDoc.createElement("div");
 		parent.appendChild(optionWrapperElement);
 		optionWrapperElement.setAttribute("class", "option-wrapper");
 
 		// options
-		addOptions(optionWrapperElement, q, form);
+		addOptions(optionWrapperElement, q, form, tableList);
 	}
 
 	/*
@@ -582,19 +632,19 @@ public class GetHtml {
 		// constraint
 		if (q.constraint != null && q.constraint.trim().length() > 0) {
 			bodyElement.setAttribute("data-constraint",
-						UtilityMethods.convertAllxlsNames(q.constraint, false, paths, form.id, true));
+					UtilityMethods.convertAllxlsNames(q.constraint, false, paths, form.id, true));
 		}
 
 		// relevant
 		if (q.relevant != null && q.relevant.trim().length() > 0) {
 			bodyElement.setAttribute("data-relevant",
-						UtilityMethods.convertAllxlsNames(q.relevant, false, paths, form.id, true));	
+					UtilityMethods.convertAllxlsNames(q.relevant, false, paths, form.id, true));
 		}
 
 		parent.appendChild(bodyElement);
 	}
 
-	private void addOptions(Element parent, Question q, Form form) throws Exception {
+	private void addOptions(Element parent, Question q, Form form, boolean tableList) throws Exception {
 
 		// Itemset Template
 		if (hasNodeset(q, form)) {
@@ -606,13 +656,19 @@ public class GetHtml {
 			Element inputElement = outputDoc.createElement("input");
 			labelElement.appendChild(inputElement);
 			inputElement.setAttribute("type", getInputType(q));
-			inputElement.setAttribute("name", paths.get(getRefName(q.name, form)));
-			inputElement.setAttribute("data-name", paths.get(getRefName(q.name, form)));
+			if (!tableList) {
+				inputElement.setAttribute("name", paths.get(getRefName(q.name, form)));
+				inputElement.setAttribute("data-name", paths.get(getRefName(q.name, form)));
+			} else {
+				// create dummy name for table list
+				inputElement.setAttribute("name", paths.get(getRefName(q.name, form)) + "_table_list_labels");
+				inputElement.setAttribute("data-name", paths.get(getRefName(q.name, form)) + "_table_list_labels");
+			}
 			inputElement.setAttribute("data-type-xml", getXmlType(q));
 			inputElement.setAttribute("value", "");
 			if (q.relevant != null && q.relevant.trim().length() > 0) {
 				inputElement.setAttribute("data-relevant",
-							UtilityMethods.convertAllxlsNames(q.relevant, false, paths, form.id, true));	
+						UtilityMethods.convertAllxlsNames(q.relevant, false, paths, form.id, true));
 			}
 
 			// Itemset labels
@@ -623,15 +679,15 @@ public class GetHtml {
 			optionElement.setAttribute("data-label-type", "itext");
 			optionElement.setAttribute("data-label-ref", "itextId");
 
-			addOptionLabels(optionElement, q, form);
+			addOptionLabels(optionElement, q, form, tableList);
 
 		} else {
-			addOptionLabels(parent, q, form);
+			addOptionLabels(parent, q, form, true);
 		}
 
 	}
 
-	private void addOptionLabels(Element parent, Question q, Form form) throws Exception {
+	private void addOptionLabels(Element parent, Question q, Form form, boolean tableList) throws Exception {
 
 		boolean hasNodeset = hasNodeset(q, form);
 		Element labelElement = null;
@@ -643,12 +699,14 @@ public class GetHtml {
 				parent.appendChild(labelElement);
 				labelElement.setAttribute("class", "");
 
-				Element inputElement = outputDoc.createElement("input");
-				labelElement.appendChild(inputElement);
-				inputElement.setAttribute("type", getInputType(q));
-				inputElement.setAttribute("name", paths.get(getRefName(q.name, form)));
-				inputElement.setAttribute("value", o.value);
-				inputElement.setAttribute("data-type-xml", q.type);
+				if (!tableList) {
+					Element inputElement = outputDoc.createElement("input");
+					labelElement.appendChild(inputElement);
+					inputElement.setAttribute("type", getInputType(q));
+					inputElement.setAttribute("name", paths.get(getRefName(q.name, form)));
+					inputElement.setAttribute("value", o.value);
+					inputElement.setAttribute("data-type-xml", q.type);
+				}
 
 			}
 			int idx = 0;
@@ -1075,4 +1133,32 @@ public class GetHtml {
 		}
 
 	}
+
+	private Question getTableListLabelQuestion(Question q, Form form) {
+		boolean inGroup = false;
+
+		Question labelQ = null;
+
+		for (Question qx : form.questions) {
+			if (qx.type.equals("begin group") && qx.name.equals(q.name)) {
+				inGroup = true;
+				continue; // Skip the begin group question
+			}
+			if (inGroup && qx.type.equals("end group")) {
+				inGroup = false;
+				break; // Must be done
+			}
+
+			if (inGroup) {
+				if (qx.type.startsWith("select")) {
+					labelQ = qx;
+					break; // Only need labels from one of the select questions
+				}
+
+			}
+		}
+
+		return labelQ;
+	}
+
 }
