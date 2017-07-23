@@ -3367,7 +3367,6 @@ public class GeneralUtilityMethods {
 							if(appFilename.endsWith("self")) {
 								appFilename = appFilename.replace("self", sIdent);
 							}
-							log.info("yyyy app file name: " + appFilename);
 							if(filename.equals(appFilename)) {	// We want this one
 								log.info("We have found a manifest link to " + filename);
 								
@@ -3432,13 +3431,11 @@ public class GeneralUtilityMethods {
 						filename = filename.substring(1, filename.length() -1);
 						
 						if(filename.startsWith("linked_s") || filename.startsWith("linked_s_pd_s")) {	// Linked survey
-							log.info("We have found a manifest link to " + filename);
 							refQuestions = getRefQuestionsSearch(criteria);
 							manifestType = "linked";
 						} else {
 							filename += ".csv";
 							manifestType = "csv";
-							log.info("We have found a manifest file " + filename);
 						}
 						
 						updateManifest(mi, filename, refQuestions, manifestType);

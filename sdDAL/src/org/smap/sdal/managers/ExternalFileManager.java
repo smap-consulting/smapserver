@@ -535,9 +535,7 @@ public class ExternalFileManager {
 				}
 				colNames.add(colName);
 				forms.put(fId, fId);
-				
-				System.out.println("Adding form: " + fId + " for name: " + colName);
-				
+
 				if(!first) {
 					sql.append(",");
 					order_cols.append(",");
