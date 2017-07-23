@@ -283,6 +283,7 @@ define({
     "a_cm": "Cluster Members",
     "a_dv": "Show Details",
     "a_rd": "Report Definition",
+    "a_rp": "Report Parameters",
     "a_embed": "Embed Images in Excel File",
     "a_hxl": "HXL",
     "a_query": "Select a query",

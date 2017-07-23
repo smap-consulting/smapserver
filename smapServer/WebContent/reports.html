@@ -165,6 +165,33 @@
         </div>
     </div>
 
+    <!-- Modal to enter parameters for custom reports -->
+    <div id="report_popup" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="reportLabel"
+         aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal"><span
+                            aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                    <h4 class="modal-title lang" data-lang="a_rp" id="reportLabel">parameters</h4>
+                </div>
+                <div class="modal-body">
+                    <div id="alert" style="display:none; word-wrap:break-word;" class="alert alert-success" role="alert"></div>
+                    <form role="form" class="form-horizontal" id="report_params_form">
+
+                    </form>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_close">Close
+                    </button>
+                    <button id="generateReport" type="button" class="btn btn-primary lang"
+                            data-lang="c_create">create
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Modal to allow the user to edit their own details -->
     <div id="modify_me_popup" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="modifyMeLabel"
