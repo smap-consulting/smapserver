@@ -117,6 +117,8 @@ create TABLE organisation (
 	ft_sync_incomplete boolean,
 	ft_odk_style_menus boolean default true,
 	ft_review_final boolean default true,
+	ft_send_wifi boolean default false,
+	ft_send_wifi_cell boolean default false,
 	changed_by text,
 	admin_email text,
 	smtp_host text,				-- Set if email is enabled

@@ -16,7 +16,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 
-*/
+ */
 
 public class Organisation {
 	public int id;
@@ -34,6 +34,8 @@ public class Organisation {
 	public boolean ft_sync_incomplete;
 	public boolean ft_odk_style_menus;
 	public boolean ft_review_final;
+	public boolean ft_send_wifi;
+	public boolean ft_send_wifi_cell;
 	public String changed_by;
 	public String changed_ts;
 	public String admin_email;
@@ -46,18 +48,18 @@ public class Organisation {
 	public String website;
 	public String locale;
 	public String timeZone;
-	
+
 	public String getAdminEmail() {
-		
+
 		String email = null;
-		if(admin_email != null && admin_email.trim().length() > 0) {
+		if (admin_email != null && admin_email.trim().length() > 0) {
 			email = admin_email;
-		} else if(company_email != null && company_email.trim().length() > 0) {
+		} else if (company_email != null && company_email.trim().length() > 0) {
 			email = company_email;
 		} else {
 			email = email_user;
 		}
-		
+
 		return email;
 	}
 }

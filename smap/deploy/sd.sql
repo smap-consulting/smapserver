@@ -774,3 +774,6 @@ ALTER TABLE report OWNER TO ws;
 -- Upgrade to 17.06
 alter table server add column sms_url text;
 
+-- Upgrade to 17.07
+alter table organisation add column ft_send_wifi boolean default false;
+alter table organisation add column ft_send_wifi_cell boolean default false;

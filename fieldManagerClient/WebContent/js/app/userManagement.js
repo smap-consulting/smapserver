@@ -475,7 +475,11 @@ $(document).ready(function() {
 				organisation.ft_odk_style_menus = true;
 			} else if(options[i] === "ft_review_final") {
 				organisation.ft_review_final = true;
-			} 
+			} else if(options[i] === "ft_send_wifi") {
+                organisation.ft_send_wifi = true;
+            } else if(options[i] === "ft_send_wifi_cell") {
+                organisation.ft_send_wifi_cell = true;
+            }
 		}
 		organisationList[0] = organisation;	
 		var organisationString = JSON.stringify(organisationList);
@@ -925,7 +929,11 @@ function openOrganisationDialog(existing, organisationIndex) {
 				this.checked = org.ft_odk_style_menus;
 			} else if($(this).val() === "ft_review_final") {
 				this.checked = org.ft_review_final;
-			}
+			} else if($(this).val() === "ft_send_wifi") {
+                this.checked = org.ft_send_wifi;
+            } else if($(this).val() === "ft_send_wifi_cell") {
+                this.checked = org.ft_send_wifi_cell;
+            }
 		});
 		addLanguageOptions($('#o_language'), org.locale);
 		$('#o_tz').val(org.timeZone);
