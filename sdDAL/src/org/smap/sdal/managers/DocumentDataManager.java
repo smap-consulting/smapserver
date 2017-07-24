@@ -156,20 +156,23 @@ public class DocumentDataManager {
 			sql.append(" repeat ");
 			
 			sql.append("where main.prikey = repeat.parkey ");
+			String sqlRestrictToDateRange = GeneralUtilityMethods.getDateRange(startDate, endDate, "repeat.consult_date");
+			if(sqlRestrictToDateRange.trim().length() > 0) {
+				sql.append(" and " + sqlRestrictToDateRange);
+			}
 			sql.append("and main.gender = ? ");
 			sql.append("and main.age >= ? ");
 			sql.append("and main.age < ? ");
 			
-			String sqlRestrictToDateRange = GeneralUtilityMethods.getDateRange(startDate, endDate, tableRepeat + ".consult_date");
-			if(sqlRestrictToDateRange.trim().length() > 0) {
-				sql.append(sqlRestrictToDateRange);
-			}
-			
 			pstmt = cResults.prepareStatement(sql.toString());
 			int idx = 1;
 			if(sqlRestrictToDateRange.trim().length() > 0) {
-				pstmt.setDate(idx++, startDate);
-				pstmt.setDate(idx++, endDate);
+				if(startDate != null) {
+					pstmt.setDate(idx++, startDate);
+				}
+				if(endDate != null) {
+					pstmt.setDate(idx++, endDate);
+				}
 			}
 			
 			for(Category cat : categories) {

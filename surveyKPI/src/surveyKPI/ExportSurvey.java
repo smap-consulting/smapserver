@@ -50,7 +50,7 @@ import org.smap.sdal.model.TableColumn;
  *    etc
  *    
  */
-@Path("/exportSurvey/{sId}/{filename}")
+@Path("/exportxSurvey/{sId}/{filename}")
 public class ExportSurvey extends Application {
 	
 	Authorise a = new Authorise(null, Authorise.ANALYST);
