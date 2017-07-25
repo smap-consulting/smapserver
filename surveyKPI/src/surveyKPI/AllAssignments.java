@@ -558,11 +558,15 @@ public class AllAssignments extends Application {
 							String getTaskSql = null;
 							String getTaskSqlWhere = null;
 							String getTaskSqlEnd = null;
+							boolean hasInstanceName = GeneralUtilityMethods.hasColumn(connectionRel, tableName, "instancename");
 							
 							if(hasGeom) {
 								log.info("Has geometry");
 								getTaskSql = "select " + tableName +".prikey, ST_AsText(" + tableName + ".the_geom) as the_geom," +
 										tableName + ".instanceid";
+								if(hasInstanceName) {
+									getTaskSql += ", " + tableName + ".instancename";
+								}
 								getTaskSqlWhere = " from " + tableName + " where " + tableName + "._bad = 'false'";	
 								getTaskSqlEnd = ";";
 							} else {
@@ -592,6 +596,9 @@ public class AllAssignments extends Application {
 								getTaskSql = "select " + tableName + 
 										".prikey, ST_AsText(ST_MakeLine(" + tableName2 + ".the_geom)) as the_geom, " +
 										tableName + ".instanceid";
+								if(hasInstanceName) {
+									getTaskSql += ", " + tableName + ".instancename";
+								}
 								
 								getTaskSqlWhere = " from " + tableName + " left outer join " + tableName2 + 
 										" on " + tableName + ".prikey = " + tableName2 + ".parkey " +
@@ -605,6 +612,9 @@ public class AllAssignments extends Application {
 								
 								getTaskSql = "select " + tableName + ".prikey, 'POINT(0 0)' as the_geom, " +
 										tableName + ".instanceid";
+								if(hasInstanceName) {
+									getTaskSql += ", " + tableName + ".instancename";
+								}
 								getTaskSqlWhere = " from " + tableName + " where " + tableName + "._bad = 'false'";	
 								getTaskSqlEnd = ";";
 								
@@ -666,6 +676,10 @@ public class AllAssignments extends Application {
 									if(hasGeom) {
 										location = resultSet.getString("the_geom");
 									} 
+									String instanceName = null;
+									if(hasInstanceName) {
+										instanceName = resultSet.getString("instancename");
+									}
 									if(location == null) {
 										location = "POINT(0 0)";
 									} else if(location.startsWith("LINESTRING")) {
@@ -693,7 +707,11 @@ public class AllAssignments extends Application {
 									}
 									pstmtInsert.setInt(1, projectId);
 									pstmtInsert.setInt(2, taskGroupId);
-									pstmtInsert.setString(3, as.project_name + " : " + as.survey_name + " : " + resultSet.getString(1));
+									if(instanceName == null || instanceName.trim().length() == 0) {
+										pstmtInsert.setString(3, as.project_name + " : " + as.survey_name + " : " + resultSet.getString(1));
+									} else {
+										pstmtInsert.setString(3, instanceName);
+									}
 									pstmtInsert.setInt(4, as.target_survey_id);
 									pstmtInsert.setString(5, target_survey_url);	
 									pstmtInsert.setString(6, geoType);
