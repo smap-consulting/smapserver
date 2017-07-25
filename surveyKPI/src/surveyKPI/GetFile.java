@@ -262,7 +262,7 @@ public class GetFile extends Application {
 			
 		}  catch (Exception e) {
 			log.info("Error getting file:" + e.getMessage());
-			r = Response.serverError().build();
+			r = Response.serverError().entity(e.getMessage()).build();
 		} finally {	
 			SDDataSource.closeConnection("Get Organisation File", connectionSD);	
 		}

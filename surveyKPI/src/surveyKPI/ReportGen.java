@@ -135,6 +135,8 @@ public class ReportGen extends Application {
 			@QueryParam("to") Date endDate,
 			@Context HttpServletResponse response) throws IOException, Exception {
 
+		Response responseVal = null;
+		
 		// Authorisation - Access
 		Connection sd = SDDataSource.getConnection("surveyKPI-ReportGen");
 		boolean superUser = false;
@@ -148,24 +150,30 @@ public class ReportGen extends Application {
 		
 		Connection cResults = ResultsDataSource.getConnection("surveyKPI-ReportGen");
 		
-		lm.writeLog(sd, sId, request.getRemoteUser(), "view", "Report");
-		
-		Response responseVal = null;
-		String filetype = "xlsx";
-		GeneralUtilityMethods.setFilenameInResponse(filename + "." + filetype, response);
-		response.setHeader("Content-type",  "application/vnd.ms-excel; charset=UTF-8");
-		
-		DocumentDataManager rdm = new DocumentDataManager(sd, sId);
-		ArrayList<KeyValue> data = rdm.getData(sd, cResults, sId, startDate, endDate);
-		
-		DocumentXLSManager rxm = new DocumentXLSManager();
-		String basePath = GeneralUtilityMethods.getBasePath(request);
-		
-		int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser(), sId);
-		rxm.create(sd, request.getRemoteUser(), data, response.getOutputStream(), basePath, oId);
-		
-		responseVal = Response.ok("").build();
-		
+		try {
+			lm.writeLog(sd, sId, request.getRemoteUser(), "view", "Report");
+			
+			String filetype = "xlsx";
+			GeneralUtilityMethods.setFilenameInResponse(filename + "." + filetype, response);
+			response.setHeader("Content-type",  "application/vnd.ms-excel; charset=UTF-8");
+			
+			DocumentDataManager rdm = new DocumentDataManager(sd, sId);
+			ArrayList<KeyValue> data = rdm.getData(sd, cResults, sId, startDate, endDate);
+			
+			DocumentXLSManager rxm = new DocumentXLSManager();
+			String basePath = GeneralUtilityMethods.getBasePath(request);			
+			int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser(), sId);
+			rxm.create(sd, request.getRemoteUser(), data, response.getOutputStream(), basePath, oId);
+			
+			responseVal = Response.ok("").build();
+			
+		} catch (Exception e) {
+			log.log(Level.SEVERE, "Error generating report:" + e.getMessage(), e);
+			responseVal = Response.serverError().build();
+		} finally {
+			SDDataSource.closeConnection("surveyKPI-ReportGen", sd);
+			SDDataSource.closeConnection("surveyKPI-ReportGen", cResults);	
+		}
 		return responseVal;
 
 		
