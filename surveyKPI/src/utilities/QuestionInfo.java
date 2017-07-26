@@ -437,11 +437,11 @@ public class QuestionInfo {
 	}
 	
 	public String getType() {
-		if(qCalculate == null) {
-			return qType;
-		} else {
+		if(qType.equals("string") && qCalculate != null && qCalculate.trim().length() > 0) {
 			return "calculate";
-		}
+		} else {
+			return qType;
+		} 
 	}
 	
 	public ArrayList<OptionInfo> getOptions() {

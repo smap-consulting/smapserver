@@ -115,7 +115,7 @@ public class QuestionDetail extends Application {
 				qName = resultSet.getString(2);
 				f_id = resultSet.getString(3);
 				calculate = resultSet.getString(4);
-				if(calculate != null) {
+				if(qType.equals("string") && calculate != null && calculate.trim().length() > 0) {
 					qType = "calculate";	// Need to differentiate type of calculate questions			
 				}
 			}

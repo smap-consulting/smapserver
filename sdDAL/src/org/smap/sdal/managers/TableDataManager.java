@@ -195,6 +195,9 @@ public class TableDataManager {
 						if(c.isGeometry()) {							
 							// Add Geometry (assume one geometry type per table)
 							String geomValue = rs.getString(i + 1);	
+							if(geomValue == null) {
+								geomValue = "";
+							}
 							name = "_geolocation";
 							/*
 							JSONArray coords = null;
@@ -205,7 +208,7 @@ public class TableDataManager {
 								coords = new JSONArray();
 							}
 							*/
-							
+
 							jr.put(name, new JSONObject(geomValue));
 				
 						} else {
