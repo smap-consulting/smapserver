@@ -196,7 +196,7 @@ public class TableDataManager {
 							// Add Geometry (assume one geometry type per table)
 							String geomValue = rs.getString(i + 1);	
 							if(geomValue == null) {
-								geomValue = "";
+								geomValue = "{}";
 							}
 							name = "_geolocation";
 							/*
