@@ -1016,7 +1016,6 @@ require([
                 $('#editRecord').modal("show");
             } else if (isBrowseResults) {
                 // TODO check if the user has maintain privilege
-                alert(JSON.stringify(rowData));
             }
             //alert(JSON.stringify( rowData ));
         });

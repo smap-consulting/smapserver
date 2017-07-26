@@ -258,6 +258,10 @@ public class Question {
 			v = GeneralUtilityMethods.convertAllXpathNames(v, true);
 		}
 		
+		if(v != null && v.trim().length() == 0) {
+			v = null;
+		}
+		
 		return v;
 	}
 	
