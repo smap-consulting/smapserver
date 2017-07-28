@@ -1,5 +1,7 @@
 package org.smap.notifications.interfaces;
 
+import java.util.Properties;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.amazonaws.auth.ClasspathPropertiesFileCredentialsProvider;
@@ -8,6 +10,8 @@ import com.amazonaws.regions.Regions;
 import com.amazonaws.services.sns.AmazonSNSClient;
 import com.amazonaws.services.sns.model.PublishRequest;
 import com.amazonaws.services.sns.model.PublishResult;
+
+import utils.AwsProperties;
 
 
 
@@ -42,6 +46,17 @@ public class EmitNotifications {
 	
 	private static Logger log =
 			 Logger.getLogger(EmitNotifications.class.getName());
+	
+	Properties properties = null;
+	
+	public EmitNotifications() {
+		try {
+				properties.load(getClass().getClassLoader().getResourceAsStream("aws.properties"));
+			}
+			catch (Exception e) { 
+				log.log(Level.SEVERE, "Error reading properties", e);
+			}
+	}
 	
 	/*
 	 * Publish to an SNS topic
