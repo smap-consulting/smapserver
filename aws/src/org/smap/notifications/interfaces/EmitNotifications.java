@@ -11,8 +11,6 @@ import com.amazonaws.services.sns.AmazonSNSClient;
 import com.amazonaws.services.sns.model.PublishRequest;
 import com.amazonaws.services.sns.model.PublishResult;
 
-import utils.AwsProperties;
-
 
 
 /*****************************************************************************
@@ -82,7 +80,7 @@ public class EmitNotifications {
 		String topic = null;
 		
 		if (event == AWS_REGISTER_ORGANISATION) {
-			topic = "arn:aws:sns:ap-southeast-1:439804189189:register";			// Singapore
+			topic = properties.getProperty("register_organisation_topic");
 			log.info("Publish: register");
 		} else {
 			log.info("Error: Publish: invalid event: " + event);
