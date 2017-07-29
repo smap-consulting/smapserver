@@ -922,7 +922,7 @@ public class SurveyManager {
 			
 			pstmtGetOptions.setInt(1, listId);
 			pstmtGetOptions.setBoolean(2, external);
-			//log.info("SQL Get options: " + pstmtGetOptions.toString());
+			log.info("SQL Get options: " + pstmtGetOptions.toString());
 			rsGetOptions = pstmtGetOptions.executeQuery();
 				
 			Type hmType = new TypeToken<HashMap<String, String>>(){}.getType();		// Used to translate cascade filters json
@@ -935,7 +935,7 @@ public class SurveyManager {
 				o.text_id = rsGetOptions.getString(3);
 				o.externalFile = rsGetOptions.getBoolean(4);
 				String cascade_filters = rsGetOptions.getString(5);
-				if(cascade_filters != null) {
+				if(cascade_filters != null && !cascade_filters.equals("null")) {
 					try {
 						o.cascade_filters = gson.fromJson(cascade_filters, hmType);
 						for (String key : o.cascade_filters.keySet()) {
