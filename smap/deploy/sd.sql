@@ -773,4 +773,5 @@ ALTER TABLE report OWNER TO ws;
 
 -- Upgrade to 17.06
 alter table server add column sms_url text;
+delete from survey_change where changes like '%"action":"external option"%' ;
 

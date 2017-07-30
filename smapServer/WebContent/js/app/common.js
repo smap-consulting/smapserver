@@ -1561,6 +1561,7 @@ function isBusinessServer() {
 			hostname.indexOf('blueoakenergy.com') < 0 &&
 			hostname.indexOf('.icanreach.com') < 0 &&
 			hostname.indexOf('encontactone.com') < 0 &&
+			hostname.indexOf('app.ezpilot.me') < 0 &&
 			hostname.indexOf('10.0') != 0) {
 		bs = false;
 		$('.bus_only').hide();
