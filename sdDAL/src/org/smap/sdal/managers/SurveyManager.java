@@ -1107,7 +1107,8 @@ public class SurveyManager {
 	 */
 	public ChangeResponse applyChangeSetArray(Connection connectionSD, 
 			Connection cResults,
-			int sId, String ident, ArrayList<ChangeSet> changes) throws Exception {
+			int sId, String ident, ArrayList<ChangeSet> changes,
+			boolean logIndividualChangeSets) throws Exception {
 		
 		ChangeResponse resp = new ChangeResponse();	// Response object
 		resp.changeSet = changes;
@@ -1162,32 +1163,32 @@ public class SurveyManager {
 					log.info("SurveyManager, applyChanges. Change set type: " + cs.changeType);
 					if(cs.changeType.equals("label")) {
 						
-						applyLabel(connectionSD, pstmtChangeLog, cs.items, sId, userId, resp.version);
+						applyLabel(connectionSD, pstmtChangeLog, cs.items, sId, userId, resp.version, logIndividualChangeSets);
 
 					} else if(cs.changeType.equals("option") && cs.source != null && cs.source.equals("file")) {
 						
 						// Apply changes to options loaded from a csv file
-						applyOptionUpdates(connectionSD, pstmtChangeLog, cs.items, sId, userId, resp.version, cs.changeType, cs.source);
+						applyOptionUpdates(connectionSD, pstmtChangeLog, cs.items, sId, userId, resp.version, cs.changeType, cs.source, logIndividualChangeSets);
 						
 					} else if(cs.changeType.equals("property") && !cs.type.equals("option")) {
 						
 						// Update a property
-						applyQuestionProperty(connectionSD, pstmtChangeLog, cs.items, sId, userId, resp.version, cs.changeType);
+						applyQuestionProperty(connectionSD, pstmtChangeLog, cs.items, sId, userId, resp.version, cs.changeType, logIndividualChangeSets);
 						
 					} else if(cs.changeType.equals("question")) {
 						
 						// Add/delete/move questions
-						applyQuestion(connectionSD, cResults, pstmtChangeLog, cs.items, sId, userId, resp.version, cs.changeType, cs.action);
+						applyQuestion(connectionSD, cResults, pstmtChangeLog, cs.items, sId, userId, resp.version, cs.changeType, cs.action, logIndividualChangeSets);
 						
 					} else if(cs.changeType.equals("option") || (cs.changeType.equals("property") && cs.type.equals("option"))) {
 						
 						// Add/delete options changed by the editor
-						applyOptionFromEditor(connectionSD, pstmtChangeLog, cs.items, sId, userId, resp.version, cs.changeType, cs.action);
+						applyOptionFromEditor(connectionSD, pstmtChangeLog, cs.items, sId, userId, resp.version, cs.changeType, cs.action, logIndividualChangeSets);
 						
 					} else if(cs.changeType.equals("optionlist")) {
 						
 						// Add/delete/move questions
-						applyOptionList(connectionSD, pstmtChangeLog, cs.items, sId, userId, resp.version, cs.changeType, cs.action);
+						applyOptionList(connectionSD, pstmtChangeLog, cs.items, sId, userId, resp.version, cs.changeType, cs.action, logIndividualChangeSets);
 						
 					} else {
 						log.info("Error: unknown changeset type: " + cs.changeType);
@@ -1246,7 +1247,8 @@ public class SurveyManager {
 			ArrayList<ChangeItem> changeItemList, 
 			int sId, 
 			int userId,
-			int version) throws Exception {
+			int version,
+			boolean logIndividualChangeSets) throws Exception {
 		
 		String transType = null;
 		PreparedStatement pstmtLangOldVal = null;
@@ -1378,16 +1380,18 @@ public class SurveyManager {
 					}
 				}
 				
-				log.info("userevent: " + userId + " : modify survey label : " + ci.property.key + " to: " + ci.property.newVal + " survey: " + sId + " language: " + ci.property.languageName + " labelId: "  + transType);
-				
-				// Write the change log
-				Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
-				pstmtChangeLog.setInt(1, sId);
-				pstmtChangeLog.setInt(2, version);
-				pstmtChangeLog.setString(3, gson.toJson(new ChangeElement(ci, "update")));
-				pstmtChangeLog.setInt(4,userId);
-				pstmtChangeLog.setTimestamp(5, GeneralUtilityMethods.getTimeStamp());
-				pstmtChangeLog.execute();
+				if(logIndividualChangeSets) {
+					log.info("userevent: " + userId + " : modify survey label : " + ci.property.key + " to: " + ci.property.newVal + " survey: " + sId + " language: " + ci.property.languageName + " labelId: "  + transType);
+					
+					// Write the change log
+					Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
+					pstmtChangeLog.setInt(1, sId);
+					pstmtChangeLog.setInt(2, version);
+					pstmtChangeLog.setString(3, gson.toJson(new ChangeElement(ci, "update")));
+					pstmtChangeLog.setInt(4,userId);
+					pstmtChangeLog.setTimestamp(5, GeneralUtilityMethods.getTimeStamp());
+					pstmtChangeLog.execute();
+				}
 			}
 		} catch (Exception e) {
 			
@@ -1488,7 +1492,8 @@ public class SurveyManager {
 			int userId,
 			int version,
 			String changeType,
-			String source) throws Exception {
+			String source,
+			boolean logIndividualChangeSets) throws Exception {
 		
 		PreparedStatement pstmtLangInsert = null;
 		PreparedStatement pstmtLangUpdate = null;
@@ -1594,18 +1599,20 @@ public class SurveyManager {
 					
 				}			
 				
-				// Write the change log
-				if(count > 0) {
-					ci.changeType = "option";
-					ci.source = source;
-					
-					pstmtChangeLog.setInt(1, sId);
-					pstmtChangeLog.setInt(2, version);
-					pstmtChangeLog.setString(3, gson.toJson(new ChangeElement(ci, "external option")));
-					pstmtChangeLog.setInt(4,userId);
-					pstmtChangeLog.setTimestamp(5, GeneralUtilityMethods.getTimeStamp());
-					pstmtChangeLog.execute();
-
+				if(logIndividualChangeSets) {
+					// Write the change log
+					if(count > 0) {
+						ci.changeType = "option";
+						ci.source = source;
+						
+						pstmtChangeLog.setInt(1, sId);
+						pstmtChangeLog.setInt(2, version);
+						pstmtChangeLog.setString(3, gson.toJson(new ChangeElement(ci, "external option")));
+						pstmtChangeLog.setInt(4,userId);
+						pstmtChangeLog.setTimestamp(5, GeneralUtilityMethods.getTimeStamp());
+						pstmtChangeLog.execute();
+	
+					}
 				}
 				totalCount += count;
 			}
@@ -1638,7 +1645,8 @@ public class SurveyManager {
 			int sId, 
 			int userId,
 			int version,
-			String type) throws Exception {
+			String type,
+			boolean logIndividualChangeSets) throws Exception {
 
 		boolean setReadonly = false;
 		boolean onlyIfNotPublished = false;
@@ -2105,14 +2113,16 @@ public class SurveyManager {
 						}
 						log.info("userevent: " + userId + " : modify survey property : " + property + " to: " + ci.property.newVal + " survey: " + sId);
 						
-						// Write the change log
-						Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
-						pstmtChangeLog.setInt(1, sId);
-						pstmtChangeLog.setInt(2, version);
-						pstmtChangeLog.setString(3, gson.toJson(new ChangeElement(ci, "update")));
-						pstmtChangeLog.setInt(4,userId);	
-						pstmtChangeLog.setTimestamp(5, GeneralUtilityMethods.getTimeStamp());
-						pstmtChangeLog.execute();
+						if(logIndividualChangeSets) {
+							// Write the change log
+							Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
+							pstmtChangeLog.setInt(1, sId);
+							pstmtChangeLog.setInt(2, version);
+							pstmtChangeLog.setString(3, gson.toJson(new ChangeElement(ci, "update")));
+							pstmtChangeLog.setInt(4,userId);	
+							pstmtChangeLog.setTimestamp(5, GeneralUtilityMethods.getTimeStamp());
+							pstmtChangeLog.execute();
+						}
 						
 					} else {
 						throw new Exception("Unknown property: " + property);
@@ -2194,7 +2204,8 @@ public class SurveyManager {
 			int userId,
 			int version,
 			String type,
-			String action) throws Exception {
+			String action,
+			boolean logIndividualChangeSets) throws Exception {
 		
 		QuestionManager qm = new QuestionManager();
 		ArrayList<Question> questions = new ArrayList<Question> ();
@@ -2205,16 +2216,18 @@ public class SurveyManager {
 					
 				questions.add(ci.question);
 
-				log.info("userevent: " + userId + " : " + action + " question : " + ci.question.name + " survey: " + sId);
-				
-				// Write the change log
-				Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
-				pstmtChangeLog.setInt(1, sId);
-				pstmtChangeLog.setInt(2, version);
-				pstmtChangeLog.setString(3, gson.toJson(new ChangeElement(ci, action)));
-				pstmtChangeLog.setInt(4,userId);
-				pstmtChangeLog.setTimestamp(5, GeneralUtilityMethods.getTimeStamp());
-				pstmtChangeLog.execute();
+				if(logIndividualChangeSets) {
+					log.info("userevent: " + userId + " : " + action + " question : " + ci.question.name + " survey: " + sId);
+					
+					// Write the change log
+					Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
+					pstmtChangeLog.setInt(1, sId);
+					pstmtChangeLog.setInt(2, version);
+					pstmtChangeLog.setString(3, gson.toJson(new ChangeElement(ci, action)));
+					pstmtChangeLog.setInt(4,userId);
+					pstmtChangeLog.setTimestamp(5, GeneralUtilityMethods.getTimeStamp());
+					pstmtChangeLog.execute();
+				}
 			} 
 			
 			if(action.equals("add")) {
@@ -2249,7 +2262,8 @@ public class SurveyManager {
 			int userId,
 			int version,
 			String type,
-			String action) throws Exception {
+			String action,
+			boolean logIndividualChangeSets) throws Exception {
 		
 		OptionListManager olm = new OptionListManager();
 		 
@@ -2257,16 +2271,18 @@ public class SurveyManager {
 		
 			for(ChangeItem ci : changeItemList) {
 
-				log.info("userevent: " + userId + " : " + action + " optionlist : " + ci.name + " survey: " + sId);
-				
-				// Write the change log
-				Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
-				pstmtChangeLog.setInt(1, sId);
-				pstmtChangeLog.setInt(2, version);
-				pstmtChangeLog.setString(3, gson.toJson(new ChangeElement(ci, action)));
-				pstmtChangeLog.setInt(4,userId);
-				pstmtChangeLog.setTimestamp(5, GeneralUtilityMethods.getTimeStamp());
-				pstmtChangeLog.execute();
+				if(logIndividualChangeSets) {
+					log.info("userevent: " + userId + " : " + action + " optionlist : " + ci.name + " survey: " + sId);
+					
+					// Write the change log
+					Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
+					pstmtChangeLog.setInt(1, sId);
+					pstmtChangeLog.setInt(2, version);
+					pstmtChangeLog.setString(3, gson.toJson(new ChangeElement(ci, action)));
+					pstmtChangeLog.setInt(4,userId);
+					pstmtChangeLog.setTimestamp(5, GeneralUtilityMethods.getTimeStamp());
+					pstmtChangeLog.execute();
+				}
 			
 			
 				if(action.equals("add")) {
@@ -2301,7 +2317,8 @@ public class SurveyManager {
 			int userId,
 			int version,
 			String changeType,
-			String action) throws Exception {
+			String action,
+			boolean logIndividualChangeSets) throws Exception {
 		
 		QuestionManager qm = new QuestionManager();
 		ArrayList<Option> options = new ArrayList<Option> ();
@@ -2319,14 +2336,16 @@ public class SurveyManager {
 					log.info("userevent: " + userId + (action.equals("add") ? " : add option : " : " : delete option : ") + ci.option.value + " survey: " + sId);
 				}
 				
-				// Write the change log
-				Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
-				pstmtChangeLog.setInt(1, sId);
-				pstmtChangeLog.setInt(2, version);
-				pstmtChangeLog.setString(3, gson.toJson(new ChangeElement(ci, action)));
-				pstmtChangeLog.setInt(4,userId);
-				pstmtChangeLog.setTimestamp(5, GeneralUtilityMethods.getTimeStamp());
-				pstmtChangeLog.execute();
+				if(logIndividualChangeSets) {
+					// Write the change log
+					Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
+					pstmtChangeLog.setInt(1, sId);
+					pstmtChangeLog.setInt(2, version);
+					pstmtChangeLog.setString(3, gson.toJson(new ChangeElement(ci, action)));
+					pstmtChangeLog.setInt(4,userId);
+					pstmtChangeLog.setTimestamp(5, GeneralUtilityMethods.getTimeStamp());
+					pstmtChangeLog.execute();
+				}
 			} 
 			
 			if(action.equals("add")) {
@@ -2893,7 +2912,7 @@ public class SurveyManager {
 				}
 			}
 			
-			sm.applyChangeSetArray(sd, cResults, sId, user, changes);
+			sm.applyChangeSetArray(sd, cResults, sId, user, changes, false);
 			
 		} catch(Exception e) {
 			// Record exception but otherwise ignore

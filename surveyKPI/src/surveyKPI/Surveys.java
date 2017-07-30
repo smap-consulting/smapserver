@@ -493,7 +493,7 @@ public class Surveys extends Application {
 		try {
 	
 			SurveyManager sm = new SurveyManager();
-			ChangeResponse resp = sm.applyChangeSetArray(connectionSD, cResults, sId, request.getRemoteUser(), changes);
+			ChangeResponse resp = sm.applyChangeSetArray(connectionSD, cResults, sId, request.getRemoteUser(), changes, true);
 			
 			// Add any options that this survey links to in an an external file
 			if(updateExternalChoices) {
