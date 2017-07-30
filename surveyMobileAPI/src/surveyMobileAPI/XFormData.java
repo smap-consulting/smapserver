@@ -63,176 +63,177 @@ class SaveDetails {
 }
 
 public class XFormData {
-	
-	private static Logger log =
-			 Logger.getLogger(XFormData.class.getName());
-	
-	LogManager lm = new LogManager();		// Application log
-	
+
+	private static Logger log = Logger.getLogger(XFormData.class.getName());
+
+	LogManager lm = new LogManager(); // Application log
+
 	String serverName = null;
-	
+
 	Authorise a = new Authorise(null, Authorise.ENUM);
 
 	public XFormData() {
-		
+
 	}
-	
-	public void loadMultiPartMime(
-				HttpServletRequest request, 
-				String user, 
-				String updateInstanceId,
-				String deviceId) 
-			throws SurveyBlockedException, MissingSurveyException, IOException, FileUploadException, 
+
+	public void loadMultiPartMime(HttpServletRequest request, String user, String updateInstanceId, String deviceId)
+			throws SurveyBlockedException, MissingSurveyException, IOException, FileUploadException,
 			MissingTemplateException, AuthorisationException, Exception {
 
 		log.info("loadMultiPartMime()");
-		
+
 		// Use Apache Commons file upload to get the items in the file
 		SaveDetails saveDetails = null;
-		//PersistenceContext pc = new PersistenceContext("pgsql_jpa");
-		DiskFileItemFactory  factory = new DiskFileItemFactory();
+		// PersistenceContext pc = new PersistenceContext("pgsql_jpa");
+		DiskFileItemFactory factory = new DiskFileItemFactory();
 		ServletFileUpload upload = new ServletFileUpload(factory);
-		
-		List <FileItem> items = upload.parseRequest(request);
+
+		List<FileItem> items = upload.parseRequest(request);
 		int assignmentId = 0;
 		String surveyNotes = null;
 		String locationTrigger = null;
-		
+
 		serverName = request.getServerName();
 		SurveyInstance si = null;
 		String templateName = null;
 		String form_status = request.getHeader("form_status");
-		boolean incomplete = false;	// Set true if odk has more attachments to send
+		boolean incomplete = false; // Set true if odk has more attachments to send
 		boolean superUser = false;
-	
+
 		Connection sd = null;
-		
+
 		try {
 			sd = SDDataSource.getConnection("surveyMobileAPI-XFormData");
 			String basePath = request.getServletContext().getInitParameter("au.com.smap.files");
-			if(basePath == null) {
+			if (basePath == null) {
 				basePath = "/smap";
-			} else if(basePath.equals("/ebs1")) {		// Support for legacy apache virtual hosts
+			} else if (basePath.equals("/ebs1")) { // Support for legacy apache virtual hosts
 				basePath = "/ebs1/servers/" + serverName.toLowerCase();
 			}
-			
+
 			/*
 			 * Save the XML submission file
 			 */
 			Iterator<FileItem> iter = items.iterator();
 			String thisInstanceId = null;
 			while (iter.hasNext()) {
-			    FileItem item = (FileItem) iter.next();	    
-		    	String name = item.getFieldName();
-		        if(name.equals("xml_submission_file") || name.equals("xml_submission_data")) {		// xml_submission_data is the name used by webForms
-		        	si = new SurveyInstance(item.getInputStream());
-		        	
-		        	// Extend the instance with data available in the template
-		        	// This will get a default location if one exists
+				FileItem item = (FileItem) iter.next();
+				String name = item.getFieldName();
+				if (name.equals("xml_submission_file") || name.equals("xml_submission_data")) { // xml_submission_data
+																								// is the name used by
+																								// webForms
+					si = new SurveyInstance(item.getInputStream());
+
+					// Extend the instance with data available in the template
+					// This will get a default location if one exists
 					templateName = si.getTemplateName();
-					
+
 					saveDetails = saveToDisk(item, request, basePath, null, templateName, null, 0, 0);
-					log.info("Saved xml_submission file:" + saveDetails.fileName + " (FieldName: " + item.getFieldName() + ")");
-					
+					log.info("Saved xml_submission file:" + saveDetails.fileName + " (FieldName: " + item.getFieldName()
+							+ ")");
+
 					SurveyTemplate template = new SurveyTemplate();
-					template.readDatabase(sd, templateName, false);										
+					template.readDatabase(sd, templateName, false);
 					template.extendInstance(sd, si, false);
-					
+
 					thisInstanceId = si.getUuid();
-	
-					break;	// There is only one XML submission file
-		        }
+
+					break; // There is only one XML submission file
+				}
 			}
-			
-	    	/*
-	    	 * Complete saving to disk 
-	    	 * Return error if save to disk fails (exception thrown)
-	    	 */
+
+			/*
+			 * Complete saving to disk Return error if save to disk fails (exception thrown)
+			 */
 			iter = items.iterator();
 			int iosImageCount = 0;
 			int iosVideoCount = 0;
 			log.info("############################ Saving everything to disk  ######################");
 			while (iter.hasNext()) {
-			    FileItem item = (FileItem) iter.next();	 
-			    String fieldName = item.getFieldName();
-			    String dataUrl = null;
-			    
-			    log.info("==== Item: " + fieldName);
-			    if (item.isFormField() && !fieldName.equals("xml_submission_data")) {
-			    	// Check to see if this form field indicates the submission is incomplete
-			    	if(fieldName.equals("*isIncomplete*") && item.getString().equals("yes")) {
-			    		log.info("    ++++++ Incomplete Submission");
-			    		incomplete = true;
-			    	} else if ((dataUrl = item.getString()).startsWith("data:")) {
-			    		// File Attachment from web forms
-			    		SaveDetails attachSaveDetails = saveToDisk(item, request, basePath, saveDetails.instanceDir, 
-			    				templateName, dataUrl.substring(dataUrl.indexOf("base64") + 7), iosImageCount, iosVideoCount);
-			    		iosImageCount = attachSaveDetails.iosImageCount;
-			    		iosVideoCount = attachSaveDetails.iosVideoCount;
-			    		log.info("Saved webforms attachment:" + attachSaveDetails.fileName + " (FieldName: " + fieldName + ")");
-			    	} else if(fieldName.equals("assignment_id"))  {
-			    		log.info("Got assignment id ++++++++++++++++++" + item.getString());
-			    		try {
-			    			assignmentId = Integer.parseInt(item.getString());
-			    		} catch (Exception e) {
-			    			
-			    		}
-			    	} else if(fieldName.equals("location_trigger"))  {
-			    		locationTrigger = item.getString();
-			    	} else if(fieldName.equals("survey_notes"))  {
-			    		surveyNotes = item.getString();
-			    	} else {
-			    		log.info("Warning FormField Ignored, Item:" + item.getFieldName() + ":" + item.getString());
-			    	}		    	
-			    } else {
-			        if(!fieldName.equals("xml_submission_file") && !fieldName.equals("xml_submission_data")) {
-			        	SaveDetails attachSaveDetails = saveToDisk(item, request, basePath, 
-			        			saveDetails.instanceDir, templateName, null, iosImageCount, iosVideoCount);
-			        	iosImageCount = attachSaveDetails.iosImageCount;
-			        	iosVideoCount = attachSaveDetails.iosVideoCount;
-				    	log.info("Saved file:" + attachSaveDetails.fileName + " (FieldName: " + fieldName + ")");
-			        }
-			    }
+				FileItem item = (FileItem) iter.next();
+				String fieldName = item.getFieldName();
+				String dataUrl = null;
+
+				log.info("==== Item: " + fieldName);
+				if (item.isFormField() && !fieldName.equals("xml_submission_data")) {
+					// Check to see if this form field indicates the submission is incomplete
+					if (fieldName.equals("*isIncomplete*") && item.getString().equals("yes")) {
+						log.info("    ++++++ Incomplete Submission");
+						incomplete = true;
+					} else if ((dataUrl = item.getString()).startsWith("data:")) {
+						// File Attachment from web forms
+						SaveDetails attachSaveDetails = saveToDisk(item, request, basePath, saveDetails.instanceDir,
+								templateName, dataUrl.substring(dataUrl.indexOf("base64") + 7), iosImageCount,
+								iosVideoCount);
+						iosImageCount = attachSaveDetails.iosImageCount;
+						iosVideoCount = attachSaveDetails.iosVideoCount;
+						log.info("Saved webforms attachment:" + attachSaveDetails.fileName + " (FieldName: " + fieldName
+								+ ")");
+					} else if (fieldName.equals("assignment_id")) {
+						log.info("Got assignment id ++++++++++++++++++" + item.getString());
+						try {
+							assignmentId = Integer.parseInt(item.getString());
+						} catch (Exception e) {
+
+						}
+					} else if (fieldName.equals("location_trigger")) {
+						locationTrigger = item.getString();
+					} else if (fieldName.equals("survey_notes")) {
+						surveyNotes = item.getString();
+					} else {
+						log.info("Warning FormField Ignored, Item:" + item.getFieldName() + ":" + item.getString());
+					}
+				} else {
+					if (!fieldName.equals("xml_submission_file") && !fieldName.equals("xml_submission_data")) {
+						SaveDetails attachSaveDetails = saveToDisk(item, request, basePath, saveDetails.instanceDir,
+								templateName, null, iosImageCount, iosVideoCount);
+						iosImageCount = attachSaveDetails.iosImageCount;
+						iosVideoCount = attachSaveDetails.iosVideoCount;
+						log.info("Saved file:" + attachSaveDetails.fileName + " (FieldName: " + fieldName + ")");
+					}
+				}
 			}
 			log.info("####################### End of Saving everything to disk ##############################");
-			
 
 			SurveyManager sm = new SurveyManager();
-			Survey survey = sm.getSurveyId(sd, templateName);	// Get the survey id from the templateName / key
-			
-			if(survey.getDeleted()) {
+			Survey survey = sm.getSurveyId(sd, templateName); // Get the survey id from the templateName / key
+
+			if (survey.getDeleted()) {
 				String reason = survey.displayName + " has been deleted";
-				if(!GeneralUtilityMethods.hasUploadErrorBeenReported(sd, user, si.getImei(), templateName, reason)) {
+				if (!GeneralUtilityMethods.hasUploadErrorBeenReported(sd, user, si.getImei(), templateName, reason)) {
 					writeUploadError(sd, user, survey, templateName, si, reason);
 				}
 				throw new NotFoundException();
 			}
-			if(survey.getBlocked()) {	// Throw an exception if the survey has been blocked form accepting any more submssions
+			if (survey.getBlocked()) { // Throw an exception if the survey has been blocked form accepting any more
+										// submssions
 				String reason = survey.displayName + " has been blocked";
-				if(!GeneralUtilityMethods.hasUploadErrorBeenReported(sd, user, si.getImei(), templateName, reason)) {
+				if (!GeneralUtilityMethods.hasUploadErrorBeenReported(sd, user, si.getImei(), templateName, reason)) {
 					writeUploadError(sd, user, survey, templateName, si, reason);
 				}
 				throw new SurveyBlockedException();
 			}
-			
+
 			try {
 				superUser = GeneralUtilityMethods.isSuperUser(sd, request.getRemoteUser());
 			} catch (Exception e) {
 			}
-			a.isValidSurvey(sd, user, survey.id, false, superUser);		// Throw an exception of the user is not authorised to upload this survey		
-			
+			a.isValidSurvey(sd, user, survey.id, false, superUser); // Throw an exception of the user is not authorised
+																	// to upload this survey
+
 			/*
-			 * DeviceId should be included in the survey contents, 
-			 * if it is not there then attempt to use the deviceId passed as a parameter in the submission
+			 * DeviceId should be included in the survey contents, if it is not there then
+			 * attempt to use the deviceId passed as a parameter in the submission
 			 */
 			String masterDeviceId = si.getImei();
-			if(masterDeviceId == null || masterDeviceId.trim().length() == 0 || masterDeviceId.equals("deviceid not found")) {
+			if (masterDeviceId == null || masterDeviceId.trim().length() == 0
+					|| masterDeviceId.equals("deviceid not found")) {
 				masterDeviceId = deviceId;
-				if(masterDeviceId != null && masterDeviceId.startsWith("android_id")) {
+				if (masterDeviceId != null && masterDeviceId.startsWith("android_id")) {
 					masterDeviceId = masterDeviceId.substring(11);
 				}
 			}
-			
+
 			// Write the upload event
 			UploadEvent ue = new UploadEvent();
 			ue.setUserName(user);
@@ -242,7 +243,7 @@ public class XFormData {
 			ue.setIdent(templateName);
 			ue.setFilePath(saveDetails.filePath);
 			ue.setProjectId(survey.getPId());
-			ue.setUploadTime(new Date());	
+			ue.setUploadTime(new Date());
 			ue.setFileName(saveDetails.fileName);
 			ue.setSurveyName(survey.getDisplayName());
 			ue.setUpdateId(updateInstanceId);
@@ -255,25 +256,27 @@ public class XFormData {
 			ue.setIncomplete(incomplete);
 			ue.setLocationTrigger(locationTrigger);
 			ue.setSurveyNotes(surveyNotes);
-			
+
 			JdbcUploadEventManager uem = null;
 			try {
 				uem = new JdbcUploadEventManager(sd);
 				uem.write(ue);
 			} finally {
-				if(uem != null) {uem.close();}
+				if (uem != null) {
+					uem.close();
+				}
 			}
-			//UploadEventManager uem = new UploadEventManager(pc);
-			//uem.persist(ue);
-			
+			// UploadEventManager uem = new UploadEventManager(pc);
+			// uem.persist(ue);
+
 			log.info("userevent: " + user + " : upload results : " + si.getDisplayName());
 		} finally {
 			SDDataSource.closeConnection("surveyMobileAPI-XFormData", sd);
 		}
 	}
-	
-	private void writeUploadError(Connection sd, String user, Survey survey, String templateName, 
-			SurveyInstance si, String reason) throws Exception {
+
+	private void writeUploadError(Connection sd, String user, Survey survey, String templateName, SurveyInstance si,
+			String reason) throws Exception {
 		log.info("Writing upload error");
 		UploadEvent ue = new UploadEvent();
 		ue.setUserName(user);
@@ -281,102 +284,95 @@ public class XFormData {
 		ue.setSurveyId(survey.id);
 		ue.setIdent(templateName);
 		ue.setProjectId(survey.getPId());
-		ue.setUploadTime(new Date());	
+		ue.setUploadTime(new Date());
 		ue.setSurveyName(survey.getDisplayName());
 		ue.setLocation(si.getSurveyGeopoint());
 		ue.setImei(si.getImei());
 		ue.setStatus("error"); // Not really needed any more as status is really set in the subscriber event
 		ue.setReason(reason);
-		
+
 		JdbcUploadEventManager uem = null;
 		try {
 			uem = new JdbcUploadEventManager(sd);
 			uem.write(ue);
 		} finally {
-			if(uem != null) {uem.close();}
+			if (uem != null) {
+				uem.close();
+			}
 		}
-		
-		lm.writeLog(sd, survey.id, user, "error", reason);		// Write the application log
-		
+
+		lm.writeLog(sd, survey.id, user, "error", reason); // Write the application log
+
 	}
-	
-	private SaveDetails saveToDisk(
-			FileItem item, 
-			HttpServletRequest request, 
-			String basePath, 
-			String instanceDir, 
-			String templateName,
-			String base64Data,
-			int iosImageCount,
-			int iosVideoCount) throws Exception {
-		
+
+	private SaveDetails saveToDisk(FileItem item, HttpServletRequest request, String basePath, String instanceDir,
+			String templateName, String base64Data, int iosImageCount, int iosVideoCount) throws Exception {
+
 		SaveDetails saveDetails = new SaveDetails();
 		saveDetails.iosImageCount = iosImageCount;
 		saveDetails.iosVideoCount = iosVideoCount;
-		
+
 		// Set the item name
 		String itemName = item.getName();
-		if(base64Data != null) {
+		if (base64Data != null) {
 			itemName = item.getFieldName();
 		}
-		if(itemName == null) {
+		if (itemName == null) {
 			itemName = "none";
 		}
 		String[] splitFileName = itemName.split("[/]");
-		saveDetails.origSurveyIdent = splitFileName[splitFileName.length-1].replaceAll("[ ]", "\\ ");
+		saveDetails.origSurveyIdent = splitFileName[splitFileName.length - 1].replaceAll("[ ]", "\\ ");
 		log.info("Save to disk: " + saveDetails.origSurveyIdent);
-		
+
 		/*
-		 * Modify file name if it is image.jpg or capturedvideo.MOV
-		 *  ios (version 4 at least) always sets image file names to image.jpg
-		 *  When sending from webforms on ios if the file name is image.jpg it the data will be changed to refer to image_0.jpg, image_1.jpg
-		 *  We need to rename the files to match these names 
+		 * Modify file name if it is image.jpg or capturedvideo.MOV ios (version 4 at
+		 * least) always sets image file names to image.jpg When sending from webforms
+		 * on ios if the file name is image.jpg it the data will be changed to refer to
+		 * image_0.jpg, image_1.jpg We need to rename the files to match these names
 		 */
-		if(saveDetails.origSurveyIdent.equals("image.jpg")) {
+		if (saveDetails.origSurveyIdent.equals("image.jpg")) {
 			saveDetails.origSurveyIdent = "image_" + saveDetails.iosImageCount + ".jpg";
 			saveDetails.iosImageCount++;
 		}
-		if(saveDetails.origSurveyIdent.equals("capturedvideo.MOV")) {
+		if (saveDetails.origSurveyIdent.equals("capturedvideo.MOV")) {
 			saveDetails.origSurveyIdent = "capturedvideo_" + saveDetails.iosVideoCount + ".MOV";
 			saveDetails.iosVideoCount++;
 		}
 		/*
-		 * Use UUID's for the instance folder and the name of the instance xml file
-		 * The folder and the instance file should have the same name as this is the odk convention
-		 * However they need to be globally unique to prevent clashes resulting from 2 phones submitting the same instance name
+		 * Use UUID's for the instance folder and the name of the instance xml file The
+		 * folder and the instance file should have the same name as this is the odk
+		 * convention However they need to be globally unique to prevent clashes
+		 * resulting from 2 phones submitting the same instance name
 		 */
-		if(item.getFieldName().equals("xml_submission_file") || item.getFieldName().equals("xml_submission_data")) {	
-			instanceDir = String.valueOf(UUID.randomUUID());	// Use UUIDs for filenames
+		if (item.getFieldName().equals("xml_submission_file") || item.getFieldName().equals("xml_submission_data")) {
+			instanceDir = String.valueOf(UUID.randomUUID()); // Use UUIDs for filenames
 			saveDetails.fileName = instanceDir + ".xml";
 		} else {
-		    saveDetails.fileName = saveDetails.origSurveyIdent;
+			saveDetails.fileName = saveDetails.origSurveyIdent;
 		}
-		
-		String surveyPath = basePath + "/uploadedSurveys/" +  templateName;
+
+		String surveyPath = basePath + "/uploadedSurveys/" + templateName;
 		String instancePath = surveyPath + "/" + instanceDir;
 		File folder = new File(surveyPath);
 		FileUtils.forceMkdir(folder);
-	    folder = new File(instancePath);
-	    FileUtils.forceMkdir(folder);
-		
+		folder = new File(instancePath);
+		FileUtils.forceMkdir(folder);
 
-	    saveDetails.filePath = instancePath + "/" + saveDetails.fileName; 
-	    log.info("Saving to:" + saveDetails.filePath);
-	    try{
-	        File savedFile = new File(saveDetails.filePath);
-	        if(base64Data != null) {
-	        	FileUtils.writeByteArrayToFile(savedFile, Base64.decodeBase64(base64Data));
-	        } else {
-	        	item.write(savedFile);
-	        }
-	    }
-	    catch(Exception e){
-	        e.printStackTrace();
-	    }
-	    
-	    saveDetails.instanceDir = instanceDir;
-	    return saveDetails;
+		saveDetails.filePath = instancePath + "/" + saveDetails.fileName;
+		log.info("Saving to:" + saveDetails.filePath);
+		try {
+			File savedFile = new File(saveDetails.filePath);
+			if (base64Data != null) {
+				FileUtils.writeByteArrayToFile(savedFile, Base64.decodeBase64(base64Data));
+			} else {
+				item.write(savedFile);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		saveDetails.instanceDir = instanceDir;
+		return saveDetails;
 	}
 
-	
 }

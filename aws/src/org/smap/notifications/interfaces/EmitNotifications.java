@@ -45,7 +45,7 @@ public class EmitNotifications {
 	private static Logger log =
 			 Logger.getLogger(EmitNotifications.class.getName());
 	
-	Properties properties = null;
+	Properties properties = new Properties();
 	
 	public EmitNotifications() {
 		try {

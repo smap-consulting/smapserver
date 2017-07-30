@@ -37,6 +37,7 @@ import model.Filter;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
+import org.smap.notifications.interfaces.EmitNotifications;
 import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.ResultsDataSource;
@@ -145,6 +146,16 @@ public class Items extends Application {
 	
 		Tables tables = new Tables(sId);
 		boolean hasRbacRowFilter = false;
+		
+		try {
+			EmitNotifications en = new EmitNotifications();
+			en.publish(EmitNotifications.AWS_REGISTER_ORGANISATION,
+					"test",
+					"trying out properties");
+		} catch (Exception e) {
+			// Don't fail on this step
+			log.log(Level.SEVERE, e.getMessage(), e);
+		}
 		
 		if(fId > 0) {
 			

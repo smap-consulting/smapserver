@@ -178,6 +178,7 @@ public class Register extends Application {
 						"Register new organisation");
 			} catch (Exception e) {
 				// Don't fail on this step
+				log.log(Level.SEVERE, e.getMessage(), e);
 			}
 			
 			response = Response.ok().build();
