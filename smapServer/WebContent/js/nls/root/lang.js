@@ -562,7 +562,7 @@ define({
     "ed_gps": "GPS Point",
     "ed_calc": "Calculation",
     "ed_audio": "Audio",
-    "ed_video": "Vidoe",
+    "ed_video": "Video",
     "ed_bc": "Barcode",
     "ed_dt": "Date and Time",
     "ed_t": "Time",
