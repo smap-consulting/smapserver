@@ -2,6 +2,9 @@
 -- Apply upgrade patches to survey definitions database
 --
 
+-- Clean up database
+vacuum analyze;
+
 -- Upgrade to:  13.08 from 13.07 =======
 alter table tasks add column existing_record integer;
 

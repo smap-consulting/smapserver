@@ -258,7 +258,7 @@ public class ActionService extends Application{
 	    Survey s = sm.getById(
 	    		sd, 
 	    		cResults, uIdent, a.sId, false, null, null, false, false, false, false, false,
-	    		null, false, 0, null);
+	    		null, false, false, 0, null);
 	    if(s == null) {
 	    	throw new Exception(localisation.getString("mf_snf"));
 	    }

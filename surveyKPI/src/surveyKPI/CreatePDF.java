@@ -108,7 +108,7 @@ public class CreatePDF extends Application {
 			org.smap.sdal.model.Survey survey = null;
 			boolean generateBlank =  (instanceId == null) ? true : false;	// If false only show selected options
 			survey = sm.getById(connectionSD, cResults, request.getRemoteUser(), sId, true, basePath, 
-					instanceId, true, generateBlank, true, false, true, "real", superUser, utcOffset, "geojson");
+					instanceId, true, generateBlank, true, false, true, "real", false, superUser, utcOffset, "geojson");
 			
 			String urlprefix = request.getScheme() + "://" + request.getServerName() + "/";
 			pm.createPdf(

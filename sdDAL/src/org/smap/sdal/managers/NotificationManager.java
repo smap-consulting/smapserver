@@ -420,7 +420,7 @@ public class NotificationManager {
 				boolean generateBlank =  (instanceId == null) ? true : false;	// If false only show selected options
 				boolean superUser = GeneralUtilityMethods.isSuperUser(sd, remoteUser);
 				survey = sm.getById(sd, cResults, remoteUser, sId, true, basePath, 
-						instanceId, true, generateBlank, true, false, true, "real", superUser, utcOffset, "geojson");
+						instanceId, true, generateBlank, true, false, true, "real", false, superUser, utcOffset, "geojson");
 	
 				/*
 				 * Add details from the survey to the subject and email content

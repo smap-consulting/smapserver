@@ -191,6 +191,7 @@ public class SurveyManager {
 			boolean getSoftDeleted,				// Set to true to get soft deleted questions
 			boolean getHrk,						// Set to true to return HRK as a question if it exists in the survey
 			String getExternalOptions,			// external || internal || real (get external if they exist else get internal)
+			boolean getChangeHistory,	
 			boolean superUser,
 			int utcOffset,
 			String geomFormat
@@ -268,7 +269,8 @@ public class SurveyManager {
 				
 				populateSurvey(sd, cResults, s, basePath, user, getPropertyTypeQuestions, getExternalOptions, 
 						getSoftDeleted,
-						getHrk);			// Add forms, questions, options
+						getHrk,
+						getChangeHistory);			// Add forms, questions, options
 				
 				if(getResults) {								// Add results
 					
@@ -594,7 +596,8 @@ public class SurveyManager {
 			boolean getPropertyTypeQuestions,
 			String getExternalOptions,
 			boolean getSoftDeleted,
-			boolean getHrk) throws Exception {
+			boolean getHrk,
+			boolean getChangeHistory) throws Exception {
 		
 		/*
 		 * Prepared Statements
@@ -977,31 +980,35 @@ public class SurveyManager {
 		}
 		
 		// Add the change log
-		pstmtGetChanges.setInt(1, s.getId());
-		rsGetChanges = pstmtGetChanges.executeQuery();
-		
-		Gson gson =  new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
-		
-		while (rsGetChanges.next()) {
+		if(getChangeHistory) {
+			pstmtGetChanges.setInt(1, s.getId());
+			log.info("Get change log: " + pstmtGetChanges.toString());
+			rsGetChanges = pstmtGetChanges.executeQuery();
 			
-			ChangeLog cl = new ChangeLog();
+			Gson gson =  new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
 			
-			cl.change = gson.fromJson(rsGetChanges.getString(1), ChangeElement.class);
-			
-			cl.cId = rsGetChanges.getInt(2);
-			cl.version = rsGetChanges.getInt(3);
-			cl.userName = rsGetChanges.getString(4);
-			cl.updatedTime = rsGetChanges.getTimestamp(5);
-			cl.apply_results = rsGetChanges.getBoolean(6);
-			cl.success = rsGetChanges.getBoolean(7) || !cl.apply_results;	// Set the update of the results database to success automatically if a change does not need to be applied
-			cl.msg = rsGetChanges.getString(8);
-
-			s.changes.add(cl);
+			while (rsGetChanges.next()) {
+				
+				ChangeLog cl = new ChangeLog();
+				
+				cl.change = gson.fromJson(rsGetChanges.getString(1), ChangeElement.class);
+				
+				cl.cId = rsGetChanges.getInt(2);
+				cl.version = rsGetChanges.getInt(3);
+				cl.userName = rsGetChanges.getString(4);
+				cl.updatedTime = rsGetChanges.getTimestamp(5);
+				cl.apply_results = rsGetChanges.getBoolean(6);
+				cl.success = rsGetChanges.getBoolean(7) || !cl.apply_results;	// Set the update of the results database to success automatically if a change does not need to be applied
+				cl.msg = rsGetChanges.getString(8);
+	
+				s.changes.add(cl);
+			}
 		}
 		
 		// Add the linkable surveys
 		pstmtGetLinkable.setInt(1, oId);
 		pstmtGetLinkable.setString(2, user);
+		log.info("Get linkable surveys: " + pstmtGetLinkable.toString());
 		rsGetLinkable = pstmtGetLinkable.executeQuery();
 		while(rsGetLinkable.next()) {
 			int linkedId = rsGetLinkable.getInt(1);
