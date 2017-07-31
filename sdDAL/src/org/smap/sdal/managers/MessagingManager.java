@@ -3,6 +3,7 @@ package org.smap.sdal.managers;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.Locale;
 import java.util.ResourceBundle;
 import java.util.logging.Level;
@@ -10,9 +11,14 @@ import java.util.logging.Logger;
 
 import javax.mail.internet.AddressException;
 import javax.mail.internet.InternetAddress;
+
+import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.UtilityMethodsEmail;
 import org.smap.sdal.model.EmailServer;
+import org.smap.sdal.model.SurveyMessage;
 import org.smap.sdal.model.Organisation;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 /*****************************************************************************
  * 
@@ -42,6 +48,40 @@ public class MessagingManager {
 
 	LogManager lm = new LogManager(); // Application log
 
+	/*
+	 * Create a message resulting from a change to a form
+	 */
+	public void surveyChange(Connection sd, int sId) throws SQLException {
+		Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
+		String data = gson.toJson(new SurveyMessage(sId));		
+		int oId = GeneralUtilityMethods.getOrganisationIdForSurvey(sd, sId);		
+		createMessage(sd, oId, "survey", null, data);
+	}
+	
+	/*
+	 * Create a new message
+	 */
+	public void createMessage(Connection sd, int oId, String topic, String msg, String data) throws SQLException {
+		
+		String sqlMsg = "insert into message" + "(o_id, topic, description, data, outbound, created_time) "
+				+ "values(?, ?, ?, ?, 'true', now())";
+		PreparedStatement pstmtMsg = null;
+		
+		try {
+			pstmtMsg = sd.prepareStatement(sqlMsg);
+			pstmtMsg.setInt(1, oId);
+			pstmtMsg.setString(2, topic);
+			pstmtMsg.setString(3, msg);
+			pstmtMsg.setString(4, data);
+			log.info("Add message: " + pstmtMsg.toString());
+			pstmtMsg.executeUpdate();
+		} finally {
+
+			try {if (pstmtMsg != null) {	pstmtMsg.close();}} catch (SQLException e) {}
+
+		}
+	}
+	
 	/*
 	 * Apply any outbound messages
 	 */
@@ -74,49 +114,63 @@ public class MessagingManager {
 				int o_id = rs.getInt(2);
 				String topic = rs.getString(3);
 				String description = rs.getString(4);
+				String data = rs.getString(5);
 				
 				// Localisation
 				Organisation organisation = UtilityMethodsEmail.getOrganisationDefaults(sd, o_id);
 				Locale locale = new Locale(organisation.locale);
 				ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
 				
-				log.info("++++++ Message: " + topic + " " + description);
+				log.info("++++++ Message: " + topic + " " + description + " : " + data );
 
 				String status = "Success";
 				
 				/*
-				 * Send document to target
+				 * Record that the message is being processed
+				 * After this point it will not be processed again even if it fails unless there is manual intervention
 				 */
-				
 				pstmtConfirm.setString(1, "Sending");
 				pstmtConfirm.setInt(2, id);
 				log.info(pstmtConfirm.toString());
 				pstmtConfirm.executeUpdate();
 				
-				EmailServer emailServer = UtilityMethodsEmail.getSmtpHost(sd, null, null);
-				if (isValidEmail(topic) && 
-						emailServer.smtpHost != null && emailServer.smtpHost.trim().length() > 0) {
-
-					// Set the subject
-					String subject = "";
-					String from = "";
-
-					subject += localisation.getString("c_message");
-
-					try {
-						EmailManager em = new EmailManager();
-
-						em.sendEmail(topic, null, "notify", subject, description, from, null, null, null, null, null,
-								null, organisation.getAdminEmail(), emailServer, "https", serverName, localisation);
-					} catch (Exception e) {
-						status = "Error";
+				if(topic.equals("survey")) {
+					Gson gson=  new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
+					SurveyMessage sm = gson.fromJson(data, SurveyMessage.class);
+					if(sm != null) {
+						System.out.println("xxxxxxxxxxxxxxxxxxxx Processing: " + sm.id);
+					} else {
+						System.out.println("Error: null survey message");
 					}
-
 				} else {
-					log.log(Level.SEVERE, "Error: Attempt to do email notification but email server not set");
-					status = "Error: email server not enabled";
+					// Assume a direct email
+
+					EmailServer emailServer = UtilityMethodsEmail.getSmtpHost(sd, null, null);
+					if (isValidEmail(topic) && 
+							emailServer.smtpHost != null && emailServer.smtpHost.trim().length() > 0) {
+	
+						// Set the subject
+						String subject = "";
+						String from = "";
+	
+						subject += localisation.getString("c_message");
+	
+						try {
+							EmailManager em = new EmailManager();
+	
+							em.sendEmail(topic, null, "notify", subject, description, from, null, null, null, null, null,
+									null, organisation.getAdminEmail(), emailServer, "https", serverName, localisation);
+						} catch (Exception e) {
+							status = "Error";
+						}
+	
+					} else {
+						log.log(Level.SEVERE, "Error: Attempt to do email notification but email server not set");
+						status = "Error: email server not enabled";
+					}
 				}
 				
+				// Set the final status
 				pstmtConfirm.setString(1, status);
 				pstmtConfirm.setInt(2, id);
 				log.info(pstmtConfirm.toString());

@@ -883,6 +883,10 @@ CREATE SEQUENCE message_seq START 1;
 ALTER SEQUENCE message_seq OWNER TO ws;
 
 -- Very draft definition of Smap messaging
+-- topic is
+--    and email for direct (hack) notifications
+--    form for a change to a form
+
 DROP TABLE IF EXISTS message CASCADE;
 create TABLE message (
 	id integer DEFAULT NEXTVAL('message_seq') CONSTRAINT pk_message PRIMARY KEY,
