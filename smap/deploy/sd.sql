@@ -2,6 +2,9 @@
 -- Apply upgrade patches to survey definitions database
 --
 
+-- Clean up database
+vacuum analyze;
+
 -- Upgrade to:  13.08 from 13.07 =======
 alter table tasks add column existing_record integer;
 
@@ -773,6 +776,7 @@ ALTER TABLE report OWNER TO ws;
 
 -- Upgrade to 17.06
 alter table server add column sms_url text;
+delete from survey_change where changes like '%"action":"external option"%' ;
 
 -- Upgrade to 17.07
 alter table organisation add column ft_send_wifi boolean default false;

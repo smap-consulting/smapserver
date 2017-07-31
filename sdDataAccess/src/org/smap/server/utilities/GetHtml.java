@@ -66,7 +66,7 @@ public class GetHtml {
 		try {
 
 			survey = sm.getById(sd, null, request.getRemoteUser(), sId, true, basePath, null, false, false, true, false,
-					false, "real", superUser, 0, null);
+					false, "real", false, superUser, 0, null);
 
 			log.info("Getting survey as Html-------------------------------");
 			// Create a new XML Document

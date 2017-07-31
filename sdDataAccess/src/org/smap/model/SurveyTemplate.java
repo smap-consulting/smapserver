@@ -1666,7 +1666,7 @@ public class SurveyTemplate {
 				}
 			}
 			
-			sm.applyChangeSetArray(connectionSD, cResults, survey.getId(), user, changes);
+			sm.applyChangeSetArray(connectionSD, cResults, survey.getId(), user, changes, false);
 			
 		} catch(Exception e) {
 			// Record exception but otherwise ignore

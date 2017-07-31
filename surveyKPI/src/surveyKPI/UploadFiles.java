@@ -736,7 +736,7 @@ public class UploadFiles extends Application {
 		 
 		// Apply the changes 
 		if(changes.size() > 0) {
-			sm.applyChangeSetArray(connectionSD, cResults, sId, user, changes);
+			sm.applyChangeSetArray(connectionSD, cResults, sId, user, changes, false);
 		} else {
 			// No changes to the survey definition but we will update the survey version so that it gets downloaded with the new CSV data (pulldata only surveys will follow this path)
 			GeneralUtilityMethods.updateVersion(connectionSD, sId);

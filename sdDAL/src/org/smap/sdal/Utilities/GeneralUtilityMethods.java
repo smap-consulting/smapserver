@@ -306,6 +306,7 @@ public class GeneralUtilityMethods {
 				!host.endsWith(".icanreach.com") &&
 				!host.endsWith("encontactone.com") &&
 				!host.endsWith(".kontrolid.com") &&
+				!host.endsWith(".ezpilot.me") &&
 				!host.endsWith(".smap.com.au")) {
 			businessServer = false;;
 		}

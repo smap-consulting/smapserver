@@ -162,7 +162,8 @@ public class Surveys extends Application {
 	@Path("/{sId}")
 	@Produces("application/json")
 	public Response getSurveyDetails(@Context HttpServletRequest request,
-			@PathParam("sId") int sId
+			@PathParam("sId") int sId,
+			@QueryParam("get_changes") boolean getChanges
 			) { 
 		
 		try {
@@ -203,6 +204,7 @@ public class Surveys extends Application {
 					true,
 					false,
 					"internal",
+					getChanges,
 					superUser,
 					0,
 					null);
@@ -283,7 +285,7 @@ public class Surveys extends Application {
 			survey = sm.getById(connectionSD, 
 					cResults,  request.getRemoteUser(), sId, true, 
 					basePath, null, false, false, true, true, false,
-					"internal", true, 0, null);
+					"internal", false, true, 0, null);
 			log.info("userevent: " + request.getRemoteUser() + " : create empty survey : " + name + " in project " + projectId);
 			Gson gson=  new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
 			String resp = gson.toJson(survey);
@@ -355,7 +357,7 @@ public class Surveys extends Application {
 			org.smap.sdal.model.Survey  survey = sm.getById(sd, 
 					null,  request.getRemoteUser(), sId, true, 
 					basePath, null, false, false, true, true, false,
-					"internal", true, 0, null);
+					"internal", false, true, 0, null);
 			
 			String resp = gson.toJson(survey);
 			response = Response.ok(resp).build();
@@ -493,7 +495,7 @@ public class Surveys extends Application {
 		try {
 	
 			SurveyManager sm = new SurveyManager();
-			ChangeResponse resp = sm.applyChangeSetArray(connectionSD, cResults, sId, request.getRemoteUser(), changes);
+			ChangeResponse resp = sm.applyChangeSetArray(connectionSD, cResults, sId, request.getRemoteUser(), changes, true);
 			
 			// Add any options that this survey links to in an an external file
 			if(updateExternalChoices) {
