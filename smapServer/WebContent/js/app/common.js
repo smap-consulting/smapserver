@@ -1378,10 +1378,13 @@ function questionMetaURL (sId, lang, qId) {
 /*
  * Get a survey details - depends on globals being set
  */
-function getSurveyDetails(callback) {
+function getSurveyDetails(callback, get_changes) {
 
 	var url="/surveyKPI/surveys/" + globals.gCurrentSurvey;
-	
+	if(get_changes) {
+		url += "?get_changes=true";
+	}
+
 	if(!globals.gCurrentSurvey) {
 		alert("Error: Can't get survey details, Survey identifier not specified");
 	} else {
