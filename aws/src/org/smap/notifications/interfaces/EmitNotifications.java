@@ -5,8 +5,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.amazonaws.auth.ClasspathPropertiesFileCredentialsProvider;
-import com.amazonaws.regions.Region;
-import com.amazonaws.regions.Regions;
+import com.amazonaws.services.sns.AmazonSNS;
 import com.amazonaws.services.sns.AmazonSNSClient;
 import com.amazonaws.services.sns.model.PublishRequest;
 import com.amazonaws.services.sns.model.PublishResult;
@@ -62,14 +61,16 @@ public class EmitNotifications {
 	public void publish(int event, String msg, String subject) {
 		
 		//create a new SNS client and set endpoint
-		AmazonSNSClient snsClient = new AmazonSNSClient(new ClasspathPropertiesFileCredentialsProvider());		                           
-		snsClient.setRegion(Region.getRegion(Regions.AP_SOUTHEAST_1));	// Singapore
+		AmazonSNS sns = AmazonSNSClient.builder()
+				.withRegion("ap-southeast-1")
+				.withCredentials(new ClasspathPropertiesFileCredentialsProvider())
+				.build();
 		
 		String topic = getTopic(event);
 		
 		if(topic != null) {
 			PublishRequest publishRequest = new PublishRequest(topic, msg, subject);
-			PublishResult publishResult = snsClient.publish(publishRequest);
+			PublishResult publishResult = sns.publish(publishRequest);
 			log.info("Publish: " + subject + " MessageId - " + publishResult.getMessageId());
 		} 
 		

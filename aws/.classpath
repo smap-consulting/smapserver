@@ -1,32 +1,30 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry kind="src" path="src"/>
-	<classpathentry kind="con" path="org.eclipse.jst.j2ee.internal.module.container"/>
-	<classpathentry kind="lib" path="Libraries/jackson-annotations-2.5.3.jar">
+	<classpathentry including="**/*.java" kind="src" output="target/classes" path="src">
 		<attributes>
-			<attribute name="org.eclipse.jst.component.dependency" value="../"/>
+			<attribute name="optional" value="true"/>
+			<attribute name="maven.pomderived" value="true"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="lib" path="Libraries/jackson-core-2.5.3.jar">
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.6">
 		<attributes>
-			<attribute name="org.eclipse.jst.component.dependency" value="../"/>
+			<attribute name="maven.pomderived" value="true"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="lib" path="Libraries/jackson-databind-2.5.3.jar">
+	<classpathentry kind="con" path="org.eclipse.m2e.MAVEN2_CLASSPATH_CONTAINER">
 		<attributes>
-			<attribute name="org.eclipse.jst.component.dependency" value="../"/>
+			<attribute name="maven.pomderived" value="true"/>
+			<attribute name="org.eclipse.jst.component.nondependency" value=""/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="lib" path="Libraries/joda-time-2.8.1.jar">
+	<classpathentry kind="lib" path="/Users/neilpenman/.m2/repository/com/amazonaws/aws-java-sdk-core/1.11.158/aws-java-sdk-core-1.11.158.jar">
 		<attributes>
-			<attribute name="org.eclipse.jst.component.dependency" value="../"/>
+			<attribute name="maven.pomderived" value="true"/>
+			<attribute name="maven.groupId" value="com.amazonaws"/>
+			<attribute name="maven.artifactId" value="aws-java-sdk-core"/>
+			<attribute name="maven.version" value="1.11.158"/>
+			<attribute name="maven.scope" value="compile"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.launching.macosx.MacOSXType/Java SE 8 [1.8.0_45]"/>
-	<classpathentry kind="lib" path="Libraries/aws-java-sdk-1.10.43.jar">
-		<attributes>
-			<attribute name="org.eclipse.jst.component.dependency" value="../"/>
-		</attributes>
-	</classpathentry>
-	<classpathentry kind="output" path="bin"/>
+	<classpathentry kind="output" path="target/classes"/>
 </classpath>

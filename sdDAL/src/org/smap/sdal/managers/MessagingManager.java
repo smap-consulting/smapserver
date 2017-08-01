@@ -12,6 +12,7 @@ import java.util.logging.Logger;
 import javax.mail.internet.AddressException;
 import javax.mail.internet.InternetAddress;
 
+import org.smap.notifications.interfaces.EmitDeviceNotification;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.UtilityMethodsEmail;
 import org.smap.sdal.model.EmailServer;
@@ -104,6 +105,7 @@ public class MessagingManager {
 
 		try {
 
+			EmitDeviceNotification emitDevice = new EmitDeviceNotification();
 			pstmtGetMessages = sd.prepareStatement(sqlGetMessages);
 			pstmtConfirm = sd.prepareStatement(sqlConfirm);
 
