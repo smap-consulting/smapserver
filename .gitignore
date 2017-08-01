@@ -26,6 +26,9 @@ local.properties
 .idea/
 workspace.xml
 
+# Properties
+aws.properties
+
 # enketo 
 smapServer/WebContent/build/css.orig
 combined.min.js

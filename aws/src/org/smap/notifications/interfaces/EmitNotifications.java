@@ -1,5 +1,6 @@
 package org.smap.notifications.interfaces;
 
+import java.io.FileInputStream;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -48,7 +49,7 @@ public class EmitNotifications {
 	
 	public EmitNotifications() {
 		try {
-				properties.load(getClass().getClassLoader().getResourceAsStream("aws.properties"));
+				properties.load(new FileInputStream("/smap_bin/resources/properties/aws.properties"));
 			}
 			catch (Exception e) { 
 				log.log(Level.SEVERE, "Error reading properties", e);

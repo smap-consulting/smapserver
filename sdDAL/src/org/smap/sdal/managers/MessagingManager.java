@@ -4,6 +4,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Locale;
 import java.util.ResourceBundle;
 import java.util.logging.Level;
@@ -91,6 +93,9 @@ public class MessagingManager {
 		ResultSet rs = null;
 		PreparedStatement pstmtGetMessages = null;
 		PreparedStatement pstmtConfirm = null;
+		
+		HashMap<Integer, SurveyMessage> changedSurveys = new HashMap<> ();
+		HashMap<String, SurveyMessage> usersImpacted =   new HashMap<> ();
 
 		String sqlGetMessages = "select id, "
 				+ "o_id, "
@@ -144,8 +149,11 @@ public class MessagingManager {
 					} else {
 						System.out.println("Error: null survey message");
 					}
+					
+					changedSurveys.put(sm.id, sm);
+					
 				} else {
-					// Assume a direct email
+					// Assume a direct email process immediately
 
 					EmailServer emailServer = UtilityMethodsEmail.getSmtpHost(sd, null, null);
 					if (isValidEmail(topic) && 
@@ -170,8 +178,8 @@ public class MessagingManager {
 						log.log(Level.SEVERE, "Error: Attempt to do email notification but email server not set");
 						status = "Error: email server not enabled";
 					}
+					
 				}
-				
 				// Set the final status
 				pstmtConfirm.setString(1, status);
 				pstmtConfirm.setInt(2, id);
@@ -179,6 +187,19 @@ public class MessagingManager {
 				pstmtConfirm.executeUpdate();
 
 			}
+			
+			/*
+			 * Device notifications have been accumulated to an array so that duplicates can be eliminated
+			 * Process these now
+			 */
+			for(Integer sId : changedSurveys.keySet()) {
+				ArrayList<String> users = getSurveyUsers(sd, sId);
+				for(String user : users) {
+					System.out.println("Need to notify:  " + user);
+				}
+			}
+			
+			
 
 		} catch (Exception e) {
 			log.log(Level.SEVERE, "Error", e);
@@ -211,5 +232,36 @@ public class MessagingManager {
 			isValid = false;
 		}
 		return isValid;
+	}
+	
+	/*
+	 * Get users of a survey
+	 */
+	ArrayList<String> getSurveyUsers(Connection sd, int sId) throws SQLException {
+		
+		ArrayList<String> users = new ArrayList<String> ();
+		String sql = "select u.ident "
+				+ "from users u, user_project up, survey s "
+				+ "where u.id = up.u_id "
+				+ "and s.p_id = up.p_id "
+				+ "and s.s_id = ? and not temporary";
+
+		PreparedStatement pstmt = null;
+		
+		try {
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setInt(1, sId);
+			log.info("Get survey users: " + pstmt.toString());
+			ResultSet rs = pstmt.executeQuery();
+			while(rs.next()) {
+				users.add(rs.getString(1));
+			}
+		} finally {
+
+			try {if (pstmt != null) {	pstmt.close();}} catch (SQLException e) {}
+
+		}
+		
+		return users;
 	}
 }
