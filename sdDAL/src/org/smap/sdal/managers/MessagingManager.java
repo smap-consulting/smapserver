@@ -192,11 +192,18 @@ public class MessagingManager {
 			 * Device notifications have been accumulated to an array so that duplicates can be eliminated
 			 * Process these now
 			 */
+			// Get a list of users impacted without duplicates
 			for(Integer sId : changedSurveys.keySet()) {
 				ArrayList<String> users = getSurveyUsers(sd, sId);
 				for(String user : users) {
+					usersImpacted.put(user, changedSurveys.get(sId));
 					System.out.println("Need to notify:  " + user);
-				}
+				}				
+			}
+			
+			// For each user send a notification to each of their devices
+			for(String user : usersImpacted.keySet()) {
+				emitDevice.notify(serverName, user);
 			}
 			
 			
@@ -241,8 +248,10 @@ public class MessagingManager {
 		
 		ArrayList<String> users = new ArrayList<String> ();
 		String sql = "select u.ident "
-				+ "from users u, user_project up, survey s "
+				+ "from users u, user_project up, survey s, user_group ug "
 				+ "where u.id = up.u_id "
+				+ "and u.id = ug.u_id "
+				+ "and ug.g_id = 3 "			// enum
 				+ "and s.p_id = up.p_id "
 				+ "and s.s_id = ? and not temporary";
 
