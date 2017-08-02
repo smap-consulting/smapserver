@@ -63,7 +63,6 @@
 	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/poi-ooxml-schemas-3.13-20150929.jar"/>
 	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/xmlbeans-2.6.0.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/sdDataAccess"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/aws"/>
 	<classpathentry kind="con" path="org.eclipse.jst.server.core.container/org.eclipse.jst.server.tomcat.runtimeTarget/Apache Tomcat v7.0">
 		<attributes>
 			<attribute name="owner.project.facets" value="jst.web;#system#"/>
@@ -71,5 +70,6 @@
 	</classpathentry>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.launching.macosx.MacOSXType/Java SE 8 [1.8.0_45]"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/grammars"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/amazon"/>
 	<classpathentry kind="output" path="build/classes"/>
 </classpath>
