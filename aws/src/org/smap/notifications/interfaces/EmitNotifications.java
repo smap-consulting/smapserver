@@ -61,7 +61,7 @@ public class EmitNotifications {
 	 */
 	public void publish(int event, String msg, String subject) {
 		
-		//create a new SNS client and set endpoint
+		//create a new SNS client
 		AmazonSNS sns = AmazonSNSClient.builder()
 				.withRegion("ap-southeast-1")
 				.withCredentials(new ClasspathPropertiesFileCredentialsProvider())

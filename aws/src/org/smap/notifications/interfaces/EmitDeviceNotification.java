@@ -2,6 +2,8 @@ package org.smap.notifications.interfaces;
 
 import java.io.FileInputStream;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -35,6 +37,10 @@ import com.amazonaws.services.dynamodbv2.model.TableDescription;
 import com.amazonaws.services.dynamodbv2.util.TableUtils;
 import com.amazonaws.services.sns.AmazonSNS;
 import com.amazonaws.services.sns.AmazonSNSClient;
+import com.amazonaws.services.sns.model.MessageAttributeValue;
+
+import tools.AmazonSNSClientWrapper;
+import tools.SampleMessageGenerator.Platform;
 
 /*****************************************************************************
  * 
@@ -62,10 +68,12 @@ public class EmitDeviceNotification {
 
 	private static Logger log = Logger.getLogger(EmitDeviceNotification.class.getName());
 
-    static AmazonDynamoDB dynamoDB;
+    private AmazonDynamoDB dynamoDB;
+    private AmazonSNSClientWrapper snsClientWrapper;
 	Properties properties = new Properties();
 	String tableName = null;
 	String region = null;
+	String platformApplicationArn = null;
 
 	public EmitDeviceNotification() {
 		
@@ -74,27 +82,25 @@ public class EmitDeviceNotification {
 			properties.load(new FileInputStream("/smap_bin/resources/properties/aws.properties"));
 			tableName = properties.getProperty("userDevices_table");
 			region = properties.getProperty("userDevices_region");
+			platformApplicationArn = properties.getProperty("fieldTask_platform");
 		} catch (Exception e) {
 			log.log(Level.SEVERE, "Error reading properties", e);
 		}
-        
-		/*
-		try {
-            credentials = new ProfileCredentialsProvider("default").getCredentials();
-        } catch (Exception e) {
-            throw new AmazonClientException(
-                    "Cannot load the credentials from the credential profiles file. " +
-                    "Please make sure that your credentials file is at the correct " +
-                    "location (/Users/neilpenman/.aws/credentials), and is in valid format.",
-                    e);
-        }
-        */
             
-		//create a new SNS client and set endpoint
+		//create a new DynamoDB client
 		dynamoDB = AmazonDynamoDBClient.builder()
 				.withRegion(region)
 				.withCredentials(new ProfileCredentialsProvider())
 				.build();
+		
+		//create a new SNS client
+		AmazonSNS sns = AmazonSNSClient.builder()
+				.withRegion(region)
+				.withCredentials(new ProfileCredentialsProvider())
+				.build();
+		
+		// create a wraper
+		snsClientWrapper = new AmazonSNSClientWrapper(sns);
 
 	}
 
@@ -108,7 +114,7 @@ public class EmitDeviceNotification {
 			server = "dev.smap.com.au";
 		}
 		
-		System.out.println("Notify: " + server + ":" + user);
+		// Get registration entries for this user
 		 HashMap<String, Condition> scanFilter = new HashMap<String, Condition>();
          Condition conditionServer = new Condition()
              .withComparisonOperator(ComparisonOperator.EQ.toString())
@@ -120,10 +126,23 @@ public class EmitDeviceNotification {
          scanFilter.put("userIdent", conditionUser);
          ScanRequest scanRequest = new ScanRequest(tableName).withScanFilter(scanFilter);
          ScanResult scanResult = dynamoDB.scan(scanRequest);
-         System.out.println("Result: " + scanResult); 
-		
-		
-	
+		 
+         // Process the results
+         List<Map<String, AttributeValue>> items = scanResult.getItems();
+         if(items!= null && items.size() > 0) {
+        	 	for(Map<String, AttributeValue> item : items) {
+        	 		AttributeValue val = item.get("registrationId");
+        	 		String token = val.getS();
+        	 		System.out.println("Token: " + token + " for " + server + ":" + user);
+        	 		
+        	        // Send the notification
+        	 		Map<Platform, Map<String, MessageAttributeValue>> attrsMap = new HashMap<Platform, Map<String, MessageAttributeValue>> ();
+        	 		snsClientWrapper.demoNotification(Platform.GCM, token, attrsMap, platformApplicationArn);
+        	 		
+        	 	}
+         } else {
+        	 	log.info("No token found for: " + server + ":" + user);
+         }
 		
 	}
 
