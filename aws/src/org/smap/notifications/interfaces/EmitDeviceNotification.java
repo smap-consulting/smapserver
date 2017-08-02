@@ -9,6 +9,7 @@ import java.util.logging.Logger;
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.auth.AWSCredentials;
+import com.amazonaws.auth.ClasspathPropertiesFileCredentialsProvider;
 import com.amazonaws.auth.profile.ProfileCredentialsProvider;
 import com.amazonaws.regions.Region;
 import com.amazonaws.regions.Regions;
@@ -32,6 +33,8 @@ import com.amazonaws.services.dynamodbv2.model.ScanRequest;
 import com.amazonaws.services.dynamodbv2.model.ScanResult;
 import com.amazonaws.services.dynamodbv2.model.TableDescription;
 import com.amazonaws.services.dynamodbv2.util.TableUtils;
+import com.amazonaws.services.sns.AmazonSNS;
+import com.amazonaws.services.sns.AmazonSNSClient;
 
 /*****************************************************************************
  * 
@@ -59,9 +62,10 @@ public class EmitDeviceNotification {
 
 	private static Logger log = Logger.getLogger(EmitDeviceNotification.class.getName());
 
-    static AmazonDynamoDBClient dynamoDB;
+    static AmazonDynamoDB dynamoDB;
 	Properties properties = new Properties();
 	String tableName = null;
+	String region = null;
 
 	public EmitDeviceNotification() {
 		
@@ -69,13 +73,13 @@ public class EmitDeviceNotification {
 		try {
 			properties.load(new FileInputStream("/smap_bin/resources/properties/aws.properties"));
 			tableName = properties.getProperty("userDevices_table");
+			region = properties.getProperty("userDevices_region");
 		} catch (Exception e) {
 			log.log(Level.SEVERE, "Error reading properties", e);
 		}
-		
-		// Get AWS credentials and initialise the dynamoDB object
-        AWSCredentials credentials = null;
-        try {
+        
+		/*
+		try {
             credentials = new ProfileCredentialsProvider("default").getCredentials();
         } catch (Exception e) {
             throw new AmazonClientException(
@@ -84,9 +88,14 @@ public class EmitDeviceNotification {
                     "location (/Users/neilpenman/.aws/credentials), and is in valid format.",
                     e);
         }
-        dynamoDB = new AmazonDynamoDBClient(credentials);
-        Region usWest2 = Region.getRegion(Regions.US_WEST_2);
-        dynamoDB.setRegion(usWest2);
+        */
+            
+		//create a new SNS client and set endpoint
+		dynamoDB = AmazonDynamoDBClient.builder()
+				.withRegion(region)
+				.withCredentials(new ProfileCredentialsProvider())
+				.build();
+
 	}
 
 	/*
@@ -94,6 +103,12 @@ public class EmitDeviceNotification {
 	 */
 	public void notify(String server, String user) {
 		
+		// For testing on local host - can leave in final code
+		if(server.equals("smap")) {
+			server = "dev.smap.com.au";
+		}
+		
+		System.out.println("Notify: " + server + ":" + user);
 		 HashMap<String, Condition> scanFilter = new HashMap<String, Condition>();
          Condition conditionServer = new Condition()
              .withComparisonOperator(ComparisonOperator.EQ.toString())

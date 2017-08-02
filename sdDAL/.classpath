@@ -37,8 +37,6 @@
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="lib" path="Libraries/jettison-1.1.jar"/>
-	<classpathentry kind="lib" path="/subscribers/lib/httpclient-4.3.3.jar"/>
-	<classpathentry kind="lib" path="/subscribers/lib/httpcore-4.3.2.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/aws"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
