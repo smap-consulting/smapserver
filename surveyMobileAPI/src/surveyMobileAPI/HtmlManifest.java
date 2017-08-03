@@ -220,11 +220,11 @@ public class HtmlManifest extends Application{
 		
 		String sql = "select value from translation where s_id = ? " +
 				"and (type = 'image' or type = 'audio' or type = 'video');";
-		System.out.println("Getting media: " + sql + " : " + s_id);
 
 		try {
 			PreparedStatement pstmt = connection.prepareStatement(sql);
 			pstmt.setInt(1, s_id);
+			log.info("Get media: " + pstmt.toString());
 			ResultSet rs = pstmt.executeQuery();
 			while(rs.next()) {
 				media.add(rs.getString(1));
