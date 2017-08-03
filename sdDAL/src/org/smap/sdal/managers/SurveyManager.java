@@ -139,6 +139,82 @@ public class SurveyManager {
 		
 	}
 	
+	public ArrayList<Survey> getSurveysAndForms(Connection sd, 
+			String user, 
+			boolean superUser
+			) throws SQLException {
+		
+		ArrayList<Survey> surveys = new ArrayList<Survey>();	// Results of request
+		
+		ResultSet resultSet = null;
+		PreparedStatement pstmt = null;
+		StringBuffer sql = new StringBuffer("");
+		sql.append("select distinct s.s_id, s.name, s.display_name, s.deleted, s.blocked, "
+				+ "s.ident, s.managed_id, s.version, s.loaded_from_xls "
+				+ "from survey s, users u, user_project up, project p "
+				+ "where u.id = up.u_id "
+				+ "and p.id = up.p_id "
+				+ "and s.p_id = up.p_id "
+				+ "and p.o_id = u.o_id "
+				+ "and u.ident = ? "
+				+ "and s.deleted = 'false' "
+				+ "order BY s.display_name");
+			
+		if(!superUser) {
+			// Add RBAC
+			sql.append(GeneralUtilityMethods.getSurveyRBAC());
+		}
+		
+		// Get subforms pnly
+		String sqlForms = "select f_id, name from form where s_id = ? and parentform != 0";
+		PreparedStatement pstmtGetForms = null;
+	
+		try {
+			pstmt = sd.prepareStatement(sql.toString());	
+			pstmtGetForms = sd.prepareStatement(sqlForms);
+			int idx = 1;
+			pstmt.setString(idx++, user);
+			if(!superUser) {
+				pstmt.setString(idx++, user);	// Second user entry for RBAC
+			}
+	
+			log.info("Get surveys and forms: " + pstmt.toString());
+			resultSet = pstmt.executeQuery();
+	
+			while (resultSet.next()) {						
+	
+				Survey s = new Survey();
+				s.setId(resultSet.getInt(1));
+				s.setName(resultSet.getString(2));
+				s.setDisplayName(resultSet.getString(3));
+				s.setDeleted(resultSet.getBoolean(4));
+				s.setBlocked(resultSet.getBoolean(5));
+				s.setIdent(resultSet.getString(6));
+				s.setManagedId(resultSet.getInt(7));
+				s.setVersion(resultSet.getInt(8));
+				s.setLoadedFromXLS(resultSet.getBoolean(9));
+				
+				pstmtGetForms.setInt(1, s.id);
+				ResultSet rsForms = pstmtGetForms.executeQuery();
+				while(rsForms.next()) {
+					if(s.forms == null) {
+						s.forms = new ArrayList<Form> ();
+					}
+					Form f = new Form();
+					f.id = rsForms.getInt(1);
+					f.name = rsForms.getString(2);
+					s.forms.add(f);
+				}
+				surveys.add(s);
+			} 
+		} finally {
+			try {if (pstmt != null) {pstmt.close();	}} catch (SQLException e) {	}
+			try {if (pstmtGetForms != null) {pstmtGetForms.close();	}} catch (SQLException e) {	}
+		}
+		return surveys;
+		
+	}
+	
 	/*
 	 * Return true if there is already a survey with the supplied display name and project id
 	 */

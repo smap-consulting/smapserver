@@ -102,13 +102,6 @@ public class Data extends Application {
 		
 		Response response = null;
 		
-		try {
-		    Class.forName("org.postgresql.Driver");	 
-		} catch (ClassNotFoundException e) {
-			log.log(Level.SEVERE, "Can't find PostgreSQL JDBC Driver", e);
-		    response = Response.serverError().build();
-		}
-		
 		DataManager dm = new DataManager();
 		try {
 			ArrayList<DataEndPoint> data = dm.getDataEndPoints(sd, request, false);

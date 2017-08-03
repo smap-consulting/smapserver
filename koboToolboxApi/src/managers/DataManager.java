@@ -4,6 +4,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -12,6 +13,7 @@ import model.DataEndPoint;
 
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.managers.SurveyManager;
+import org.smap.sdal.model.Form;
 import org.smap.sdal.model.Survey;
 
 public class DataManager {
@@ -29,25 +31,9 @@ public class DataManager {
 		 * Use existing survey manager call to get a list of surveys that the user can access
 		 */
 		ArrayList<Survey> surveys = null;	
-		PreparedStatement pstmt = null;
 		SurveyManager sm = new SurveyManager();
-		try {
-			boolean superUser = GeneralUtilityMethods.isSuperUser(sd, request.getRemoteUser());
-			surveys = sm.getSurveys(sd, pstmt, request.getRemoteUser(), false, true, 0, superUser);
-		} finally {
-			
-			try {if (pstmt != null) {pstmt.close();	}} catch (SQLException e) {	}
-		
-			try {
-				if (sd != null) {
-					sd.close();
-					sd = null;
-				}	
-			} catch (SQLException e) {
-				log.log(Level.SEVERE, "Failed to close connection", e);
-			}
-			
-		}
+		boolean superUser = GeneralUtilityMethods.isSuperUser(sd, request.getRemoteUser());
+		surveys = sm.getSurveysAndForms(sd, request.getRemoteUser(), superUser);
 		
 		String urlprefix = request.getScheme() + "://" + request.getServerName();
 		if(csv) {
@@ -63,6 +49,13 @@ public class DataManager {
 			dep.title = s.displayName;
 			dep.description = s.displayName;
 			dep.url = urlprefix + dep.id;
+			
+			if(s.forms != null && s.forms.size() > 0) {
+				dep.subforms = new HashMap<String, String> ();
+				for(Form f : s.forms) {
+					dep.subforms.put(f.name, dep.url + "?form=" + f.id);
+				}
+			}
 			data.add(dep);
 		}
 		
