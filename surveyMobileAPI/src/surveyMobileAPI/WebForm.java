@@ -634,7 +634,7 @@ public class WebForm extends Application {
 				}
 			}
 		}
-		log.info("weform html: " + html);
+
 		output.append(html);
 
 		if (!minimal) {

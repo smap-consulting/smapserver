@@ -567,7 +567,7 @@ public class GetHtml {
 	}
 
 	/*
-	 * Add the contents of a normal select that has a nodeset
+	 * Add the contents of a select
 	 * 
 	 */
 	private void addSelectContents(Element parent, Question q, Form form, boolean tableList)
@@ -682,7 +682,7 @@ public class GetHtml {
 			addOptionLabels(optionElement, q, form, tableList);
 
 		} else {
-			addOptionLabels(parent, q, form, true);
+			addOptionLabels(parent, q, form, tableList);
 		}
 
 	}

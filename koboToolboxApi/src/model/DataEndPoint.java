@@ -1,5 +1,7 @@
 package model;
 
+import java.util.HashMap;
+
 public class DataEndPoint {
 	
 	// Kobo
@@ -8,6 +10,7 @@ public class DataEndPoint {
 	public String title;
 	public String description;		// Not available in Smap will be just title
 	public String url;
+	public HashMap<String, String> subforms = null;
 	
 	// Smap Extensions
 	//public String project;

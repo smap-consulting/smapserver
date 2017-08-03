@@ -6,6 +6,9 @@ fieldManager/build
 surveyMobileAPI/build/classes/.gitignore
 koboToolboxApi/.gitignore
 
+aws.properties
+subscribers/target/
+
 build/css.orig
 
 # Eclipse artifacts
