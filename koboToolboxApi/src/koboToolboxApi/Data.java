@@ -170,6 +170,7 @@ public class Data extends Application {
 		String table_name = null;
 		int parentform = 0;
 		int managedId = 0;
+		boolean getParkey = false;
 		ResultSet rs = null;
 
 
@@ -209,6 +210,7 @@ public class Data extends Application {
 				}
 				rs.close();
 			} else {
+				getParkey = true;
 				pstmtGetForm = sd.prepareStatement(sqlGetForm);
 				pstmtGetForm.setInt(1,sId);
 				pstmtGetForm.setInt(2,fId);
@@ -231,7 +233,7 @@ public class Data extends Application {
 					fId,
 					table_name,
 					false,
-					false,		// Don't include parent key
+					getParkey,	// Include parent key if the form is not the top level form (fId is 0)
 					false,		// Don't include "bad" columns
 					true,		// include instance id
 					true,		// include other meta data
