@@ -15,7 +15,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 
-*/
+ */
 
 import javax.servlet.http.HttpServletRequest;
 import managers.DataManager;
@@ -58,36 +58,36 @@ import org.smap.sdal.model.TableColumn;
  */
 @Path("/v1/data")
 public class Data extends Application {
-	
+
 	Authorise a = null;
 	Authorise aSuper = null;
-	
+
 	private static Logger log =
-			 Logger.getLogger(Data.class.getName());
+			Logger.getLogger(Data.class.getName());
 
 	LogManager lm = new LogManager();		// Application log
-	
+
 	// Tell class loader about the root classes.  (needed as tomcat6 does not support servlet 3)
 	public Set<Class<?>> getClasses() {
 		Set<Class<?>> s = new HashSet<Class<?>>();
 		s.add(Data.class);
 		return s;
 	}
-	
+
 	public Data() {
 		ArrayList<String> authorisations = new ArrayList<String> ();	
 		authorisations.add(Authorise.ANALYST);
 		authorisations.add(Authorise.ADMIN);
 		authorisations.add(Authorise.MANAGE);
 		a = new Authorise(authorisations, null);
-		
+
 		ArrayList<String> authorisationsSuper = new ArrayList<String> ();	
 		authorisationsSuper.add(Authorise.ANALYST);
 		authorisationsSuper.add(Authorise.ADMIN);
 		aSuper = new Authorise(authorisations, null);
-		
+
 	}
-	
+
 	/*
 	 * KoboToolBox API version 1 /data
 	 * Returns a list of data end points
@@ -95,17 +95,17 @@ public class Data extends Application {
 	@GET
 	@Produces("application/json")
 	public Response getData(@Context HttpServletRequest request) { 
-		
+
 		// Authorisation - Access
 		Connection sd = SDDataSource.getConnection("koboToolBoxAPI-getData");
 		aSuper.isAuthorised(sd, request.getRemoteUser());
-		
+
 		Response response = null;
-		
+
 		DataManager dm = new DataManager();
 		try {
 			ArrayList<DataEndPoint> data = dm.getDataEndPoints(sd, request, false);
-			
+
 			Gson gson=  new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd").create();
 			String resp = gson.toJson(data);
 			response = Response.ok(resp).build();
@@ -118,7 +118,7 @@ public class Data extends Application {
 
 		return response;
 	}
-	
+
 	/*
 	 * KoboToolBox API version 1 /data
 	 * Get records for an individual survey in JSON format
@@ -128,20 +128,22 @@ public class Data extends Application {
 	@Path("/{sId}")
 	public Response getDataRecords(@Context HttpServletRequest request,
 			@PathParam("sId") int sId,
-			@QueryParam("start") int start,
-			@QueryParam("limit") int limit,
+			@QueryParam("start") int start,				// Primary key to start from
+			@QueryParam("limit") int limit,				// Number of records to return
 			@QueryParam("mgmt") boolean mgmt,
 			@QueryParam("group") boolean group,			// If set include a dummy group value in the response, used by duplicate query
-			@QueryParam("sort") String sort,			// Column Human Name to sort on
-			@QueryParam("dirn") String dirn,			// Sort direction, asc || desc
-			@QueryParam("form") int fId,				// Form id (optional only specify for a child form)
+			@QueryParam("sort") String sort,				// Column Human Name to sort on
+			@QueryParam("dirn") String dirn,				// Sort direction, asc || desc
+			@QueryParam("form") int fId,					// Form id (optional only specify for a child form)
+			@QueryParam("start_parkey") int start_parkey,// Parent key to start from
 			@QueryParam("parkey") int parkey,			// Parent key (optional, use to get records that correspond to a single parent record)
 			@QueryParam("hrk") String hrk,				// Unique key (optional, use to restrict records to a specific hrk)
-			@QueryParam("format") String format			// dt for datatables otherwise assume kobo
+			@QueryParam("format") String format,			// dt for datatables otherwise assume kobo
+			@QueryParam("bad") String include_bad		// yes | only | none Include records marked as bad
 			) { 
-		
+
 		Response response = null;
-		
+
 		// Authorisation - Access
 		Connection sd = SDDataSource.getConnection("koboToolboxApi - get data records");
 		boolean superUser = false;
@@ -152,41 +154,45 @@ public class Data extends Application {
 		a.isAuthorised(sd, request.getRemoteUser());
 		a.isValidSurvey(sd, request.getRemoteUser(), sId, false, superUser);
 		// End Authorisation
-		
+
 		lm.writeLog(sd, sId, request.getRemoteUser(), "view", "Managed Forms or the API. " + (hrk == null ? "" : "Hrk: " + hrk));
-		
+
 		Connection cResults = ResultsDataSource.getConnection("koboToolboxApi - get data records");
-		
+
 		String sqlGetManagedId = "select managed_id from survey where s_id = ?";
 		PreparedStatement pstmtGetManagedId = null;
-		
+
 		String sqlGetMainForm = "select f_id, table_name from form where s_id = ? and parentform = 0;";
 		PreparedStatement pstmtGetMainForm = null;
-		
+
 		String sqlGetForm = "select parentform, table_name from form where s_id = ? and f_id = ?;";
 		PreparedStatement pstmtGetForm = null;
-		
-		
+
+		PreparedStatement pstmt = null;
+
 		String table_name = null;
 		int parentform = 0;
 		int managedId = 0;
 		boolean getParkey = false;
 		ResultSet rs = null;
 
-
 		if(sort != null && dirn == null) {
 			dirn = "asc";
 		}
-		
+
+		if(include_bad == null) {
+			include_bad = "none";
+		}
+
 		boolean isDt = false;
 		if(format != null && format.equals("dt")) {
 			isDt = true;
 		}
-		
+
 		try {
 
 			String urlprefix = GeneralUtilityMethods.getUrlPrefix(request);
-			
+
 			// Get the managed Id
 			if(mgmt) {
 				pstmtGetManagedId = sd.prepareStatement(sqlGetManagedId);
@@ -197,11 +203,11 @@ public class Data extends Application {
 				}
 				rs.close();
 			}
-			
+
 			if(fId == 0) {
 				pstmtGetMainForm = sd.prepareStatement(sqlGetMainForm);
 				pstmtGetMainForm.setInt(1,sId);
-				
+
 				log.info("Getting main form: " + pstmtGetMainForm.toString() );
 				rs = pstmtGetMainForm.executeQuery();
 				if(rs.next()) {
@@ -214,7 +220,7 @@ public class Data extends Application {
 				pstmtGetForm = sd.prepareStatement(sqlGetForm);
 				pstmtGetForm.setInt(1,sId);
 				pstmtGetForm.setInt(2,fId);
-				
+
 				log.info("Getting specific form: " + pstmtGetForm.toString() );
 				rs = pstmtGetForm.executeQuery();
 				if(rs.next()) {
@@ -223,7 +229,7 @@ public class Data extends Application {
 				}
 				rs.close();
 			}
-				
+
 			ArrayList<TableColumn> columns = GeneralUtilityMethods.getColumnsInForm(
 					sd,
 					cResults,
@@ -234,7 +240,7 @@ public class Data extends Application {
 					table_name,
 					false,
 					getParkey,	// Include parent key if the form is not the top level form (fId is 0)
-					false,		// Don't include "bad" columns
+					(include_bad.equals("yes") || include_bad.equals("only")),
 					true,		// include instance id
 					true,		// include other meta data
 					true,		// include preloads
@@ -243,15 +249,17 @@ public class Data extends Application {
 					superUser,
 					false		// TODO include HXL
 					);
-			
+
 			if(mgmt) {
 				CustomReportsManager crm = new CustomReportsManager ();
 				ArrayList<TableColumn> managedColumns = crm.get(sd, managedId, -1);
 				columns.addAll(managedColumns);
 			}
-			
+
 			TableDataManager tdm = new TableDataManager();
-			JSONArray ja = tdm.getData(
+			JSONArray ja = null;
+
+			pstmt = tdm.getPreparedStatement(
 					sd, 
 					cResults,
 					columns,
@@ -268,10 +276,26 @@ public class Data extends Application {
 					isDt,
 					start,
 					limit,
+					getParkey,
+					start_parkey,
 					superUser,
-					false			// Return records greater than or equal to primary key
+					false,			// Return records greater than or equal to primary key
+					include_bad
 					);
 			
+			if(pstmt != null) {
+				ja = tdm.getData(
+						pstmt,
+						columns,
+						urlprefix,
+						group,
+						isDt,
+						limit
+						);
+			}
+
+
+
 			if(isDt) {
 				JSONObject dt  = new JSONObject();
 				dt.put("data", ja);
@@ -279,27 +303,28 @@ public class Data extends Application {
 			} else {
 				response = Response.ok(ja.toString()).build();
 			}
-			
-			
-			
-			
+
+
+
+
 		} catch (Exception e) {
 			log.log(Level.SEVERE, "Exception", e);
 			response = Response.serverError().entity(e.getMessage()).build();
 		} finally {
-			
+
+			try {if (pstmt != null) {pstmt.close();	}} catch (SQLException e) {	}
 			try {if (pstmtGetMainForm != null) {pstmtGetMainForm.close();	}} catch (SQLException e) {	}
 			try {if (pstmtGetForm != null) {pstmtGetForm.close();	}} catch (SQLException e) {	}
 			try {if (pstmtGetManagedId != null) {pstmtGetManagedId.close();	}} catch (SQLException e) {	}
-			
+
 			ResultsDataSource.closeConnection("koboToolboxApi - get data records", cResults);			
 			SDDataSource.closeConnection("koboToolboxApi - get data records", sd);
 		}
-		
+
 		return response;
-		
+
 	}
-	
+
 	/*
 	 * Get similar records for an individual survey in JSON format
 	 */
@@ -309,16 +334,16 @@ public class Data extends Application {
 	public Response getSimilarDataRecords(@Context HttpServletRequest request,
 			@PathParam("sId") int sId,
 			@PathParam("select") String select,			// comma separated list of qname::function
-														//  where function is none || lower
+			//  where function is none || lower
 			@QueryParam("start") int start,
 			@QueryParam("limit") int limit,
 			@QueryParam("mgmt") boolean mgmt,
 			@QueryParam("form") int fId,				// Form id (optional only specify for a child form)
 			@QueryParam("format") String format			// dt for datatables otherwise assume kobo
 			) { 
-		
+
 		Response response = null;
-		
+
 		// Authorisation - Access
 		Connection sd = SDDataSource.getConnection("koboToolboxApi - get data records");
 		boolean superUser = false;
@@ -329,22 +354,22 @@ public class Data extends Application {
 		aSuper.isAuthorised(sd, request.getRemoteUser());
 		aSuper.isValidSurvey(sd, request.getRemoteUser(), sId, false, superUser);
 		// End Authorisation
-		
+
 		Connection cResults = ResultsDataSource.getConnection("koboToolboxApi - get similar data records");
 
 		String sqlGetMainForm = "select f_id, table_name from form where s_id = ? and parentform = 0;";
 		PreparedStatement pstmtGetMainForm = null;
-		
+
 		String sqlGetForm = "select parentform, table_name from form where s_id = ? and f_id = ?;";
 		PreparedStatement pstmtGetForm = null;
-		
+
 		String sqlGetManagedId = "select managed_id from survey where s_id = ?";
 		PreparedStatement pstmtGetManagedId = null;
-		
+
 		PreparedStatement pstmtGetSimilar = null;
 		PreparedStatement pstmtGetData = null;
 
-		
+
 		StringBuffer columnSelect = new StringBuffer();
 		StringBuffer similarWhere = new StringBuffer();
 		ArrayList<String> groupTypes = new ArrayList<String> ();
@@ -354,16 +379,16 @@ public class Data extends Application {
 		int managedId = 0;
 		ResultSet rs = null;
 		JSONArray ja = new JSONArray();
-		
+
 		boolean isDt = false;
 		if(format != null && format.equals("dt")) {
 			isDt = true;
 		}
-		
+
 		try {
 
 			String urlprefix = GeneralUtilityMethods.getUrlPrefix(request);
-			
+
 			// Get the managed Id
 			if(mgmt) {
 				pstmtGetManagedId = sd.prepareStatement(sqlGetManagedId);
@@ -374,11 +399,11 @@ public class Data extends Application {
 				}
 				rs.close();
 			}
-			
+
 			if(fId == 0) {
 				pstmtGetMainForm = sd.prepareStatement(sqlGetMainForm);
 				pstmtGetMainForm.setInt(1,sId);
-				
+
 				log.info("Getting main form: " + pstmtGetMainForm.toString() );
 				rs = pstmtGetMainForm.executeQuery();
 				if(rs.next()) {
@@ -390,7 +415,7 @@ public class Data extends Application {
 				pstmtGetForm = sd.prepareStatement(sqlGetForm);
 				pstmtGetForm.setInt(1,sId);
 				pstmtGetForm.setInt(2,fId);
-				
+
 				log.info("Getting specific form: " + pstmtGetForm.toString() );
 				rs = pstmtGetForm.executeQuery();
 				if(rs.next()) {
@@ -399,7 +424,7 @@ public class Data extends Application {
 				}
 				rs.close();
 			}
-				
+
 			ArrayList<TableColumn> columns = GeneralUtilityMethods.getColumnsInForm(
 					sd,
 					cResults,
@@ -419,15 +444,15 @@ public class Data extends Application {
 					superUser,
 					false		// Only include HXL with CSV and Excel output
 					);
-			
+
 			if(mgmt) {
 				CustomReportsManager crm = new CustomReportsManager ();
 				ArrayList<TableColumn> managedColumns = crm.get(sd, managedId, -1);
 				columns.addAll(managedColumns);
 			}
-			
+
 			if(GeneralUtilityMethods.tableExists(cResults, table_name)) {
-				
+
 				/*
 				 * 1. Prepare the data query minus the where clause that is created to select similar rows
 				 */
@@ -438,22 +463,22 @@ public class Data extends Application {
 					}
 					columnSelect.append(c.getSqlSelect(urlprefix));
 				}
-				
-					
+
+
 				String sqlGetData = "select " + columnSelect.toString() + " from " + table_name
 						+ " where prikey >= ? "
 						+ "and _bad = 'false' ";
 				String sqlSelect = "";
-				
+
 				String sqlGetDataOrder = null;
-				
+
 				// Set default sort order
 				if(mgmt) {
 					sqlGetDataOrder = " order by prikey desc limit 10000";
 				} else {
 					sqlGetDataOrder = " order by prikey asc;";
 				}
-				
+
 				/*
 				 * 1. Find the groups of similar records
 				 */
@@ -466,20 +491,20 @@ public class Data extends Application {
 							if(columns.get(j).name.equals(aSelect[0])) {
 								TableColumn c = columns.get(j);
 								boolean stringFnApplies = false;
-								
+
 								if(c.type.equals("string") || c.type.equals("select1")
 										|| c.type.equals("barcode")) {
 									stringFnApplies = true;
 								}
-								
+
 								if( groupColumns > 0) {
 									columnSelect.append(",");
 								}
 								similarWhere.append(" and ");
-								
+
 								if(stringFnApplies 
 										&& (aSelect[1].equals("lower") 
-										|| aSelect[1].equals("soundex"))) {
+												|| aSelect[1].equals("soundex"))) {
 									String s = aSelect[1] +"(" + c.getSqlSelect(urlprefix) + ")";
 									columnSelect.append(s);
 									similarWhere.append(s + " = ?");
@@ -495,35 +520,35 @@ public class Data extends Application {
 						}
 					}
 				}
-			
+
 				if(columnSelect.length() == 0) {
 					throw new Exception("No Matching Columns");
 				}
-				
+
 				String sqlGetSimilar = "select count(*), " + columnSelect.toString()
-						+ " from " + table_name
-						+ " where prikey >= ? "
-						+ "and _bad = 'false'";
+				+ " from " + table_name
+				+ " where prikey >= ? "
+				+ "and _bad = 'false'";
 				String sqlGroup = " group by " + columnSelect.toString();
 				String sqlHaving = " having count(*) > 1 ";
-			
-				
+
+
 				pstmtGetSimilar = cResults.prepareStatement(sqlGetSimilar + sqlGroup + sqlHaving);
 				pstmtGetSimilar.setInt(1, start);
 				rs = pstmtGetSimilar.executeQuery();
-				
+
 				/*
 				 * For each grouping of similar records get the individual records
 				 */
 				while(rs.next()) {
 
-					
+
 					/*
 					 * 3. Get the data that make up these similar records
 					 */
 					String groupKey = "";
 					pstmtGetData = cResults.prepareStatement(sqlGetData + sqlSelect + similarWhere.toString() 
-						+ sqlGetDataOrder);
+					+ sqlGetDataOrder);
 					int paramCount = 1;
 					pstmtGetData.setInt(paramCount++, start);
 					for(int i = 0; i < groupColumns; i++) {
@@ -541,23 +566,23 @@ public class Data extends Application {
 					}
 					log.info("Get data: " + pstmtGetData.toString());
 					ResultSet rsD = pstmtGetData.executeQuery();
-					
+
 					int index = 0;
 					while (rsD.next()) {
-						
+
 						if(limit > 0 && index >= limit) {
 							break;
 						}
 						index++;
-						
+
 						JSONObject jr = new JSONObject();
 						jr.put("_group", groupKey);
 						for(int i = 0; i < columns.size(); i++) {	
-							
+
 							TableColumn c = columns.get(i);
 							String name = null;
 							String value = null;
-							
+
 							if(c.isGeometry()) {							
 								// Add Geometry (assume one geometry type per table)
 								String geomValue = rsD.getString(i + 1);	
@@ -571,20 +596,20 @@ public class Data extends Application {
 									coords = new JSONArray();
 								}
 								jr.put(name, coords);
-					
+
 							} else {
-								
+
 								//String name = rsMetaData.getColumnName(i);	
 								//name = c.humanName;
 								name = c.name;
 								value = rsD.getString(i + 1);	
-								
+
 								if(value == null) {
 									value = "";
 								} else if(c.type.equals("dateTime")) {
 									value = value.replaceAll("\\.[0-9]{3}", "");
 								}
-								
+
 								if(name != null ) {
 									if(!isDt) {
 										name = GeneralUtilityMethods.translateToKobo(name);
@@ -592,19 +617,19 @@ public class Data extends Application {
 									jr.put(name, value);
 								}
 							}
-							
-					
+
+
 						}
-							
+
 						ja.put(jr);
 					}
 					rsD.close();
 				}
-			
+
 				rs.close();
 			}
 
-			
+
 			if(isDt) {
 				JSONObject dt  = new JSONObject();
 				dt.put("data", ja);
@@ -612,29 +637,29 @@ public class Data extends Application {
 			} else {
 				response = Response.ok(ja.toString()).build();
 			}
-			
-			
-			
-			
+
+
+
+
 		} catch (Exception e) {
 			log.log(Level.SEVERE, "Exception", e);
 			response = Response.serverError().build();
 		} finally {
-			
+
 			try {if (pstmtGetMainForm != null) {pstmtGetMainForm.close();	}} catch (SQLException e) {	}
 			try {if (pstmtGetForm != null) {pstmtGetForm.close();	}} catch (SQLException e) {	}
 			try {if (pstmtGetData != null) {pstmtGetData.close();	}} catch (SQLException e) {	}
 			try {if (pstmtGetSimilar != null) {pstmtGetSimilar.close();	}} catch (SQLException e) {	}
 			try {if (pstmtGetManagedId != null) {pstmtGetManagedId.close();	}} catch (SQLException e) {	}
-			
+
 			ResultsDataSource.closeConnection("koboToolboxApi - get data records", cResults);			
 			SDDataSource.closeConnection("koboToolboxApi - get data records", sd);
 		}
-		
+
 		return response;
-		
+
 	}
-	
-	
+
+
 }
 
