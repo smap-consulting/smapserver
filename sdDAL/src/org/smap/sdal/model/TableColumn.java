@@ -98,7 +98,9 @@ public class TableColumn {
 		} else if(isCalculate() && calculation != null) {
 			selName = calculation.sql.toString();
 		} else if(type.equals("duration")) {
-			selName = "extract(epoch FROM (" + endName + " - " + startName + ")) as "+ name;
+			if(startName != null && endName != null) {
+				selName = "extract(epoch FROM (" + endName + " - " + startName + ")) as "+ name;
+			}
 		} else {
 			selName = name;
 		}

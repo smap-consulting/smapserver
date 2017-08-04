@@ -464,27 +464,49 @@ public class ActionService extends Application{
 		StringBuffer output = new StringBuffer();
 		
 		Gson gson=  new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd").create();
+		
 		TableDataManager tdm = new TableDataManager();
-		JSONArray ja = tdm.getData(
-				sd, 
-				cResults,
-				mfc.columns,
-				urlprefix,
-				sId,
-				tableName,
-				0,				// parkey
-				null,			// HRK
-				uIdent,
-				null,			// Sort
-				null,			// Sort direction
-				true,			// Management
-				false,			// group
-				true,
-				prikey,			
-				1,				// Number of records to return
-				superUser,
-				true			// Return the specific primary key
-				);				
+		JSONArray ja = null;
+
+		PreparedStatement pstmt = null;
+		try {
+			pstmt = tdm.getPreparedStatement(
+					sd, 
+					cResults,
+					mfc.columns,
+					urlprefix,
+					sId,
+					tableName,
+					0,				// parkey
+					null,			// HRK
+					uIdent,
+					null,			// Sort
+					null,			// Sort direction
+					true,			// Management
+					false,			// group
+					false,			// isDt
+					prikey,			
+					1,				// Number of records to return
+					false,			// get parkey
+					0,				// start parkey
+					superUser,
+					true	,			// Return the specific primary key
+					"none"			// include bad
+					);
+			
+			if(pstmt != null) {
+				ja = tdm.getData(
+						pstmt,
+						mfc.columns,
+						urlprefix,
+						false,
+						false,
+						1
+						);
+			}
+		} finally {
+			try {if (pstmt != null) {pstmt.close();	}} catch (SQLException e) {	}
+		}
 		
 		output.append("\nvar gRecord=");
 		output.append(ja.toString());
