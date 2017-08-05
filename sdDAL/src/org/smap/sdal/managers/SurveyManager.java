@@ -157,13 +157,15 @@ public class SurveyManager {
 				+ "and s.p_id = up.p_id "
 				+ "and p.o_id = u.o_id "
 				+ "and u.ident = ? "
-				+ "and s.deleted = 'false' "
-				+ "order BY s.display_name");
+				+ "and s.deleted = 'false' ");
 			
 		if(!superUser) {
 			// Add RBAC
+			sql.append(" ");
 			sql.append(GeneralUtilityMethods.getSurveyRBAC());
 		}
+		
+		sql.append(" order BY s.display_name");
 		
 		// Get subforms pnly
 		String sqlForms = "select f_id, name from form where s_id = ? and parentform != 0";
