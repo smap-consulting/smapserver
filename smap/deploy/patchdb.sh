@@ -140,19 +140,19 @@ then
 fi
 
 # version 16.02
-if [ $version -lt "160201" ]
+if [ $version -lt "1602" ]
 then
 	echo "no patches for 16.02"
 fi
 
 # version 16.03
-if [ $version -lt "160301" ]
+if [ $version -lt "1603" ]
 then
 	echo "no patches for 16.03"
 fi
 
 # version 16.12
-if [ $version -lt "161201" ]
+if [ $version -lt "1612" ]
 then
 echo "Applying patches for version 16.12"
 sudo mkdir /smap_bin
@@ -179,7 +179,7 @@ sudo chown -R tomcat7 /smap_bin
 fi
 
 # version 16.12
-if [ $version -lt "161202" ]
+if [ $version -lt "1612" ]
 then
 	echo '# copy subscriber upstart files'
 	u1604=`lsb_release -r | grep -c "16\.04"`
@@ -199,6 +199,7 @@ then
 
 fi
 
+
 #####################################################################################
 # All versions
 # Copy the new apache configuration files
@@ -212,5 +213,5 @@ cd ../deploy
 sudo sed -i "s/from pyxform import constants/import constants/g" /smap_bin/pyxform/survey.py
 
 # update version reference
-new_version="170601"
+new_version="1707"
 echo "$new_version" > ~/smap_version

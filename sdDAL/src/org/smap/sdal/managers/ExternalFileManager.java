@@ -397,7 +397,6 @@ public class ExternalFileManager {
 			pstmt.setInt(1, linked_sId);
 			pstmt.setInt(2, linker_sId);
 			pstmt.setString(3, filepath);
-			pstmt.setString(4, user);
 			log.info("Test for regen: " + pstmt.toString());
 
 			ResultSet rs = pstmt.executeQuery();
@@ -418,6 +417,7 @@ public class ExternalFileManager {
 						pstmtInsert.setInt(1, linked_sId);
 						pstmtInsert.setInt(2, linker_sId);
 						pstmtInsert.setString(3, filepath);
+						pstmtInsert.setString(4, user);
 						pstmtInsert.executeUpdate();
 						log.info("Insert record: " + pstmtInsert.toString());
 					} else {

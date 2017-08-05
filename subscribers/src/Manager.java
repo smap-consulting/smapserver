@@ -46,7 +46,7 @@ public class Manager {
 		}
 		
 		System.out.println("Starting subscriber: " + smapId + " : " + fileLocn + " : " + subscriberType);
-		int delaySecs = 10;
+		int delaySecs = 4;
 		
 		while(true) {
 
