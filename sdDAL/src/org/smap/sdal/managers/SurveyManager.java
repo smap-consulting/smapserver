@@ -1239,7 +1239,7 @@ public class SurveyManager {
 			
 			// Record the mesage so that devices can be notified
 			MessagingManager mm = new MessagingManager();
-			mm.surveyChange(connectionSD, sId);
+			mm.surveyChange(connectionSD, sId, 0);
 			
 			for(ChangeSet cs : changes) {			
 				

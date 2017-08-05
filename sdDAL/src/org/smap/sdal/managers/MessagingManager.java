@@ -66,9 +66,11 @@ public class MessagingManager {
 	/*
 	 * Create a message resulting from a change to a form
 	 */
-	public void surveyChange(Connection sd, int sId) throws SQLException {
+	public void surveyChange(Connection sd, int sId, int linkedId) throws SQLException {
 		Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
-		String data = gson.toJson(new SurveyMessage(sId));		
+		SurveyMessage sm = new SurveyMessage(sId);
+		sm.linkedSurveyId = linkedId;
+		String data = gson.toJson(sm);
 		int oId = GeneralUtilityMethods.getOrganisationIdForSurvey(sd, sId);		
 		createMessage(sd, oId, "survey", null, data);
 	}
