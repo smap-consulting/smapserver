@@ -3568,19 +3568,19 @@ public class GeneralUtilityMethods {
 				Type type = new TypeToken<ArrayList<String>>(){}.getType();
 				ArrayList<String> manifestList = new Gson().fromJson(manifestString, type);
 				
-				System.out.println("Number of manifest entries: " + manifestList.size());
 				HashMap<Integer, Integer> linkedSurveys = new HashMap<Integer, Integer> ();
 				for(int i = 0; i < manifestList.size(); i++) {
 					int linked_sId = 0;
 					String fileName = manifestList.get(i);
 					
+					log.info("Linked file name: " + fileName);
 					if(fileName.equals("linked_self")) {
 						linked_sId = sId;
 					} else if(fileName.equals("linked_s_pd_self")) {
 						linked_sId = sId;
 					} else if(fileName.startsWith("linked_s")){
 						String ident = fileName.substring(fileName.indexOf("s"));
-						System.out.println("Survey Iden: " + ident);
+						log.info("Survey Ident: " + ident);
 						linked_sId = getSurveyId(sd, ident);
 					}
 					

@@ -720,7 +720,7 @@ public class SubRelationalDB extends Subscriber {
 				int linker_s_id = rs.getInt(1);
 				mm.surveyChange(sd, sId, linker_s_id);
 			}
-			// Delete the linked form entries so that the CSV files will be regenerated
+			// Delete the linked form entries so that the CSV files will be regenerated when the linker form is downloaded
 			pstmt = sd.prepareStatement(sql);
 			pstmt.setInt(1, sId);
 			log.info("Clear entries in linked_forms: " + pstmt.toString());
