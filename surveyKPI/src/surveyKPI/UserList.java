@@ -37,6 +37,7 @@ import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.managers.LogManager;
+import org.smap.sdal.managers.MessagingManager;
 import org.smap.sdal.managers.UserManager;
 import org.smap.sdal.model.Project;
 import org.smap.sdal.model.Role;
@@ -360,14 +361,6 @@ public class UserList extends Application {
 	public Response updateUser(@Context HttpServletRequest request, @FormParam("users") String users) { 
 		
 		Response response = null;
-
-		try {
-		    Class.forName("org.postgresql.Driver");	 
-		} catch (ClassNotFoundException e) {
-			log.log(Level.SEVERE,"Error: Can't find PostgreSQL JDBC Driver", e);
-			response = Response.serverError().build();
-		    return response;
-		}
 		
 		// Authorisation - Access
 		Connection connectionSD = SDDataSource.getConnection("surveyKPI-UserList");
@@ -446,8 +439,13 @@ public class UserList extends Application {
 						lm.writeLogOrganisation(connectionSD, 
 								o_id, request.getRemoteUser(), "Update", "User " + u.ident);
 					}
+					
+					// Record the user change so that devices can be notified
+					MessagingManager mm = new MessagingManager();
+					mm.userChange(connectionSD, u.ident);
 				}
-		
+
+				
 				response = Response.ok().build();
 			} else {
 				log.log(Level.SEVERE,"Error: No organisation");

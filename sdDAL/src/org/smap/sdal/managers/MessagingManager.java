@@ -19,6 +19,7 @@ import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.UtilityMethodsEmail;
 import org.smap.sdal.model.EmailServer;
 import org.smap.sdal.model.SurveyMessage;
+import org.smap.sdal.model.UserMessage;
 import org.smap.sdal.model.Organisation;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -51,6 +52,17 @@ public class MessagingManager {
 
 	LogManager lm = new LogManager(); // Application log
 
+	/*
+	 * Create a message resulting from a change to a user
+	 */
+	public void userChange(Connection sd, String userIdent) throws SQLException {
+		Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
+		String data = gson.toJson(new UserMessage(userIdent));		
+		int oId = GeneralUtilityMethods.getOrganisationId(sd, userIdent, 0);		
+		createMessage(sd, oId, "user", null, data);
+	}
+	
+	
 	/*
 	 * Create a message resulting from a change to a form
 	 */
@@ -95,7 +107,7 @@ public class MessagingManager {
 		PreparedStatement pstmtConfirm = null;
 		
 		HashMap<Integer, SurveyMessage> changedSurveys = new HashMap<> ();
-		HashMap<String, SurveyMessage> usersImpacted =   new HashMap<> ();
+		HashMap<String, String> usersImpacted =   new HashMap<> ();
 
 		String sqlGetMessages = "select id, "
 				+ "o_id, "
@@ -152,6 +164,17 @@ public class MessagingManager {
 					
 					changedSurveys.put(sm.id, sm);
 					
+				} else if(topic.equals("user")) {
+					Gson gson=  new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
+					UserMessage um = gson.fromJson(data, UserMessage.class);
+					if(um != null) {
+						System.out.println("xxxxxxxxxxxxxxxxxxxx Processing: " + um.ident);
+					} else {
+						System.out.println("Error: null survey message");
+					}
+					
+					usersImpacted.put(um.ident, um.ident);
+					
 				} else {
 					// Assume a direct email process immediately
 
@@ -192,14 +215,16 @@ public class MessagingManager {
 			 * Device notifications have been accumulated to an array so that duplicates can be eliminated
 			 * Process these now
 			 */
-			// Get a list of users impacted without duplicates
+			// Get a list of users impacted by form changes without duplicates
 			for(Integer sId : changedSurveys.keySet()) {
 				ArrayList<String> users = getSurveyUsers(sd, sId);
 				for(String user : users) {
-					usersImpacted.put(user, changedSurveys.get(sId));
+					usersImpacted.put(user, user);
 					System.out.println("Need to notify:  " + user);
 				}				
 			}
+			
+			// Add any users directly impacted
 			
 			// For each user send a notification to each of their devices
 			for(String user : usersImpacted.keySet()) {

@@ -1240,6 +1240,7 @@ public class SurveyManager {
 			// Record the mesage so that devices can be notified
 			MessagingManager mm = new MessagingManager();
 			mm.surveyChange(connectionSD, sId);
+			
 			for(ChangeSet cs : changes) {			
 				
 				// Process each change set separately and roll back to a save point if it fails
