@@ -19,6 +19,7 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
+import java.util.List;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -32,6 +33,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.smap.sdal.managers.RoleManager;
 import org.smap.sdal.managers.SurveyManager;
+import org.smap.sdal.managers.TranslationManager;
 import org.smap.sdal.model.ChangeItem;
 import org.smap.sdal.model.ChoiceList;
 import org.smap.sdal.model.FileDescription;
@@ -41,6 +43,7 @@ import org.smap.sdal.model.KeyValueSimp;
 import org.smap.sdal.model.Language;
 import org.smap.sdal.model.LinkedTarget;
 import org.smap.sdal.model.ManifestInfo;
+import org.smap.sdal.model.ManifestValue;
 import org.smap.sdal.model.Option;
 import org.smap.sdal.model.RoleColumnFilter;
 import org.smap.sdal.model.SurveyLinkDetails;
@@ -3527,6 +3530,85 @@ public class GeneralUtilityMethods {
 
 		mi.manifest = gson.toJson(mArray);
 		
+	}
+	
+	/*
+	 * Update the form dependencies table from the survey manifest
+	 */
+	public static void updateFormDependencies(Connection sd, int sId) throws SQLException {
+		
+		String sql = "select manifest from survey where s_id = ? and manifest is not null; ";
+		PreparedStatement pstmt = null;
+		
+		String sqlDel = "delete from form_dependencies where linker_s_id = ?";
+		PreparedStatement pstmtDel = null;
+		
+		String sqlIns = "insert into form_dependencies (linker_s_id, linked_s_id) values (?, ?)";
+		PreparedStatement pstmtIns = null;
+		
+		try {
+			
+			ResultSet rs = null;
+			
+			pstmtDel = sd.prepareStatement(sqlDel);
+			pstmtDel.setInt(1, sId);
+			pstmtIns = sd.prepareStatement(sqlIns);
+			pstmtIns.setInt(1, sId);
+			
+			/*
+			 * Get Survey Level manifests from survey table
+			 */
+			pstmt = sd.prepareStatement(sql);	 			
+			pstmt.setInt(1, sId);
+			log.info("SQL survey level manifests:" + pstmt.toString());
+			
+			rs = pstmt.executeQuery();
+			if(rs.next()) {
+				String manifestString = rs.getString(1);
+				Type type = new TypeToken<ArrayList<String>>(){}.getType();
+				ArrayList<String> manifestList = new Gson().fromJson(manifestString, type);
+				
+				System.out.println("Number of manifest entries: " + manifestList.size());
+				HashMap<Integer, Integer> linkedSurveys = new HashMap<Integer, Integer> ();
+				for(int i = 0; i < manifestList.size(); i++) {
+					int linked_sId = 0;
+					String fileName = manifestList.get(i);
+					
+					if(fileName.equals("linked_self")) {
+						linked_sId = sId;
+					} else if(fileName.equals("linked_s_pd_self")) {
+						linked_sId = sId;
+					} else if(fileName.startsWith("linked_s")){
+						String ident = fileName.substring(fileName.indexOf("s"));
+						System.out.println("Survey Iden: " + ident);
+						linked_sId = getSurveyId(sd, ident);
+					}
+					
+					if(linked_sId > 0) {
+						linkedSurveys.put(linked_sId, linked_sId);
+					}
+				}
+				
+				// Delete old entries for this survey if they exist
+				pstmtDel.executeUpdate();
+				
+				// Add new entries
+				for(int linked : linkedSurveys.keySet()) {
+					pstmtIns.setInt(2, linked);
+					log.info("Write form dependency: " + pstmtIns.toString());
+					pstmtIns.executeUpdate();
+				}
+			}
+			
+			
+		} catch (SQLException e) {
+			log.log(Level.SEVERE,"Error", e);
+			throw e;
+		} finally {
+			if (pstmt != null) { try {pstmt.close();} catch (SQLException e) {}}
+			if (pstmtDel != null) { try {pstmtDel.close();} catch (SQLException e) {}}
+			if (pstmtIns != null) { try {pstmtIns.close();} catch (SQLException e) {}}
+		}
 	}
 	
 	/*

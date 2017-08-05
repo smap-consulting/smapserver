@@ -841,6 +841,17 @@ CREATE TABLE public.linked_forms (
 );
 ALTER TABLE public.linked_forms OWNER TO ws;
 
+DROP SEQUENCE IF EXISTS form_dependencies_seq CASCADE;
+CREATE SEQUENCE form_dependencies_seq START 1;
+ALTER TABLE form_dependencies_seq OWNER TO ws;
+
+DROP TABLE IF EXISTS public.form_dependencies CASCADE;
+CREATE TABLE public.form_dependencies (
+	id integer DEFAULT nextval('form_dependencies_seq') NOT NULL PRIMARY KEY,
+	Linked_s_id integer REFERENCES survey(s_id) ON DELETE CASCADE,
+	linker_s_id integer REFERENCES survey(s_id) ON DELETE CASCADE
+);
+ALTER TABLE public.form_dependencies OWNER TO ws;
 
 DROP SEQUENCE IF EXISTS survey_role_seq CASCADE;
 CREATE SEQUENCE survey_role_seq START 1;

@@ -359,7 +359,7 @@ public class MyAssignments extends Application {
 				 *  generate the new CSV files if the linked data has changed
 				 */
 				List<ManifestValue> manifestList = translationMgr.
-						getLinkedManifests(connectionSD, request.getRemoteUser(), sId, sIdent);
+						getLinkedManifests(connectionSD, sId, sIdent);
 				
 				for( ManifestValue m : manifestList) {
 					

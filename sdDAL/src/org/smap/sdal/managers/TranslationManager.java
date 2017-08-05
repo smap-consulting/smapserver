@@ -154,8 +154,7 @@ public class TranslationManager {
 	/*
 	 * Get the manifest items to linked forms
 	 */
-	public List<ManifestValue> getLinkedManifests(Connection sd, 
-			String user, 
+	public List<ManifestValue> getLinkedManifests(Connection sd,  
 			int surveyId,
 			String surveyIdent
 			)	throws SQLException {

@@ -703,7 +703,7 @@ public class SubRelationalDB extends Subscriber {
 			) throws SQLException {
 		
 	
-		String sqlGetLinkers = "select linker_s_id from linked_forms where linked_s_id = ?";
+		String sqlGetLinkers = "select linker_s_id from form_dependencies where linked_s_id = ?";
 		PreparedStatement pstmtGetLinkers = null;
 	
 		String sql = "delete from linked_forms where linked_s_id = ?";

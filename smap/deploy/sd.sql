@@ -781,3 +781,13 @@ delete from survey_change where changes like '%"action":"external option"%' ;
 -- Upgrade to 17.07
 alter table organisation add column ft_send_wifi boolean default false;
 alter table organisation add column ft_send_wifi_cell boolean default false;
+
+CREATE SEQUENCE form_dependencies_seq START 1;
+ALTER TABLE form_dependencies_seq OWNER TO ws;
+
+CREATE TABLE public.form_dependencies (
+	id integer DEFAULT nextval('form_dependencies_seq') NOT NULL PRIMARY KEY,
+	Linked_s_id integer REFERENCES survey(s_id) ON DELETE CASCADE,
+	linker_s_id integer REFERENCES survey(s_id) ON DELETE CASCADE
+);
+ALTER TABLE public.form_dependencies OWNER TO ws;

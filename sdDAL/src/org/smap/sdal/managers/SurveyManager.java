@@ -1237,10 +1237,7 @@ public class SurveyManager {
 			resp.version = rs.getInt(1);
 			pstmt.close();
 			
-			// Record the mesage so that devices can be notified
-			MessagingManager mm = new MessagingManager();
-			mm.surveyChange(connectionSD, sId, 0);
-			
+
 			for(ChangeSet cs : changes) {			
 				
 				// Process each change set separately and roll back to a save point if it fails
@@ -1296,6 +1293,12 @@ public class SurveyManager {
 				}
 				
 			}
+			
+			// Record the message so that devices can be notified
+			MessagingManager mm = new MessagingManager();
+			mm.surveyChange(connectionSD, sId, 0);
+			// Update the form dependencies so that when new results are received it is simple to identify the impacted forms			
+			GeneralUtilityMethods.updateFormDependencies(connectionSD, sId);
 			
 			if(resp.success > 0) {
 				connectionSD.commit();
