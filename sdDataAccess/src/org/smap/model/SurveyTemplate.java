@@ -14,6 +14,7 @@ import java.util.Set;
 import java.util.Vector;
 
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
+import org.smap.sdal.managers.MessagingManager;
 import org.smap.sdal.model.ChangeItem;
 import org.smap.sdal.model.ChangeSet;
 import org.smap.sdal.model.ManifestInfo;
@@ -986,7 +987,6 @@ public class SurveyTemplate {
 					}
 				}
 			}
-			System.out.println("===================================");
 			
 			/*
 			 * Sort the list by sequence
@@ -1108,6 +1108,12 @@ public class SurveyTemplate {
 					
 				}
 			}
+			
+			// Record the message so that devices can be notified
+			MessagingManager mm = new MessagingManager();
+			mm.surveyChange(sd, sId, 0);
+			// Update the form dependencies so that when new results are received it is simple to identify the impacted forms			
+			GeneralUtilityMethods.updateFormDependencies(sd, sId);
 			
 			sd.commit();
 		} catch (Exception e) {
