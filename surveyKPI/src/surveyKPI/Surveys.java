@@ -40,6 +40,7 @@ import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.managers.ExternalFileManager;
+import org.smap.sdal.managers.MessagingManager;
 import org.smap.sdal.managers.SurveyManager;
 import org.smap.sdal.model.ChangeElement;
 import org.smap.sdal.model.ChangeItem;
@@ -359,6 +360,10 @@ public class Surveys extends Application {
 					basePath, null, false, false, true, true, false,
 					"internal", false, true, 0, null);
 			
+			// Record the message so that devices can be notified
+			MessagingManager mm = new MessagingManager();
+			mm.surveyChange(sd, sId, 0);
+			
 			String resp = gson.toJson(survey);
 			response = Response.ok(resp).build();
 			
@@ -378,7 +383,7 @@ public class Surveys extends Application {
 	}
 	
 	/*
-	 * Update the survey languages
+	 * Save the pulldata key used to get repeating records from dependent forms
 	 */
 	@Path("/save_pulldata/{sId}")
 	@POST
@@ -418,6 +423,10 @@ public class Surveys extends Application {
 			pstmt.setInt(2, sId);
 			pstmt.executeUpdate();	
 
+			// Record the message so that devices can be notified
+			MessagingManager mm = new MessagingManager();
+			mm.surveyChange(sd, sId, 0);
+			
 			response = Response.ok().build();
 			
 		} catch (Exception e) {
@@ -731,6 +740,10 @@ public class Surveys extends Application {
 				GeneralUtilityMethods.renameTemplateFiles(originalDisplayName, survey.displayName, basePath, originalProjectId, survey.p_id);
 			}
 			
+			// Record the message so that devices can be notified
+			MessagingManager mm = new MessagingManager();
+			mm.surveyChange(connectionSD, sId, 0);
+		
 			response = Response.ok().build();
 			
 		} catch (SQLException e) {
@@ -870,6 +883,10 @@ public class Surveys extends Application {
 			connectionSD.commit();
 			connectionSD.setAutoCommit(true);
 			
+			// Record the message so that devices can be notified
+			MessagingManager mm = new MessagingManager();
+			mm.surveyChange(connectionSD, sId, 0);
+		
 			response = Response.ok().build();
 			
 		} catch (SQLException e) {

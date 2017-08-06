@@ -3,7 +3,6 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.InetAddress;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -13,8 +12,6 @@ import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.logging.Level;
-
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -25,13 +22,10 @@ import javax.xml.xpath.XPathFactory;
 
 import org.smap.model.SurveyInstance;
 import org.smap.model.SurveyTemplate;
-import org.smap.sdal.Utilities.SDDataSource;
-import org.smap.sdal.managers.MessagingManager;
+import org.smap.sdal.managers.MessagingManagerApply;
 import org.smap.sdal.managers.NotificationManager;
 import org.smap.sdal.managers.ServerManager;
-import org.smap.sdal.managers.SurveyManager;
 import org.smap.sdal.model.Notification;
-import org.smap.sdal.model.Survey;
 import org.smap.server.entities.HostUnreachableException;
 import org.smap.server.entities.MissingSurveyException;
 import org.smap.server.entities.MissingTemplateException;
@@ -329,8 +323,8 @@ public class SubscriberBatch {
 			// Erase any templates that were deleted more than a set time ago
 			eraseOldTemplates(sd, cResults, basePath);
 			
-			MessagingManager mm = new MessagingManager();
-			mm.applyOutbound(sd, "smap");
+			MessagingManagerApply mma = new MessagingManagerApply();
+			mma.applyOutbound(sd, "smap");
 			subscribers = null;
 			
 		} catch (Exception e) {
