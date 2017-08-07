@@ -1664,6 +1664,7 @@ function respondToEvents($context) {
 		var $this = $(this),
 			$questionElement = $this.closest('li'),
 			published,
+			saved,
 			survey = globals.model.survey,
 			name,
 			formIndex,
@@ -1677,6 +1678,7 @@ function respondToEvents($context) {
 		itemIndex = $questionElement.data("id");
 		
 		published = survey.forms[formIndex].questions[itemIndex].published;
+		saved = (survey.forms[formIndex].questions[itemIndex].published > 0);
 		if($this.hasClass("disabled")) {
 			alert("You cannot change the type of a question that has an invalid name");
 		} else {
@@ -2054,7 +2056,7 @@ function updateSettingsData() {
 
 
 /*
- * Update the language modal view
+ * Update the language model view
  */
 function updateLanguageView() {
 	var i,

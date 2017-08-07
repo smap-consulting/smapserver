@@ -30,7 +30,9 @@ define([
          'app/editorMarkup',
          'app/option'], 
 		function($, modernizr, lang, globals, markup, option) {
-	
+
+	var modelGeneratedChanges = [];
+
 	return {	
 		add: add,
 		undo: undo,
@@ -58,6 +60,7 @@ define([
 			itemType;
 		
 		// Apply to model
+		modelGeneratedChanges = [];
 		refresh = updateModel(change);
 		
 		/*
@@ -117,8 +120,12 @@ define([
 		}
 		
 		// Add to changeset array ready for writing to the database
-		
 		addToChangesetArray(change);
+
+		// Add any additional changes generated in the model
+		for(i = 0; i < modelGeneratedChanges.length; i++) {
+            addToChangesetArray(modelGeneratedChanges[i]);
+		}
 		
 		return $context;
 		
@@ -249,6 +256,8 @@ define([
                 }
 				change.property.name = item.name;
 				change.property.qId = item.id;
+                change.property.fId = item.fId;
+                change.property.childFormIndex = survey.forms.length - 1;
 				if(change.changeType === "property") {
 					setTypeSpecificChanges(change.property.prop, change, survey);
 				}
@@ -626,7 +635,7 @@ define([
 							} else if(property.newVal == "geopoint" || property.newVal == "geoshape" || property.newVal == "geotrace") {
 								
 								// Set the question name automatically
-								addToChangesetArray({
+								modelGeneratedChanges.push({
 										changeType: "property",	
 										action: "update",			
 										source: "editor",
@@ -643,9 +652,12 @@ define([
 								});
 								question.name = "the_geom";	
 							
-							} else if(oldVal === "note") {
+							}
+
+							// Fix ups depending on oldVal
+							if(oldVal === "note") {
 								// Remove the readonly status
-								addToChangesetArray({
+                                modelGeneratedChanges.push({
 										changeType: "property",	
 										action: "update",			
 										source: "editor",
@@ -656,11 +668,78 @@ define([
 											language: property.language,
 											formIndex: property.formIndex,
 											itemIndex: property.itemIndex
-										
 										}
 								});
 								question.readonly = false;	
-							}
+							} else if(oldVal === "begin group") {
+							 	console.log("xxxxxxx fix up begin group");
+                                if(property.newVal == "begin repeat") {
+                                    console.log("xxxxxxx move questions to repeat");
+                                    // Move the questions in the group to the new form
+                                    var newFormIdx = question.childFormIndex;
+                                    var oldFormIdx = property.formIndex;
+                                    oldLocation = property.itemIndex;
+                                    newLocation = 0;
+                                    var endQuestionIdx = 0;
+
+                                    name = question.name;
+                                    endName = name + "_groupEnd";
+
+									/*
+									 * Get the questions to move
+									 * Start from one past the begin group
+									 */
+									oldLocation++;
+                                    var groupMembers = [];
+                                    for(i = oldLocation; i < survey.forms[oldFormIdx].qSeq.length; i++) {
+
+                                    	// Don't include the group end or any questions after it
+                                        if(survey.forms[oldFormIdx].questions[survey.forms[oldFormIdx].qSeq[i]].name.toLowerCase() === endName.toLowerCase()) {
+                                           endQuestionIdx = i;
+                                           break;
+                                        }
+                                        groupMembers.push(survey.forms[oldFormIdx].qSeq[i]);
+                                    }
+
+									/*
+									 * Move the group members
+									 */
+									var mvStartIdx = oldLocation;
+                                    for(i = 0; i < groupMembers.length; i++) {
+
+                                        var itemIndex = moveQuestion(survey, survey.forms[oldFormIdx].questions[groupMembers[i]],
+                                            newFormIdx,
+                                            newLocation++,
+                                            oldFormIdx,
+                                            mvStartIdx++);
+
+                                        // Add the move to the changeset
+                                        modelGeneratedChanges.push({
+                                            changeType: "question",
+                                            action: "move",
+                                            source: "editor",
+                                            question: {
+
+                                            	type: survey.forms[oldFormIdx].questions[groupMembers[i]].type,
+                                                formIndex: newFormIdx,
+                                                itemIndex: itemIndex,
+                                                sourceFormIndex: oldFormIdx,
+												sourceItemIndex: survey.forms[oldFormIdx].questions[groupMembers[i]].itemIndex,
+												sourceFormId: survey.forms[oldFormIdx].id,
+												name: survey.forms[oldFormIdx].questions[groupMembers[i]].name
+                                            }
+										});
+
+                                        console.log("xxxxx moved");
+                                    }
+
+								}
+                                console.log("xxxxxxx remove end group");
+                                applyToEndGroup(survey.forms[oldFormIdx], question.name, oldLocation, "delete");
+                                refresh = true;
+                            }
+
+
 						} else if(property.prop === "name") {
 							// update the end group name
 							if(survey.forms[property.formIndex].questions[property.itemIndex].type === "begin group") {
