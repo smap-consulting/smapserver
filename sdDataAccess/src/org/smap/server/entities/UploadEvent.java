@@ -69,6 +69,8 @@ public class UploadEvent implements Serializable {
 	
 	private String filePath;
 	
+	private String auditFilePath;
+	
 	private boolean incomplete = false;
 	
 	private String surveyNotes;
@@ -158,6 +160,10 @@ public class UploadEvent implements Serializable {
 	
 	public String getFilePath() {
 		return filePath;
+	}
+	
+	public String getAuditFilePath() {
+		return auditFilePath;
 	}
 	
 	public boolean getIncomplete() {
@@ -254,6 +260,10 @@ public class UploadEvent implements Serializable {
 	
 	public void setFilePath(String value) {
 		filePath = value;
+	}
+	
+	public void setAuditFilePath(String value) {
+		auditFilePath = value;
 	}
 	
 	public void setIncomplete(boolean value) {

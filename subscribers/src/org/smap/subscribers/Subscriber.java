@@ -60,7 +60,8 @@ public abstract class Subscriber {
 	public abstract void upload(SurveyInstance event, InputStream id, String user, String server, String device, 
 			SubscriberEvent se, String confFilePath, String formStatus, String basePath, String filePath,
 			String updateId, int ue_id, Date uploadTime, 
-			String surveyNotes, String locationTrigger) throws HostUnreachableException;
+			String surveyNotes, String locationTrigger,
+			String auditFilePath) throws HostUnreachableException;
 
 	/*
 	 * Getters

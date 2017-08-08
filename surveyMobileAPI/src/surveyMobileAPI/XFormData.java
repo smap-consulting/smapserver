@@ -57,6 +57,7 @@ class SaveDetails {
 	String fileName = null;
 	String instanceDir = null;
 	String filePath = null;
+	String auditFilePath = null;
 	String origSurveyIdent = null;
 	int iosImageCount = 0;
 	int iosVideoCount = 0;
@@ -99,6 +100,7 @@ public class XFormData {
 		String form_status = request.getHeader("form_status");
 		boolean incomplete = false; // Set true if odk has more attachments to send
 		boolean superUser = false;
+		String auditFilePath = null;
 
 		Connection sd = null;
 
@@ -189,6 +191,9 @@ public class XFormData {
 								templateName, null, iosImageCount, iosVideoCount);
 						iosImageCount = attachSaveDetails.iosImageCount;
 						iosVideoCount = attachSaveDetails.iosVideoCount;
+						if(attachSaveDetails.auditFilePath != null) {
+							auditFilePath = attachSaveDetails.auditFilePath;
+						}
 						log.info("Saved file:" + attachSaveDetails.fileName + " (FieldName: " + fieldName + ")");
 					}
 				}
@@ -242,6 +247,7 @@ public class XFormData {
 			ue.setSurveyId(survey.id);
 			ue.setIdent(templateName);
 			ue.setFilePath(saveDetails.filePath);
+			ue.setAuditFilePath(auditFilePath);
 			ue.setProjectId(survey.getPId());
 			ue.setUploadTime(new Date());
 			ue.setFileName(saveDetails.fileName);
@@ -360,6 +366,12 @@ public class XFormData {
 
 		saveDetails.filePath = instancePath + "/" + saveDetails.fileName;
 		log.info("Saving to:" + saveDetails.filePath);
+		
+		// set the audit file path if this is an audit file
+		if(saveDetails.fileName.equals("audit.csv")) {
+			saveDetails.auditFilePath = saveDetails.filePath;
+		}
+		
 		try {
 			File savedFile = new File(saveDetails.filePath);
 			if (base64Data != null) {

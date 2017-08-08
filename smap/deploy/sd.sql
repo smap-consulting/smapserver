@@ -791,3 +791,6 @@ CREATE TABLE public.form_dependencies (
 	linker_s_id integer REFERENCES survey(s_id) ON DELETE CASCADE
 );
 ALTER TABLE public.form_dependencies OWNER TO ws;
+
+-- Upgrade to 17.08
+ALTER TABLE upload_event add column audit_file_path text;

@@ -146,10 +146,6 @@ public class SubscriberBatch {
 						} else if(subscriberType.equals("forward")) {
 							uel = uem.getFailedForward(s.getSubscriberName(), s.getSurveyId());		// Get pending jobs 
 						}
-						
-						
-						//uel = uem.getFailedForSubscriber(s.getSubscriberName(), 0);
-						
 									
 						if(uel.isEmpty()) {
 							
@@ -166,6 +162,7 @@ public class SubscriberBatch {
 								se.setSubscriber(s.getSubscriberName());
 								se.setDest(s.getDest());
 								String uploadFile = ue.getFilePath();
+								String auditFile = ue.getAuditFilePath();
 								
 								System.out.println("Upload file: " + uploadFile);
 								InputStream is = null;
@@ -222,7 +219,8 @@ public class SubscriberBatch {
 												ue.getId(),
 												ue.getUploadTime(),
 												ue.getSurveyNotes(),
-												ue.getLocationTrigger());	// Call the subscriber	
+												ue.getLocationTrigger(),
+												ue.getAuditFilePath());	// Call the subscriber	
 									
 									} else {
 										

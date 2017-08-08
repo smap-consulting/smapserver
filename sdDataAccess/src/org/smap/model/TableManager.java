@@ -392,12 +392,12 @@ public class TableManager {
 			 * Create default columns
 			 * only add _user and _version, _complete, _modified to the top level form
 			 */
-			sql += ", _bad boolean DEFAULT FALSE, _bad_reason text";
+			sql += ", _bad boolean DEFAULT FALSE, _bad_reason text, _audit text";
 			if(!form.hasParent()) {
 				sql += ", _user text, _version text, _survey_notes text, _location_trigger text,"
 						+ "_complete boolean default true, "
 						+ "_modified boolean default false"
-						+ ", _upload_time timestamp with time zone, _s_id integer ";
+						+ ", _upload_time timestamp with time zone, _s_id integer";
 				
 				if(hasHrk) {
 					sql += ", _hrk text ";

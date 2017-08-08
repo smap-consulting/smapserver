@@ -53,6 +53,9 @@ import org.smap.server.exceptions.SQLInsertException;
 import org.smap.server.utilities.UtilityMethods;
 import org.w3c.dom.Document;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+
 
 public class SubRelationalDB extends Subscriber {
 
@@ -78,6 +81,7 @@ public class SubRelationalDB extends Subscriber {
 	
 	String gBasePath = null;
 	String gFilePath = null;
+	String gAuditFilePath = null;
 
 	/**
 	 * @param args
@@ -97,17 +101,17 @@ public class SubRelationalDB extends Subscriber {
 	public void upload(SurveyInstance instance, InputStream is, String remoteUser, 
 			String server, String device, SubscriberEvent se, String confFilePath, String formStatus,
 			String basePath, String filePath, String updateId, int ue_id, Date uploadTime,
-			String surveyNotes, String locationTrigger)  {
+			String surveyNotes, String locationTrigger, String auditFilePath)  {
 		
 		gBasePath = basePath;
 		gFilePath = filePath;
+		gAuditFilePath = auditFilePath;
 
 		if(gBasePath == null || gBasePath.equals("/ebs1")) {
 			gBasePath = "/ebs1/servers/" + server.toLowerCase();
 		}
 		formStatus = (formStatus == null) ? "complete" : formStatus;
 		
-		System.out.println("base path: " + gBasePath);
 		// Open the configuration file
 		DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
 		DocumentBuilder db = null;
@@ -166,7 +170,9 @@ public class SubRelationalDB extends Subscriber {
 		try {
 			
 			writeAllTableContent(instance, remoteUser, server, device, 
-					formStatus, updateId, survey.id, uploadTime, surveyNotes, locationTrigger, survey.key_policy);
+					formStatus, updateId, survey.id, uploadTime, surveyNotes, 
+					locationTrigger, survey.key_policy);
+			
 			applyNotifications(ue_id, remoteUser, server, survey.id);
 			applyAssignmentStatus(ue_id, remoteUser);
 			se.setStatus("success");			
@@ -219,11 +225,11 @@ public class SubRelationalDB extends Subscriber {
 				if(assignment_id > 0) {
 					pstmt.setInt(1, assignment_id);
 					pstmt.setString(2, remoteUser);
-					System.out.println("Updating assignment status: " + pstmt.toString());
+					log.info("Updating assignment status: " + pstmt.toString());
 					pstmt.executeUpdate();
 					
 					pstmtRepeats.setInt(1, assignment_id);
-					System.out.println("Updating task repeats: " + pstmtRepeats.toString());
+					log.info("Updating task repeats: " + pstmtRepeats.toString());
 					pstmtRepeats.executeUpdate();
 				}
 				
@@ -356,7 +362,6 @@ public class SubRelationalDB extends Subscriber {
 		PreparedStatement pstmtHrk = null;
 		PreparedStatement pstmtAddHrk = null;
 		
-		System.out.println("UploadTime: " + uploadTime.toGMTString());
 		try {
 		    Class.forName(dbClass);	 
 			cResults = DriverManager.getConnection(database, user, password);
@@ -388,27 +393,28 @@ public class SubRelationalDB extends Subscriber {
 					cResults,
 					cMeta,
 					sId,
-					uploadTime);
+					uploadTime,
+					0);
 
 			/*
 			 * Update existing records
 			 */
 			String existingKey = null;
 			if(keys.duplicateKeys.size() > 0) {
-					System.out.println("Dropping duplicate");
+					log.info("Dropping duplicate");
 			} else {
 				// Check to see this submission was set to update an existing record with new data
 				
 				
 				if(updateId != null) {
-					System.out.println("Existing unique id:" + updateId);
+					log.info("Existing unique id:" + updateId);
 					existingKey = getKeyFromId(cResults, topElement, updateId);
 				} else {		
 					existingKey = topElement.getKey(); 	// Old way of checking for updates - deprecate
 				}
 				
 				if(existingKey != null) {
-					System.out.println("Existing key:" + existingKey);
+					log.info("Existing key:" + existingKey);
 					ArrayList<Integer> existingKeys = new ArrayList<Integer>();
 					existingKeys.add(Integer.parseInt(existingKey));
 					replaceExistingRecord(cResults, 	// Mark the existing record as being replaced
@@ -533,7 +539,8 @@ public class SubRelationalDB extends Subscriber {
 			Connection cRel,
 			Connection cMeta,
 			int sId,
-			Date uploadTime) throws SQLException, Exception {
+			Date uploadTime,
+			int recCounter) throws SQLException, Exception {
 
 		Keys keys = new Keys();
 		PreparedStatement pstmt = null;
@@ -599,10 +606,12 @@ public class SubRelationalDB extends Subscriber {
 				 */
 				if(columns.size() > 0 || parent_key == 0) {
 					
-					boolean hasAltitude = GeneralUtilityMethods.hasColumn(cRel, tableName, "the_geom_alt");				// Latest meta column added
+					boolean hasAudit = GeneralUtilityMethods.hasColumn(cRel, tableName, "_audit");
+					boolean hasAltitude = hasAudit || GeneralUtilityMethods.hasColumn(cRel, tableName, "the_geom_alt");				// Latest meta column added
 					boolean hasUploadTime = hasAltitude || GeneralUtilityMethods.hasColumn(cRel, tableName, "_upload_time");		
 					boolean hasVersion = hasUploadTime || GeneralUtilityMethods.hasColumn(cRel, tableName, "_version");
 					boolean hasSurveyNotes = GeneralUtilityMethods.hasColumn(cRel, tableName, "_survey_notes");
+					
 					sql = "INSERT INTO " + tableName + " (parkey";
 					if(parent_key == 0) {
 						sql += ",_user, _complete";	// Add remote user, _complete automatically (top level table only)
@@ -618,6 +627,10 @@ public class SubRelationalDB extends Subscriber {
 						if(isBad) {
 							sql += ",_bad, _bad_reason";
 						}
+					}
+					
+					if(hasAudit) {
+						sql += ", _audit";
 					}
 	
 					sql += addSqlColumns(columns, hasAltitude);
@@ -638,6 +651,10 @@ public class SubRelationalDB extends Subscriber {
 						if(isBad) {
 							sql += ", ?, ?";	// _bad, _bad_reason
 						}
+					}
+					
+					if(hasAudit) {
+						sql += ", ?";
 					}
 					
 					sql += addSqlValues(columns, sName, device, server, false, hasAltitude);
@@ -664,27 +681,39 @@ public class SubRelationalDB extends Subscriber {
 							pstmt.setBoolean(stmtIndex++, true);
 							pstmt.setString(stmtIndex++, bad_reason);
 						}
+						if(hasAudit) {
+							String auditString = null;
+							if(gAuditFilePath != null) {
+								System.out.println("Audit file path: " + gAuditFilePath);
+								File auditFile = new File(gAuditFilePath);
+								HashMap<String, Integer> auditReport = GeneralUtilityMethods.getAudit(auditFile, getColNames(columns));
+								
+								Gson gson = new GsonBuilder().disableHtmlEscaping().create();
+								auditString = gson.toJson(auditReport);
+							} 
+							pstmt.setString(stmtIndex++, auditString);
+						}
 					}
 					
-					System.out.println("        SQL statement: " + pstmt.toString());	
+					log.info("        SQL statement: " + pstmt.toString());	
 					pstmt.executeUpdate();
 					
 					ResultSet rs = pstmt.getGeneratedKeys();
 					if( rs.next()) {
 						parent_key = rs.getInt(1);
 						keys.newKey = parent_key;
-					}
-	
-					
+					}	
 				}
 			}
 			
 			//Write any child forms
 			List<IE> childElements = element.getChildren();
+			recCounter = 0;
 			for(IE child : childElements) {
 				writeTableContent(child, parent_key, sName, remoteUser, server, device, 
 						uuid, formStatus, version, surveyNotes, locationTrigger, 
-						cRel, cMeta, sId, uploadTime);
+						cRel, cMeta, sId, uploadTime, recCounter);
+				recCounter++;
 			}
 		} finally {
 			if(pstmt != null) try{pstmt.close();}catch(Exception e) {}
@@ -1341,7 +1370,6 @@ public class SubRelationalDB extends Subscriber {
 		ArrayList<Integer> duplicateKeys = new ArrayList<Integer> ();
 		PreparedStatement pstmt = null;
 		uuid = uuid.replace("'", "''");	// Escape apostrophes
-		System.out.println("checkDuplicates: " + tableName + " : " + uuid);
 		
 		if(uuid != null && uuid.trim().length() > 0) {
 			try {
@@ -1401,4 +1429,11 @@ public class SubRelationalDB extends Subscriber {
 	}
 	
 
+	private ArrayList<String> getColNames(List<IE> cols) {
+		ArrayList<String> colNames = new ArrayList<String> ();
+		for(IE col : cols) {
+			colNames.add(col.getColumnName());
+		}
+		return colNames;	
+	}
 }

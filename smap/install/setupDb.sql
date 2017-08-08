@@ -354,6 +354,7 @@ CREATE TABLE upload_event (
 	user_name text,
 	file_name text,
 	file_path text,
+	audit_file_path text,
 	survey_name text,
 	imei text,
 	orig_survey_ident text,

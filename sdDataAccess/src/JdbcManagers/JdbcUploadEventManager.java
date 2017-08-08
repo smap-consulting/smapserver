@@ -56,10 +56,11 @@ public class JdbcUploadEventManager {
 			+ "instanceid,"
 			+ "assignment_id,"
 			+ "survey_notes,"
-			+ "location_trigger) "
+			+ "location_trigger,"
+			+ "audit_file_path) "
 			+ "values (nextval('ue_seq'), now(), ?, ?, ?, ?, ?, ?, ?, ?, ?"
 			+ ", ?, ?, ?, ?, ?, ?, ?, ?, ?, ?"
-			+ ", ?);";
+			+ ", ?, ?);";
 	
 	PreparedStatement pstmtFailed = null;
 	String sqlGet = "select "
@@ -84,7 +85,8 @@ public class JdbcUploadEventManager {
 			+ "ue.instanceid,"
 			+ "ue.assignment_id,"
 			+ "ue.survey_notes,"
-			+ "ue.location_trigger "
+			+ "ue.location_trigger,"
+			+ "ue.audit_file_path "
 			+ "from upload_event ue "
 				+ "where ue.status = 'success' "
 				+ "and ue.s_id is not null "
@@ -128,6 +130,7 @@ public class JdbcUploadEventManager {
 		pstmt.setInt(18, ue.getAssignmentId());
 		pstmt.setString(19, ue.getSurveyNotes());
 		pstmt.setString(20, ue.getLocationTrigger());
+		pstmt.setString(21, ue.getAuditFilePath());
 	
 		pstmt.executeUpdate();
 	}
@@ -184,6 +187,7 @@ public class JdbcUploadEventManager {
 			ue.setAssignmentId(rs.getInt(20));
 			ue.setSurveyNotes(rs.getString(21));
 			ue.setLocationTrigger(rs.getString(22));
+			ue.setAuditFilePath(rs.getString(23));
 			
 			ueList.add(ue);
 		}
