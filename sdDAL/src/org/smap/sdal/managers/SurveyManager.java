@@ -715,7 +715,8 @@ public class SurveyManager {
 				+ "q.autoplay,"
 				+ "q.accuracy,"
 				+ "q.linked_target,"
-				+ "q.display_name "
+				+ "q.display_name,"
+				+ "q.f_id "
 				+ "from question q "
 				+ "left outer join listname l on q.l_id = l.l_id "
 				+ "where q.f_id = ? ";
@@ -886,6 +887,7 @@ public class SurveyManager {
 				q.accuracy = rsGetQuestions.getString(26);
 				q.linked_target = rsGetQuestions.getString(27);
 				q.display_name = rsGetQuestions.getString(28);
+				q.fId = rsGetQuestions.getInt(29);
 
 				if(q.autoplay == null) {
 					q.autoplay = "none";
@@ -1765,6 +1767,15 @@ public class SurveyManager {
 		PreparedStatement pstmtUpdateQuestionNodeset = null;
 		PreparedStatement pstmtAddNodeset = null;
 		
+		PreparedStatement pstmtForm = null;
+		String sqlForm = "insert into form(f_id, s_id, name, label, table_name, "
+				+ "parentform, parentquestion, repeats, path, form_index) " +
+				"values(nextval('f_seq'), ?, ?, ?, ?, ?, ?, ?, ?, ?);";
+		
+		PreparedStatement pstmt = null;
+		String sql = "delete from question q where f_id = ? and qname = ? and q.q_id in " +
+				" (select q_id from question q, form f where q.f_id = f.f_id and f.s_id = ?);";	// Ensure user is authorised to access this question
+		
 		try {
 		
 			for(ChangeItem ci : changeItemList) {
@@ -2085,6 +2096,48 @@ public class SurveyManager {
 							log.info(msg);
 							throw new Exception(msg);		// No matching value assume it has already been modified
 						}
+						
+						// If question is being converted to a begin repeat then create a new form
+						boolean isRepeatType = false;
+						if(ci.property.newVal.equals("begin repeat") || ci.property.newVal.equals("geopolygon") || ci.property.newVal.equals("geolinestring")) {
+							isRepeatType = true;
+						}
+						if(isRepeatType) {
+								
+							String columnName = GeneralUtilityMethods.cleanName(ci.property.name, true, true, true);
+							// Create the sub form
+							String tableName = "s" + sId + "_" + columnName;
+							
+							
+							pstmtForm = sd.prepareStatement(sqlForm);
+							pstmtForm.setInt(1, sId);
+							pstmtForm.setString(2, ci.property.name);
+							pstmtForm.setString(3, ci.property.fId + "_question_" + columnName + ":label");
+							pstmtForm.setString(4, tableName);
+							pstmtForm.setInt(5, ci.property.fId);
+							pstmtForm.setInt(6, ci.property.qId);		// parent question id
+							pstmtForm.setString(7, ci.property.calculation);
+							pstmtForm.setString(8, "");	// path is no longer used
+							pstmtForm.setInt(9, ci.property.childFormIndex);
+							
+							log.info("SQL: Insert new form: " + pstmtForm.toString());
+							pstmtForm.executeUpdate();
+							
+						}
+						
+						// if the old question type was a begin group then delete the end group
+						if(ci.property.oldVal.equals("begin group")) {
+							String endGroupName = ci.property.name + "_groupEnd";
+							
+							// Delete the end group
+							pstmt = sd.prepareStatement(sql);
+							pstmt.setInt(1, ci.property.fId);
+							pstmt.setString(2, endGroupName);
+							pstmt.setInt(3, sId );
+							
+							log.info("Delete End group of question: " + pstmt.toString());
+							pstmt.executeUpdate();
+						}
 							
 						// Update the survey manifest if this question references CSV files
 						if(ci.property.prop.equals("calculation")) {
@@ -2251,6 +2304,8 @@ public class SurveyManager {
 			try {if (pstmtUpdateNodeset != null) {pstmtUpdateNodeset.close();}} catch (SQLException e) {}
 			try {if (pstmtUpdateQuestionNodeset != null) {pstmtUpdateQuestionNodeset.close();}} catch (SQLException e) {}
 			try {if (pstmtAddNodeset != null) {pstmtAddNodeset.close();}} catch (SQLException e) {}
+			try {if (pstmtForm != null) {pstmtForm.close();}} catch (SQLException e) {}
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 		
 		}
 	

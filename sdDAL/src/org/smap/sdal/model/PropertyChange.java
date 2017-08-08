@@ -9,6 +9,9 @@ public class PropertyChange {
 	public int qId;
 	public String qType;			// question type
 	public int l_id;				// Listname id
+	public int fId;				// form Id
+	public int formIndex;				// form Id
+	public int childFormIndex;				// form Id
 	public int o_id;				// Option id
 	public String optionList;		// Option list name if an option is being updated (deprecated)
 	public String type;				// question or option (Used when updating labels)
@@ -16,8 +19,9 @@ public class PropertyChange {
 	public String propType;			// Type of language element:  text, image, video, audio
 	public String prop;				// The property to be changed
 	public String languageName;		// Language to be updated
-	public boolean allLanguages;	// Set to true if all languages are to be updated with the same value	
+	public boolean allLanguages;		// Set to true if all languages are to be updated with the same value	
 	public String repeat_path;
+	public String calculation;		// For a repeat group
 	
 	// Change properties - Identifies the change to be applied
 	public String newVal;			// New value to be applied (For example labels)

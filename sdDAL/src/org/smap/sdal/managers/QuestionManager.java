@@ -172,7 +172,7 @@ public class QuestionManager {
 				"values(nextval('f_seq'), ?, ?, ?, ?, ?, ?, ?, ?, ?);";
 		
 		PreparedStatement pstmtGetFormId = null;
-		String sqlGetFormId = "select f_id, path from form where s_id = ? and form_index = ?;";
+		String sqlGetFormId = "select f_id from form where s_id = ? and form_index = ?;";
 		
 		PreparedStatement pstmtGetOldQuestions = null;
 		String sqlGetOldQuestions = "select column_name from question q where q.f_id = ? and q.qname = ? and q.soft_deleted = 'true';";
@@ -466,7 +466,6 @@ public class QuestionManager {
 				groupQuestion.seq = newSeq++;
 				
 				groupQuestion.name = rs.getString(1);
-				//groupQuestion.path =  rs.getString(2);
 				groupQuestion.type = rs.getString(3);
 				groupQuestion.sourceSeq = rs.getInt(4);
 				
