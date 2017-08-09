@@ -2205,7 +2205,8 @@ public class GeneralUtilityMethods {
 			boolean includeInstanceName,
 			boolean includeSurveyDuration,
 			boolean superUser,
-			boolean hxl) throws SQLException {
+			boolean hxl,
+			boolean audit) throws SQLException {
 
 		ArrayList<TableColumn> columnList = new ArrayList<TableColumn>();
 		ArrayList<TableColumn> realQuestions = new ArrayList<TableColumn> ();	// Temporary array so that all property questions can be added first
@@ -2378,6 +2379,14 @@ public class GeneralUtilityMethods {
 			}
 
 
+		}
+		
+		if(audit && GeneralUtilityMethods.columnType(cResults, table_name, "_audit") != null) {
+			c = new TableColumn();
+			c.name = "_audit";
+			c.humanName = "Audit";
+			c.type = "";
+			columnList.add(c);
 		}
 
 		try {

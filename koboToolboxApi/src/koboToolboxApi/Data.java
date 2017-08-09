@@ -139,7 +139,8 @@ public class Data extends Application {
 			@QueryParam("parkey") int parkey,			// Parent key (optional, use to get records that correspond to a single parent record)
 			@QueryParam("hrk") String hrk,				// Unique key (optional, use to restrict records to a specific hrk)
 			@QueryParam("format") String format,			// dt for datatables otherwise assume kobo
-			@QueryParam("bad") String include_bad		// yes | only | none Include records marked as bad
+			@QueryParam("bad") String include_bad,		// yes | only | none Include records marked as bad
+			@QueryParam("audit") boolean audit			// if true return audit data
 			) { 
 
 		Response response = null;
@@ -247,7 +248,8 @@ public class Data extends Application {
 					true,		// include instancename
 					true,		// include survey duration
 					superUser,
-					false		// TODO include HXL
+					false,		// TODO include HXL
+					audit
 					);
 
 			if(mgmt) {
@@ -442,7 +444,8 @@ public class Data extends Application {
 					true,		// Include instance name
 					false,		// Include survey duration
 					superUser,
-					false		// Only include HXL with CSV and Excel output
+					false,		// Only include HXL with CSV and Excel output
+					false
 					);
 
 			if(mgmt) {

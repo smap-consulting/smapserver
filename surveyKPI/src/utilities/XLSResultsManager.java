@@ -364,7 +364,9 @@ public class XLSResultsManager {
 							true,		// instancename
 							false,		// Survey Duration
 							superUser,
-							hxl);
+							hxl,
+							false		// Don't include audit data
+							);
 						
 							
 					for(int k = 0; k < f.maxRepeats; k++) {

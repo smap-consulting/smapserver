@@ -147,7 +147,8 @@ public class SurveyViewManager {
 					true,		// include instancename
 					true,		// Survey duration
 					superUser,
-					false		// HXL only include with XLS exports
+					false,		// HXL only include with XLS exports
+					false		// Don't include audit data
 					);		
 			
 			

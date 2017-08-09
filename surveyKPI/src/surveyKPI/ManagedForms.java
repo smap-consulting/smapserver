@@ -361,7 +361,8 @@ public class ManagedForms extends Application {
 						true,	// Include instancename
 						false,	// Include survey duration
 						superUser,
-						false		// HXL only include with XLS exports
+						false,		// HXL only include with XLS exports
+						false		// Don't include audit data
 						);
 				
 				for(TableColumn mc : managedColumns) {

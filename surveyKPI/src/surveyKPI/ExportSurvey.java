@@ -405,7 +405,8 @@ public class ExportSurvey extends Application {
 							true,		// instancename
 							false,		// survey duration
 							superUser,
-							false		// TODO add HXL export processing
+							false,		// TODO add HXL export processing
+							false		// Don't include audit data
 							);
 						
 							

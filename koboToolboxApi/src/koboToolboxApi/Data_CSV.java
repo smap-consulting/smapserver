@@ -162,7 +162,8 @@ public class Data_CSV extends Application {
 			@QueryParam("hrk") String hrk,				// Unique key (optional, use to restrict records to a specific hrk)
 			@QueryParam("format") String format,			// dt for datatables otherwise assume kobo
 			@QueryParam("bad") String include_bad,		// yes | only | none Include records marked as bad
-			@QueryParam("filename") String filename
+			@QueryParam("filename") String filename,
+			@QueryParam("audit") boolean audit
 			) { 
 
 		// Authorisation - Access
@@ -276,7 +277,8 @@ public class Data_CSV extends Application {
 					true,		// include instancename
 					true,		// include survey duration
 					superUser,
-					false		// TODO include HXL
+					false,		// TODO include HXL
+					audit
 					);
 
 			if(mgmt) {
@@ -285,6 +287,7 @@ public class Data_CSV extends Application {
 				columns.addAll(managedColumns);
 			}
 
+			boolean hasAudit = false;
 			for(int i = 0; i < columns.size(); i ++) {
 				TableColumn c = columns.get(i);
 				if(i > 0) {

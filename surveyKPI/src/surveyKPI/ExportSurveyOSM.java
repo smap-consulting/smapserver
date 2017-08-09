@@ -269,7 +269,8 @@ public class ExportSurveyOSM extends Application {
 							true,		// Include instancename
 							false,		// Survey duration
 							superUser,
-							false		// HXL only include with XLS exports
+							false,		// HXL only include with XLS exports
+							false		// Don't include audit data
 							);
 					
 					for(TableColumn col : f.cols) {

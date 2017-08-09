@@ -228,7 +228,8 @@ public class Items extends Application {
 						true,	// Include instance names
 						false,	// Include survey duration
 						superUser,
-						false		// HXL only include with XLS exports
+						false,		// HXL only include with XLS exports
+						false		// Don't include audit data
 						);		
 				
 				// Construct a new query that retrieves a geometry object as geoJson

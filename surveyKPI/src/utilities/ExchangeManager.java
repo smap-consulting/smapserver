@@ -185,7 +185,9 @@ public class ExchangeManager {
 							true,		// instancename
 							false,		// Survey duration
 							superUser,
-							false);
+							false,
+							false		// Don't include audit data
+							);
 						
 					// Get the list of spreadsheet columns
 					ArrayList<Column> cols = new ArrayList<Column> ();
