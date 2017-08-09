@@ -447,7 +447,7 @@ public class SubRelationalDB extends Subscriber {
 
 				sql += " where _hrk is null;";
 				pstmtHrk = cResults.prepareStatement(sql);
-				System.out.println("Adding HRK: " + pstmtHrk.toString());
+				log.info("Adding HRK: " + pstmtHrk.toString());
 				pstmtHrk.executeUpdate();
 			}
 

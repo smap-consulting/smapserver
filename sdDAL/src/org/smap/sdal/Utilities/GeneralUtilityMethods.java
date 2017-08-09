@@ -1551,6 +1551,7 @@ public class GeneralUtilityMethods {
 
 		BufferedReader br = null;
 		HashMap<String, Integer> audit = new HashMap<> ();
+		HashMap<String, Integer> initAudit = new HashMap<> ();
 		
 		try {
 			FileReader reader = new FileReader(csvFile);
@@ -1576,7 +1577,7 @@ public class GeneralUtilityMethods {
 									BigInteger to = new BigInteger(auditCols[3]);
 									BigInteger diff = to.subtract(from);
 									time = diff.intValue();
-									audit.put(name, time);
+									initAudit.put(name, time);
 								} catch (Exception e) {
 									log.info("Error: invalid audit line: " + e.getMessage() + " : " + line);
 								}	
@@ -1584,18 +1585,26 @@ public class GeneralUtilityMethods {
 						}
 					}
 
-				} else {
-					// ignore line
-				}
+				} 
 				line = br.readLine();
 			}
 			
 			/*
 			 * Only add audit values that are in this form
+			 * Also make sure we had a timing value for very column in this form
 			 */
-			
+			for(String col : columns) {
+				if(!col.startsWith("_")) {
+					int t = 0;
+					try {
+						t = initAudit.get(col);
+					} catch(Exception e) {
+						// ignore errors time will be set to 0
+					}
+					audit.put(col, t);
+				}
+			}
 
-			// TODO delete all file options that were not in the latest file (file version number)
 		} catch (Exception e) {
 			log.log(Level.SEVERE,"Error", e);
 		} finally {

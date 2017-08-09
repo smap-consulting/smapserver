@@ -24,11 +24,13 @@ import managers.DataManager;
 import model.DataEndPoint;
 
 import java.io.PrintWriter;
+import java.lang.reflect.Type;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.logging.Level;
@@ -52,6 +54,10 @@ import org.smap.sdal.managers.LogManager;
 import org.smap.sdal.managers.TableDataManager;
 import org.smap.sdal.model.TableColumn;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
+
 /*
  * Returns data for the passed in table name
  */
@@ -60,12 +66,12 @@ public class Data_CSV extends Application {
 
 	Authorise a = null;
 
-	private static Logger log =
-			Logger.getLogger(Data_CSV.class.getName());
+	private static Logger log = Logger.getLogger(Data_CSV.class.getName());
 
-	LogManager lm = new LogManager();		// Application log
+	LogManager lm = new LogManager(); // Application log
 
-	// Tell class loader about the root classes.  (needed as tomcat6 does not support servlet 3)
+	// Tell class loader about the root classes. (needed as tomcat6 does not support
+	// servlet 3)
 	public Set<Class<?>> getClasses() {
 		Set<Class<?>> s = new HashSet<Class<?>>();
 		s.add(Data_CSV.class);
@@ -73,21 +79,19 @@ public class Data_CSV extends Application {
 	}
 
 	public Data_CSV() {
-		ArrayList<String> authorisations = new ArrayList<String> ();	
+		ArrayList<String> authorisations = new ArrayList<String>();
 		authorisations.add(Authorise.ANALYST);
 		authorisations.add(Authorise.ADMIN);
 		a = new Authorise(authorisations, null);
 	}
 
 	/*
-	 * KoboToolBox API version 1 /data.csv
-	 * CSV version
+	 * KoboToolBox API version 1 /data.csv CSV version
 	 */
 	@GET
 	@Produces("text/csv")
-	public void getDataCsv(@Context HttpServletRequest request,
-			@QueryParam("filename") String filename,
-			@Context HttpServletResponse response) { 
+	public void getDataCsv(@Context HttpServletRequest request, @QueryParam("filename") String filename,
+			@Context HttpServletResponse response) {
 
 		// Authorisation - Access
 		Connection sd = SDDataSource.getConnection("koboToolBoxApi-getDataCSV");
@@ -97,28 +101,32 @@ public class Data_CSV extends Application {
 		PrintWriter outWriter = null;
 
 		try {
-			Class.forName("org.postgresql.Driver");	 
+			Class.forName("org.postgresql.Driver");
 		} catch (ClassNotFoundException e) {
 			log.log(Level.SEVERE, "Can't find PostgreSQL JDBC Driver", e);
-			try {response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);} catch(Exception ex) {};
+			try {
+				response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+			} catch (Exception ex) {
+			}
+			;
 		}
 
-		if(filename == null) {
+		if (filename == null) {
 			filename = "forms.csv";
 		}
-		
+
 		DataManager dm = new DataManager();
 		try {
 			ArrayList<DataEndPoint> data = dm.getDataEndPoints(sd, request, true);
 
-			response.setHeader("Content-Disposition","attachment; filename=\"" + filename +"\"");
-			
+			response.setHeader("Content-Disposition", "attachment; filename=\"" + filename + "\"");
+
 			outWriter = response.getWriter();
 
-			if(data.size() > 0) {
-				for(int i = 0; i < data.size(); i++) {
+			if (data.size() > 0) {
+				for (int i = 0; i < data.size(); i++) {
 					DataEndPoint dep = data.get(i);
-					if(i == 0) {
+					if (i == 0) {
 						outWriter.print(dep.getCSVColumns() + "\n");
 					}
 					outWriter.print(dep.getCSVData() + "\n");
@@ -128,16 +136,19 @@ public class Data_CSV extends Application {
 				outWriter.print("No Data");
 			}
 
-			outWriter.flush(); 
+			outWriter.flush();
 			outWriter.close();
 
 		} catch (Exception e) {
 			e.printStackTrace();
-			try {response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);} catch(Exception ex) {};
+			try {
+				response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+			} catch (Exception ex) {
+			}
+			;
 		} finally {
 			SDDataSource.closeConnection("koboToolBoxApi-getDataCSV", sd);
 		}
-
 
 	}
 
@@ -290,15 +301,24 @@ public class Data_CSV extends Application {
 			boolean hasAudit = false;
 			for(int i = 0; i < columns.size(); i ++) {
 				TableColumn c = columns.get(i);
+				
+				if(c.name.equals("_audit")) {
+					hasAudit = true;
+				}
 				if(i > 0) {
 					columnSelect.append(",");
-					columnHeadings.append(",");
+					if(c.name.equals("_audit")) {
+						// Column headings at end
+					} else {
+						columnHeadings.append(",");
+					}
 				}
 				columnSelect.append(c.getSqlSelect(urlprefix));
-				columnHeadings.append(c.humanName);
+				if(!c.name.equals("_audit")) {
+					columnHeadings.append(c.humanName);
+				}
 			}
 
-			outWriter.print(columnHeadings.toString() + "\n");
 			if(GeneralUtilityMethods.tableExists(cResults, table_name)) {
 
 				TableDataManager tdm = new TableDataManager();
@@ -330,6 +350,10 @@ public class Data_CSV extends Application {
 
 
 				log.info("Get CSV data: " + pstmt.toString());
+				HashMap<String, Integer> auditData = null;
+				Gson gson = new GsonBuilder().disableHtmlEscaping().create();
+				Type type = new TypeToken<HashMap<String, Integer>> (){}.getType();
+				
 				rs = pstmt.executeQuery();
 
 				int index = 0;
@@ -342,23 +366,50 @@ public class Data_CSV extends Application {
 
 					record = new StringBuffer();
 
+					// Add the standard data
 					for(int i = 0; i < columns.size(); i++) {
 						TableColumn c = columns.get(i);
-						if(i > 0) {
-							record.append(",");
-						}
-
+						
 						String val = rs.getString(i + 1);
-						if(val != null) {	
+						if(val == null) {
+							val = "";
+						}
+						if(!c.name.equals("_audit")) {	
+							if(i > 0) {
+								record.append(",");
+							}
 							record.append("\"" + val.replaceAll("\"", "\"\"") + "\"");
+						} else {						
+							auditData = gson.fromJson(val, type);
+						} 
+					}
+					
+					// Add the audit data
+					if(hasAudit && auditData != null) {
+						for(TableColumn c : columns) {
+							if(!c.name.equals("_audit") && auditData.get(c.name) != null) {
+								if(index == 1) {
+									columnHeadings.append(",");
+									columnHeadings.append(c.humanName);
+									columnHeadings.append(" ");
+									columnHeadings.append("(time ms)");
+								}
+								record.append(",");
+								record.append(auditData.get(c.name));
+							}
 						}
 					}
 
 					record.append("\n");
+					
+					if(index == 1) {
+						outWriter.print(columnHeadings.toString() + "\n");
+					}
 					outWriter.print(record.toString());
 
 				}
 			} else {
+				outWriter.print(columnHeadings.toString() + "\n");
 				outWriter.print("No data\n");
 			}
 
@@ -386,6 +437,4 @@ public class Data_CSV extends Application {
 
 	}
 
-
 }
-
