@@ -1668,7 +1668,8 @@ function respondToEvents($context) {
 			survey = globals.model.survey,
 			name,
 			formIndex,
-			itemIndex;
+			itemIndex,
+			i;
 		
 		if(globals.gSaveInProgress) {
 			return;
@@ -1695,9 +1696,22 @@ function respondToEvents($context) {
 				
 				// Add an end group question if a new group has been created
 				if(type === "begin group") {
+
+                    // If the group was originally a begin repeat then it may not be empty
+                    var seq = question.getSequenceQuestion(itemIndex, survey.forms[formIndex], false, undefined);
+                    var endGroupSeq = seq;
+                    for(i = seq + 1; i < survey.forms[formIndex].qSeq.length; i++) {
+                        if(survey.forms[formIndex].questions[survey.forms[formIndex].qSeq[i]].memberGroup === survey.forms[formIndex].questions[itemIndex].name) {
+                            endGroupSeq++;
+                        } else {
+                        	break;
+						}
+                    }
+
 					name = survey.forms[formIndex].questions[itemIndex].name + "_groupEnd" ;
 					$context = question.add(formIndex,
-							$questionElement.attr("id"), 
+							//$questionElement.attr("id"),
+                        	"question" + formIndex + "_" + survey.forms[formIndex].qSeq[endGroupSeq],
 							"after", 
 							"end group",
 							name);

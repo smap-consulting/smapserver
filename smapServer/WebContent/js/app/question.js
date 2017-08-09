@@ -40,7 +40,8 @@ define([
 		deleteOption: deleteOption,
 		moveQuestion: moveQuestion,
 		moveBeforeOption: moveBeforeOption,
-		setGroupEnd: setGroupEnd
+		setGroupEnd: setGroupEnd,
+		getSequenceQuestion: getSequenceQuestion
 	};
 	
 	var gEditor;
@@ -234,7 +235,7 @@ define([
 		question = survey.forms[beforeFormIndex].questions[endGroupData.index];
 		
 		// Create changeset to be applied on save		
-		change = {
+		var change = {
 				changeType: "question",		// survey | form | language | question | option | (property | label) last two are types of property change
 				action: "move",
 				question: {
