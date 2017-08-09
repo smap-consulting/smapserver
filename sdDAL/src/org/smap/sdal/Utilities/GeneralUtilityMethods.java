@@ -1547,12 +1547,11 @@ public class GeneralUtilityMethods {
 	/*
 	 * Convert and audit file into a Hashmap
 	 */
-	public static HashMap<String, Integer> getAudit(File csvFile, ArrayList<String> columns) {
+	public static HashMap<String, Integer> getAudit(File csvFile, ArrayList<String> columns, String auditPath) {
 
 		BufferedReader br = null;
-		HashMap<String, Integer> tempAudit = new HashMap<> ();
 		HashMap<String, Integer> audit = new HashMap<> ();
-
+		
 		try {
 			FileReader reader = new FileReader(csvFile);
 			br = new BufferedReader(reader);
@@ -1561,21 +1560,29 @@ public class GeneralUtilityMethods {
 			// Get Header
 			String line = br.readLine();
 
+			// Get audit values that match the current audit path that is: auditPath/qname
 			while(line != null) {
 				String [] auditCols = parser.parseLine(line);
 				int time = 0;
 				if(auditCols.length > 2 && auditCols[0] != null && auditCols[0].equals("question")) {
-					try {
-						BigInteger from = new BigInteger(auditCols[2]);
-						BigInteger to = new BigInteger(auditCols[3]);
-						BigInteger diff = to.subtract(from);
-						time = diff.intValue() / 1000;
-						tempAudit.put(auditCols[1], time);
-					} catch (Exception e) {
-						log.info("Error: invalid audit line: " + e.getMessage() + " : " + line);
+					String id = auditCols[1];
+					if(id != null) {
+						id = id.trim();
+						if(id.startsWith(auditPath)) {
+							String name = id.substring(auditPath.length() + 1);
+							if(name.indexOf('/') < 0) {
+								try {
+									BigInteger from = new BigInteger(auditCols[2]);
+									BigInteger to = new BigInteger(auditCols[3]);
+									BigInteger diff = to.subtract(from);
+									time = diff.intValue();
+									audit.put(name, time);
+								} catch (Exception e) {
+									log.info("Error: invalid audit line: " + e.getMessage() + " : " + line);
+								}	
+							}
+						}
 					}
-
-					System.out.println("Getting time for " + auditCols[1]);						
 
 				} else {
 					// ignore line
