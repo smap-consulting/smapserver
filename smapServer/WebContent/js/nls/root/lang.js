@@ -85,6 +85,7 @@ define({
     "c_enabled": "Enabled",
     "c_edit": "Edit",
     "c_del": "Delete",
+    "c_del_data": "Delete Data",
     "c_download": "Download",
     "c_upload": "Upload",
     "c_done": "Done",

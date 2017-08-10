@@ -101,7 +101,7 @@ var htable7 =  '<h3>' + localise.set["c_actions"] + '</h3>';
 var htable8 =	'<div class="pfoot">';
 var htable9 =	  '<button class="tExport">' + localise.set["m_export"] + '</button>';
 var htable10 =	  '<button class="tImport">' + localise.set["m_import"] + '</button>';
-var htable11 =	  '<button class="tDelete">' + localise.set["c_del"] + '</button>';
+var htable11 =	  '<button class="tDelete">' + localise.set["c_del_data"] + '</button>';
 var htable12 =	'</div>' ;
 var htable13 = '</div>';
 
