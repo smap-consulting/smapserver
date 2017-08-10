@@ -320,6 +320,7 @@ define(['jquery', 'bootstrap', 'mapbox_app', 'common', 'localise',
 
                 // Clear form
                 $('#assign_survey_form')[0].reset();
+                surveyChanged();
                 $('#add_task_from_existing').hide();
 
                 if($('#filter_results_check').prop('checked', false));
