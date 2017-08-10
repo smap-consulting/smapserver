@@ -1594,7 +1594,7 @@ public class GeneralUtilityMethods {
 			 * Also make sure we had a timing value for very column in this form
 			 */
 			for(String col : columns) {
-				if(!col.startsWith("_")) {
+				if(!col.startsWith("_") && !col.equals("meta")) {
 					int t = 0;
 					try {
 						t = initAudit.get(col);

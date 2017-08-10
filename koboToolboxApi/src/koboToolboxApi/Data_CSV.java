@@ -174,7 +174,7 @@ public class Data_CSV extends Application {
 			@QueryParam("format") String format,			// dt for datatables otherwise assume kobo
 			@QueryParam("bad") String include_bad,		// yes | only | none Include records marked as bad
 			@QueryParam("filename") String filename,
-			@QueryParam("audit") boolean audit
+			@QueryParam("audit") String audit_set
 			) { 
 
 		// Authorisation - Access
@@ -216,6 +216,11 @@ public class Data_CSV extends Application {
 
 		if(sort != null && dirn == null) {
 			dirn = "asc";
+		}
+		
+		boolean audit=false;
+		if(audit_set != null && audit_set.equals("yes")) {
+			audit = true;
 		}
 
 		if(include_bad == null) {

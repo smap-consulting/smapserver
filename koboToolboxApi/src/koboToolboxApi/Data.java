@@ -140,7 +140,7 @@ public class Data extends Application {
 			@QueryParam("hrk") String hrk,				// Unique key (optional, use to restrict records to a specific hrk)
 			@QueryParam("format") String format,			// dt for datatables otherwise assume kobo
 			@QueryParam("bad") String include_bad,		// yes | only | none Include records marked as bad
-			@QueryParam("audit") boolean audit			// if true return audit data
+			@QueryParam("audit") String audit_set		// if yes return audit data
 			) { 
 
 		Response response = null;
@@ -179,6 +179,11 @@ public class Data extends Application {
 
 		if(sort != null && dirn == null) {
 			dirn = "asc";
+		}
+		
+		boolean audit=false;
+		if(audit_set != null && audit_set.equals("yes")) {
+			audit = true;
 		}
 
 		if(include_bad == null) {
@@ -297,7 +302,10 @@ public class Data extends Application {
 			}
 
 
-
+			if(ja == null) {
+				ja = new JSONArray();
+			}
+			
 			if(isDt) {
 				JSONObject dt  = new JSONObject();
 				dt.put("data", ja);

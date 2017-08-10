@@ -78,8 +78,12 @@ define(['jquery', 'bootstrap', 'mapbox_app', 'common', 'localise',
             });
 
             // Add a trigger to respond to the clicking of "filter tasks"
-            $('#filter_results_check').prop('checked', false).click(function () {
-                $('#filter_results').toggle();
+            $('#filter_results_check').change(function () {
+                if($('#filter_results_check').prop('checked')) {
+                    $('#filter_results').show();
+                } else {
+                    $('#filter_results').hide();
+                }
             });
 
             // Add a trigger to respond to the clicking of "add_from_survey"
@@ -317,6 +321,10 @@ define(['jquery', 'bootstrap', 'mapbox_app', 'common', 'localise',
                 // Clear form
                 $('#assign_survey_form')[0].reset();
                 $('#add_task_from_existing').hide();
+
+                if($('#filter_results_check').prop('checked', false));
+                $('#filter_results').hide();
+
                 // open the modal
                 $('#addTask').modal("show");
 
