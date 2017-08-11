@@ -100,17 +100,6 @@ public class Data_CSV extends Application {
 		StringBuffer record = null;
 		PrintWriter outWriter = null;
 
-		try {
-			Class.forName("org.postgresql.Driver");
-		} catch (ClassNotFoundException e) {
-			log.log(Level.SEVERE, "Can't find PostgreSQL JDBC Driver", e);
-			try {
-				response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-			} catch (Exception ex) {
-			}
-			;
-		}
-
 		if (filename == null) {
 			filename = "forms.csv";
 		}
@@ -158,24 +147,22 @@ public class Data_CSV extends Application {
 	@GET
 	@Produces("text/csv")
 	@Path("/{sId}")
-	public void getDataRecords(@Context HttpServletRequest request,
-			@Context HttpServletResponse response,			
-			@PathParam("sId") int sId,
-			@QueryParam("start") int start,				// Primary key to start from
-			@QueryParam("limit") int limit,				// Number of records to return
-			@QueryParam("mgmt") boolean mgmt,
-			@QueryParam("group") boolean group,			// If set include a dummy group value in the response, used by duplicate query
-			@QueryParam("sort") String sort,				// Column Human Name to sort on
-			@QueryParam("dirn") String dirn,				// Sort direction, asc || desc
-			@QueryParam("form") int fId,					// Form id (optional only specify for a child form)
-			@QueryParam("start_parkey") int start_parkey,// Parent key to start from
-			@QueryParam("parkey") int parkey,			// Parent key (optional, use to get records that correspond to a single parent record)
-			@QueryParam("hrk") String hrk,				// Unique key (optional, use to restrict records to a specific hrk)
-			@QueryParam("format") String format,			// dt for datatables otherwise assume kobo
-			@QueryParam("bad") String include_bad,		// yes | only | none Include records marked as bad
-			@QueryParam("filename") String filename,
-			@QueryParam("audit") String audit_set
-			) { 
+	public void getDataRecords(@Context HttpServletRequest request, @Context HttpServletResponse response,
+			@PathParam("sId") int sId, @QueryParam("start") int start, // Primary key to start from
+			@QueryParam("limit") int limit, // Number of records to return
+			@QueryParam("mgmt") boolean mgmt, @QueryParam("group") boolean group, // If set include a dummy group value
+			// in the response, used by
+			// duplicate query
+			@QueryParam("sort") String sort, // Column Human Name to sort on
+			@QueryParam("dirn") String dirn, // Sort direction, asc || desc
+			@QueryParam("form") int fId, // Form id (optional only specify for a child form)
+			@QueryParam("start_parkey") int start_parkey, // Parent key to start from
+			@QueryParam("parkey") int parkey, // Parent key (optional, use to get records that correspond to a single
+			// parent record)
+			@QueryParam("hrk") String hrk, // Unique key (optional, use to restrict records to a specific hrk)
+			@QueryParam("format") String format, // dt for datatables otherwise assume kobo
+			@QueryParam("bad") String include_bad, // yes | only | none Include records marked as bad
+			@QueryParam("filename") String filename, @QueryParam("audit") String audit_set) {
 
 		// Authorisation - Access
 		Connection sd = SDDataSource.getConnection("koboToolboxApi - get data records csv");
@@ -201,7 +188,7 @@ public class Data_CSV extends Application {
 		String sqlGetForm = "select parentform, table_name from form where s_id = ? and f_id = ?;";
 		PreparedStatement pstmtGetForm = null;
 
-		PreparedStatement pstmt= null;
+		PreparedStatement pstmt = null;
 
 		StringBuffer columnSelect = new StringBuffer();
 		StringBuffer columnHeadings = new StringBuffer();
@@ -214,49 +201,48 @@ public class Data_CSV extends Application {
 		boolean getParkey = false;
 		ResultSet rs = null;
 
-		if(sort != null && dirn == null) {
+		if (sort != null && dirn == null) {
 			dirn = "asc";
 		}
-		
-		boolean audit=false;
-		if(audit_set != null && audit_set.equals("yes")) {
+
+		boolean audit = false;
+		if (audit_set != null && audit_set.equals("yes")) {
 			audit = true;
 		}
 
-		if(include_bad == null) {
+		if (include_bad == null) {
 			include_bad = "none";
 		}
 
 		boolean isDt = false;
 
-		if(filename == null) {
+		if (filename == null) {
 			filename = "data.csv";
 		}
-		
+
 		try {
-			response.setHeader("Content-Disposition","attachment; filename=\"" + filename +"\"");
+			response.setHeader("Content-Disposition", "attachment; filename=\"" + filename + "\"");
 			outWriter = response.getWriter();
 			String urlprefix = GeneralUtilityMethods.getUrlPrefix(request);
 
 			// Get the managed Id
-			if(mgmt) {
+			if (mgmt) {
 				pstmtGetManagedId = sd.prepareStatement(sqlGetManagedId);
 				pstmtGetManagedId.setInt(1, sId);
 				rs = pstmtGetManagedId.executeQuery();
-				if(rs.next()) {
+				if (rs.next()) {
 					managedId = rs.getInt(1);
 				}
 				rs.close();
 			}
 
-
-			if(fId == 0) {
+			if (fId == 0) {
 				pstmtGetMainForm = sd.prepareStatement(sqlGetMainForm);
-				pstmtGetMainForm.setInt(1,sId);
+				pstmtGetMainForm.setInt(1, sId);
 
-				log.info("Getting main form: " + pstmtGetMainForm.toString() );
+				log.info("Getting main form: " + pstmtGetMainForm.toString());
 				rs = pstmtGetMainForm.executeQuery();
-				if(rs.next()) {
+				if (rs.next()) {
 					fId = rs.getInt(1);
 					table_name = rs.getString(2);
 				}
@@ -264,107 +250,94 @@ public class Data_CSV extends Application {
 			} else {
 				getParkey = true;
 				pstmtGetForm = sd.prepareStatement(sqlGetForm);
-				pstmtGetForm.setInt(1,sId);
-				pstmtGetForm.setInt(2,fId);
+				pstmtGetForm.setInt(1, sId);
+				pstmtGetForm.setInt(2, fId);
 
-				log.info("Getting specific form: " + pstmtGetForm.toString() );
+				log.info("Getting specific form: " + pstmtGetForm.toString());
 				rs = pstmtGetForm.executeQuery();
-				if(rs.next()) {
+				if (rs.next()) {
 					parentform = rs.getInt(1);
 					table_name = rs.getString(2);
 				}
 				rs.close();
 			}
 
-			ArrayList<TableColumn> columns = GeneralUtilityMethods.getColumnsInForm(
-					sd,
-					cResults,
-					sId,
-					request.getRemoteUser(),
-					parentform,
-					fId,
-					table_name,
-					false,
-					getParkey,	// Include parent key if the form is not the top level form (fId is 0)
-					(include_bad.equals("yes") || include_bad.equals("only")),
-					true,		// include instance id
-					true,		// include other meta data
-					true,		// include preloads
-					true,		// include instancename
-					true,		// include survey duration
-					superUser,
-					false,		// TODO include HXL
-					audit
-					);
+			ArrayList<TableColumn> columns = GeneralUtilityMethods.getColumnsInForm(sd, cResults, sId,
+					request.getRemoteUser(), parentform, fId, table_name, false, getParkey, // Include parent key if the
+					// form is not the top level
+					// form (fId is 0)
+					(include_bad.equals("yes") || include_bad.equals("only")), true, // include instance id
+					true, // include other meta data
+					true, // include preloads
+					true, // include instancename
+					true, // include survey duration
+					superUser, false, // TODO include HXL
+					audit);
 
-			if(mgmt) {
-				CustomReportsManager crm = new CustomReportsManager ();
+			if (mgmt) {
+				CustomReportsManager crm = new CustomReportsManager();
 				ArrayList<TableColumn> managedColumns = crm.get(sd, managedId, -1);
 				columns.addAll(managedColumns);
 			}
 
 			boolean hasAudit = false;
-			for(int i = 0; i < columns.size(); i ++) {
+			for (int i = 0; i < columns.size(); i++) {
 				TableColumn c = columns.get(i);
-				
-				if(c.name.equals("_audit")) {
+
+				if (c.name.equals("_audit")) {
 					hasAudit = true;
 				}
-				if(i > 0) {
+				if (i > 0) {
 					columnSelect.append(",");
-					if(c.name.equals("_audit")) {
+					if (c.name.equals("_audit")) {
 						// Column headings at end
 					} else {
 						columnHeadings.append(",");
 					}
 				}
 				columnSelect.append(c.getSqlSelect(urlprefix));
-				if(!c.name.equals("_audit")) {
+				if (!c.name.equals("_audit")) {
 					columnHeadings.append(c.humanName);
 				}
 			}
 
-			if(GeneralUtilityMethods.tableExists(cResults, table_name)) {
+			System.out.println("Add audit columns: " + hasAudit);
+			// Add the audit columns
+			if(hasAudit) {
+				for (TableColumn c : columns) {
+					if (includeInAudit(c.name)) {
+						columnHeadings.append(",");
+						columnHeadings.append(c.humanName);
+						columnHeadings.append(" ");
+						columnHeadings.append("(time ms)");
+					}
+				}
+			}
+			columnHeadings.append("\n");
+			outWriter.print(columnHeadings.toString());
+
+			if (GeneralUtilityMethods.tableExists(cResults, table_name)) {
 
 				TableDataManager tdm = new TableDataManager();
 				JSONArray ja = null;
 
-				pstmt = tdm.getPreparedStatement(
-						sd, 
-						cResults,
-						columns,
-						urlprefix,
-						sId,
-						table_name,
-						parkey,
-						hrk,
-						request.getRemoteUser(),
-						sort,
-						dirn,
-						mgmt,
-						group,
-						isDt,
-						start,
-						limit,
-						getParkey,
-						start_parkey,
-						superUser,
-						false,			// Return records greater than or equal to primary key
-						include_bad
-						);
-
+				pstmt = tdm.getPreparedStatement(sd, cResults, columns, urlprefix, sId, table_name, parkey, hrk,
+						request.getRemoteUser(), sort, dirn, mgmt, group, isDt, start, limit, getParkey, start_parkey,
+						superUser, false, // Return records greater than or equal to primary key
+						include_bad);
 
 				log.info("Get CSV data: " + pstmt.toString());
 				HashMap<String, Integer> auditData = null;
 				Gson gson = new GsonBuilder().disableHtmlEscaping().create();
-				Type type = new TypeToken<HashMap<String, Integer>> (){}.getType();
-				
+				Type type = new TypeToken<HashMap<String, Integer>>() {
+				}.getType();
+
 				rs = pstmt.executeQuery();
 
 				int index = 0;
 				while (rs.next()) {
 
-					if(limit > 0 && index >= limit) {
+					if (limit > 0 && index >= limit) {
 						break;
 					}
 					index++;
@@ -372,74 +345,94 @@ public class Data_CSV extends Application {
 					record = new StringBuffer();
 
 					// Add the standard data
-					for(int i = 0; i < columns.size(); i++) {
+					for (int i = 0; i < columns.size(); i++) {
 						TableColumn c = columns.get(i);
-						
+
 						String val = rs.getString(i + 1);
-						if(val == null) {
+						if (val == null) {
 							val = "";
 						}
-						if(!c.name.equals("_audit")) {	
-							if(i > 0) {
+						if (!c.name.equals("_audit")) {
+							if (i > 0) {
 								record.append(",");
 							}
 							record.append("\"" + val.replaceAll("\"", "\"\"") + "\"");
-						} else {						
+						} else {
 							auditData = gson.fromJson(val, type);
-						} 
+						}
 					}
-					
+
 					// Add the audit data
-					if(hasAudit && auditData != null) {
-						for(TableColumn c : columns) {
-							if(!c.name.equals("_audit") && auditData.get(c.name) != null) {
-								if(index == 1) {
-									columnHeadings.append(",");
-									columnHeadings.append(c.humanName);
-									columnHeadings.append(" ");
-									columnHeadings.append("(time ms)");
-								}
+					if (hasAudit && auditData != null) {
+						for (TableColumn c : columns) {
+							if (includeInAudit(c.name)) {
 								record.append(",");
-								record.append(auditData.get(c.name));
+								if(auditData.get(c.name) != null) {
+									record.append(auditData.get(c.name));
+								}
 							}
 						}
 					}
 
 					record.append("\n");
-					
-					if(index == 1) {
-						outWriter.print(columnHeadings.toString() + "\n");
-					}
 					outWriter.print(record.toString());
 
 				}
-			} else {
-				outWriter.print(columnHeadings.toString() + "\n");
-				outWriter.print("No data\n");
+
+				outWriter.flush();
+				outWriter.close();
 			}
 
-			outWriter.flush(); 
-			outWriter.close();
+			} catch (Exception e) {
+				log.log(Level.SEVERE, "Exception", e);
+				try {
+					response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+				} catch (Exception ex) {
+				}
+				;
+			} finally {
 
+				try {
+					if (pstmt != null) {
+						pstmt.close();
+					}
+				} catch (SQLException e) {
+				}
+				try {
+					if (pstmtGetMainForm != null) {
+						pstmtGetMainForm.close();
+					}
+				} catch (SQLException e) {
+				}
+				try {
+					if (pstmtGetForm != null) {
+						pstmtGetForm.close();
+					}
+				} catch (SQLException e) {
+				}
+				try {
+					if (pstmtGetManagedId != null) {
+						pstmtGetManagedId.close();
+					}
+				} catch (SQLException e) {
+				}
 
+				ResultsDataSource.closeConnection("koboToolboxApi - get data records csv", cResults);
+				SDDataSource.closeConnection("koboToolboxApi - get data records csv", sd);
+			}
 
-
-		} catch (Exception e) {
-			log.log(Level.SEVERE, "Exception", e);
-			try {response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);} catch(Exception ex) {};
-		} finally {
-
-			try {if (pstmt != null) {pstmt.close();	}} catch (SQLException e) {	}
-			try {if (pstmtGetMainForm != null) {pstmtGetMainForm.close();	}} catch (SQLException e) {	}
-			try {if (pstmtGetForm != null) {pstmtGetForm.close();	}} catch (SQLException e) {	}
-			try {if (pstmtGetManagedId != null) {pstmtGetManagedId.close();	}} catch (SQLException e) {	}
-
-
-			ResultsDataSource.closeConnection("koboToolboxApi - get data records csv", cResults);
-			SDDataSource.closeConnection("koboToolboxApi - get data records csv", sd);
 		}
-
+	
+	private boolean includeInAudit(String name) {
+		boolean include = true;
+		
+		if(name.startsWith("_")) {
+			include  = false;
+		} else if(name.equals("prikey") || name.equals("instanceid") || name.equals("instancename")) {
+			include = false;
+		}
+		return include;
+	}
 
 	}
 
-}
