@@ -59,8 +59,6 @@ public class TableDataManager {
 
 		StringBuffer columnSelect = new StringBuffer();
 		boolean hasRbacFilter = false;
-		ResultSet rs = null;
-		JSONArray ja = new JSONArray();
 		ArrayList<SqlFrag> columnSqlFrags = new ArrayList<SqlFrag>();
 
 		PreparedStatement pstmt = null;

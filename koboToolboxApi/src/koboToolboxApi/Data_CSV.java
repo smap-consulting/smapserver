@@ -162,7 +162,8 @@ public class Data_CSV extends Application {
 			@QueryParam("hrk") String hrk, // Unique key (optional, use to restrict records to a specific hrk)
 			@QueryParam("format") String format, // dt for datatables otherwise assume kobo
 			@QueryParam("bad") String include_bad, // yes | only | none Include records marked as bad
-			@QueryParam("filename") String filename, @QueryParam("audit") String audit_set) {
+			@QueryParam("filename") String filename, 
+			@QueryParam("audit") String audit_set) {
 
 		// Authorisation - Access
 		Connection sd = SDDataSource.getConnection("koboToolboxApi - get data records csv");
@@ -280,30 +281,26 @@ public class Data_CSV extends Application {
 				columns.addAll(managedColumns);
 			}
 
-			boolean hasAudit = false;
+			boolean colHeadingAdded = false;
 			for (int i = 0; i < columns.size(); i++) {
 				TableColumn c = columns.get(i);
 
-				if (c.name.equals("_audit")) {
-					hasAudit = true;
-				}
 				if (i > 0) {
 					columnSelect.append(",");
-					if (c.name.equals("_audit")) {
-						// Column headings at end
-					} else {
-						columnHeadings.append(",");
-					}
 				}
 				columnSelect.append(c.getSqlSelect(urlprefix));
+				
 				if (!c.name.equals("_audit")) {
+					if (colHeadingAdded) {
+						columnHeadings.append(",");
+					}
+					colHeadingAdded = true;
 					columnHeadings.append(c.humanName);
 				}
 			}
 
-			System.out.println("Add audit columns: " + hasAudit);
 			// Add the audit columns
-			if(hasAudit) {
+			if(audit) {
 				for (TableColumn c : columns) {
 					if (includeInAudit(c.name)) {
 						columnHeadings.append(",");
@@ -329,8 +326,7 @@ public class Data_CSV extends Application {
 				log.info("Get CSV data: " + pstmt.toString());
 				HashMap<String, Integer> auditData = null;
 				Gson gson = new GsonBuilder().disableHtmlEscaping().create();
-				Type type = new TypeToken<HashMap<String, Integer>>() {
-				}.getType();
+				Type type = new TypeToken<HashMap<String, Integer>>() {}.getType();
 
 				rs = pstmt.executeQuery();
 
@@ -363,7 +359,7 @@ public class Data_CSV extends Application {
 					}
 
 					// Add the audit data
-					if (hasAudit && auditData != null) {
+					if (audit && auditData != null) {
 						for (TableColumn c : columns) {
 							if (includeInAudit(c.name)) {
 								record.append(",");
@@ -428,7 +424,7 @@ public class Data_CSV extends Application {
 		
 		if(name.startsWith("_")) {
 			include  = false;
-		} else if(name.equals("prikey") || name.equals("instanceid") || name.equals("instancename")) {
+		} else if(name.equals("prikey") || name.equals("parkey") || name.equals("instanceid") || name.equals("instancename")) {
 			include = false;
 		}
 		return include;

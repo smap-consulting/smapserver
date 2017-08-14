@@ -1928,11 +1928,6 @@ public class GeneralUtilityMethods {
 			}
 
 
-
-
-
-
-
 		} catch(SQLException e) {
 			try { sd.rollback();} catch (Exception ex){log.log(Level.SEVERE,"", ex);}
 			log.log(Level.SEVERE,"Error", e);
@@ -2388,7 +2383,7 @@ public class GeneralUtilityMethods {
 			}
 
 
-		}
+		}	
 		
 		if(audit && GeneralUtilityMethods.columnType(cResults, table_name, "_audit") != null) {
 			c = new TableColumn();

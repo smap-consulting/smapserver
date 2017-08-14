@@ -1750,6 +1750,7 @@ public class SurveyManager {
 		PreparedStatement pstmtProperty3 = null;
 		PreparedStatement pstmtDependent = null;
 		PreparedStatement pstmtReadonly = null;
+		PreparedStatement pstmtSource = null;
 		PreparedStatement pstmtGetQuestionId = null;
 		PreparedStatement pstmtGetQuestionDetails = null;
 		PreparedStatement pstmtGetListId = null;
@@ -2103,7 +2104,7 @@ public class SurveyManager {
 							isRepeatType = true;
 						}
 						if(isRepeatType) {
-								
+							
 							String columnName = GeneralUtilityMethods.cleanName(ci.property.name, true, true, true);
 							// Create the sub form
 							String tableName = "s" + sId + "_" + columnName;
@@ -2137,6 +2138,25 @@ public class SurveyManager {
 							
 							log.info("Delete End group of question: " + pstmt.toString());
 							pstmt.executeUpdate();
+						}
+						
+						// Source is set to "user" for questions that can be completed by a user
+						boolean setSource = false;
+						String newSource = null;
+						
+						if(isRepeatType) {
+							setSource = true;
+							newSource = null;
+						}
+						
+						if(setSource) {
+							String sqlSource = "update question set source = ? " +
+									"where q_id = ?";
+							pstmtSource = sd.prepareStatement(sqlSource);
+							pstmtSource.setString(1, newSource);
+							pstmtSource.setInt(2, ci.property.qId);
+							log.info("Update source: " + pstmtSource.toString());
+							pstmtSource.executeUpdate();
 						}
 							
 						// Update the survey manifest if this question references CSV files
@@ -2306,6 +2326,7 @@ public class SurveyManager {
 			try {if (pstmtAddNodeset != null) {pstmtAddNodeset.close();}} catch (SQLException e) {}
 			try {if (pstmtForm != null) {pstmtForm.close();}} catch (SQLException e) {}
 			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+			try {if (pstmtSource != null) {pstmtSource.close();}} catch (SQLException e) {}
 		
 		}
 	
