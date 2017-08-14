@@ -93,12 +93,12 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
  ******************************************************************************/
 
 public class PDFSurveyManager {
-	
+
 	private static Logger log =
-			 Logger.getLogger(PDFSurveyManager.class.getName());
-	
+			Logger.getLogger(PDFSurveyManager.class.getName());
+
 	LogManager lm = new LogManager();		// Application log
-	
+
 	public static Font Symbols = null;
 	public static Font defaultFont = null;
 	public static Font defaultFontBold = null;
@@ -110,28 +110,28 @@ public class PDFSurveyManager {
 	//private static int GROUP_WIDTH_DEFAULT = 4;
 	private static int NUMBER_TABLE_COLS = 10;
 	private static int NUMBER_QUESTION_COLS = 10;
-	
+
 	//Font font = new Font(FontFamily.HELVETICA, 10);
-    //Font fontbold = new Font(FontFamily.HELVETICA, 10, Font.BOLD);
+	//Font fontbold = new Font(FontFamily.HELVETICA, 10, Font.BOLD);
 
 	private class Parser {
 		XMLParser xmlParser = null;
 		ElementList elements = null;
 	}
-	
+
 	int marginLeft = 50;
 	int marginRight = 50;
 	int marginTop_1 = 130;
 	int marginBottom_1 = 100;
 	int marginTop_2 = 50;
 	int marginBottom_2 = 100;
-	
+
 	private class GlobalVariables {																// Level descended in form hierarchy
 		//HashMap<String, Integer> count = new HashMap<String, Integer> ();		// Record number at a location given by depth_length as a string
 		int [] cols = {NUMBER_QUESTION_COLS};	// Current Array of columns
 		boolean hasAppendix = false;
 		String mapbox_key;
-		
+
 		// Map of questions that need to have the results of another question appended to their results in a pdf report
 		HashMap <String, ArrayList<String>> addToList = new HashMap <String, ArrayList<String>>();
 	}
@@ -154,28 +154,28 @@ public class PDFSurveyManager {
 			boolean landscape,					// Set true if landscape
 			HttpServletResponse response,
 			int utcOffset) {
-		
+
 		if(language != null) {
 			language = language.replace("'", "''");	// Escape apostrophes
 		} else {
 			language = "none";
 		}
-		
-	
+
+
 		User user = null;
-		
+
 		ServerManager serverManager = new ServerManager();
 		ServerData serverData = serverManager.getServer(sd);
-		
+
 		UserManager um = new UserManager();
 		int [] repIndexes = new int[20];		// Assume repeats don't go deeper than 20 levels
 
 		try {
-			
+
 			// Get fonts and embed them
 			String os = System.getProperty("os.name");
 			log.info("Operating System:" + os);
-			
+
 			if(os.startsWith("Mac")) {
 				FontFactory.register("/Library/Fonts/fontawesome-webfont.ttf", "Symbols");
 				//FontFactory.register("/Library/Fonts/Arial Unicode.ttf", "default");
@@ -193,22 +193,22 @@ public class PDFSurveyManager {
 				FontFactory.register("/usr/share/fonts/truetype/NotoSansBengali-Regular.ttf", "bengali");
 				FontFactory.register("/usr/share/fonts/truetype/NotoSansBengali-Bold.ttf", "bengalibold");
 			}
-			
+
 			Symbols = FontFactory.getFont("Symbols", BaseFont.IDENTITY_H, 
-				    BaseFont.EMBEDDED, 12); 
+					BaseFont.EMBEDDED, 12); 
 			defaultFontLink = FontFactory.getFont("Symbols", BaseFont.IDENTITY_H, 
-				    BaseFont.EMBEDDED, 12); 
+					BaseFont.EMBEDDED, 12); 
 			defaultFont = FontFactory.getFont("notosans", BaseFont.IDENTITY_H, 
-				    BaseFont.EMBEDDED, 10); 
+					BaseFont.EMBEDDED, 10); 
 			defaultFontBold = FontFactory.getFont("notosansbold", BaseFont.IDENTITY_H, 
-				    BaseFont.EMBEDDED, 10); 
+					BaseFont.EMBEDDED, 10); 
 			arabicFont = FontFactory.getFont("arabic", BaseFont.IDENTITY_H, 
-				    BaseFont.EMBEDDED, 10); 
+					BaseFont.EMBEDDED, 10); 
 			bengaliFont = FontFactory.getFont("bengali", BaseFont.IDENTITY_H, 
-				    BaseFont.EMBEDDED, 10); 
+					BaseFont.EMBEDDED, 10); 
 			bengaliFontBold = FontFactory.getFont("bengalibold", BaseFont.IDENTITY_H, 
-				    BaseFont.EMBEDDED, 10); 
-			
+					BaseFont.EMBEDDED, 10); 
+
 			defaultFontLink.setColor(BaseColor.BLUE);
 
 			/*
@@ -223,7 +223,7 @@ public class PDFSurveyManager {
 			if(userName != null) {
 				user = um.getByIdent(sd, userName);
 			}
-			
+
 			// If a filename was not specified then get one from the survey data
 			// This filename is returned to the calling program so that it can be used as a permanent name for the temporary file created here
 			// If the PDF is to be returned in an http response then the header is set now before writing to the output stream
@@ -235,19 +235,19 @@ public class PDFSurveyManager {
 					filename += ".pdf";
 				}
 			}
-			
+
 			// If the PDF is to be returned in an http response then set the file name now
 			if(response != null) {
 				log.info("Setting filename to: " + filename);
 				GeneralUtilityMethods.setFilenameInResponse(filename, response);
 			}
-			
+
 			/*
 			 * Get a template for the PDF report if it exists
 			 * The template name will be the same as the XLS form name but with an extension of pdf
 			 */
 			File templateFile = GeneralUtilityMethods.getPdfTemplate(basePath, survey.displayName, survey.p_id);
-			
+
 			/*
 			 * Get dependencies between Display Items, for example if a question result should be added to another
 			 *  question's results
@@ -259,13 +259,13 @@ public class PDFSurveyManager {
 				}
 			}
 			gv.mapbox_key = serverData.mapbox_default;
-			
-			
+
+
 			if(templateFile.exists()) {
-				
+
 				log.info("PDF Template Exists");
 				String templateName = templateFile.getAbsolutePath();
-				
+
 				PdfReader reader = new PdfReader(templateName);
 				PdfStamper stamper = new PdfStamper(reader, outputStream);
 				int languageIdx = GeneralUtilityMethods.getLanguageIdx(survey, language);
@@ -280,19 +280,19 @@ public class PDFSurveyManager {
 				stamper.close();
 			} else {
 				log.info("++++No template exists creating a pdf file programmatically");
-				
+
 				/*
 				 * Create a PDF without the stationary
 				 */				
-				
+
 				PdfWriter writer = null;
-				
+
 				/*
 				 * If we need to add a letter head then create document in two passes, the second pass adds the letter head
 				 * Else just create the document directly in a single pass
 				 */
 				Parser parser = getXMLParser();
-				
+
 				// Step 1 - Create the underlying document as a byte array
 				Document document = null;
 				if(landscape) {
@@ -302,22 +302,22 @@ public class PDFSurveyManager {
 				}
 				document.setMargins(marginLeft, marginRight, marginTop_1, marginBottom_1);
 				writer = PdfWriter.getInstance(document, outputStream);
-				
+
 				writer.setInitialLeading(12);	
-				
+
 				writer.setPageEvent(new PdfPageSizer(survey.displayName, survey.pName, 
 						user, basePath, null,
 						marginLeft, marginRight, marginTop_2, marginBottom_2)); 
 				document.open();
-				
+
 				int languageIdx = GeneralUtilityMethods.getLanguageIdx(survey, language);
-				
+
 				// If this form has data maintain a list of parent records to lookup ${values}
 				ArrayList<ArrayList<Result>> parentRecords = null;
 				if(!generateBlank) {
 					parentRecords = new ArrayList<ArrayList<Result>> ();
 				}
-				
+
 				for(int i = 0; i < survey.instance.results.size(); i++) {
 					processForm(
 							sd, parser, document, survey.instance.results.get(i), 
@@ -334,14 +334,14 @@ public class PDFSurveyManager {
 							parentRecords,
 							remoteUser);		
 				}
-				
+
 				fillNonTemplateUserDetails(document, user, basePath);
-				
+
 				// Add appendix
 				if(gv.hasAppendix) {
 					document.newPage();
 					document.add(new Paragraph("Appendix", defaultFontBold));
-					
+
 					for(int i = 0; i < survey.instance.results.size(); i++) {
 						processForm(
 								sd, parser, document, survey.instance.results.get(i), survey, 
@@ -358,24 +358,24 @@ public class PDFSurveyManager {
 								remoteUser);		
 					}
 				}
-				
+
 				document.close();
-				
+
 			}
-			
-			
+
+
 		} catch (SQLException e) {
 			log.log(Level.SEVERE, "SQL Error", e);
-			
+
 		}  catch (Exception e) {
 			log.log(Level.SEVERE, "Exception", e);
-			
+
 		}
-		
+
 		return filename;
-	
+
 	}
-	
+
 	/*
 	 * Get dependencies between question
 	 */
@@ -383,7 +383,7 @@ public class PDFSurveyManager {
 			ArrayList<Result> record,
 			org.smap.sdal.model.Survey survey,
 			int recNumber) {
-		
+
 		for(int j = 0; j < record.size(); j++) {
 			Result r = record.get(j);
 			if(r.type.equals("form")) {
@@ -391,13 +391,13 @@ public class PDFSurveyManager {
 					getDependencies(gv, r.subForm.get(k), survey, k);
 				}
 			} else {
-				
+
 				if(r.appearance != null && r.appearance.contains("pdfaddto")) {
 					String name = getReferencedQuestion(r.appearance);
 					if(name != null) {
 						String refKey = r.fIdx + "_" + recNumber + "_" + name; 
 						ArrayList<String> deps = gv.addToList.get(refKey);
-						
+
 						if(deps == null) {
 							deps = new ArrayList<String> ();
 							gv.addToList.put(refKey, deps);
@@ -408,10 +408,10 @@ public class PDFSurveyManager {
 			}
 		}
 	}
-	
+
 	private String getReferencedQuestion(String app) {
 		String name = null;
-		
+
 		String [] appValues = app.split(" ");
 		for(int i = 0; i < appValues.length; i++) {
 			if(appValues[i].startsWith("pdfaddto")) {
@@ -422,11 +422,11 @@ public class PDFSurveyManager {
 				break;
 			}
 		}
-		
+
 		return name;
 	}
-	
-	
+
+
 	/*
 	 * Fill the template with data from the survey
 	 */
@@ -443,14 +443,14 @@ public class PDFSurveyManager {
 			String serverRoot,
 			PdfStamper stamper) throws IOException, DocumentException {
 		try {
-			
+
 			for(Result r : record) {
-				
+
 				String value = "";
 				boolean hideLabel = false;
 				String fieldName = getFieldName(formName, repeatIndex, r.name);
 				String fieldNameQR = getFieldName(formName, repeatIndex, r.name + "_qr");
-				
+
 				DisplayItem di = new DisplayItem();
 				try {
 					Form form = survey.forms.get(r.fIdx);
@@ -459,7 +459,7 @@ public class PDFSurveyManager {
 				} catch (Exception e) {
 					// If we can't get the question details for this data then that is ok
 				}
-				
+
 				/*
 				 * Set the value based on the result
 				 * Process subforms if this is a repeating group
@@ -475,11 +475,11 @@ public class PDFSurveyManager {
 							if(c.name.equals("other")) {
 								hideLabel = true;
 							}
-							
+
 							Option option = survey.optionLists.get(c.listName).options.get(c.cIdx);
 							Label label = option.labels.get(languageIdx);
 							value = GeneralUtilityMethods.unesc(label.text);
-							
+
 							break;
 						}
 					}
@@ -489,7 +489,7 @@ public class PDFSurveyManager {
 						if(c.isSet) {
 							// value = c.name;
 							if(!c.name.equals("other")) {
-							
+
 								Option option = survey.optionLists.get(c.listName).options.get(c.cIdx);
 								Label label = option.labels.get(languageIdx);
 								if(value.length() > 0) {
@@ -502,7 +502,7 @@ public class PDFSurveyManager {
 				} else {
 					value = r.value;
 				}
-	
+
 				/*
 				 * Add the value to the form
 				 * Alternatively remove the fieldName if the value is empty.
@@ -514,7 +514,7 @@ public class PDFSurveyManager {
 						log.info("Error removing field: " + fieldName + ": " + e.getMessage());
 					}
 				} else if(r.type.equals("geopoint") || r.type.equals("geoshape") || r.type.equals("geotrace") || r.type.startsWith("geopolygon_") || r.type.startsWith("geolinestring_")) {
-					
+
 					Image img = PdfUtilities.getMapImage(sd, di.map, r.value, di.location, di.zoom, gv.mapbox_key);
 					PdfUtilities.addMapImageTemplate(pdfForm, fieldName, img);
 				} else if(r.type.equals("image") || r.type.equals("video") || r.type.equals("audio")) {
@@ -529,36 +529,36 @@ public class PDFSurveyManager {
 					} else {
 						if(di.isBarcode) {
 							BarcodeQRCode qrcode = new BarcodeQRCode(value.trim(), 1, 1, null);
-					        Image qrcodeImage = qrcode.getImage();
-					        qrcodeImage.setAbsolutePosition(10,500);
-					        qrcodeImage.scalePercent(200);
-					        PdfUtilities.addMapImageTemplate(pdfForm, fieldName, qrcodeImage);
+							Image qrcodeImage = qrcode.getImage();
+							qrcodeImage.setAbsolutePosition(10,500);
+							qrcodeImage.scalePercent(200);
+							PdfUtilities.addMapImageTemplate(pdfForm, fieldName, qrcodeImage);
 						} else {
 							pdfForm.setField(fieldName, value);
 						}
 					}	
 				} 
-				
+
 				/*
 				 * Add any QR code values to fields that have been identified using the QR suffix
 				 */
 				if(fieldNameQR != null && value != null && value.trim().length() > 0) {
 					BarcodeQRCode qrcode = new BarcodeQRCode(value.trim(), 1, 1, null);
-			        Image qrcodeImage = qrcode.getImage();
-			        qrcodeImage.setAbsolutePosition(10,500);
-			        qrcodeImage.scalePercent(200);
-			        PdfUtilities.addMapImageTemplate(pdfForm, fieldNameQR, qrcodeImage);
+					Image qrcodeImage = qrcode.getImage();
+					qrcodeImage.setAbsolutePosition(10,500);
+					qrcodeImage.scalePercent(200);
+					PdfUtilities.addMapImageTemplate(pdfForm, fieldNameQR, qrcodeImage);
 				}
-				
+
 			}
 		} catch (Exception e) {
 			log.log(Level.SEVERE, "Error filling template", e);
 		}
 	}
-	
+
 	private String getFieldName(String formName, int index, String qName) {
 		String name = null;
-		
+
 		if(formName == null || formName.equals("")) {
 			name = qName;
 		} else {
@@ -566,18 +566,18 @@ public class PDFSurveyManager {
 		}
 		return name;
 	}
-	
+
 	private class UserSettings {
 		String title;
 		String license;
 	}
-	
+
 	/*
 	 * Fill the template with data from the survey
 	 */
 	private static void fillTemplateUserDetails(AcroFields pdfForm, User user, String basePath) throws IOException, DocumentException {
 		try {
-					
+
 			pdfForm.setField("user_name", user.name);
 			pdfForm.setField("user_company", user.company_name);
 
@@ -589,11 +589,11 @@ public class PDFSurveyManager {
 			Type type = new TypeToken<UserSettings>(){}.getType();
 			Gson gson=  new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
 			UserSettings us = gson.fromJson(settings, type);
-			
+
 			if(us != null) {
 				pdfForm.setField("user_title", us.title);
 				pdfForm.setField("user_license", us.license);
-				
+
 				PushbuttonField ad = pdfForm.getNewPushbuttonFromField("user_signature");
 				if(ad != null) {
 					ad.setLayout(PushbuttonField.LAYOUT_ICON_ONLY);
@@ -610,58 +610,58 @@ public class PDFSurveyManager {
 					//log.info("Picture field: user_signature not found");
 				}
 			}
-				
+
 		} catch (Exception e) {
 			log.log(Level.SEVERE, "Error filling template", e);
 		}
 	}
-	
 
-	
+
+
 	/*
 	 * Get an XML Parser
 	 */
 	private Parser getXMLParser() {
-		
-		Parser parser = new Parser();
-		
-        // CSS
-		 CSSResolver cssResolver = new StyleAttrCSSResolver();
-		 try {
-			 CssFile cssFile = XMLWorkerHelper.getCSS( new FileInputStream(DEFAULT_CSS));
-		     cssResolver.addCss(cssFile);
-		 } catch(Exception e) {
-			 log.log(Level.SEVERE, "Failed to get CSS file", e);
-			 cssResolver = XMLWorkerHelper.getInstance().getDefaultCssResolver(true);
-		 }
- 
 
- 
-        // Pipelines
-        parser.elements = new ElementList();
-        ElementHandlerPipeline end = new ElementHandlerPipeline(parser.elements, null);
- 
-        String os = System.getProperty("os.name");
+		Parser parser = new Parser();
+
+		// CSS
+		CSSResolver cssResolver = new StyleAttrCSSResolver();
+		try {
+			CssFile cssFile = XMLWorkerHelper.getCSS( new FileInputStream(DEFAULT_CSS));
+			cssResolver.addCss(cssFile);
+		} catch(Exception e) {
+			log.log(Level.SEVERE, "Failed to get CSS file", e);
+			cssResolver = XMLWorkerHelper.getInstance().getDefaultCssResolver(true);
+		}
+
+
+
+		// Pipelines
+		parser.elements = new ElementList();
+		ElementHandlerPipeline end = new ElementHandlerPipeline(parser.elements, null);
+
+		String os = System.getProperty("os.name");
 		log.info("Operating System:" + os);
-		
-		
-        XMLWorkerFontProvider fontProvider = new XMLWorkerFontProvider();
-       
+
+
+		XMLWorkerFontProvider fontProvider = new XMLWorkerFontProvider();
+
 		if(os.startsWith("Mac")) {
 			fontProvider.register("/Library/Fonts/NotoSansBengali-Regular.ttf", BaseFont.IDENTITY_H);
-	        fontProvider.register("/Library/Fonts/NotoNaskhArabic-Regular.ttf", BaseFont.IDENTITY_H);
-	        fontProvider.register("/Library/Fonts/NotoSansBengali-Bold.ttf", BaseFont.IDENTITY_H);
-	        fontProvider.register("/Library/Fonts/NotoSans-Regular.ttf", BaseFont.IDENTITY_H);
-	        fontProvider.register("/Library/Fonts/NotoSans-Bold.ttf", BaseFont.IDENTITY_H);
-	        
-	        
+			fontProvider.register("/Library/Fonts/NotoNaskhArabic-Regular.ttf", BaseFont.IDENTITY_H);
+			fontProvider.register("/Library/Fonts/NotoSansBengali-Bold.ttf", BaseFont.IDENTITY_H);
+			fontProvider.register("/Library/Fonts/NotoSans-Regular.ttf", BaseFont.IDENTITY_H);
+			fontProvider.register("/Library/Fonts/NotoSans-Bold.ttf", BaseFont.IDENTITY_H);
+
+
 		} else if(os.indexOf("nix") >= 0 || os.indexOf("nux") >= 0 || os.indexOf("aix") > 0) {
 			// Linux / Unix
 			fontProvider.register("/usr/share/fonts/truetype/NotoSansBengali-Regular.ttf", BaseFont.IDENTITY_H);
-	        fontProvider.register("/usr/share/fonts/truetype/NotoNaskhArabic-Regular.ttf", BaseFont.IDENTITY_H);
 			fontProvider.register("/usr/share/fonts/truetype/NotoNaskhArabic-Regular.ttf", BaseFont.IDENTITY_H);
-		    fontProvider.register("/usr/share/fonts/truetype/NotoSans-Regular.ttf", BaseFont.IDENTITY_H);
-		    fontProvider.register("/usr/share/fonts/truetype/NotoSans-Bold.ttf", BaseFont.IDENTITY_H);
+			fontProvider.register("/usr/share/fonts/truetype/NotoNaskhArabic-Regular.ttf", BaseFont.IDENTITY_H);
+			fontProvider.register("/usr/share/fonts/truetype/NotoSans-Regular.ttf", BaseFont.IDENTITY_H);
+			fontProvider.register("/usr/share/fonts/truetype/NotoSans-Bold.ttf", BaseFont.IDENTITY_H);
 		}
 
 		/*
@@ -669,23 +669,23 @@ public class PDFSurveyManager {
 	        Set<String> registeredFonts = fontProvider.getRegisteredFonts();
 	        for (String font : registeredFonts)
 	            System.out.println(font);
-        */
-        CssAppliers cssAppliers = new CssAppliersImpl(fontProvider);
-        
-        // HTML
-        HtmlPipelineContext htmlContext = new HtmlPipelineContext(cssAppliers);
-        htmlContext.setTagFactory(Tags.getHtmlTagProcessorFactory());
-        htmlContext.autoBookmark(false);
-        HtmlPipeline html = new HtmlPipeline(htmlContext, end);
-        CssResolverPipeline css = new CssResolverPipeline(cssResolver, html);
-        
-        XMLWorker worker = new XMLWorker(css, true);  
-        parser.xmlParser = new XMLParser(worker);
-        
-        return parser;
-		
+		 */
+		CssAppliers cssAppliers = new CssAppliersImpl(fontProvider);
+
+		// HTML
+		HtmlPipelineContext htmlContext = new HtmlPipelineContext(cssAppliers);
+		htmlContext.setTagFactory(Tags.getHtmlTagProcessorFactory());
+		htmlContext.autoBookmark(false);
+		HtmlPipeline html = new HtmlPipeline(htmlContext, end);
+		CssResolverPipeline css = new CssResolverPipeline(cssResolver, html);
+
+		XMLWorker worker = new XMLWorker(css, true);  
+		parser.xmlParser = new XMLParser(worker);
+
+		return parser;
+
 	}
-	
+
 	/*
 	 * Process the form
 	 * Attempt to follow the standard set by enketo for the layout of forms so that the same layout directives
@@ -708,17 +708,17 @@ public class PDFSurveyManager {
 			boolean appendix,
 			ArrayList<ArrayList<Result>> parentRecords,
 			String remoteUser) throws DocumentException, IOException {
-		
+
 		// Check that the depth of repeats hasn't exceeded the maximum
 		if(depth > repIndexes.length - 1) {
 			depth = repIndexes.length - 1;	
 		}
-		
+
 		boolean firstQuestion = true;
 		for(int j = 0; j < record.size(); j++) {
 			Result r = record.get(j);
 			if(r.type.equals("form")) {
-				
+
 				firstQuestion = true;			// Make sure there is a gap when we return from the sub form
 				// If this is a blank template check to see the number of times we should repeat this sub form
 				if(generateBlank) {
@@ -763,10 +763,10 @@ public class PDFSurveyManager {
 				}
 			} else if(r.qIdx >= 0) {
 				// Process the question
-				
+
 				Form form = survey.forms.get(r.fIdx);
 				org.smap.sdal.model.Question question = form.questions.get(r.qIdx);
-			
+
 				if(includeResult(r, question, appendix, gv)) {
 					if(question.type.equals("begin group")) {
 						if(question.isNewPage()) {
@@ -783,21 +783,21 @@ public class PDFSurveyManager {
 								basePath, 
 								serverRoot,
 								generateBlank, 
-                                                                depth, 
-                                                                repIndexes, 
-                                                                gv,
-                                                                remoteUser,
-                                                                survey);
-						
+								depth, 
+								repIndexes, 
+								gv,
+								remoteUser,
+								survey);
+
 						newTable.setWidthPercentage(100);
-				        
+
 						// Add a gap if this is the first question of the record
 						// or the previous row was at a different depth
 						if(firstQuestion) {
 							newTable.setSpacingBefore(5);
 						}
 						firstQuestion = false;
-						
+
 						// Start a new page if the first question needs to be on a new page
 						if(row.items.get(0).isNewPage) {
 							document.newPage();
@@ -806,20 +806,20 @@ public class PDFSurveyManager {
 						j += row.items.size() - 1;	// Jump over multiple questions if more than one was added to the row
 					}
 				}
-				
+
 			}
 		}
-		
+
 		return;
 	}
-	
+
 	/*
 	 * Make a decision as to whether this result should be included in the PDF
 	 */
 	private boolean includeResult(Result r, org.smap.sdal.model.Question question, 
 			boolean appendix,
 			GlobalVariables gv) {
-		
+
 		boolean include = true;
 		boolean inMeta = question.inMeta;
 
@@ -842,10 +842,10 @@ public class PDFSurveyManager {
 				include = false;
 			}
 		}
-		
+
 		// Check appendix status
-		
-		
+
+
 		if(include) {
 			if(r.name == null) {
 				include = false;
@@ -860,12 +860,12 @@ public class PDFSurveyManager {
 				include = false;
 			} 
 		}
-		
-		
+
+
 		return include;
 	}
-	
-	
+
+
 	/*
 	 * Add the table row to the document
 	 */
@@ -883,7 +883,7 @@ public class PDFSurveyManager {
 			org.smap.sdal.model.Survey survey) throws BadElementException, MalformedURLException, IOException {
 
 		PdfPTable table = new PdfPTable(depth + NUMBER_TABLE_COLS);	// Add a column for each level of repeats so that the repeat number can be shown
-		
+
 		// Add the cells to record repeat indexes
 		for(int i = 0; i < depth; i++) {
 			PdfPCell c = new PdfPCell();
@@ -891,9 +891,9 @@ public class PDFSurveyManager {
 			c.setBackgroundColor(BaseColor.LIGHT_GRAY);
 			table.addCell(c);
 
-			
+
 		}
-		
+
 		int spanCount = NUMBER_TABLE_COLS;
 		int numberItems = row.items.size();
 		for(DisplayItem di : row.items) {
@@ -901,7 +901,7 @@ public class PDFSurveyManager {
 			PdfPCell cell = new PdfPCell(addDisplayItem(sd, parser, di, basePath, serverRoot, generateBlank, gv, remoteUser, survey));
 			//cell.addElement(addDisplayItem(parser, di, basePath, generateBlank, gv));
 			cell.setBorderColor(BaseColor.LIGHT_GRAY);
-			
+
 			// Make sure the last cell extends to the end of the table
 			if(numberItems == 1) {
 				di.width = spanCount;
@@ -912,13 +912,13 @@ public class PDFSurveyManager {
 			//	table.setSpacingBefore(spaceBefore);
 			//}
 			table.addCell(cell);
-			
+
 			numberItems--;
 			spanCount -= di.width;
 		}
 		return table;
 	}
-	
+
 	/*
 	 * Add a row of questions
 	 * Each row is created as a table
@@ -936,13 +936,13 @@ public class PDFSurveyManager {
 			int recNumber,
 			boolean appendix,
 			ArrayList<ArrayList<Result>> parentRecords) {
-		
+
 		Row row = new Row();
 		row.groupWidth = gv.cols.length;
-		
+
 		for(int i = offset; i < record.size(); i++) {
 			Result r = record.get(i);
-			
+
 			Form form = survey.forms.get(r.fIdx);
 			org.smap.sdal.model.Question question = form.questions.get(r.qIdx);
 			Label label = null;
@@ -952,16 +952,16 @@ public class PDFSurveyManager {
 				label = new Label();
 				log.info("Error: No label found for question: " + question.name);
 			}
-			
+
 			boolean isNewPage = question.isNewPage();
-			
+
 			if(i == offset) {
 				// First question of row - update the number of columns
 				int [] updateCols = question.updateCols(gv.cols);
 				if(updateCols != null) {
 					gv.cols = updateCols;			// Can only update the number of columns with the first question of the row
 				}
-				
+
 				includeQuestion(row.items, gv, i, label, question, offset, survey, languageIdx, r, isNewPage, 
 						recNumber,
 						record,
@@ -969,8 +969,8 @@ public class PDFSurveyManager {
 			} else if(i - offset < gv.cols.length) {
 				// 2nd or later questions in the row
 				int [] updateCols = question.updateCols(gv.cols);		// Returns null if the number of columns has not changed
-				
-				
+
+
 				if(updateCols == null || isNewPage) {
 					if(includeResult(r, question, appendix, gv)) {
 						includeQuestion(row.items, 
@@ -991,17 +991,17 @@ public class PDFSurveyManager {
 					// If the question updated the number of columns then we will need to start a new row
 					break;
 				}
-		
-			
+
+
 			} else {
 				break;
 			}
-			
-			
+
+
 		}
 		return row;
 	}
-	
+
 	/*
 	 * Include question in the row
 	 */
@@ -1015,7 +1015,7 @@ public class PDFSurveyManager {
 			int recNumber,
 			ArrayList<Result> record,
 			ArrayList<ArrayList<Result>> parentRecords) {
-		
+
 		int [] cols = gv.cols;
 		DisplayItem di = new DisplayItem();
 		di.width = cols[colIdx-offset];		
@@ -1025,10 +1025,10 @@ public class PDFSurveyManager {
 			di.text = label.text == null ? "" : label.text;
 		}
 		di.text = lookupReferenceValue(di.text, record, parentRecords);
-		
+
 		di.hint = label.hint ==  null ? "" : label.hint;
 		di.hint = lookupReferenceValue(di.hint, record, parentRecords);
-		
+
 		di.type = question.type;
 		di.name = question.name;
 		di.value = r.value;
@@ -1041,39 +1041,39 @@ public class PDFSurveyManager {
 		setQuestionFormats(question.appearance, di);
 		di.fIdx = r.fIdx;
 		di.rec_number = recNumber;
-		
+
 		items.add(di);
 	}
-	
+
 	/*
 	 * Where a label includes a reference value such as ${name} then these need to be converted to the actual value
 	 */
 	public String lookupReferenceValue(String input, ArrayList<Result> record, ArrayList<ArrayList<Result>> parentRecords) {
-		
+
 		StringBuffer newValue = new StringBuffer("");
 		String v;
-		
+
 		// Return if we are generating a blank template
 		if(parentRecords == null) {
 			return input;
 		}
-		
+
 		Pattern pattern = Pattern.compile("\\$\\{.+?\\}");
 		java.util.regex.Matcher matcher = pattern.matcher(input);
 		int start = 0;
 		while (matcher.find()) {
-			
+
 			String matched = matcher.group();
 			String qname = matched.substring(2, matched.length() - 1);
-			
+
 			// Add any text before the match
 			int startOfGroup = matcher.start();
 			newValue.append(input.substring(start, startOfGroup));
-			
+
 			// Add the matched value after lookup
 			// First check in the current record
 			v = lookupInRecord(qname, record);
-			
+
 			// If not found try each of the parent records starting from the closest
 			if(v == null) {
 				for(ArrayList<Result> p : parentRecords) {
@@ -1083,32 +1083,32 @@ public class PDFSurveyManager {
 					}
 				}
 			}
-			
+
 			// Still null!  well maybe this ${..} pattern was just meant to be
 			if(v == null) {
 				v = matcher.group();
 			}
 			newValue.append(v);
-			
+
 			// Reset the start
 			start = matcher.end();
 
 		}
-		
+
 		// Get the remainder of the string
 		if(start < input.length()) {
 			newValue.append(input.substring(start));		
 		}
-		
+
 		return newValue.toString();
 	}
-	
+
 	/*
 	 * Lookup the value of a question in a record
 	 */
 	private String lookupInRecord(String name, ArrayList<Result> record) {
 		String value = null;
-		
+
 		for(Result r : record) {
 			if(r.name.equals(name)) {
 				if(r.type.startsWith("select")) {
@@ -1127,17 +1127,17 @@ public class PDFSurveyManager {
 				break;
 			}
 		}
-		
+
 		return value;
-		
+
 	}
-	
+
 	/*
 	 * Get the number of blank repeats to generate
 	 */
 	int getBlankRepeats(String appearance) {
 		int repeats = 1;
-		
+
 		if(appearance != null) {
 			String [] appValues = appearance.split(" ");
 			if(appearance != null) {
@@ -1152,14 +1152,14 @@ public class PDFSurveyManager {
 				}
 			}
 		}
-					
+
 		return repeats;
 	}
 	/*
 	 * Set the attributes for this question from keys set in the appearance column
 	 */
 	void setQuestionFormats(String appearance, DisplayItem di) {
-	
+
 		if(appearance != null) {
 			String [] appValues = appearance.split(" ");
 			if(appearance != null) {
@@ -1193,16 +1193,16 @@ public class PDFSurveyManager {
 			}
 		}
 	}
-	
+
 	/*
 	 * Get the color values for a single appearance value
 	 * Format is:  xxxx_0Xrr_0Xgg_0xbb
 	 */
 	void setColor(String aValue, DisplayItem di, boolean isLabel) {
-		
+
 		di.labelbg = null;
 		BaseColor color = null;
-		
+
 		String [] parts = aValue.split("_");
 		if(parts.length >= 4) {
 			if(parts[1].startsWith("0x")) {
@@ -1211,11 +1211,11 @@ public class PDFSurveyManager {
 						Integer.decode(parts[3]));
 			} else {
 				color = new BaseColor(Integer.decode("0x" + parts[1]), 
-					Integer.decode("0x" + parts[2]),
-					Integer.decode("0x" + parts[3]));
+						Integer.decode("0x" + parts[2]),
+						Integer.decode("0x" + parts[3]));
 			}
 		}
-		
+
 		if(isLabel) {
 			di.labelbg = color;
 		} else {
@@ -1223,51 +1223,51 @@ public class PDFSurveyManager {
 		}
 
 	}
-	
+
 	/*
 	 * Set the widths of the label and the value
 	 * Appearance is:  pdflabelw_## where ## is a number from 0 to 10
 	 */
 	void setWidths(String aValue, DisplayItem di) {
-		
+
 		String [] parts = aValue.split("_");
 		if(parts.length >= 2) {
 			di.widthLabel = Integer.valueOf(parts[1]);   		
 		}
-		
+
 		// Do bounds checking
 		if(di.widthLabel < 0 || di.widthLabel > 10) {
 			di.widthLabel = 5;		
 		}
-		
+
 	}
-	
+
 	/*
 	 * Set the height of the value
 	 * Appearance is:  pdfheight_## where ## is the height
 	 */
 	void setHeight(String aValue, DisplayItem di) {
-		
+
 		String [] parts = aValue.split("_");
 		if(parts.length >= 2) {
 			di.valueHeight = Double.valueOf(parts[1]);   		
 		}
-		
+
 	}
-	
+
 	/*
 	 * Set space before this item
 	 * Appearance is:  pdfheight_## where ## is the height
 	 */
 	void setSpace(String aValue, DisplayItem di) {
-		
+
 		String [] parts = aValue.split("_");
 		if(parts.length >= 2) {
 			di.space = Integer.valueOf(parts[1]);   		
 		}
-		
+
 	}
-	
+
 	String getAppValue(String aValue) {
 		String [] parts = aValue.split("_");
 		if(parts.length >= 2) {
@@ -1275,7 +1275,7 @@ public class PDFSurveyManager {
 		}
 		else return null;
 	}
-	
+
 	/*
 	 * Convert the results  and survey definition arrays to display items
 	 */
@@ -1284,7 +1284,7 @@ public class PDFSurveyManager {
 			org.smap.sdal.model.Question question,
 			ArrayList<Result> choiceResults,
 			int languageIdx) {
-		
+
 		ArrayList<DisplayItem> diList = null;
 		if(choiceResults != null) {
 			diList = new ArrayList<DisplayItem>();
@@ -1302,7 +1302,7 @@ public class PDFSurveyManager {
 		}
 		return diList;
 	}
-	
+
 	/*
 	 * Add the question label, hint, and any media
 	 */
@@ -1316,21 +1316,21 @@ public class PDFSurveyManager {
 			GlobalVariables gv,
 			String remoteUser,
 			org.smap.sdal.model.Survey survey) throws BadElementException, MalformedURLException, IOException {
-		
+
 		PdfPCell labelCell = new PdfPCell();
 		PdfPCell valueCell = new PdfPCell();
 		labelCell.setBorderColor(BaseColor.LIGHT_GRAY);
 		valueCell.setBorderColor(BaseColor.LIGHT_GRAY);
-		
+
 		PdfPTable tItem = null;
-		 
+
 		// Add label
 		StringBuffer html = new StringBuffer();
 		html.append("<span class='label ");
 		if(di.labelbold) {
 			html.append(" lbold");
 		}
-		
+
 		// Get text value
 		String textValue = "";
 		if(di.text != null && di.text.trim().length() > 0) {
@@ -1345,7 +1345,7 @@ public class PDFSurveyManager {
 		if(di.labelcaps) {
 			textValue = textValue.toUpperCase();
 		}
-		
+
 		// Add language class
 		html.append(GeneralUtilityMethods.getLanguage(textValue));
 		html.append("'>");
@@ -1353,7 +1353,7 @@ public class PDFSurveyManager {
 		// Add text value
 		html.append(GeneralUtilityMethods.unesc(textValue));
 		html.append("</span>");
-		
+
 		// Only include hints if we are generating a blank template
 		if(generateBlank) {
 			html.append("<span class='hint ");
@@ -1364,7 +1364,7 @@ public class PDFSurveyManager {
 			}
 			html.append("</span>");
 		}
-		
+
 		parser.elements.clear();
 		try {
 			parser.xmlParser.parse(new StringReader(html.toString()));
@@ -1373,7 +1373,7 @@ public class PDFSurveyManager {
 			lm.writeLog(sd, survey.getId(), remoteUser, "error", e.getMessage() + " for: " + html.toString());
 			throw e;
 		}
-		
+
 		for(Element element : parser.elements) {
 			if(textValue != null && textValue.length() > 0) {
 				if(GeneralUtilityMethods.isRtlLanguage(textValue)) {
@@ -1386,7 +1386,7 @@ public class PDFSurveyManager {
 			}
 			labelCell.addElement(element);
 		}
-		
+
 		// Set the content of the value cell
 		try {
 			updateValueCell(sd, valueCell, di, generateBlank, basePath, serverRoot, gv);
@@ -1394,7 +1394,7 @@ public class PDFSurveyManager {
 			log.info("Error updating value cell, continuing: " + basePath + " : " + di.value);
 			log.log(Level.SEVERE, "Exception", e);
 		}
-		
+
 		int widthValue = 5;
 		if(di.widthLabel == 10) {
 			widthValue = 1;	// Label and value in 1 column
@@ -1410,7 +1410,7 @@ public class PDFSurveyManager {
 		if(di.labelbg != null) {
 			labelCell.setBackgroundColor(di.labelbg);
 		}
-		
+
 		// Format value cell
 		valueCell.setColspan(widthValue);
 		if(di.valueHeight > -1.0) {
@@ -1419,12 +1419,12 @@ public class PDFSurveyManager {
 		if(di.valuebg != null) {
 			valueCell.setBackgroundColor(di.valuebg);
 		}
-		
+
 		tItem.addCell(labelCell);
 		tItem.addCell(valueCell);
 		return tItem;
 	}
-	
+
 	/*
 	 * Set the contents of the value cell
 	 */
@@ -1437,10 +1437,10 @@ public class PDFSurveyManager {
 			String serverRoot,
 			GlobalVariables gv
 			) throws BadElementException, MalformedURLException, IOException, SQLException {
-		
+
 		// Questions that append their values to this question
 		ArrayList<String> deps = gv.addToList.get(di.fIdx + "_" + di.rec_number + "_" + di.name);
-		
+
 		if(di.type.startsWith("select")) {
 			processSelect(valueCell, di, generateBlank, gv);
 		} else if (di.type.equals("image")) {
@@ -1448,7 +1448,7 @@ public class PDFSurveyManager {
 				if(di.isHyperlink) {
 					Anchor anchor = new Anchor(serverRoot + di.value);
 					anchor.setReference(serverRoot + di.value);
-					          
+
 					valueCell.addElement(getPara("", di, gv, deps, anchor));
 				} else {
 					try {
@@ -1463,11 +1463,22 @@ public class PDFSurveyManager {
 			} else {
 				// TODO add empty image
 			}
-		
+
+		} else if (di.type.equals("video") || di.type.equals("audio")) {
+			if(di.value != null && !di.value.trim().equals("") && !di.value.trim().equals("Unknown")) {
+				Anchor anchor = new Anchor(serverRoot + di.value);
+				anchor.setReference(serverRoot + di.value);
+
+				valueCell.addElement(getPara("", di, gv, deps, anchor));
+
+			} else {
+				// TODO add empty image
+			}
+
 		} else if(di.type.equals("geopoint") || di.type.equals("geoshape") || di.type.equals("geotrace") || di.type.startsWith("geopolygon_") || di.type.startsWith("geolinestring_")) {
-			
+
 			Image img = PdfUtilities.getMapImage(sd, di.map, di.value, di.location, di.zoom, gv.mapbox_key);
-			
+
 			if(img != null) {
 				valueCell.addElement(img);
 			} else {
@@ -1475,11 +1486,11 @@ public class PDFSurveyManager {
 			}
 		} else if(di.isBarcode) { 
 			BarcodeQRCode qrcode = new BarcodeQRCode(di.value.trim(), 1, 1, null);
-	        Image qrcodeImage = qrcode.getImage();
-	        qrcodeImage.setAbsolutePosition(10,500);
-	        qrcodeImage.scalePercent(200);
-	   
-	        valueCell.addElement((qrcodeImage));
+			Image qrcodeImage = qrcode.getImage();
+			qrcodeImage.setAbsolutePosition(10,500);
+			qrcodeImage.scalePercent(200);
+
+			valueCell.addElement((qrcodeImage));
 		} else {
 			// Todo process other question types
 			if(di.value == null || di.value.trim().length() == 0) {
@@ -1494,17 +1505,17 @@ public class PDFSurveyManager {
 			valueCell.addElement(getPara(di.value, di, gv, deps, null));
 
 		}
-		
+
 
 	}
-	
+
 	private Paragraph getPara(String value, DisplayItem di, GlobalVariables gv, ArrayList<String> deps, Anchor anchor) {
-		
+
 		boolean hasContent = false;
 		Font f = null;
 		boolean isRtl = false;
 		String lang = "";
-		
+
 		Paragraph para = new Paragraph("", defaultFont);
 
 		if(value != null && value.trim().length() > 0) {
@@ -1514,7 +1525,7 @@ public class PDFSurveyManager {
 			para.add(new Chunk(GeneralUtilityMethods.unesc(value), f));
 			hasContent = true;
 		}
-		
+
 		// Add dependencies
 
 		if(deps != null) {
@@ -1523,7 +1534,7 @@ public class PDFSurveyManager {
 					if(hasContent) {
 						para.add(new Chunk(",", defaultFont));
 					}
-					
+
 					lang = GeneralUtilityMethods.getLanguage(n);
 					f = getFont(lang);
 					if(!isRtl) {		// Don't override RTL if it has already been set
@@ -1531,7 +1542,7 @@ public class PDFSurveyManager {
 					}
 					para.add(new Chunk(n, f));
 				}
-				
+
 			}
 		}
 		if(anchor != null) {
@@ -1541,10 +1552,10 @@ public class PDFSurveyManager {
 		}
 		return para;
 	}
-	
+
 	private Font getFont(String lang) {
 		Font f = defaultFont;
-		
+
 		if(lang.length() > 0) {
 			if(lang.equals("arabic")) {
 				f = arabicFont;
@@ -1552,13 +1563,13 @@ public class PDFSurveyManager {
 				f = bengaliFont;
 			}		
 		} 
-		
+
 		return f;
 	}
-	
+
 	private boolean isRtl(String lang) {
 		boolean isRtl = false;
-		
+
 		if(lang.length() > 0) {
 			if(lang.equals("arabic")) {
 				isRtl = true;
@@ -1566,27 +1577,27 @@ public class PDFSurveyManager {
 		} 
 		return isRtl;
 	}
-	
+
 	private void processSelect(PdfPCell cell, DisplayItem di,
 			boolean generateBlank,
 			GlobalVariables gv) {
 
 		Font f = null;
 		boolean isRtl = false;
-		
+
 		// If generating blank template
 		List list = new List();
 		list.setAutoindent(false);
 		list.setSymbolIndent(24);
-		
+
 		String stringValue = null;
 		String lang;
-		
+
 		boolean isSelectMultiple = di.type.equals("select") ? true : false;
-		
+
 		// Questions that append their values to this question
 		ArrayList<String> deps = gv.addToList.get(di.fIdx + "_" + di.rec_number + "_" + di.name);
-		
+
 		/*
 		 * Add the value of this question unless
 		 *   The form is not blank and the value is "other" and their are 1 or more dependent questions
@@ -1594,23 +1605,23 @@ public class PDFSurveyManager {
 		 */
 		if(generateBlank) {
 			for(DisplayItem aChoice : di.choices) {
-				
+
 				lang = GeneralUtilityMethods.getLanguage(aChoice.text);
 				f = getFont(lang);
 				isRtl = isRtl(lang);
-				
+
 				ListItem item = new ListItem(GeneralUtilityMethods.unesc(aChoice.text), f);
-			
+
 				if(isSelectMultiple) {
 					if(aChoice.isSet) {
 						item.setListSymbol(new Chunk("\uf046", Symbols)); 
 						list.add(item);	
 					} else {
-					
+
 						item.setListSymbol(new Chunk("\uf096", Symbols)); 
 						list.add(item);
 					}
-				
+
 				} else {
 					if(aChoice.isSet) {
 						item.setListSymbol(new Chunk("\uf111", Symbols)); 
@@ -1623,12 +1634,12 @@ public class PDFSurveyManager {
 					}
 				}
 			}
-			
+
 			if(isRtl) {
 				cell.setRunDirection(PdfWriter.RUN_DIRECTION_RTL);
 			}
 			cell.addElement(list);
-			
+
 		} else {
 			stringValue = getSelectValue(isSelectMultiple, di, deps);
 			if(GeneralUtilityMethods.isRtlLanguage(stringValue)) {
@@ -1638,29 +1649,29 @@ public class PDFSurveyManager {
 		}
 
 	}
-	
+
 	/*
 	 * Get the value of a select question
 	 */
 	String getSelectValue(boolean isSelectMultiple, DisplayItem di, ArrayList<String> deps) {
 		StringBuffer sb = new StringBuffer("");
-		
+
 		for(DisplayItem aChoice : di.choices) {
-			
+
 			if(isSelectMultiple) {
 				if(aChoice.isSet) {
-				
+
 					if(deps == null || (aChoice.name != null && !aChoice.name.trim().toLowerCase().equals("other"))) {
 						if(sb.length() > 0) {
 							sb.append(", ");
 						}
 						sb.append(aChoice.text);
 					}
-					
+
 				} 
 			} else {
 				if(aChoice.isSet) {
-					
+
 					if(deps == null || (aChoice.name != null && !aChoice.name.trim().toLowerCase().equals("other"))) {
 						if(sb.length() > 0) {
 							sb.append(", ");
@@ -1671,38 +1682,38 @@ public class PDFSurveyManager {
 				}
 			}
 
-			
+
 		}
-			
+
 		return sb.toString();
-		
+
 	}
-	
+
 	/*
 	 * Fill in user details for the output when their is no template
 	 */
 	private void fillNonTemplateUserDetails(Document document, User user, String basePath) throws IOException, DocumentException {
-		
+
 		String settings = user.settings;
 		Type type = new TypeToken<UserSettings>(){}.getType();
 		Gson gson=  new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
 		UserSettings us = gson.fromJson(settings, type);
-		
+
 		float indent = (float) 20.0;
 		addValue(document, "Completed by:", (float) 0.0);
 		if(user.signature != null && user.signature.trim().length() > 0) {
 			String fileName = null;
 			try {
 				//fileName = basePath + user.signature;
-				
+
 				fileName = basePath + "/media/users/" + user.id + "/sig/"  + user.signature;
-				
+
 				Image img = Image.getInstance(fileName);
 				img.scaleToFit(200, 50);
 				img.setIndentationLeft(indent);
-					
+
 				document.add(img);
-					
+
 			} catch (Exception e) {
 				log.info("Error: Failed to add signature (non template) " + fileName + " to pdf: " + e.getMessage());
 			}
@@ -1715,28 +1726,28 @@ public class PDFSurveyManager {
 		}
 
 	}
-	
+
 	/*
 	 * Format a single value into a paragraph
 	 */
 	private void addValue(Document document, String value, float indent) throws DocumentException {
-		
+
 		Font f = null;
 		String lang;
 		boolean isRtl;
-		
+
 		if(value != null && value.trim().length() > 0) {
 			lang = GeneralUtilityMethods.getLanguage(value);
 			f = getFont(lang);
 			isRtl = isRtl(lang);
-			
+
 			Paragraph para = new Paragraph("", f);	
 			para.setIndentationLeft(indent);
 			para.add(new Chunk(GeneralUtilityMethods.unesc(value), f));
 			document.add(para);
 		}
 	}
-	
+
 }
 
 
