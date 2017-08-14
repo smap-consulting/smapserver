@@ -456,12 +456,12 @@ public class SubRelationalDB extends Subscriber {
 			 */
 			if(hasHrk && existingKey == null && keyPolicy != null) {
 				if(keyPolicy.equals("add")) {
-					System.out.println("Apply add policy - no action");
+					log.info("Apply add policy - no action");
 				} else if(keyPolicy.equals("merge")) {
-					System.out.println("Apply merge policy");
+					log.info("Apply merge policy");
 					mergeTableContent(cMeta, cResults, sId, topLevelTable, keys.newKey);
 				} else if(keyPolicy.equals("discard")) {
-					System.out.println("Apply discard policy");
+					log.info("Apply discard policy");
 					discardTableContent(cResults, topLevelTable, keys.newKey);
 				}
 			}
@@ -480,14 +480,13 @@ public class SubRelationalDB extends Subscriber {
 
 					response = "Error: Rolling back: " + e.getMessage();
 					e.printStackTrace();
-					System.out.println("        " + response);
 					cResults.rollback();
 					cResults.setAutoCommit(true);
 					throw new SQLInsertException(e.getMessage());
 
 				} catch (SQLException ex) {
 
-					System.out.println(ex.getMessage());
+					log.info(ex.getMessage());
 					throw new SQLInsertException(e.getMessage());
 
 				}
@@ -495,7 +494,7 @@ public class SubRelationalDB extends Subscriber {
 			} else {
 
 				String mesg = "Error: Connection to the database is null";
-				System.out.println("        " + mesg);
+				log.info("        " + mesg);
 				throw new SQLInsertException(mesg);
 
 			}
@@ -552,8 +551,6 @@ public class SubRelationalDB extends Subscriber {
 			 * The sub elements of a complex question will be written to their own table
 			 *  as well as being handled as a composite/complex question by the parent form
 			 */
-
-			System.out.println("Audit path: " + auditPath);
 
 			// Write form
 			String tableName = element.getTableName();
@@ -1430,7 +1427,7 @@ public class SubRelationalDB extends Subscriber {
 	private ArrayList<String> getColNames(List<IE> cols) {
 		ArrayList<String> colNames = new ArrayList<String> ();
 		for(IE col : cols) {
-			colNames.add(col.getColumnName());
+			colNames.add(col.getName());
 		}
 		return colNames;	
 	}
