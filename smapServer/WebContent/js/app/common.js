@@ -849,14 +849,14 @@ function refreshMediaView(data, sId) {
 				h[++idx] = '<button class="media_del btn btn-danger" data-url="';
 				h[++idx] = files[i].deleteUrl;
 				h[++idx] = '">';
-				h[++idx] = '<span class="glyphicon glyphicon-trash" aria-hidden="true"></span>'
-				h[++idx] = ' Delete';
+				h[++idx] = '<span class="glyphicon glyphicon-trash" aria-hidden="true"></span> '
+				h[++idx] = localise.set['c_del'];
 				h[++idx] = '</button>';
 			h[++idx] = '</td>';
 			h[++idx] = '<td class="mediaSelect">';
 				h[++idx] = '<button class="mediaAdd btn btn-success">';
-				h[++idx] = '<span class="glyphicon glyphicon-plus" aria-hidden="true"></span>'
-					h[++idx] = ' Add';
+				h[++idx] = '<span class="glyphicon glyphicon-plus" aria-hidden="true"></span> '
+					h[++idx] = localise.set['c_add'];
 				h[++idx] = '</button>';
 			h[++idx] = '</td>';
 			

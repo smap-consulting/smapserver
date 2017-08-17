@@ -489,8 +489,8 @@
    			<div class="container">
 		    <div class="modal-body row">
    				<ul class="nav nav-pills mediaSelect" role="tablist">
-       				<li id="orgLevelTab" role="presentation" class="active"><a href='javascript:void(0)'>Organisation</a></li>
-       				<li id="surveyLevelTab" role="presentation" class="disabled"><a href='javascript:void(0)'>Form</a></li>
+       				<li id="orgLevelTab" role="presentation" class="active"><a href='javascript:void(0)' class="lang" data-lang="c_org">organisation</a></li>
+       				<li id="surveyLevelTab" role="presentation" class="disabled"><a href='javascript:void(0)' class="lang" data-lang="c_form">form</a></li>
 
    				</ul>
    
@@ -508,11 +508,11 @@
 	                
 	                		<button type="button" id="submitFiles" class="btn btn-primary">
 	                    		<i class="glyphicon glyphicon-upload"></i>
-	                    		<span>Start upload</span>
+	                    		<span class="lang" data-lang="c_start">start</span>
 	                		</button>
 	                		<button type="reset" class="btn btn-warning cancel">
 	                    		<i class="glyphicon glyphicon-ban-circle"></i>
-	                    		<span>Cancel upload</span>
+	                    		<span class="lang" data-lang="c_cancel">cancel</span>
 	                		</button>
 	                		
 	                		<!-- The global file processing state -->
@@ -563,7 +563,7 @@
 			</div>
 
 			<div class="modal-footer">
-				<button id="removeMedia" type="button" class="btn btn-danger" data-dismiss="modal" ><span class="glyphicon glyphicon-trash" aria-hidden="true"></span> Remove</button>
+				<button id="removeMedia" type="button" class="btn btn-danger" data-dismiss="modal" ><span class="glyphicon glyphicon-trash" aria-hidden="true"></span> <span class="lang" data-lang="c_del">delete</span></button>
 	           	<button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_close">Close</button>
 	           	<button id="mediaSelectSave" type="button" class="btn btn-primary lang mediaSelect" data-dismiss="modal" data-lang="c_save">Save</button>
 	       	</div>

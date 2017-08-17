@@ -313,6 +313,7 @@ define({
     "msg_edit_map": "Edit Map",
     "msg_sel_form": "Select Form:",
     "msg_sel_media": "Select Media Question:",
+    "msg_sel_media_f": "Select Media File",
     "msg_err_save": "Error: Save failed: ",
     "msg_err_del": "Error: Delete failed: ",
     "msg_err_cr": "Error: Create failed: ",
@@ -517,6 +518,7 @@ define({
     "ed_con_msg": "Constraint Message",
     "ed_rel": "Relevant",
     "ed_req": "Required",
+    "ed_nreq": "Not Required",
     "ed_ap": "Auto play",
     "ed_at": "GPS Accuracy Threshold",
     "ed_ls": "Linked Survey",
@@ -540,6 +542,7 @@ define({
     "ed_namedia": "Media cannot be used with this question",
     "ed_ab": "Add Before",
     "ed_aa": "Add After",
+    "ed_aq": "Add New Question",
     "ed_anc": "Add New Choice",
     "ed_cs": "Cascading Select",
     "ed_cspq": "Previous Select Question",
@@ -571,6 +574,7 @@ define({
     "ed_gps_line": "GPS Line",
     "ed_gps_area": "GPS Area",
     "ed_ack": "Acknowledge",
+    "ed_qs": "Questions set ",
 
 
     // Managed Forms
@@ -674,6 +678,11 @@ define({
     "n_eq": "Email Question",
     "n_smsq": "SMS Question",
     "n_share": "Get link",
+    "n_cs_e": "Comma separated list of email addresses",
+    "n_ea": "Email addresses",
+    "n_eq": "Email question",
+    "n_eqc": "Question that will contain the email addresses to use",
+    "n_esc": "Subject for the email (optional)",
 
     // Roles
     "ro_fr": "Filter rows",

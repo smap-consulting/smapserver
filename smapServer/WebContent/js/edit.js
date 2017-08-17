@@ -679,7 +679,7 @@ function setAllRequired(required) {
 			success: function(data) {
 				removeHourglass();
 				getSurveyDetails(surveyDetailsDone);
-				var msg = "Questions set as " + (required ? "required" : "not required");
+				var msg = localise.set['ed_qs'] + (required ? localise.set['ed_req'] : localise.set['ed_nreq']);
 				bootbox.alert(msg);
 			},
 			error: function(xhr, textStatus, err) {
@@ -1931,7 +1931,7 @@ function mediaPropSelected($this) {
 	
 	$('.mediaManage').hide();						
 	$('.mediaSelect').show();
-	$('#mediaModalLabel').html("Select Media File");
+	$('#mediaModalLabel').html(localise.set['msg_sel_media_f']);
 	
 	// Remove any current selections
 	$('#surveyPanel, #orgPanel').find('tr').removeClass('success');

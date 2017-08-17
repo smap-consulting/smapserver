@@ -261,7 +261,9 @@ define([
 		if(selProperty === "group") {
 			h[++idx] = '<span class="has_tt" title="End the group here">';
 		} else {
-			h[++idx] = '<span class="has_tt" title="add question here">';
+			h[++idx] = '<span class="has_tt" title="';
+			h[++idx] = localise.set['ed_aq'];
+			h[++idx] = '">';
 		}
 		h[++idx] = '<button tabindex="-1" id="addnew_';
 		h[++idx] = globals.gNewQuestionButtonIndex++;
@@ -272,8 +274,6 @@ define([
 		}	
 		h[++idx] = '" data-locn="';
 		h[++idx] = locn;
-		//h[++idx] = '" data-qid="';
-		//h[++idx] = questionId;
 		h[++idx] = '" data-findex="';
 		h[++idx] = formIndex;
 		if(selProperty === "group") {
@@ -297,9 +297,10 @@ define([
 			}
 			
 		} else {
-			h[++idx] = '">Add New Question'; 
+			h[++idx] = '">';
+			h[++idx] = localise.set['ed_aq'];
 			if(formName) {
-				h[++idx] = ' to ';
+				h[++idx] = ' - ';
 				h[++idx] = formName;
 			}
 		}
@@ -776,7 +777,7 @@ define([
 			}
 			if(form.parentFormIndex == -1) {
 				topLevelForm = true;
-				finalButtonName = "end";
+				finalButtonName = undefined;
 			} else {
 				finalButtonName = form.name;
 			}
