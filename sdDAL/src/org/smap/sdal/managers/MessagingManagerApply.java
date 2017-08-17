@@ -115,9 +115,9 @@ public class MessagingManagerApply {
 					Gson gson=  new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
 					SurveyMessage sm = gson.fromJson(data, SurveyMessage.class);
 					if(sm != null) {
-						System.out.println("xxxxxxxxxxxxxxxxxxxx Processing: " + sm.id);
+						log.info("xxxxxxxxxxxxxxxxxxxx Processing: " + sm.id);
 					} else {
-						System.out.println("Error: null survey message");
+						log.info("Error: null survey message");
 					}
 					
 					changedSurveys.put(sm.id, sm);
@@ -126,15 +126,15 @@ public class MessagingManagerApply {
 					Gson gson=  new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
 					UserMessage um = gson.fromJson(data, UserMessage.class);
 					if(um != null) {
-						System.out.println("xxxxxxxxxxxxxxxxxxxx Processing: " + um.ident);
+						log.info("xxxxxxxxxxxxxxxxxxxx Processing: " + um.ident);
 					} else {
-						System.out.println("Error: null survey message");
+						log.info("Error: null survey message");
 					}
 					
 					usersImpacted.put(um.ident, um.ident);
 					
 				} else {
-					// Assume a direct email process immediately
+					// Assume a direct email to be processed immediately
 
 					EmailServer emailServer = UtilityMethodsEmail.getSmtpHost(sd, null, null);
 					if (isValidEmail(topic) && 

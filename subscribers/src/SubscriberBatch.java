@@ -22,6 +22,7 @@ import javax.xml.xpath.XPathFactory;
 
 import org.smap.model.SurveyInstance;
 import org.smap.model.SurveyTemplate;
+import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.managers.MessagingManagerApply;
 import org.smap.sdal.managers.NotificationManager;
 import org.smap.sdal.managers.ServerManager;
@@ -322,7 +323,8 @@ public class SubscriberBatch {
 			eraseOldTemplates(sd, cResults, basePath);
 			
 			MessagingManagerApply mma = new MessagingManagerApply();
-			mma.applyOutbound(sd, "smap");
+			String serverName = GeneralUtilityMethods.getSubmissionServer(sd);
+			mma.applyOutbound(sd, serverName);
 			subscribers = null;
 			
 		} catch (Exception e) {

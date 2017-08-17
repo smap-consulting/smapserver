@@ -895,6 +895,38 @@ public class GeneralUtilityMethods {
 		}
 
 	}
+	
+	/*
+	 * The subscriber batch job has no direct connection to incoming requests
+	 * Get the server name from the last upload event
+	 */
+	static public String getSubmissionServer(Connection sd) throws SQLException {
+
+
+		String sql = "select server_name from upload_event order by ue_id desc limit 1"; 
+		String serverName = "smap";
+
+		PreparedStatement pstmt = null;
+
+		try {
+
+			pstmt = sd.prepareStatement(sql);
+			ResultSet rs = pstmt.executeQuery();
+			if(rs.next()) {
+				serverName = rs.getString(1);
+			}
+
+		} catch(SQLException e) {
+			log.log(Level.SEVERE,"Error", e);
+			throw e;
+		} finally {
+			try {if (pstmt != null) { pstmt.close();}} catch (SQLException e) {}
+		}
+		
+		return serverName;
+
+	}
+
 
 	/*
 	 * Get Safe Template File Name

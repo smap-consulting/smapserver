@@ -545,6 +545,7 @@ define(function () {
                 success: function (data, status) {
                     removeHourglass();
                     globals.model.savedSettings = settings;
+                    globals.model.survey.pdfTemplateName = $('.upload_file_msg').val();
                     globals.model.forceSettingsChange = false;
                     $('#save_settings, #save_keys').prop("disabled", true);
 
