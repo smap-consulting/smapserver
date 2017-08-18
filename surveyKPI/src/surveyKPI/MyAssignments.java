@@ -568,43 +568,45 @@ public class MyAssignments extends Application {
 
 			connectionSD.setAutoCommit(false);
 			for(TaskAssignment ta : tr.taskAssignments) {
-				log.info("+++++Task Assignment: " + ta.assignment.assignment_status);
-				
-				/*
-				 * If the updated status = "cancelled" then this is an acknowledgment of the status set on the server
-				 *   hence update the server status to "deleted"
-				 */
-				if(ta.assignment.assignment_status.equals("cancelled")) {
-					log.info("Assignment:" + ta.assignment.assignment_id + " acknowledge cancel");
+				if(ta.assignment.assignment_id > 0) {
+					log.info("Task Assignment: " + ta.assignment.assignment_status);
 					
-					sql = "delete from tasks where id in (select a.task_id from assignments a " +
-							"where a.id = ? " + 
-							"and a.assignee IN (SELECT id FROM users u " +
-								"where u.ident = ?));";
-					pstmt = connectionSD.prepareStatement(sql);	
-					pstmt.setInt(1, ta.assignment.assignment_id);
-					pstmt.setString(2, userName);
-				} else {
-				
-					// Apply update making sure the assignment was made to the updating user
-					sql = "UPDATE assignments a SET status = ? " +
-							"where a.id = ? " + 
-							"and a.assignee IN (SELECT id FROM users u " +
-								"where u.ident = ?);";
-					pstmt = connectionSD.prepareStatement(sql);
-					pstmt.setString(1, ta.assignment.assignment_status);
-					pstmt.setInt(2, ta.assignment.assignment_id);
-					pstmt.setString(3, userName);
+					/*
+					 * If the updated status = "cancelled" then this is an acknowledgment of the status set on the server
+					 *   hence update the server status to "deleted"
+					 */
+					if(ta.assignment.assignment_status.equals("cancelled")) {
+						log.info("Assignment:" + ta.assignment.assignment_id + " acknowledge cancel");
+						
+						sql = "delete from tasks where id in (select a.task_id from assignments a " +
+								"where a.id = ? " + 
+								"and a.assignee IN (SELECT id FROM users u " +
+									"where u.ident = ?));";
+						pstmt = connectionSD.prepareStatement(sql);	
+						pstmt.setInt(1, ta.assignment.assignment_id);
+						pstmt.setString(2, userName);
+					} else {
 					
-					if(ta.assignment.assignment_status.equals("submitted")) {
-						pstmtRepeats.setInt(1, ta.assignment.assignment_id);
-						log.info("Updating task repeats: " + pstmtRepeats.toString());
-						pstmtRepeats.executeUpdate();
+						// Apply update making sure the assignment was made to the updating user
+						sql = "UPDATE assignments a SET status = ? " +
+								"where a.id = ? " + 
+								"and a.assignee IN (SELECT id FROM users u " +
+									"where u.ident = ?);";
+						pstmt = connectionSD.prepareStatement(sql);
+						pstmt.setString(1, ta.assignment.assignment_status);
+						pstmt.setInt(2, ta.assignment.assignment_id);
+						pstmt.setString(3, userName);
+						
+						if(ta.assignment.assignment_status.equals("submitted")) {
+							pstmtRepeats.setInt(1, ta.assignment.assignment_id);
+							log.info("Updating task repeats: " + pstmtRepeats.toString());
+							pstmtRepeats.executeUpdate();
+						}
 					}
+					
+					log.info("update assignments: " + pstmt.toString());
+					pstmt.executeUpdate();
 				}
-				
-				log.info("update assignments: " + pstmt.toString());
-				pstmt.executeUpdate();
 			}
 			
 			/*
