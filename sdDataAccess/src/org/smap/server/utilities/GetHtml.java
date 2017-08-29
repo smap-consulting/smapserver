@@ -886,26 +886,30 @@ public class GetHtml {
 
 		// Audio
 		String audio = label.audio;
-		if (audio != null && image.trim().length() > 0) {
+		if (audio != null && audio.trim().length() > 0) {
 			bodyElement = outputDoc.createElement("audio");
 			bodyElement.setAttribute("lang", lang.name);
 			bodyElement.setAttribute("class", (lang.name.equals(survey.def_lang) ? " active" : ""));
 			bodyElement.setAttribute("src", "jr://audio/" + audio);
 			bodyElement.setAttribute("alt", "audio");
+			bodyElement.setAttribute("controls", "controls");
 			bodyElement.setAttribute("data-itext-id", textId);
+			bodyElement.setTextContent("Audio not supported by your browser");
 
 			parent.appendChild(bodyElement);
 		}
 
 		// Video
 		String video = label.video;
-		if (audio != null && image.trim().length() > 0) {
+		if (video != null && video.trim().length() > 0) {
 			bodyElement = outputDoc.createElement("video");
 			bodyElement.setAttribute("lang", lang.name);
 			bodyElement.setAttribute("class", (lang.name.equals(survey.def_lang) ? " active" : ""));
 			bodyElement.setAttribute("src", "jr://video/" + video);
 			bodyElement.setAttribute("alt", "video");
 			bodyElement.setAttribute("data-itext-id", textId);
+			bodyElement.setAttribute("controls", "controls");
+			bodyElement.setTextContent("Video not supported by your browser");
 
 			parent.appendChild(bodyElement);
 		}

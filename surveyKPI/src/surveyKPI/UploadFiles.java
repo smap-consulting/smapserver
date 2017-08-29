@@ -96,10 +96,9 @@ public class UploadFiles extends Application {
 		Response response = null;
 		
 		DiskFileItemFactory  fileItemFactory = new DiskFileItemFactory ();		
-		String serverName = request.getServerName();
 		String user = request.getRemoteUser();
 
-		String original_url = "/edit.html?mesg=error loading media file";
+		//String original_url = "/edit.html?mesg=error loading media file";
 		int sId = -1;
 		//String settings = "false";
 	
@@ -127,7 +126,7 @@ public class UploadFiles extends Application {
 				if(item.isFormField()) {
 				
 					if(item.getFieldName().equals("original_url")) {
-						original_url = item.getString();
+						//original_url = item.getString();
 					} else if(item.getFieldName().equals("survey_id")) {
 						try {
 							sId = Integer.parseInt(item.getString());
