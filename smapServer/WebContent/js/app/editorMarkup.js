@@ -190,7 +190,7 @@ define([
 			h[++idx] = addNewQuestionButton(false, false, undefined, undefined, selProperty);		
 		}
 		
-		h[++idx] = addPanelStyle("choices", undefined, undefined, false, itemId, list_name);
+		h[++idx] = addPanelStyle("choices", undefined, undefined, optionList.error, itemId, list_name);
 		h[++idx] = '<div class="panel-heading">';
 		h[++idx] = addErrorMsg(optionList.errorMsg);
 			h[++idx] = '<div class="row">';

@@ -172,10 +172,10 @@ $(document).ready(function() {
 	/*
 	 * Switch between choices list view and question view
 	 */
-	updateViewControls();
+	changeset.updateViewControls();
 	$('#viewType').change(function() {
 		globals.gIsQuestionView = $(this).prop('checked');
-		updateViewControls();
+		changeset.updateViewControls();
 		
 		refreshForm();
 	});
@@ -227,11 +227,11 @@ $(document).ready(function() {
 	});
 
 	$('#next-error').off().click(function(){
-		changeset.nextIssue("error");
+		nextIssue("error");
 	});
 	
 	$('#next-warning').off().click(function(){
-		changeset.nextIssue("warning");
+		nextIssue("warning");
 	});
 	
 	$('.m_validate').off().click(function() {
@@ -797,7 +797,7 @@ function surveyDetailsDone() {
 		// skip the refresh of the choices as when the data was reloaded the item index may have changed hence we can't be guaranteed which question will be refreshed
 		// Safer to return to the question view
 		globals.gShowingChoices = false;
-		updateViewControls();
+		changeset.updateViewControls();
 		
 		/*
 		globals.gSelChoiceProperty = globals.gSelProperty;	// Restore selProperty and selLabel for questions
@@ -906,7 +906,7 @@ function respondToEventsChoices($context) {
 	$('.exitOptions', $context).off().click(function() {
 		
 		globals.gShowingChoices = false;
-		updateViewControls();
+		changeset.updateViewControls();
 		
 		/*
 		globals.gSelChoiceProperty = globals.gSelProperty;	// Restore selProperty and selLabel for questions
@@ -1344,7 +1344,7 @@ function respondToEvents($context) {
 		option.setupChoiceView($('#filterType').val());
 		
 		respondToEventsChoices($context);
-		updateViewControls();
+		changeset.updateViewControls();
 
 		/*
 		globals.gSelQuestionProperty = globals.gSelProperty;	// Restore selProperty and selLabel for options
@@ -2507,25 +2507,81 @@ function setNoFilter() {
 			globals.gItemIndex, undefined, "text", "", undefined, "choice_filter");
 }
 
-/*
- * Modify controls that are dependent on the view being either for questions or choices
- */
-function updateViewControls() {
-	
-	//if(globals.gSelProperty !== "media") {		// media is the only common attribute between question and option view
-	//	globals.gSelProperty = "label";
-	//}
-	if(globals.gIsQuestionView && !globals.gShowingChoices) {
-		$('.q_only').show();
-		$('.o_only').hide();
-		globals.gSelLabel = $('#selProperty > li.q_only.default').text();
-	} else {
-		$('.q_only').hide();
-		$('.o_only').show();
-		globals.gSelLabel = $('#selProperty > li.o_only.default').text();
-	}
-	globals.gSelProperty = "label";
-	$('#propSelected').text(globals.gSelLabel);
-}
+            function nextIssue(severity) {
+
+                var i, pos;
+				/*
+				 * Make sure we start inside the array
+				 */
+                if(globals.errors.length > 0) {
+                    if(globals.gErrorPosition > globals.errors.length - 1) {
+                        globals.gErrorPosition  = 0;
+                    }
+                    for(i = globals.gErrorPosition + 1; i < globals.gErrorPosition + globals.errors.length + 1; i++) {
+
+                        if(i > globals.errors.length - 1 ) {
+                            pos = i - globals.errors.length;
+                        } else {
+                            pos = i;
+                        }
+
+                        if(globals.errors[pos].severity === severity) {
+                            globals.gErrorPosition = pos;
+                            break;
+                        }
+                    }
+
+                    focusOnError(globals.gErrorPosition);
+                } else {
+                    globals.gErrorPosition = 0;
+                }
+            }
+
+
+            function focusOnError(position) {
+                var survey = globals.model.survey,
+                    error = globals.errors[position],
+                    itemId,
+                    $textarea,
+                    $item,
+                    $parents;
+
+                if(error.itemType === "question") {
+
+                    itemId = "question" + error.container + "_" + error.itemIndex;
+                    $item = $('#' + itemId);
+
+                    // Expand all parent panes
+                    $parents = $item.parents('div.collapse');
+                    $parents.show();
+
+                    $textarea = $item.find('.question').find('textarea');
+                    if($textarea.length > 0) {
+                        $textarea.focus();
+                    } else {
+                        $item.find('button').focus();
+                    }
+
+                    if(!$("#viewType").prop('checked')) {
+                        $("#viewType").closest('.toggle').trigger("click");
+                    }
+
+                } else {
+
+                    //globals.gIsQuestionView = false;
+                    changeset.updateViewControls();
+                    //refreshForm();
+
+                    if($("#viewType").prop('checked')) {
+                        $("#viewType").closest('.toggle').trigger("click");
+					}
+
+                    $item = $('.olname[value="' + error.container + '"]');
+                    $item.focus();
+                }
+
+
+
+            }
 
 });

@@ -46,7 +46,8 @@ define([
                 series,
                 units = "";
 
-            config.graph.setMargins(80, 50, 20, 80);
+            // get the max label size
+            config.graph.setMargins(80, 50, 20, 80);       // left, top, right, bottom
             if(chart.fn === "count") {
                 y = config.graph.addMeasureAxis("y", "count");
             } else {

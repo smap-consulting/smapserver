@@ -45,8 +45,8 @@ define([
             updateModelWithErrorStatus: updateModelWithErrorStatus,
             validateAll: validateAll,
             numberIssues: numberIssues,
-            nextIssue: nextIssue,
-            addUpdateMessage: addUpdateMessage
+            addUpdateMessage: addUpdateMessage,
+            updateViewControls: updateViewControls
         };
 
 		/*
@@ -1812,12 +1812,6 @@ define([
                 item = survey.forms[container].questions[itemIndex];
                 $changedRow = $('#question' + container + '_' + itemIndex);
             } else if(itemType === "option") {
-                item = survey.optionLists[container].options[itemIndex];
-                $changedRow = $('tr.option', '#choiceView').filter(function(index){
-                    var $this = $(this);
-                    return $this.data("id") == itemIndex;
-                });
-            } else if(itemType === "optionlist") {
                 item = survey.optionLists[container];
                 $changedRow = $('#ol_' + container);
             }
@@ -2131,77 +2125,6 @@ define([
 
         }
 
-        function nextIssue(severity) {
-
-            var i, pos;
-			/*
-			 * Make sure we start inside the array
-			 */
-            if(globals.errors.length > 0) {
-                if(globals.gErrorPosition > globals.errors.length - 1) {
-                    globals.gErrorPosition  = 0;
-                }
-                for(i = globals.gErrorPosition + 1; i < globals.gErrorPosition + globals.errors.length + 1; i++) {
-
-                    if(i > globals.errors.length - 1 ) {
-                        pos = i - globals.errors.length;
-                    } else {
-                        pos = i;
-                    }
-
-                    if(globals.errors[pos].severity === severity) {
-                        globals.gErrorPosition = pos;
-                        break;
-                    }
-                }
-
-                focusOnError(globals.gErrorPosition);
-            } else {
-                globals.gErrorPosition = 0;
-            }
-        }
-
-
-        function focusOnError(position) {
-            var survey = globals.model.survey,
-                error = globals.errors[position],
-                itemId,
-                $textarea,
-                $item,
-                $parents;
-
-            if(error.itemType === "question") {
-
-                itemId = "question" + error.container + "_" + error.itemIndex;
-                $item = $('#' + itemId);
-
-                // Expand all parent panes
-                $parents = $item.parents('div.collapse');
-                $parents.show();
-            } else {
-
-                globals.gIsQuestionView = false;
-                updateViewControls();
-                refreshForm();
-
-                $item = $('.olname[value="' + error.container + '"]');
-
-                if(!globals.gShowingChoices) {
-                    $item.find('.edit_choice').trigger("click");
-                }
-            }
-
-            if(error.itemType === "question") {
-                $textarea = $item.find('.question').find('textarea');
-                if($textarea.length > 0) {
-                    $textarea.focus();
-                } else {
-                    $item.find('button').focus();
-                }
-            }
-
-        }
-
         function numberIssues(severity) {
             var i,
                 count = 0;
@@ -2229,6 +2152,27 @@ define([
             }
 
             return 0;
+        }
+
+        /*
+         * Modify controls that are dependent on the view being either for questions or choices
+         */
+        function updateViewControls() {
+
+            //if(globals.gSelProperty !== "media") {		// media is the only common attribute between question and option view
+            //	globals.gSelProperty = "label";
+            //}
+            if(globals.gIsQuestionView && !globals.gShowingChoices) {
+                $('.q_only').show();
+                $('.o_only').hide();
+                globals.gSelLabel = $('#selProperty > li.q_only.default').text();
+            } else {
+                $('.q_only').hide();
+                $('.o_only').show();
+                globals.gSelLabel = $('#selProperty > li.o_only.default').text();
+            }
+            globals.gSelProperty = "label";
+            $('#propSelected').text(globals.gSelLabel);
         }
 
     });

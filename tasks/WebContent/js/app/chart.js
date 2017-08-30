@@ -548,7 +548,9 @@ define([
                         for (j = 0; j < columns.length; j++) {
                             var val = results[i][columns[j].name];
                             if(columns[j].l_id > 0) {
-                                val = lookupChoiceLabel(columns[j].l_id, val);
+                                if(chart.qlabel) {
+                                    val = lookupChoiceLabel(columns[j].l_id, val);  // Convert to the default label
+                                }
                             }
                             di[columns[j].name] = val;
                         }
@@ -806,7 +808,11 @@ define([
 
                         val = choiceValues[j];
                         if(selM.l_id > 0) {
-                            val = lookupChoiceLabel(selM.l_id, val);
+                            if(chart.qlabel) {
+                                val = lookupChoiceLabel(selM.l_id, val);
+                            } else {
+                                val = choiceValues[j];
+                            }
                         }
                         row[selM.dataLabel] = val;
                         if(nonM) {
@@ -1028,6 +1034,7 @@ define([
                 q1, q2;
 
             $('#ew_tseries').prop("checked", gEdChart.tSeries);
+            $('#ew_qlabel').prop("checked", gEdChart.qlabel);
             $('#ew_chart_type').val(gEdChart.chart_type);
             $("#ew_title").val(gEdChart.title);
             $('#ew_width').val(gEdChart.width);
@@ -1293,6 +1300,7 @@ define([
                 gEdChart.fn = $('#ew_fn').val();
                 gEdChart.title = title;
                 gEdChart.tSeries = $('#ew_tseries').prop("checked");
+                gEdChart.qlabel = $('#ew_qlabel').prop("checked");
                 gEdChart.chart_type = $('#ew_chart_type').val();
                 gEdChart.width = $('#ew_width').val();
                 gEdChart.period = $('#ew_period').val();

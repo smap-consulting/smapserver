@@ -27,6 +27,7 @@ public class ChartDefn {
 	public String group;
 	public String fn;
 	public boolean tSeries;
+	public boolean qlabel;
 	public int width;
 	public String id;
 	public boolean time_interval;
