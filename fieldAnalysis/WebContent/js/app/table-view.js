@@ -144,12 +144,17 @@ function setTableSurvey(view) {
 	});
 	
 	$selFoot.find('.tImport').button().off().click(function() {
-		$('#survey_to_update').val(view.sId);
-		$('#survey_to_update_name').text(view.sName);
-		
-		$('#load_tasks_alert').hide();
-		$('#clear_existing_alert').hide();
-		$('#load_data_popup').dialog("open");
+
+		if(globals.gSelector.surveys[view.sId].task_file) {
+            $('#survey_to_update').val(view.sId);
+            $('#survey_to_update_name').text(view.sName);
+
+            $('#load_tasks_alert').hide();
+            $('#clear_existing_alert').hide();
+            $('#load_data_popup').dialog("open");
+        } else {
+            alert(localise.set["a_ni"]);
+		}
 	});
 
 	$('#clear_existing').change(function(){

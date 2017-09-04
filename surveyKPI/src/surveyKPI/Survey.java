@@ -614,7 +614,7 @@ public class Survey extends Application {
 			 * Get other survey details
 			 */
 			sql = "select "
-					+ "s.display_name, s.deleted, s.p_id, s.ident, s.model "
+					+ "s.display_name, s.deleted, s.p_id, s.ident, s.model, s.task_file "
 					+ "from survey s "
 					+ "where s.s_id = ?";
 
@@ -629,6 +629,7 @@ public class Survey extends Application {
 				jo.put("project", resultSet.getInt(3));
 				jo.put("survey_ident", resultSet.getString(4));
 				jo.put("model", resultSet.getString(5));
+				jo.put("task_file", resultSet.getBoolean(6));
 			}
 
 			String resp = jo.toString();

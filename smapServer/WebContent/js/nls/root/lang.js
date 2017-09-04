@@ -290,6 +290,7 @@ define({
     "a_hxl": "HXL",
     "a_query": "Select a query",
     "a_fn": "Function",
+    "a_ni": "You need to enable loading tasks for this form in the form settings in the editor page",
 
 
     // Messages
