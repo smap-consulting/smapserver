@@ -45,7 +45,7 @@ define([
                 x, y,
                 series;
 
-            config.graph.setMargins(80, 50, 20, 80);    // left, top, right, bottom
+            config.graph.setMargins(120, 50, 20, 50);    // left, top, right, bottom
             if(chart.fn === "count") {
                 x = config.graph.addMeasureAxis("x", "count");
             } else {
