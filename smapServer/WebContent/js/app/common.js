@@ -2037,6 +2037,15 @@ function timeDifference(fromTime, toTime) {
 
 
 function downloadFile(url) {
+
+	// Add a cache buster
+	if(url.indexOf("?") < 0) {
+		url += "?";
+	} else {
+        url += "&";
+	}
+	url += "_v" + new Date().getTime().toString();
+
 	$("body").append("<iframe src='" + url + "' style='display: none;' ></iframe>");
 	// Check for errors allow 5 seconds for an error to be returned
 	setTimeout(downloadFileErrorCheck, 5000);
