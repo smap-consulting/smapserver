@@ -911,7 +911,7 @@ public class ExchangeManager {
 					}
 
 					
-					if(c.isAttachment()) {
+					if(c.isAttachment() && value != null && value.trim().length() > 0) {
 						
 						// Path to attachment
 						String attachmentPath = basePath + "/" + value;
