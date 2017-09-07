@@ -586,7 +586,7 @@ public class TableManager {
 		
 		Gson gson =  new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
 		
-		System.out.println("######## Apply table changes");
+		log.info("######## Apply table changes");
 		try {
 			
 			pstmtGet = connectionSD.prepareStatement(sqlGet);
@@ -595,13 +595,13 @@ public class TableManager {
 			pstmtGetAnOption = connectionSD.prepareStatement(sqlGetAnOption);
 			
 			pstmtGet.setInt(1, sId);
-			System.out.println("SQL: " + pstmtGet.toString());
+			log.info("SQL: " + pstmtGet.toString());
 			
 			ResultSet rs = pstmtGet.executeQuery();
 			while(rs.next()) {
 				int cId = rs.getInt(1);
 				String ciJson = rs.getString(2);
-				System.out.println("Apply table change: " + ciJson);
+				log.info("Apply table change: " + ciJson);
 				ChangeItem ci = gson.fromJson(ciJson, ChangeItem.class);
 				
 				/*
@@ -623,7 +623,7 @@ public class TableManager {
 								(ci.property.prop.equals("name") || ci.property.prop.equals("value"))
 								)))) {
 						
-					System.out.println("table is altered");
+					log.info("table is altered");
 					
 					ArrayList<String> columns = new ArrayList<String> ();	// Column names in results table
 					int l_id = 0;											// List ID
@@ -660,7 +660,7 @@ public class TableManager {
 						pstmtGetAnOption.setInt(1, listId);
 						pstmtGetAnOption.setString(2, value);
 						
-						System.out.println("Get option details: " + pstmtGetAnOption);
+						log.info("Get option details: " + pstmtGetAnOption);
 						ResultSet rsOption = pstmtGetAnOption.executeQuery();
 						if(rsOption.next()) {
 							optionColumnName = rsOption.getString(1);
@@ -672,7 +672,7 @@ public class TableManager {
 							pstmtGetListQuestions.setInt(1, sId);
 							pstmtGetListQuestions.setInt(2, listId);
 							
-							System.out.println("Get list of questions that refer to an option: " + pstmtGetListQuestions);
+							log.info("Get list of questions that refer to an option: " + pstmtGetListQuestions);
 							ResultSet rsQuestions = pstmtGetListQuestions.executeQuery();
 							
 							while(rsQuestions.next()) {
@@ -704,8 +704,6 @@ public class TableManager {
 							qId = ci.property.qId;
 						}
 						
-						System.out.println("qid is: " + qId);
-						
 						if(qId != 0) {
 							QuestionDetails qd = getQuestionDetails(connectionSD, qId);
 	
@@ -732,8 +730,6 @@ public class TableManager {
 							} else {
 								columns.add(qd.columnName);		// Usually this is the case unless the question is a select multiple
 								
-								System.out.println("Adding " + qd.type);
-								
 								if(qd.type.equals("string")) {
 									qd.type = "text";
 								} else if(qd.type.equals("dateTime")) {
@@ -754,7 +750,7 @@ public class TableManager {
 									columns.clear();
 									pstmtGetOptions.setInt(1, qId);
 									
-									System.out.println("Get options to add: "+ pstmtGetOptions.toString());
+									log.info("Get options to add: "+ pstmtGetOptions.toString());
 									ResultSet rsOptions = pstmtGetOptions.executeQuery();
 									while(rsOptions.next()) {			
 										// Create if its an external choice and this question uses external choices
@@ -827,28 +823,26 @@ public class TableManager {
 		PreparedStatement pstmtGetUnpublishedOptions = null;
 		
 		
-		Gson gson =  new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
-		
-		System.out.println("######## Apply unpublished questions");
+		log.info("######## Apply unpublished questions");
 		try {
 			
 			pstmtGetUnpublishedQuestions = connectionSD.prepareStatement(sqlGetUnpublishedQuestions);
 			pstmtGetUnpublishedOptions = connectionSD.prepareStatement(sqlGetUnpublishedOptions);
 			
 			pstmtGetUnpublishedQuestions.setInt(1, sId);
-			System.out.println("Get unpublished questions: " + pstmtGetUnpublishedQuestions.toString());
+			log.info("Get unpublished questions: " + pstmtGetUnpublishedQuestions.toString());
 			
 			ArrayList<String> columns = new ArrayList<String> ();	// Column names in results table
-			TableUpdateStatus status = null;
 			
 			ResultSet rs = pstmtGetUnpublishedQuestions.executeQuery();
 			while(rs.next()) {
-				int qId = rs.getInt(1);
 				String qType = rs.getString(2);
 				String columnName = rs.getString(3);
 				int l_id = rs.getInt(4);				// List Id
 				boolean hasExternalOptions = GeneralUtilityMethods.isAppearanceExternalFile(rs.getString(5));
 				String table_name = rs.getString(6);
+				
+				columns.clear();
 				
 				if(qType.equals("begin group") || qType.equals("end group")) {
 						// Ignore group changes
@@ -869,7 +863,7 @@ public class TableManager {
 					} else if(qType.equals("barcode")) {
 						qType = "text";
 					} else if(qType.equals("note")) {
-							qType = "text";
+						qType = "text";
 					} else if(qType.equals("select1")) {
 						qType = "text";
 					} else if(qType.equals("acknowledge")) {
@@ -880,7 +874,7 @@ public class TableManager {
 						columns.clear();
 						pstmtGetUnpublishedOptions.setInt(1, l_id);
 								
-						System.out.println("Get unpublished options to add: "+ pstmtGetUnpublishedOptions.toString());
+						log.info("Get unpublished options to add: "+ pstmtGetUnpublishedOptions.toString());
 						ResultSet rsOptions = pstmtGetUnpublishedOptions.executeQuery();
 							while(rsOptions.next()) {			
 							// Create if its an external choice and this question uses external choices
@@ -893,13 +887,13 @@ public class TableManager {
 								columns.add(column);
 							}
 						}
-							
-						// Apply each column
-						for(String col : columns) {
-							status = alterColumn(cResults, table_name, qType, col);
-							tablePublished = true;
-						}					
 					}
+							
+					// Apply each column
+					for(String col : columns) {
+						alterColumn(cResults, table_name, qType, col);
+						tablePublished = true;
+					}					
 				} 
 
 			}
@@ -942,43 +936,51 @@ public class TableManager {
 				}
 				String gSql = "SELECT AddGeometryColumn('" + table + 
 						"', 'the_geom', 4326, '" + geoType + "', 2);";
-					System.out.println("Sql statement: " + gSql);
+					log.info("Add geometry column: " + gSql);
 					
 					pstmtApplyGeometryChange = cResults.prepareStatement(gSql);
-					pstmtApplyGeometryChange.executeQuery();
+					try { 
+						pstmtApplyGeometryChange.executeQuery();
+					} catch (Exception e) {
+						// Allow this to fail where an older version added a geometry, which was then deleted, then a new 
+						//  geometry with altitude was added we need to go on and add the altitude and accuracy
+						log.info("Error altering table -- continuing: " + e.getMessage());
+						try {cResults.rollback();} catch(Exception ex) {}
+					}
+					
+					// Add altitude and accuracy
+					if(type.equals("geopoint")) {
+						String sqlAlterTable = "alter table " + table + " add column the_geom_alt double precision";
+						pstmtAlterTable = cResults.prepareStatement(sqlAlterTable);
+						log.info("Alter table: " + pstmtAlterTable.toString());					
+						pstmtAlterTable.executeUpdate();
+						
+						try {if (pstmtAlterTable != null) {pstmtAlterTable.close();}} catch (Exception e) {}
+						sqlAlterTable = "alter table " + table + " add column the_geom_acc double precision";
+						pstmtAlterTable = cResults.prepareStatement(sqlAlterTable);
+						log.info("Alter table: " + pstmtAlterTable.toString());					
+						pstmtAlterTable.executeUpdate();
+					}
 					
 					// Commit this change to the database
-					try {
-						cResults.commit();
-					} catch(Exception ex) {
-						
-					}
+					try { cResults.commit();	} catch(Exception ex) {}
 			} else {
 				
 				String sqlAlterTable = "alter table " + table + " add column " + column + " " + type + ";";
 				pstmtAlterTable = cResults.prepareStatement(sqlAlterTable);
-				System.out.println("SQL: " + pstmtAlterTable.toString());
+				log.info("Alter table: " + pstmtAlterTable.toString());
 			
-				System.out.println("Pre-alter table: Auto commit for results is: " + cResults.getAutoCommit());
 				pstmtAlterTable.executeUpdate();
 				
 				// Commit this change to the database
-				try {
-					cResults.commit();
-				} catch(Exception ex) {
-					
-				}
+				try {cResults.commit();} catch(Exception ex) {}
 			} 
 		} catch (Exception e) {
 			// Report but otherwise ignore any errors
-			System.out.println("Error altering table -- continuing: " + e.getMessage());
+			log.info("Error altering table -- continuing: " + e.getMessage());
 			
 			// Rollback this change
-			try {
-				cResults.rollback();
-			} catch(Exception ex) {
-				
-			}
+			try {cResults.rollback();} catch(Exception ex) {}
 			
 			// Only record the update as failed if the problem was not due to the column already existing
 			status.msg = e.getMessage();
@@ -1007,7 +1009,7 @@ public class TableManager {
 			
 			pstmt.setInt(1, qId);
 			
-			System.out.println("Get question details: " + pstmt.toString());
+			log.info("Get question details: " + pstmt.toString());
 			ResultSet rsDetails = pstmt.executeQuery();
 			if(rsDetails.next()) {
 				qd.columnName = rsDetails.getString(1);
