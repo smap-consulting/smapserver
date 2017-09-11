@@ -761,6 +761,42 @@ public class GeneralUtilityMethods {
 
 		return o_id;
 	}
+	
+	/*
+	 * Get the organisation id for the task
+	 */
+	static public int getOrganisationIdForTask(
+			Connection sd, 
+			int taskId) throws SQLException {
+
+		int o_id = -1;
+
+		String sql = "select p.o_id "
+				+ " from tasks t, task_group tg, project p "
+				+ "where tg.p_id = p.id "
+				+ "and t.tg_id = tg.tg_id "
+				+ "and t.id = ?";
+
+		PreparedStatement pstmt = null;
+
+		try {
+
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setInt(1, taskId);
+			ResultSet rs = pstmt.executeQuery();
+			if(rs.next()) {
+				o_id = rs.getInt(1);	
+			}
+
+		} catch(SQLException e) {
+			log.log(Level.SEVERE,"Error", e);
+			throw e;
+		} finally {
+			try {if (pstmt != null) { pstmt.close();}} catch (SQLException e) {}
+		}
+
+		return o_id;
+	}
 
 	/*
 	 * Get the organisation name for the organisation id
@@ -831,6 +867,40 @@ public class GeneralUtilityMethods {
 		}
 
 		return u_id;
+	}
+	
+	/*
+	 * Get the user ident from the user id
+	 */
+	static public String getUserIdent(
+			Connection sd, 
+			int id) throws SQLException {
+
+		String u_ident = null;
+
+		String sql = "select ident " +
+				" from users u " +
+				" where u.id = ?;";
+
+		PreparedStatement pstmt = null;
+
+		try {
+
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setInt(1, id);
+			ResultSet rs = pstmt.executeQuery();
+			if(rs.next()) {
+				u_ident = rs.getString(1);	
+			}
+
+		} catch(SQLException e) {
+			log.log(Level.SEVERE,"Error", e);
+			throw e;
+		} finally {
+			try {if (pstmt != null) { pstmt.close();}} catch (SQLException e) {}
+		}
+
+		return u_ident;
 	}
 
 	/*

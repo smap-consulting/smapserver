@@ -977,6 +977,12 @@ public class TaskManager {
 					log.info("Assign user to task:" + pstmtAssign.toString());
 					
 					pstmtAssign.executeUpdate();
+					
+					
+					// Create a notification to alert the new user of the change to the task details
+					String userIdent = GeneralUtilityMethods.getUserIdent(sd, tf.properties.assignee);
+					MessagingManager mm = new MessagingManager();
+					mm.userChange(sd, userIdent);
 				}
 		
 			}
@@ -1007,6 +1013,7 @@ public class TaskManager {
 			}
 			
 			
+			
 		} finally {
 			if(pstmt != null) try {pstmt.close(); } catch(SQLException e) {};
 			if(pstmtAssign != null) try {pstmtAssign.close(); } catch(SQLException e) {};
@@ -1022,6 +1029,12 @@ public class TaskManager {
 	 * Apply an action to multiple tasks
 	 */
 	public void applyBulkAction(Connection sd, int pId, TaskBulkAction action) throws Exception {
+		
+		String sqlGetUsers = "select distinct ident from users where temporary = false and id in "
+				+ "(select a.assignee from assignments a, tasks t "
+				+ "where a.task_id = t.id "
+				+ "and t.p_id = ? "
+				+ "and a.task_id in ("; 
 		
 		String sqlUsers = "delete from users where temporary = true and id in "
 				+ "(select a.assignee from assignments a, tasks t "
@@ -1045,6 +1058,7 @@ public class TaskManager {
 		PreparedStatement pstmtGetUnassigned = null;
 		PreparedStatement pstmtCreateAssignments = null;
 		PreparedStatement pstmtDelTempUsers = null;
+		PreparedStatement pstmtGetUsers = null;
 		
 		try {
 
@@ -1059,6 +1073,17 @@ public class TaskManager {
 				whereSql += action.taskIds.get(i).toString();
 			}
 			whereSql += ")";
+			
+			// Notify users currently assigned to tasks that are being modified
+			MessagingManager mm = new MessagingManager();
+			pstmtGetUsers = sd.prepareStatement(sqlGetUsers + whereSql + ")");
+			pstmtGetUsers.setInt(1, pId);
+			log.info("Notify affected users: " + pstmtGetUsers.toString());
+			ResultSet rsNot = pstmtGetUsers.executeQuery();
+			while(rsNot.next()) {
+				mm.userChange(sd, rsNot.getString(1));
+			}
+			
 			
 			if(action.action.equals("delete")) {
 				
@@ -1088,6 +1113,10 @@ public class TaskManager {
 				pstmt = sd.prepareStatement(assignSql + whereSql);
 				pstmt.setInt(1,action.userId);
 				pstmt.setInt(2, pId);
+				
+				// Notify the user who has been assigned the tasks
+				String userIdent = GeneralUtilityMethods.getUserIdent(sd, action.userId);
+				mm.userChange(sd, userIdent);
 			}
 			
 			log.info("Bulk update: " + pstmt.toString());
@@ -1098,6 +1127,7 @@ public class TaskManager {
 			if(pstmtGetUnassigned != null) try {pstmtGetUnassigned.close(); } catch(SQLException e) {};
 			if(pstmtCreateAssignments != null) try {pstmtCreateAssignments.close(); } catch(SQLException e) {};	
 			if(pstmtDelTempUsers != null) try {pstmtDelTempUsers.close(); } catch(SQLException e) {};	
+			if(pstmtGetUsers != null) try {pstmtGetUsers.close(); } catch(SQLException e) {};	
 		}
 		
 	}
@@ -1142,6 +1172,11 @@ public class TaskManager {
 		String sql = "delete from tasks where tg_id = ?"; 
 		PreparedStatement pstmt = null;
 		
+		String sqlGetUsers = "select distinct ident from users where temporary = false and id in "
+				+ "(select assignee from assignments where task_id in "
+				+ "(select id from tasks where tg_id = ?))"; 
+		PreparedStatement pstmtGetUsers = null;
+		
 		try {
 
 			// Delete any temporary users created for this task
@@ -1151,6 +1186,16 @@ public class TaskManager {
 			log.info("Delete temporary user: " + pstmtUsers.toString());
 			pstmtUsers.executeUpdate();
 				
+			// Notify users whose task has been deleted
+			MessagingManager mm = new MessagingManager();
+			pstmtGetUsers = sd.prepareStatement(sqlGetUsers);
+			pstmtGetUsers.setInt(1, tgId);
+			log.info("Get task users: " + pstmtGetUsers.toString());
+			ResultSet rs = pstmtGetUsers.executeQuery();
+			while (rs.next()) {
+				mm.userChange(sd, rs.getString(1));
+			}			
+			
 			// Delete the task group
 			pstmt = sd.prepareStatement(sql);
 			pstmt.setInt(1, tgId);
@@ -1161,6 +1206,7 @@ public class TaskManager {
 		} finally {
 			if(pstmt != null) try {	pstmt.close(); } catch(SQLException e) {};
 			if(pstmtUsers != null) try {	pstmtUsers.close(); } catch(SQLException e) {};
+			if(pstmtGetUsers != null) try {	pstmtGetUsers.close(); } catch(SQLException e) {};
 		}		
 	}
 	
@@ -1169,11 +1215,17 @@ public class TaskManager {
 	 */
 	public void deleteTask(Connection sd, int tId, int pId) throws SQLException {
 		
-		String sqlUsers = "delete from users where temporary = true and id in "
+		String sqlGetUsers = "select distinct ident from users where temporary = false and id in "
 				+ "(select a.assignee from assignments a, tasks t where a.task_id = ? "
 				+ "and a.task_id = t.id "
 				+ "and t.p_id = ?)"; 
-		PreparedStatement pstmtUsers = null;
+		PreparedStatement pstmtGetUsers = null;
+		
+		String sqlTempUsers = "delete from users where temporary = true and id in "
+				+ "(select a.assignee from assignments a, tasks t where a.task_id = ? "
+				+ "and a.task_id = t.id "
+				+ "and t.p_id = ?)"; 
+		PreparedStatement pstmtTempUsers = null;
 		
 		String sql = "delete from tasks where id = ? and p_id = ?"; 
 		PreparedStatement pstmt = null;
@@ -1181,12 +1233,24 @@ public class TaskManager {
 		try {
 			
 			// Delete any temporary users created for this task
-			pstmtUsers = sd.prepareStatement(sqlUsers);
-			pstmtUsers.setInt(1, tId);
-			pstmtUsers.setInt(2, pId);
+			pstmtTempUsers = sd.prepareStatement(sqlTempUsers);
+			pstmtTempUsers.setInt(1, tId);
+			pstmtTempUsers.setInt(2, pId);
 			
-			log.info("Delete temporary user: " + pstmtUsers.toString());
-			pstmtUsers.executeUpdate();
+			log.info("Delete temporary user: " + pstmtTempUsers.toString());
+			pstmtTempUsers.executeUpdate();
+			
+			// Notify users whose task has been deleted
+			MessagingManager mm = new MessagingManager();
+			pstmtGetUsers = sd.prepareStatement(sqlGetUsers);
+			pstmtGetUsers.setInt(1, tId);
+			pstmtGetUsers.setInt(2, pId);
+			
+			log.info("Get task users: " + pstmtGetUsers.toString());
+			ResultSet rs = pstmtGetUsers.executeQuery();
+			while (rs.next()) {
+				mm.userChange(sd, rs.getString(1));
+			}			
 			
 			// Delete the task
 			pstmt = sd.prepareStatement(sql);
@@ -1198,8 +1262,8 @@ public class TaskManager {
 				
 		} finally {
 			if(pstmt != null) try {	pstmt.close(); } catch(SQLException e) {};
-			if(pstmtUsers != null) try {	pstmtUsers.close(); } catch(SQLException e) {};
-		
+			if(pstmtTempUsers != null) try {	pstmtTempUsers.close(); } catch(SQLException e) {};
+			if(pstmtGetUsers != null) try {	pstmtGetUsers.close(); } catch(SQLException e) {};
 		}		
 	}
 }

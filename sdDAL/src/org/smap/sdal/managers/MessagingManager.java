@@ -19,6 +19,7 @@ import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.UtilityMethodsEmail;
 import org.smap.sdal.model.EmailServer;
 import org.smap.sdal.model.SurveyMessage;
+import org.smap.sdal.model.TaskMessage;
 import org.smap.sdal.model.UserMessage;
 import org.smap.sdal.model.Organisation;
 import com.google.gson.Gson;
@@ -53,15 +54,28 @@ public class MessagingManager {
 	LogManager lm = new LogManager(); // Application log
 
 	/*
+	 * Create a message resulting from a change to a task
+	 */
+	public void taskChange(Connection sd, int taskId) throws SQLException {
+		Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
+		String data = gson.toJson(new TaskMessage(taskId));		
+		int oId = GeneralUtilityMethods.getOrganisationIdForTask(sd, taskId);	
+		if(oId >= 0) {
+			createMessage(sd, oId, "task", null, data);
+		}
+	}
+	
+	/*
 	 * Create a message resulting from a change to a user
 	 */
 	public void userChange(Connection sd, String userIdent) throws SQLException {
 		Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
 		String data = gson.toJson(new UserMessage(userIdent));		
-		int oId = GeneralUtilityMethods.getOrganisationId(sd, userIdent, 0);		
-		createMessage(sd, oId, "user", null, data);
+		int oId = GeneralUtilityMethods.getOrganisationId(sd, userIdent, 0);	
+		if(oId >= 0) {
+			createMessage(sd, oId, "user", null, data);
+		}
 	}
-	
 	
 	/*
 	 * Create a message resulting from a change to a form
@@ -71,8 +85,10 @@ public class MessagingManager {
 		SurveyMessage sm = new SurveyMessage(sId);
 		sm.linkedSurveyId = linkedId;
 		String data = gson.toJson(sm);
-		int oId = GeneralUtilityMethods.getOrganisationIdForSurvey(sd, sId);		
-		createMessage(sd, oId, "survey", null, data);
+		int oId = GeneralUtilityMethods.getOrganisationIdForSurvey(sd, sId);	
+		if(oId >= 0) {
+			createMessage(sd, oId, "survey", null, data);
+		}
 	}
 	
 	/*
