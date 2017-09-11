@@ -16,7 +16,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 
-*/
+ */
 
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
@@ -77,14 +77,14 @@ import java.util.logging.Logger;
 public class MyAssignments extends Application {
 
 	Authorise a = new Authorise(null, Authorise.ENUM);
-	
+
 	private static Logger log =
-			 Logger.getLogger(Survey.class.getName());
-	
+			Logger.getLogger(Survey.class.getName());
+
 	class KeyValue {
 		String name;
 		String value;
-		
+
 		public KeyValue(String k, String v) {
 			name = k;
 			value = v;
@@ -100,7 +100,7 @@ public class MyAssignments extends Application {
 		log.info("webserviceevent : getTasksCredentials");
 		return getTasks(request, request.getRemoteUser());
 	}
-	
+
 	/*
 	 * Get assignments for user authenticated with a key
 	 */
@@ -110,12 +110,12 @@ public class MyAssignments extends Application {
 	public Response getTaskskey(
 			@PathParam("key") String key,
 			@Context HttpServletRequest request) throws SQLException {
-		
+
 		log.info("webserviceevent : getTaskskey");
-		
+
 		String user = null;		
 		Connection connectionSD = SDDataSource.getConnection("surveyMobileAPI-Upload");
-		
+
 		try {
 			user = GeneralUtilityMethods.getDynamicUser(connectionSD, key);
 		} catch (SQLException e) {
@@ -123,14 +123,14 @@ public class MyAssignments extends Application {
 		} finally {
 			SDDataSource.closeConnection("surveyMobileAPI-Upload", connectionSD);
 		}
-		
+
 		if (user == null) {
 			log.info("User not found for key");
 			throw new JsonAuthorisationException();
 		}
 		return getTasks(request, user);
 	}
-	
+
 	/*
 	 * Post assignments for user authenticated with a key
 	 */
@@ -141,12 +141,12 @@ public class MyAssignments extends Application {
 			@PathParam("key") String key,
 			@FormParam("assignInput") String assignInput,
 			@Context HttpServletRequest request) {
-		
+
 		log.info("webserviceevent : updateTasksKey");
-		
+
 		String user = null;		
 		Connection connectionSD = SDDataSource.getConnection("surveyKPI-UpdateTasksKey");
-		
+
 		try {
 			user = GeneralUtilityMethods.getDynamicUser(connectionSD, key);
 		} catch (SQLException e) {
@@ -154,7 +154,7 @@ public class MyAssignments extends Application {
 		} finally {
 			SDDataSource.closeConnection("surveyKPI-UpdateTasksKey", connectionSD);
 		}
-		
+
 		if (user == null) {
 			log.info("User not found for key");
 			throw new JsonAuthorisationException();
@@ -162,7 +162,7 @@ public class MyAssignments extends Application {
 
 		return updateTasks(request, assignInput, user);
 	}
-	
+
 	/*
 	 * Update assignments for user authenticated with credentials
 	 */
@@ -171,44 +171,44 @@ public class MyAssignments extends Application {
 	public Response updateTasksCredentials(
 			@Context HttpServletRequest request, 
 			@FormParam("assignInput") String assignInput) {
-		
+
 		log.info("webserviceevent : updateAssignments");
 		return updateTasks(request, assignInput, request.getRemoteUser());
 	}
-	
+
 	/*
 	 * Return the list of tasks allocated to the requesting user
 	 */
 	public Response getTasks(HttpServletRequest request, String userName) throws SQLException {
-		
+
 		Response response = null;
-		
+
 		TaskResponse tr = new TaskResponse();
 		tr.message = "OK Task retrieved";	// Overwritten if there is an error
 		tr.status = "200";
 		tr.version = 1;
-		
+
 		// Authorisation - Access
 		Connection connectionSD = SDDataSource.getConnection("surveyKPI-MyAssignments");
 		a.isAuthorised(connectionSD, userName);
 		// End Authorisation
-		
+
 		PreparedStatement pstmtGetForms = null;
 		PreparedStatement pstmtGetSettings = null;
 		PreparedStatement pstmtGetProjects = null;
 		PreparedStatement pstmtGeo = null;
 		PreparedStatement pstmt = null;
-		
+
 		Connection cRel = null;
-		
+
 		int oId = GeneralUtilityMethods.getOrganisationId(connectionSD, userName, 0);
-		
+
 		try {
 			String sql = null;
-			
+
 			cRel = ResultsDataSource.getConnection("surveyKPI-MyAssignments");
 			connectionSD.setAutoCommit(true);
-			
+
 			// Get the assignments
 			sql = "SELECT " +
 					"t.id as task_id," +
@@ -238,25 +238,25 @@ public class MyAssignments extends Application {
 					"and s.blocked = 'false' " +
 					"and a.assignee = u.id " +
 					"and (a.status = 'pending' or a.status = 'cancelled' or a.status = 'missed' " +
-						"or a.status = 'accepted' or (a.status = 'submitted' and t.repeat)) " +
+					"or a.status = 'accepted' or (a.status = 'submitted' and t.repeat)) " +
 					"and u.ident = ? " +
 					"and p.o_id = ?";
-						
+
 			pstmt = connectionSD.prepareStatement(sql);	
 			pstmt.setString(1, userName);
 			pstmt.setInt(2, oId);
-			
+
 			log.info("Getting assignments: " + pstmt.toString());
 			ResultSet resultSet = pstmt.executeQuery();
 
 			int t_id = 0;
 			while (resultSet.next()) {
-				
+
 				// Create the list of task assignments if it has not already been created
 				if(tr.taskAssignments == null) {
 					tr.taskAssignments = new ArrayList<TaskAssignment>();
 				}
-				
+
 				// Create the new Task Assignment Objects
 				TaskAssignment ta = new TaskAssignment();
 				ta.task = new Task();
@@ -285,7 +285,7 @@ public class MyAssignments extends Application {
 				ta.assignment.assignment_id = resultSet.getInt("assignment_id");
 				ta.assignment.assignment_status = resultSet.getString("assignment_status");
 
-				
+
 				String geo_type = resultSet.getString("geo_type");
 				// Get the coordinates
 				if(geo_type != null) {
@@ -314,11 +314,11 @@ public class MyAssignments extends Application {
 					}
 
 				}
-				
+
 				// Add the new task assignment to the list of task assignments
 				tr.taskAssignments.add(ta);
 			}
-			
+
 			/*
 			 * Get the complete list of forms accessible by this user
 			 */
@@ -338,36 +338,36 @@ public class MyAssignments extends Application {
 					"and s.blocked = 'false'" +
 					"and u.ident = ? " +
 					"and p.o_id = ?";
-						
+
 			pstmtGetForms = connectionSD.prepareStatement(sql);	
 			pstmtGetForms.setString(1, userName);
 			pstmtGetForms.setInt(2, oId);
-			
+
 			log.info("Getting forms: " + pstmtGetForms.toString());
 			resultSet = pstmtGetForms.executeQuery();
-			
+
 			TranslationManager translationMgr = new TranslationManager();
-			
+
 			tr.forms = new ArrayList<FormLocator> ();
 			while(resultSet.next()) {
 				int sId = resultSet.getInt("s_id");
 				String sIdent = resultSet.getString("ident");
 				boolean newManifestFile = false;
-				
+
 				/*
 				 * For each form that has a manifest that links to another form
 				 *  generate the new CSV files if the linked data has changed
 				 */
 				List<ManifestValue> manifestList = translationMgr.
 						getLinkedManifests(connectionSD, sId, sIdent);
-				
+
 				for( ManifestValue m : manifestList) {
-					
+
 					String filepath = null;
 					boolean fileRegenerated = false;
-					
+
 					log.info("Linked file:" + m.fileName);
-					
+
 					/*
 					 * The file is unique per survey and by user name due to the use of roles to
 					 *  restrict columns and rows per user
@@ -376,21 +376,21 @@ public class MyAssignments extends Application {
 					String basepath = GeneralUtilityMethods.getBasePath(request);
 					String dirPath = basepath + "/media/" + sIdent+ "/" + userName + "/";
 					filepath =  dirPath + m.fileName;
-					
+
 					// Make sure the destination exists
 					File dir = new File(dirPath);
 					dir.mkdirs();
-					
+
 					log.info("CSV File is:  " + dirPath + " : directory path created");
-					
+
 					fileRegenerated = efm.createLinkedFile(connectionSD, cRel, sId, m.fileName , filepath, userName);
 					if(fileRegenerated) {
 						newManifestFile = true;
 					}
-					newManifestFile = true;  // Set to be always true, fieldTask should download manifests where checksum has changed
+					newManifestFile = true;  // Set to be always true, instead of this fieldTask should download manifests where checksum has changed
 				}
-				
-				
+
+
 				FormLocator fl = new FormLocator();
 				fl.ident = resultSet.getString("ident");
 				fl.version = resultSet.getInt("version");
@@ -399,17 +399,17 @@ public class MyAssignments extends Application {
 				fl.pid = resultSet.getInt("pid");
 				fl.tasks_only = resultSet.getBoolean("tasks_only");
 				fl.hasManifest = translationMgr.hasManifest(connectionSD, userName, sId);
-				
+
 				// If a new manifest then mark the form dirty so it will be downloaded
-	            if(newManifestFile) {
-	            	fl.dirty = true;
-	            } else {
-	            	fl.dirty = false;
-	            }	
-				
+				if(newManifestFile) {
+					fl.dirty = true;
+				} else {
+					fl.dirty = false;
+				}	
+
 				tr.forms.add(fl);
 			}
-			
+
 			/*
 			 * Get the settings for the phone
 			 */
@@ -425,12 +425,12 @@ public class MyAssignments extends Application {
 					"from organisation o, users u " +
 					"where u.o_id = o.id " +
 					"and u.ident = ?;";
-			
+
 			pstmtGetSettings = connectionSD.prepareStatement(sql);	
 			pstmtGetSettings.setString(1, userName);
 			log.info("Getting settings: " + pstmtGetSettings.toString());
 			resultSet = pstmtGetSettings.executeQuery();
-			
+
 			if(resultSet.next()) {
 				tr.settings.ft_delete_submitted = resultSet.getBoolean(1);
 				tr.settings.ft_send_trail = resultSet.getBoolean(2);
@@ -441,7 +441,7 @@ public class MyAssignments extends Application {
 				tr.settings.ft_send_wifi_cell = resultSet.getBoolean(7);
 				tr.settings.ft_location_trigger = GeneralUtilityMethods.isBusinessServer(request.getServerName());
 			}
-			
+
 			/*
 			 * Get the projects
 			 */
@@ -453,14 +453,14 @@ public class MyAssignments extends Application {
 					"and u.ident = ? " +
 					"and p.o_id = ? " +
 					"order by name ASC;";	
-			
+
 			pstmtGetProjects = connectionSD.prepareStatement(sql);	
 			pstmtGetProjects.setString(1, userName);
 			pstmtGetProjects.setInt(2, oId);
-			
+
 			log.info("Getting projects: " + pstmtGetProjects.toString());
 			resultSet = pstmtGetProjects.executeQuery();
-			
+
 			while(resultSet.next()) {
 				Project p = new Project();
 				p.id = resultSet.getInt(1);
@@ -468,15 +468,15 @@ public class MyAssignments extends Application {
 				p.desc = resultSet.getString(3);
 				tr.projects.add(p);
 			}
-			
-			
+
+
 			/*
 			 * Return the response
 			 */
 			Gson gson = new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd HH:mm").create();
 			String resp = gson.toJson(tr);
 			response = Response.ok(resp).build();
-				
+
 		} catch (SQLException e) {
 			tr.message = "SQL Error: Message=" + e.getMessage();
 			tr.status = "400";
@@ -492,25 +492,25 @@ public class MyAssignments extends Application {
 			try {if (pstmtGetSettings != null) {pstmtGetSettings.close();} } catch (Exception e) {}
 			try {if (pstmtGeo != null) {pstmtGeo.close();} } catch (Exception e) {}
 			try {if (pstmt != null) {pstmt.close();} } catch (Exception e) {}
-			
+
 			SDDataSource.closeConnection("surveyKPI-MyAssignments", connectionSD);
 			ResultsDataSource.closeConnection("surveyKPI-MyAssignments", cRel);	
 		}
 
 		return response;
 	}
-	
+
 	/*
 	 * Add a key value pair to an array of key value pairs stored as json
 	 */
 	String addKeyValuePair(String jIn, String name, String value) {
-		
+
 		String jOut = null;
 		Gson gson = new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd HH:mm").create();
 		Type type = new TypeToken<ArrayList<KeyValue>>(){}.getType();
-		
+
 		ArrayList<KeyValue> kvArray = null;
-		
+
 		// 1. Get the current array
 		if(jIn != null && jIn.trim().length() > 0) {
 			kvArray = new Gson().fromJson(jIn, type);
@@ -521,15 +521,15 @@ public class MyAssignments extends Application {
 		// 2. Add the new kv pair
 		if(value != null && value.trim().length() > 0 ) {
 			KeyValue newKV = new KeyValue(name, value);
-			
+
 			kvArray.add(newKV);
 		}
-		
+
 		// 3. Return the updated list
 		jOut = gson.toJson(kvArray);
 		return jOut;
 	}
-	
+
 	/*
 	 * Update the task assignment
 	 */
@@ -538,24 +538,17 @@ public class MyAssignments extends Application {
 			String userName) { 
 
 		Response response = null;
-		try {
-		    Class.forName("org.postgresql.Driver");	 
-		} catch (ClassNotFoundException e) {
-			log.log(Level.SEVERE,"Can't find Postgres JDBC driver", e);
-			response = Response.serverError().build();
-		    return response;
-		}
-		
+
 		Connection connectionSD = SDDataSource.getConnection("surveyKPI-MyAssignments");
-		
+
 		// Authorisation not required a user can only update their own assignments
-		
+
 		TaskResponse tr = new Gson().fromJson(assignInput, TaskResponse.class);
-			
+
 		log.info("Device:" + tr.deviceId + " for user " + userName);
-		
+
 		// TODO that the status is valid (A different range of status values depending on the role of the user)
-		
+
 		PreparedStatement pstmt = null;
 		PreparedStatement pstmtForms = null;
 		PreparedStatement pstmtFormsDelete = null;
@@ -565,7 +558,7 @@ public class MyAssignments extends Application {
 		PreparedStatement pstmtRepeats = null;
 		try {
 			String sql = null;
-			
+
 			String sqlRepeats = "UPDATE tasks SET repeat_count = repeat_count + 1 " +
 					"where id = (select task_id from assignments where id = ?);";
 			pstmtRepeats = connectionSD.prepareStatement(sqlRepeats);
@@ -574,45 +567,45 @@ public class MyAssignments extends Application {
 			for(TaskAssignment ta : tr.taskAssignments) {
 				if(ta.assignment.assignment_id > 0) {
 					log.info("Task Assignment: " + ta.assignment.assignment_status);
-					
+
 					/*
 					 * If the updated status = "cancelled" then this is an acknowledgment of the status set on the server
 					 *   hence update the server status to "deleted"
 					 */
 					if(ta.assignment.assignment_status.equals("cancelled")) {
 						log.info("Assignment:" + ta.assignment.assignment_id + " acknowledge cancel");
-						
+
 						sql = "delete from tasks where id in (select a.task_id from assignments a " +
 								"where a.id = ? " + 
 								"and a.assignee IN (SELECT id FROM users u " +
-									"where u.ident = ?));";
+								"where u.ident = ?));";
 						pstmt = connectionSD.prepareStatement(sql);	
 						pstmt.setInt(1, ta.assignment.assignment_id);
 						pstmt.setString(2, userName);
 					} else {
-					
+
 						// Apply update making sure the assignment was made to the updating user
 						sql = "UPDATE assignments a SET status = ? " +
 								"where a.id = ? " + 
 								"and a.assignee IN (SELECT id FROM users u " +
-									"where u.ident = ?);";
+								"where u.ident = ?);";
 						pstmt = connectionSD.prepareStatement(sql);
 						pstmt.setString(1, ta.assignment.assignment_status);
 						pstmt.setInt(2, ta.assignment.assignment_id);
 						pstmt.setString(3, userName);
-						
+
 						if(ta.assignment.assignment_status.equals("submitted")) {
 							pstmtRepeats.setInt(1, ta.assignment.assignment_id);
 							log.info("Updating task repeats: " + pstmtRepeats.toString());
 							pstmtRepeats.executeUpdate();
 						}
 					}
-					
+
 					log.info("update assignments: " + pstmt.toString());
 					pstmt.executeUpdate();
 				}
 			}
-			
+
 			/*
 			 * Update the status of down loaded forms
 			 */
@@ -622,16 +615,16 @@ public class MyAssignments extends Application {
 			ResultSet rs = pstmtUser.executeQuery();
 			if(rs.next()) {
 				int userId = rs.getInt(1);
-				
+
 				log.info("Updating downloaded forms for user " + userName + " with id " + userId + " and deviceId" + tr.deviceId);
 				sql = "delete from form_downloads where u_id = ? and device_id = ?;";
 				pstmtFormsDelete = connectionSD.prepareStatement(sql);
 				pstmtFormsDelete.setInt(1, userId);
 				pstmtFormsDelete.setString(2, tr.deviceId);
-				
+
 				log.info("Delete existing form downloads: " + pstmtFormsDelete.toString());
 				pstmtFormsDelete.executeUpdate();
-				
+
 				sql = "insert into form_downloads (" +
 						"u_id, " +
 						"device_id, " +
@@ -648,7 +641,7 @@ public class MyAssignments extends Application {
 					pstmtForms.setInt(4, f.version);
 					pstmtForms.executeUpdate();
 				}
-				
+
 
 				/*
 				 * Record task information for any submitted tasks
@@ -674,13 +667,13 @@ public class MyAssignments extends Application {
 						pstmtTasks.setString(5, tci.uuid);
 						pstmtTasks.setString(6, "POINT(" + tci.lon + " " + tci.lat + ")");
 						pstmtTasks.setTimestamp(7, new Timestamp(tci.actFinish));
-						
+
 						log.info("Insert task: " + pstmtTasks.toString());
 						pstmtTasks.executeUpdate();
 					}
-					
+
 				}
-				
+
 				/*
 				 * Record user trail information
 				 */
@@ -696,26 +689,26 @@ public class MyAssignments extends Application {
 					pstmtTrail.setInt(1, userId);
 					pstmtTrail.setString(2, tr.deviceId);
 					for(PointEntry pe : tr.userTrail) {
-						
+
 						pstmtTrail.setString(3, "POINT(" + pe.lon + " " + pe.lat + ")");
 						pstmtTrail.setTimestamp(4, new Timestamp(pe.time));
-						
+
 						pstmtTrail.executeUpdate();
 					}
-					
+
 				}
 			}
-			
+
 			connectionSD.commit();
 			response = Response.ok().build();
 			log.info("Assignments updated");	
-				
+
 		} catch (Exception e) {		
 			response = Response.serverError().build();
 			log.log(Level.SEVERE,"Exception", e);
-		    try { connectionSD.rollback();} catch (Exception ex){log.log(Level.SEVERE,"", ex);}
+			try { connectionSD.rollback();} catch (Exception ex){log.log(Level.SEVERE,"", ex);}
 		} finally {
-			
+
 			try {if ( pstmt != null ) { pstmt.close(); }} catch (Exception e) {}
 			try {if ( pstmtForms != null ) { pstmtForms.close(); }} catch (Exception e) {}
 			try {if ( pstmtFormsDelete != null ) { pstmtFormsDelete.close(); }} catch (Exception e) {}
@@ -723,10 +716,10 @@ public class MyAssignments extends Application {
 			try {if ( pstmtTasks != null ) { pstmtTasks.close(); }} catch (Exception e) {}
 			try {if ( pstmtTrail != null ) { pstmtTrail.close(); }} catch (Exception e) {}
 			try {if ( pstmtRepeats != null ) { pstmtRepeats.close(); }} catch (Exception e) {}
-			
+
 			SDDataSource.closeConnection("surveyKPI-MyAssignments", connectionSD);
 		}
-		
+
 		return response;
 	}
 }

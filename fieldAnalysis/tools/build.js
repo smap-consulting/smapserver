@@ -1,10 +1,10 @@
 ({
     appDir: '../WebContent',
-    optimize: 'none',
+//    optimize: 'none',
     wrapShim: false,
     waitSeconds: 0,
     baseUrl: 'js/libs',
-    removeCombined: true,
+//    removeCombined: true,
     paths: {
     	app: '../app',
     	main: '..',
