@@ -1062,6 +1062,7 @@ public class TaskManager {
 				+ "and id in (";
 		String sqlCreateAssignments = "insert into assignments (assignee, status, task_id, assigned_date) "
 				+ "values(?, 'accepted', ?, now())";
+		String sqlDeleteAssignments = "delete from assignments where task_id in (";
 		String whereSql = "";
 		
 
@@ -1106,6 +1107,9 @@ public class TaskManager {
 				
 				pstmt = sd.prepareStatement(deleteSql + whereSql);
 				pstmt.setInt(1, pId);
+				log.info("Bulk update: " + pstmt.toString());
+				pstmt.executeUpdate();
+				
 			} else if(action.action.equals("assign")) {
 				
 				// Get tasks that have not had an assignment created
@@ -1121,17 +1125,22 @@ public class TaskManager {
 					pstmtCreateAssignments.executeUpdate();
 				}
 				// Update assignments
-				pstmt = sd.prepareStatement(assignSql + whereSql);
-				pstmt.setInt(1,action.userId);
-				pstmt.setInt(2, pId);
+				if(action.userId >= 0) {
+					pstmt = sd.prepareStatement(assignSql + whereSql);
+					pstmt.setInt(1,action.userId);
+					pstmt.setInt(2, pId);				
+					log.info("Bulk update: " + pstmt.toString());
+					pstmt.executeUpdate();
+				} else {
+					pstmt = sd.prepareStatement(sqlDeleteAssignments + whereSql);				
+					log.info("Bulk update: " + pstmt.toString());
+					pstmt.executeUpdate();
+				}
 				
 				// Notify the user who has been assigned the tasks
 				String userIdent = GeneralUtilityMethods.getUserIdent(sd, action.userId);
 				mm.userChange(sd, userIdent);
 			}
-			
-			log.info("Bulk update: " + pstmt.toString());
-			pstmt.executeUpdate();
 				
 		} finally {
 			if(pstmt != null) try {	pstmt.close(); } catch(SQLException e) {};

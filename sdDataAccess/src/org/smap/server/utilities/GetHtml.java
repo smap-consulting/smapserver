@@ -338,7 +338,7 @@ public class GetHtml {
 
 						Element extraFieldsetElement = outputDoc.createElement("fieldset");
 						bodyElement.appendChild(extraFieldsetElement);
-
+						
 						addSelectContents(extraFieldsetElement, q, form, false);
 						currentParent.appendChild(bodyElement);
 					}
@@ -620,7 +620,7 @@ public class GetHtml {
 
 		// Required - note allow required on read only questions to support form level
 		// validation trick
-		if (q.required) {
+		if (q.required && !q.type.startsWith("select")) {
 			bodyElement.setAttribute("data-required", "true()");
 		}
 
@@ -669,6 +669,9 @@ public class GetHtml {
 			if (q.relevant != null && q.relevant.trim().length() > 0) {
 				inputElement.setAttribute("data-relevant",
 						UtilityMethods.convertAllxlsNames(q.relevant, false, paths, form.id, true));
+			}
+			if(q.required) {
+				inputElement.setAttribute("data-required", "true()");
 			}
 
 			// Itemset labels
@@ -852,18 +855,24 @@ public class GetHtml {
 			parent.appendChild(bodyElement);
 
 			// Message
-			bodyElement = outputDoc.createElement("span");
-			bodyElement.setAttribute("class", "or-required-msg active");
-			bodyElement.setAttribute("data-i18n", "constraint.required");
-			if (q.required_msg != null && q.required_msg.trim().length() > 0) {
-				bodyElement.setTextContent(q.required_msg);
-			} else {
-				bodyElement.setTextContent("This field is required");
-			}
-			parent.appendChild(bodyElement);
+			parent.appendChild(getRequiredMsg(q));
 		}
 	}
 
+	/*
+	 * Get the required message
+	 */
+	private Element getRequiredMsg(Question q) {
+		Element bodyElement = outputDoc.createElement("span");
+		bodyElement.setAttribute("class", "or-required-msg active");
+		bodyElement.setAttribute("data-i18n", "constraint.required");
+		if (q.required_msg != null && q.required_msg.trim().length() > 0) {
+			bodyElement.setTextContent(q.required_msg);
+		} else {
+			bodyElement.setTextContent("This field is required");
+		}
+		return bodyElement;
+	}
 	/*
 	 * Add media
 	 */
