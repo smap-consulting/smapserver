@@ -19,6 +19,7 @@ import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.UtilityMethodsEmail;
 import org.smap.sdal.model.EmailServer;
 import org.smap.sdal.model.SurveyMessage;
+import org.smap.sdal.model.TaskMessage;
 import org.smap.sdal.model.UserMessage;
 import org.smap.sdal.model.Organisation;
 import com.google.gson.Gson;
@@ -64,6 +65,7 @@ public class MessagingManagerApply {
 		PreparedStatement pstmtGetMessages = null;
 		PreparedStatement pstmtConfirm = null;
 		
+		HashMap<Integer, TaskMessage> changedTasks = new HashMap<> ();
 		HashMap<Integer, SurveyMessage> changedSurveys = new HashMap<> ();
 		HashMap<String, String> usersImpacted =   new HashMap<> ();
 
@@ -111,7 +113,18 @@ public class MessagingManagerApply {
 				log.info(pstmtConfirm.toString());
 				pstmtConfirm.executeUpdate();
 				
-				if(topic.equals("survey")) {
+				if(topic.equals("task")) {
+					Gson gson=  new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
+					TaskMessage tm = gson.fromJson(data, TaskMessage.class);
+					if(tm != null) {
+						log.info("xxxxxxxxxxxxxxxxxxxx Processing: " + tm.id);
+					} else {
+						log.info("Error: null task message");
+					}
+					
+					changedTasks.put(tm.id, tm);
+					
+				} else if(topic.equals("survey")) {
 					Gson gson=  new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
 					SurveyMessage sm = gson.fromJson(data, SurveyMessage.class);
 					if(sm != null) {
@@ -173,16 +186,21 @@ public class MessagingManagerApply {
 			 * Device notifications have been accumulated to an array so that duplicates can be eliminated
 			 * Process these now
 			 */
-			// Get a list of users impacted by form changes without duplicates
+			// Get a list of users impacted by task changes without duplicates
+			for(Integer taskId : changedTasks.keySet()) {
+				ArrayList<String> users = getTaskUsers(sd, taskId);
+				for(String user : users) {
+					usersImpacted.put(user, user);					
+				}				
+			}
+						
+			// Get a list of users impacted by survey changes without duplicates
 			for(Integer sId : changedSurveys.keySet()) {
 				ArrayList<String> users = getSurveyUsers(sd, sId);
 				for(String user : users) {
 					usersImpacted.put(user, user);
-					System.out.println("Need to notify:  " + user);
 				}				
 			}
-			
-			// Add any users directly impacted
 			
 			// For each user send a notification to each of their devices
 			for(String user : usersImpacted.keySet()) {
@@ -244,6 +262,37 @@ public class MessagingManagerApply {
 			pstmt = sd.prepareStatement(sql);
 			pstmt.setInt(1, sId);
 			log.info("Get survey users: " + pstmt.toString());
+			ResultSet rs = pstmt.executeQuery();
+			while(rs.next()) {
+				users.add(rs.getString(1));
+			}
+		} finally {
+
+			try {if (pstmt != null) {	pstmt.close();}} catch (SQLException e) {}
+
+		}
+		
+		return users;
+	}
+	
+	/*
+	 * Get users of a task
+	 */
+	ArrayList<String> getTaskUsers(Connection sd, int taskId) throws SQLException {
+		
+		ArrayList<String> users = new ArrayList<String> ();
+		String sql = "select u.ident as user "
+				+ "from tasks t, assignments a, users u "
+				+ "where a.task_id = t.id " 
+				+ "and a.assignee = u.id "
+				+ "where t.id = ? ";
+
+		PreparedStatement pstmt = null;
+		
+		try {
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setInt(1, taskId);
+			log.info("Get task users: " + pstmt.toString());
 			ResultSet rs = pstmt.executeQuery();
 			while(rs.next()) {
 				users.add(rs.getString(1));

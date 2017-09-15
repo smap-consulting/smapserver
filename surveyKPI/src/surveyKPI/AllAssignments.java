@@ -45,6 +45,7 @@ import org.smap.sdal.Utilities.NotFoundException;
 import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.managers.LogManager;
+import org.smap.sdal.managers.MessagingManager;
 import org.smap.sdal.managers.TaskManager;
 import org.smap.sdal.model.AssignFromSurvey;
 import org.smap.sdal.model.Assignment;
@@ -851,6 +852,13 @@ public class AllAssignments extends Application {
 						}
 					}
 
+				}
+				
+				// Create a notification for the updated user
+				if(as.user_id > 0) {
+					String userIdent = GeneralUtilityMethods.getUserIdent(connectionSD, as.user_id);
+					MessagingManager mm = new MessagingManager();
+					mm.userChange(connectionSD, userIdent);
 				}
 			}
 			connectionSD.commit();

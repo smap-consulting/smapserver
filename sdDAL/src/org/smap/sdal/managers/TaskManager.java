@@ -8,6 +8,7 @@ import java.sql.Statement;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.HashMap;
 import java.util.UUID;
 import java.util.logging.Logger;
 
@@ -359,11 +360,22 @@ public class TaskManager {
 			boolean updateResources,
 			int oId) throws Exception {
 		
+		HashMap<String, String> userIdents = new HashMap<>();
+		
 		ArrayList<TaskFeature> features = tl.features;
 		for(int i = 0; i < features.size(); i++) {
 			TaskFeature tf = features.get(i);
-				writeTask(sd, pId, tgId, tf, urlPrefix, updateResources, oId);
+			writeTask(sd, pId, tgId, tf, urlPrefix, updateResources, oId);
+			if(tf.properties.assignee_ident != null) {
+				userIdents.put(tf.properties.assignee_ident, tf.properties.assignee_ident);
+			}
 		}
+		
+		// Create a notification to alert the new user of the change to the task details
+		for(String user : userIdents.keySet()) {
+			MessagingManager mm = new MessagingManager();
+			mm.userChange(sd, user);
+		}	
 	
 	}
 	
@@ -978,7 +990,6 @@ public class TaskManager {
 					
 					pstmtAssign.executeUpdate();
 					
-					
 					// Create a notification to alert the new user of the change to the task details
 					String userIdent = GeneralUtilityMethods.getUserIdent(sd, tf.properties.assignee);
 					MessagingManager mm = new MessagingManager();
@@ -1152,6 +1163,10 @@ public class TaskManager {
 		
 			log.info("Update start date and time: " + pstmt.toString());
 			pstmt.executeUpdate();
+			
+			// Create a notification of the change
+			MessagingManager mm = new MessagingManager();
+			mm.taskChange(sd, taskId);
 				
 		} finally {
 			if(pstmt != null) try {	pstmt.close(); } catch(SQLException e) {};
