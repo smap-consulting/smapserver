@@ -285,7 +285,7 @@ public class MessagingManagerApply {
 				+ "from tasks t, assignments a, users u "
 				+ "where a.task_id = t.id " 
 				+ "and a.assignee = u.id "
-				+ "where t.id = ? ";
+				+ "and t.id = ? ";
 
 		PreparedStatement pstmt = null;
 		

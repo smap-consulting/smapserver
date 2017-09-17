@@ -530,7 +530,12 @@ define([
          */
         function processData(results, chart, dataLength) {
             var i, j,
-                columns = gTasks.cache.surveyConfig[globals.gViewId].columns;
+                columns = gTasks.cache.surveyConfig[globals.gViewId].columns,
+                datalabel = chart.qlabel ? 'label' : 'name';
+
+            if (!gTasks.cache.surveyConfig[globals.gViewId].processedData) {
+                gTasks.cache.surveyConfig[globals.gViewId].processedData = {};
+            }
 
             if (chart.tSeries) {
                 return processTimeSeriesData(results, chart, dataLength);
@@ -539,9 +544,9 @@ define([
             } else if (chart.groups[0].type === "select" || (chart.groups.length > 1 && chart.groups[1].type === "select")) {
                 return processSelectMultipleData(results, chart, dataLength);
             } else {
-                if (!gTasks.cache.surveyConfig[globals.gViewId].processedData) {
+                if (!gTasks.cache.surveyConfig[globals.gViewId].processedData[datalabel]) {
 
-                    gTasks.cache.surveyConfig[globals.gViewId].processedData = [];
+                    gTasks.cache.surveyConfig[globals.gViewId].processedData[datalabel] = [];
                     for (i = 0; i < results.length; i++) {
                         var di = {};
                         di.count = 1;
@@ -558,10 +563,10 @@ define([
                             di._duration = 0;
                         }
                         di._duration = +di._duration;
-                        gTasks.cache.surveyConfig[globals.gViewId].processedData.push(di);
+                        gTasks.cache.surveyConfig[globals.gViewId].processedData[datalabel].push(di);
                     }
                 }
-                return gTasks.cache.surveyConfig[globals.gViewId].processedData;
+                return gTasks.cache.surveyConfig[globals.gViewId].processedData[datalabel];
             }
         }
 
