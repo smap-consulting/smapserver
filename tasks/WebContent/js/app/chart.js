@@ -1055,16 +1055,16 @@ define([
             }
             $('#ew_period').val(gEdChart.period);
 
-            setupChartDialog(q1, q2);
+            setupChartDialog(q1, q2, gEdChart.chart_type);
             addFunctions();
             chartTypeChanged();
 
         }
 
-        function setupChartDialog(q1, q2) {
+        function setupChartDialog(q1, q2, defaultChartType) {
 
             setTimeSeries();
-            setChartTypes();
+            setChartTypes(defaultChartType);
             addQuestions(q1, q2);
             addFunctions();
 
@@ -1136,13 +1136,12 @@ define([
         /*
          * Set the available chart types
          */
-        function setChartTypes() {
+        function setChartTypes(defaultChartType) {
 
             var tSeries = $('#ew_tseries').prop("checked");
             var h = [];
             var idx = -1;
             var key;
-            var defaultChartType = $('#ew_chart_type').val();
             
 
             for (key in avCharts) {
