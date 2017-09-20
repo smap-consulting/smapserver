@@ -916,12 +916,29 @@ define([
                         }
 
                     } else {
+
                         // Move the single question
                         change.question.itemIndex = moveQuestion(survey, question,
                             targetForm,
                             newLocation,
                             sourceForm,
                             oldLocation);
+
+                        // Fix up the form being moved to point to its new parent
+                        var movedForm;
+                        if(question.type === "begin repeat") {
+                            // Get the form being moved
+                            for(i = 0; i < survey.forms.length; i++) {
+                                movedForm = survey.forms[i];
+                                if(movedForm.parentFormIndex === sourceForm && movedForm.parentQuestionIndex === sourceItem) {
+                                    movedForm.parentFormIndex = targetForm;
+                                    movedForm.parentform = survey.forms[targetForm].id;
+                                    movedForm.parentQuestionIndex = change.question.itemIndex;
+                                    break;
+                                }
+                            }
+                        }
+
                     }
                     refresh = true;		// Do a complete refresh after moving questions
 
