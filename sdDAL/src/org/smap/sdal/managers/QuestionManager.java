@@ -153,6 +153,7 @@ public class QuestionManager {
 				+ "relevant, "
 				+ "qconstraint, "
 				+ "constraint_msg, "
+				+ "mandatory, "
 				+ "required_msg, "
 				+ "autoplay, "
 				+ "accuracy,"
@@ -161,7 +162,7 @@ public class QuestionManager {
 				+ "nodeset_label,"
 				+ "display_name"
 				+ ") " 
-				+ "values (nextval('q_seq'), ?, ?, ?, ?, ?, ?, ?, ?, ?, ? ,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);";
+				+ "values (nextval('q_seq'), ?, ?, ?, ?, ?, ?, ?, ?, ?, ? ,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);";
 		
 		PreparedStatement pstmtUpdateSeq = null;
 		String sqlUpdateSeq = "update question set seq = seq + 1 where f_id = ? and seq >= ?;";
@@ -282,9 +283,10 @@ public class QuestionManager {
 				pstmtInsertQuestion.setString(16, q.relevant);
 				pstmtInsertQuestion.setString(17, q.constraint);
 				pstmtInsertQuestion.setString(18, q.constraint_msg);
-				pstmtInsertQuestion.setString(19, q.required_msg);
-				pstmtInsertQuestion.setString(20, q.autoplay);
-				pstmtInsertQuestion.setString(21, q.accuracy);
+				pstmtInsertQuestion.setBoolean(19, q.required);
+				pstmtInsertQuestion.setString(20, q.required_msg);
+				pstmtInsertQuestion.setString(21, q.autoplay);
+				pstmtInsertQuestion.setString(22, q.accuracy);
 				
 				String nodeset = null;
 				String nodeset_value = null;
@@ -297,10 +299,10 @@ public class QuestionManager {
 					nodeset_value = "name";
 					nodeset_label = "jr:itext(itextId)";
 				}
-				pstmtInsertQuestion.setString(22, nodeset);
-				pstmtInsertQuestion.setString(23, nodeset_value);
-				pstmtInsertQuestion.setString(24, nodeset_label);
-				pstmtInsertQuestion.setString(25, q.display_name);
+				pstmtInsertQuestion.setString(23, nodeset);
+				pstmtInsertQuestion.setString(24, nodeset_value);
+				pstmtInsertQuestion.setString(25, nodeset_label);
+				pstmtInsertQuestion.setString(26, q.display_name);
 				
 				log.info("Insert question: " + pstmtInsertQuestion.toString());
 				pstmtInsertQuestion.executeUpdate();
@@ -521,6 +523,13 @@ public class QuestionManager {
 		PreparedStatement pstmtGetFormId = null;
 		String sqlGetFormId = "select f_id from form where s_id = ? and form_index = ?;";
 		
+		PreparedStatement pstmtGetQuestionId = null;
+		String sqlGetQuestionId = "select q_id from question where f_id = ? and qname = ?";
+		
+		
+		PreparedStatement pstmtMoveForm = null;
+		String sqlMoveForm = "update form set parentform = ? where parentquestion = ? and parentform = ?";
+		
 		try {	
 			
 			// Get the formId of the target form
@@ -569,6 +578,31 @@ public class QuestionManager {
 				
 				// 2. Reorder the questions in the old form
 				GeneralUtilityMethods.cleanQuestionSequences(sd, q.sourceFormId);
+				
+				// 3. Update the form settings if a form is being moved
+				if(q.type.equals("begin repeat")) {
+					System.out.println("Moving repeat");
+					
+					// 3a. Get the question Id of the form being moved
+					pstmtGetQuestionId = sd.prepareStatement(sqlGetQuestionId);
+					pstmtGetQuestionId.setInt(1, q.fId);
+					pstmtGetQuestionId.setString(2, q.name);
+					log.info("Get question id: " + pstmtGetQuestionId.toString());
+					ResultSet rs = pstmtGetQuestionId.executeQuery();
+					if(rs.next()) {
+						int qId = rs.getInt(1);
+						
+						// 3b Update the parent form
+						pstmtMoveForm = sd.prepareStatement(sqlMoveForm);
+						pstmtMoveForm.setInt(1, q.fId);
+						pstmtMoveForm.setInt(2, qId);
+						pstmtMoveForm.setInt(3, q.sourceFormId);
+						log.info("Update parent form: " + pstmtMoveForm.toString());
+						pstmtMoveForm.executeUpdate();
+					} else {
+						log.info("Error: did not find question id");
+					}
+				}
 			}
 			
 			/*
@@ -636,6 +670,8 @@ public class QuestionManager {
 			try {if (pstmtMovedForward != null) {pstmtMovedForward.close();}} catch (SQLException e) {}
 			try {if (pstmtMovedToAnotherForm != null) {pstmtMovedToAnotherForm.close();}} catch (SQLException e) {}
 			try {if (pstmtGetFormId != null) {pstmtGetFormId.close();}} catch (SQLException e) {}
+			try {if (pstmtMoveForm != null) {pstmtMoveForm.close();}} catch (SQLException e) {}
+			try {if (pstmtGetQuestionId != null) {pstmtGetQuestionId.close();}} catch (SQLException e) {}
 		}	
 		
 	}
