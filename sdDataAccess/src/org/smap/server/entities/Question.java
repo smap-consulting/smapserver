@@ -633,6 +633,43 @@ public class Question {
 	}
 	
 	/*
+	 * Add a parameter to the parameter string
+	 * Replace existing parameters of the same value
+	 */
+	public void addParameter(String v) {
+		if(v != null) {
+			String[] px = v.trim().split("=");
+			if(px.length == 2) {
+				if(parameters == null) {
+					parameters = v.trim();
+				} else {
+					String[] params = parameters.split(" ");
+					boolean replaced = false;
+					for(int j = 0; j  < parameters.length(); j++) {
+						if(params[j].trim().startsWith(px[0].trim() + "=")) {
+							params[j] = v;
+							replaced = true;
+							break;
+						}
+					}
+					if(!replaced) {
+						parameters += " " + v;
+					} else {
+						parameters = "";
+						for(int i = 0; i < params.length; i++) {
+							if(i > 0) {
+								parameters += " ";
+							}
+							parameters += params[i];
+						}
+					}
+				}
+			}
+			
+		}
+	}
+	
+	/*
 	 * Return all non external choices 
 	 *   or if there is a single external choice then return all external choices
 	 */

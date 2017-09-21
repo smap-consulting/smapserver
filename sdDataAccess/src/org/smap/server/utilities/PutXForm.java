@@ -1,6 +1,7 @@
 package org.smap.server.utilities;
 
 import java.io.InputStream;
+import java.util.logging.Logger;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -18,6 +19,8 @@ import org.w3c.dom.NodeList;
 
 public class PutXForm {
 
+	private static Logger log = Logger.getLogger(GetXForm.class.getName());
+	
 	SurveyTemplate template = null;
 	boolean instanceFound = false;
 	
@@ -481,157 +484,157 @@ public class PutXForm {
      * @param the sequence of this question
      */
     private String processBodyQuestion(Node n, String formRef) { 
-    	
-    	String questionRef = null;
-    
-    	NamedNodeMap nm = n.getAttributes(); 
-		Node refNode = nm.getNamedItem("ref");
-		if(refNode == null && (n.getNodeName().equals("group"))) {
-			// This may be a repeating group that does not have a reference attribute
-			// get the question reference from the repeat elements nodeset
-			questionRef = getRepeatNodeset(n);
-			if(questionRef == null) {
-				// may be a normal group without a reference
-				// get the question reference from the groups label
-				questionRef = getGroupRefFromLabel(n);
-			}
-		} else {
-			questionRef = nm.getNamedItem("ref").getNodeValue();
-		}
-		
-		// Still no reference! report an error
-		if(questionRef == null) {
-			if(refNode == null && (n.getNodeName().equals("group"))) {
-				/*
-				 * This next bit of code handles the case where a hand crafted XML form
-				 *  did not include any reference for the group however we still want to get
-				 *  the groups questions.
-				 *  TODO: replace this code to create a dummy group that can store appearance
-				 *   information but does not appear in path
-				 */
-				processBody(n, formRef, null);	// Continue with all the question in this group without creating the group
-			} else {
-				System.out.println("Error: Question reference is null: " + n.getNodeName() + " : " + formRef);
-			}	
-			return formRef;		// Don't create the body question
-		}
 
-    	if(formRef == null) {
-    		formRef = createTopLevelForm(questionRef);	// Use the top level form, create it if you have to
-    	}
-    	
-   	 	// make this the full path if is a relative XPath
-    	if(!questionRef.startsWith("/")) {
-    		questionRef = formRef + "/" + questionRef;
-    	}
-    	
-    	// Create the question if it is not already created   	
-    	if(template.getQuestion(questionRef) == null) {
-    		String questionName = UtilityMethods.getLastFromPath(questionRef);
-    		template.createQuestion(questionRef, questionName);
-    	}
-    	
-    	Question q = template.getQuestion(questionRef);   	
-    	q.setVisible(true);		// As this question is in the body of the form then set it to visible
-    	  		
-    	q.setFormRef(formRef);    	// Set the reference of the form containing this question 	
-    	//q.setPath(questionRef);    	// Set the XForm Path   rmpath (no longer required)	   	
-    	//q.setSeq(template.getNextQuestionSeq());    	// Set the sequence number of the question
-    	
-    	q.setDefaultAnswer(template.getDefault(questionRef));    	// Set the default answer if it exists
-    	
-
-    	Node nodeMediaType = nm.getNamedItem("mediatype");    	// set the media type
-    	if(nodeMediaType != null) {
-			String mediaType = nodeMediaType.getNodeValue();
-			if(mediaType != null) {
-				if(mediaType.toLowerCase().startsWith("audio")) {
-					q.setType("audio");
-				} else if(mediaType.toLowerCase().startsWith("image")) {
-					q.setType("image");
-				} if(mediaType.toLowerCase().startsWith("video")) {
-					q.setType("video");
-				}
-			}
-    	}
-    	
-    	String eName = n.getNodeName();    	// Set the select, select1 type
-    	if(eName.equals("select")) {
-    		q.setType("select");
-    	} else if(eName.equals("select1")) {
-    		q.setType("select1");		
-    	}
-    	
-    	if(eName.equals("trigger")) {		// Set the trigger type
-    		q.setType("acknowledge");
-    	}
-    	
-    	if(q.getSource() == null) {    	// Set the source (where the source is null then no results will be stored for this question)
-    		if(!eName.equals("group")) {	// groups do not record any data therefore no source
-    			q.setSource("user");		
-    		}
-    	}
-    	
-    	// Set the appearance
-    	String appearance = null;
-    	if(q.getType().equals("begin group") && isRepeat(n)) {
-    		appearance = getRepeatAppearance(n);
-    		if(appearance != null) {
-	    		q.setAppearance(appearance);
-    		}
-    	} else {
-			Node appNode = nm.getNamedItem("appearance");	
-			
-			if(appNode != null) {
-				appearance = appNode.getNodeValue();
-				q.setAppearance(appearance);
-				// Survey level manifests can be set in the appearance attribute
-				template.addManifestFromAppearance(appearance);	
-			}
-    	}
-		
-    	// Set the autoplay
-		Node autoplayNode = nm.getNamedItem("autoplay");	
-		String autoplay = null;
-		if(autoplayNode != null) {
-			autoplay = autoplayNode.getNodeValue();
-			q.setAutoPlay(autoplay);
-		}
-		
-    	// Set the gps threshold
-		Node gpsThresholdNode = nm.getNamedItem("accuracyThreshold");	
-		String accuracy = null;
-		if(gpsThresholdNode != null) {
-			accuracy = gpsThresholdNode.getNodeValue();
-			q.setAccuracy(accuracy);
-		}
-    	
-    	if(eName.equals("group")) {
-    		setGroupLabel(questionRef, n);	// Get the label for this group
-
-    		if(isRepeat(n))	{ 	// repeating group
-    			q.setType("begin repeat");
-    			processBody(n, formRef, q);
-    			 // Delete the question that marks the end of this repeating group, we don't need it
-    			template.removeQuestion(q.getPath() + "_groupEnd");
-    		} else {									// Non repeating group
-    			q.setType("begin group");
-    			processBody(n, formRef, q);	// Continue with all the question in this group
-    		}
-    	} else {
-    	
-			// Process the question element's children
-	    	NodeList eList = n.getChildNodes();
+	    	String questionRef = null;
 	
-			template.setNextOptionSeq(1);	// Reset the option sequence number
-			if (eList != null) {
-				for(int i = 0; i < eList.getLength(); i++) {
-					processBodyQuestionChild(questionRef, eList.item(i), true, false, formRef, null);
-				}
-			}
-    	}
-		
-		return formRef;
+	    	NamedNodeMap nm = n.getAttributes(); 
+	    	Node refNode = nm.getNamedItem("ref");
+	    	if(refNode == null && (n.getNodeName().equals("group"))) {
+	    		// This may be a repeating group that does not have a reference attribute
+	    		// get the question reference from the repeat elements nodeset
+	    		questionRef = getRepeatNodeset(n);
+	    		if(questionRef == null) {
+	    			// may be a normal group without a reference
+	    			// get the question reference from the groups label
+	    			questionRef = getGroupRefFromLabel(n);
+	    		}
+	    	} else {
+	    		questionRef = nm.getNamedItem("ref").getNodeValue();
+	    	}
+	
+	    	// Still no reference! report an error
+	    	if(questionRef == null) {
+	    		if(refNode == null && (n.getNodeName().equals("group"))) {
+	    			/*
+	    			 * This next bit of code handles the case where a hand crafted XML form
+	    			 *  did not include any reference for the group however we still want to get
+	    			 *  the groups questions.
+	    			 *  TODO: replace this code to create a dummy group that can store appearance
+	    			 *   information but does not appear in path
+	    			 */
+	    			processBody(n, formRef, null);	// Continue with all the question in this group without creating the group
+	    		} else {
+	    			log.info("Error: Question reference is null: " + n.getNodeName() + " : " + formRef);
+	    		}	
+    			return formRef;		// Don't create the body question
+	    		
+	    	}
+	
+	    	if(formRef == null) {
+	    		formRef = createTopLevelForm(questionRef);	// Use the top level form, create it if you have to
+	    	}
+	
+	    	// make this the full path if is a relative XPath
+	    	if(!questionRef.startsWith("/")) {
+	    		questionRef = formRef + "/" + questionRef;
+	    	}
+	
+	    	// Create the question if it is not already created   	
+	    	if(template.getQuestion(questionRef) == null) {
+	    		String questionName = UtilityMethods.getLastFromPath(questionRef);
+	    		template.createQuestion(questionRef, questionName);
+	    	}
+	
+	    	Question q = template.getQuestion(questionRef);   	
+	    	q.setVisible(true);		// As this question is in the body of the form then set it to visible
+	
+	    	q.setFormRef(formRef);    	// Set the reference of the form containing this question 	
+	    	//q.setSeq(template.getNextQuestionSeq());    	// Set the sequence number of the question
+	
+	    	q.setDefaultAnswer(template.getDefault(questionRef));    	// Set the default answer if it exists
+	
+	
+	    	Node nodeMediaType = nm.getNamedItem("mediatype");    	// set the media type
+	    	if(nodeMediaType != null) {
+	    		String mediaType = nodeMediaType.getNodeValue();
+	    		if(mediaType != null) {
+	    			if(mediaType.toLowerCase().startsWith("audio")) {
+	    				q.setType("audio");
+	    			} else if(mediaType.toLowerCase().startsWith("image")) {
+	    				q.setType("image");
+	    			} if(mediaType.toLowerCase().startsWith("video")) {
+	    				q.setType("video");
+	    			}
+	    		}
+	    	}
+	
+	    	String eName = n.getNodeName();    	// Set the select, select1 type
+	    	if(eName.equals("select")) {
+	    		q.setType("select");
+	    	} else if(eName.equals("select1")) {
+	    		q.setType("select1");		
+	    	}
+	
+	    	if(eName.equals("trigger")) {		// Set the trigger type
+	    		q.setType("acknowledge");
+	    	}
+	
+	    	if(q.getSource() == null) {    	// Set the source (where the source is null then no results will be stored for this question)
+	    		if(!eName.equals("group")) {	// groups do not record any data therefore no source
+	    			q.setSource("user");		
+	    		}
+	    	}
+	
+	    	// Set the appearance
+	    	String appearance = null;
+	    	if(q.getType().equals("begin group") && isRepeat(n)) {
+	    		appearance = getRepeatAppearance(n);
+	    		if(appearance != null) {
+	    			q.setAppearance(appearance);
+	    		}
+	    	} else {
+	    		Node appNode = nm.getNamedItem("appearance");	
+	
+	    		if(appNode != null) {
+	    			appearance = appNode.getNodeValue();
+	    			q.setAppearance(appearance);
+	    			// Survey level manifests can be set in the appearance attribute
+	    			template.addManifestFromAppearance(appearance);	
+	    		}
+	    	}
+	
+	    	// Set the autoplay
+	    	Node autoplayNode = nm.getNamedItem("autoplay");	
+	    	String autoplay = null;
+	    	if(autoplayNode != null) {
+	    		autoplay = autoplayNode.getNodeValue();
+	    		q.setAutoPlay(autoplay);
+	    	}
+	
+	    	// Set the gps threshold
+	    	Node gpsThresholdNode = nm.getNamedItem("accuracyThreshold");	
+	    	String accuracy = null;
+	    	if(gpsThresholdNode != null) {
+	    		accuracy = gpsThresholdNode.getNodeValue();
+	    		q.setAccuracy(accuracy);
+	    	}
+	
+	    	if(eName.equals("group")) {
+	    		setGroupLabel(questionRef, n);	// Get the label for this group
+	
+	    		if(isRepeat(n))	{ 	// repeating group
+	    			q.setType("begin repeat");
+	    			processBody(n, formRef, q);
+	    			// Delete the question that marks the end of this repeating group, we don't need it
+	    			template.removeQuestion(q.getPath() + "_groupEnd");
+	    		} else {									// Non repeating group
+	    			q.setType("begin group");
+	    			processBody(n, formRef, q);	// Continue with all the question in this group
+	    		}
+	    	} else {
+	
+	    		// Process the question element's children
+	    		NodeList eList = n.getChildNodes();
+	
+	    		template.setNextOptionSeq(1);	// Reset the option sequence number
+	    		if (eList != null) {
+	    			for(int i = 0; i < eList.getLength(); i++) {
+	    				processBodyQuestionChild(questionRef, eList.item(i), true, false, formRef, null);
+	    			}
+	    		}
+	    	}
+	
+	    	return formRef;
     }    
     
     /*
@@ -1020,6 +1023,9 @@ private String getRepeatAppearance(Node n) {
 	    			
 	    		} else if (name.equals("jr:requiredMsg")) {
 	   				q.setRequiredMsg(attribute.getNodeValue());   			
+	    			
+	    		} else if (name.equals("orx:max-pixels")) {
+	   				q.addParameter(attribute.getNodeValue());   			
 	    			
 	    		} else if (name.equals("calculate")) {
 	    			

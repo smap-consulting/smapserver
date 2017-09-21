@@ -712,7 +712,7 @@ public class SurveyTemplate {
 				String existingQuestion = questionMap.get(qName.trim().toLowerCase());
 				if(existingQuestion != null) {
 					badNames.add(qName + " in forms(" + fName + "," + existingQuestion + ")");
-					System.out.println("Duplicate Question:" + qName + " in form:" + fName);
+					log.info("Duplicate Question:" + qName + " in form:" + fName);
 				} else {
 					questionMap.put(qName.trim().toLowerCase(), fName);
 				}
@@ -766,7 +766,7 @@ public class SurveyTemplate {
 				if(existingOption != null) {
 					String dupMsg = "Duplicate values:" + oName + " in choices list for question:" + q.getName();
 					badNames.add(dupMsg);
-					System.out.println(dupMsg);
+					log.info(dupMsg);
 				} else {
 					optionsInQuestion.put(checkOption, oName);
 				}
@@ -837,7 +837,6 @@ public class SurveyTemplate {
 			Iterator itr = null;
 	
 			if(forms.values().size() == 0) {
-				System.out.println("No forms in this survey");
 				throw new Exception("No forms in this survey");
 			}
 			sm = new JdbcSurveyManager(sd);
@@ -964,19 +963,16 @@ public class SurveyTemplate {
 			 * Set the sequence number of any questions that have the default sequence "-1" but
 			 * need to be placed within a non repeat group
 			 */
-			System.out.println("===================================");
 			for (Question q : questionList) {
 				if(q.getSeq() == -1) {
 					String ref = q.getPath();
 					//String ref = questionPaths.get(q.getName());
 					String group = UtilityMethods.getGroupFromPath(ref);
-					System.out.println("qref: " + ref + " : " + group);
 					if(group != null) {
 						for(Question q2 : questionList) {
 							
 							//String q2Path = questionPaths.get(q2.getName());
 							String q2Path = q2.getPath();
-							System.out.println("           " + q2.getName() + " : " + q2Path + " : " + q2.getSeq());
 							if(q2Path != null) {
 								if(q2Path.endsWith(group)) {
 									q.setSeq(q2.getSeq() + 1);
@@ -1042,7 +1038,6 @@ public class SurveyTemplate {
 			 * Forms 2. Update the form record with parent form and question keys
 			 */
 			for(Form f : formList) {
-				System.out.println("###: " + f.getName() + " : " + f.getId());
 				if (f.getParentFormRef() != null) {
 					f.setParentForm(forms.get(f.getParentFormRef()).getId());
 					f.setParentQuestionId(questions.get(f.getParentQuestionRef()).getId());
@@ -1189,7 +1184,7 @@ public class SurveyTemplate {
 			if(survey != null) {
 				readDatabase(survey, sd, embedExternalSearch);	// Get the rest of the survey
 			} else {
-				System.out.println("Error: Survey Template not found: " + surveyId);
+				log.info("Error: Survey Template not found: " + surveyId);
 				throw new MissingTemplateException("Error: Survey Template not found: " + surveyId);
 			}
 		} finally {
@@ -1220,7 +1215,7 @@ public class SurveyTemplate {
 			if(survey != null) {
 				readDatabase(survey, sd, embedExternalSearch);	// Get the rest of the survey
 			} else {
-				System.out.println("Error: Survey Template not found: " + surveyId);
+				log.info("Error: Survey Template not found: " + surveyId);
 				throw new MissingTemplateException("Error: Survey Template not found: " + surveyId);
 			}
 			
@@ -1293,7 +1288,7 @@ public class SurveyTemplate {
 				if(f != null) {
 					formRef = getFormById(f_id).getPath(formList);
 				} else {
-					System.out.println("Form not found for f_id = " + f_id);
+					log.info("Form not found for f_id = " + f_id);
 				}
 				
 				q.setFormRef(formRef);

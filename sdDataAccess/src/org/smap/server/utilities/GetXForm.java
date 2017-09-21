@@ -667,7 +667,7 @@ public class GetXForm {
 					populateForm(sd, outputDoc, repeatElement, BODY, subForm);
 
 				} else { // Add question to output
-					if (q.isVisible()) {
+					if (q.isVisible() || qType.equals("begin group")) {
 
 						questionElement = populateBodyQuestion(sd, outputDoc, f, q, f.getPath(null), useNodesets);
 						currentParent.appendChild(questionElement);
@@ -796,6 +796,21 @@ public class GetXForm {
 			String constraintMsg = q.getConstraintMsg();
 			if (constraintMsg != null && constraintMsg.trim().length() > 0) {
 				questionElement.setAttribute("jr:constraintMsg", constraintMsg);
+			}
+			
+			// Add parameters
+			String parameters = q.getParameters();
+			if (parameters != null && parameters.trim().length() > 0) {
+				String[] pArray = parameters.split(" ");
+				for(int i = 0; i < pArray.length; i++) {
+					String[] px = pArray[i].split("=");
+					if(px.length == 2) {
+						if(px[0].equals("max-pixels")) {
+							questionElement.setAttribute("orx:max-pixels", px[1]);
+						}
+					}
+					
+				}
 			}
 		}
 
