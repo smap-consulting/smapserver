@@ -343,76 +343,87 @@ define(['jquery', 'bootstrap', 'mapbox_app', 'common', 'localise',
                     filterObj = {},
                     filterqId,
                     filteroId,
-                    source_survey;
+                    source_survey,
+                    taskGroup;
 
-                if (validDates()) {
-
-                    updateTaskParams();
-
-                    assignObj["task_group_name"] = $('#task_group_name').val();	// The Name of the task group
-                    assignObj["project_name"] = $('#project_select option:selected').text();	// The name of the project that this survey is in
-
-                    if ($('#add_from_survey').is(':checked')) {
-
-                        assignObj["survey_name"] = $('#survey_to_complete option:selected').text();	// The display name of the survey to complete
-                        assignObj["target_survey_id"] = $('#survey_to_complete option:selected').val(); 		// The form id is the survey id of the survey used to complete the task!
-                        assignObj["user_id"] = $('#users_task_group option:selected').val(); 		// User assigned to complete the task
-
-                        source_survey = $('#survey').val(); 						// The survey that provides the existing results
-                        if (!source_survey) {
-                            source_survey = -1;
-                        }
-                        assignObj["source_survey_id"] = source_survey;
-                        assignObj["address_columns"] = removeUnselected(gTaskParams);
-                        assignObj["source_survey_name"] = $('#survey option:selected').text();		// The display name of the survey that will provide the source locations and initial data
-                        assignObj["update_results"] = $('#update_results').is(':checked'); 			// Set to true if the survey is to be updated
-
-                        // Add filter if filter checkbox has been checked
-                        if ($('#filter_results_check').is(':checked')) {
-
-                            filterObj["qType"] = gFilterqType;
-                            filterObj["qId"] = $('#filter_question option:selected').val();
-                            filterObj["oValue"] = $('#filter_option option:selected').val();
-                            filterObj["qText"] = $('#filter_text').val();
-                            filterObj["qStartDate"] = getUtcDate($('#startDate'), true, false);		// Get start of day
-                            filterObj["qEndDate"] = getUtcDate($('#endDate'), false, true);			// Get end of day
-                            if (gFilterqType === "int") {
-                                filterObj["qInteger"] = $('#filter_integer').val();
-                            }
-                            filterObj["lang"] = $('#filter_language option:selected').val();
-                            assignObj["filter"] = filterObj;
-
-                        }
-                    }
-
-                    assignString = JSON.stringify(assignObj);
-                    globals.gCurrentUserId = undefined;
-                    globals.gCurrentUserName = undefined;
-
-                    addHourglass();
-                    $.ajax({
-                        type: "POST",
-                        url: "/surveyKPI/assignments/addSurvey/" + globals.gCurrentProject,
-                        cache: false,
-                        data: {settings: assignString},
-                        dataType: 'json',
-                        success: function (data, status) {
-                            removeHourglass();
-                            $('#addTask').modal("hide");
-                            globals.gCurrentTaskGroup = data.tg_id;
-                            refreshTaskGroupData();
-                            refreshAssignmentData();
-                        }, error: function (data, status) {
-                            removeHourglass();
-                            if (data.responseText.indexOf("<html>") !== 0) {
-                                alert(localise.set["c_error"] + " : " + data.responseText);
-                            } else {
-                                alert(localise.set["msg_err_upd"]);
-                            }
-
-                        }
-                    });
+                // validation
+                if (!validDates()) {
+                    return;
                 }
+
+                taskGroup = $('#task_group_name').val();
+                if (!taskGroup || taskGroup.trim() === "") {
+                    alert(localise.set["msg_val_nm"]);
+                    return;
+                }
+
+
+                updateTaskParams();
+
+                assignObj["task_group_name"] = $('#task_group_name').val();	// The Name of the task group
+                assignObj["project_name"] = $('#project_select option:selected').text();	// The name of the project that this survey is in
+
+                if ($('#add_from_survey').is(':checked')) {
+
+                    assignObj["survey_name"] = $('#survey_to_complete option:selected').text();	// The display name of the survey to complete
+                    assignObj["target_survey_id"] = $('#survey_to_complete option:selected').val(); 		// The form id is the survey id of the survey used to complete the task!
+                    assignObj["user_id"] = $('#users_task_group option:selected').val(); 		// User assigned to complete the task
+
+                    source_survey = $('#survey').val(); 						// The survey that provides the existing results
+                    if (!source_survey) {
+                        source_survey = -1;
+                    }
+                    assignObj["source_survey_id"] = source_survey;
+                    assignObj["address_columns"] = removeUnselected(gTaskParams);
+                    assignObj["source_survey_name"] = $('#survey option:selected').text();		// The display name of the survey that will provide the source locations and initial data
+                    assignObj["update_results"] = $('#update_results').is(':checked'); 			// Set to true if the survey is to be updated
+
+                    // Add filter if filter checkbox has been checked
+                    if ($('#filter_results_check').is(':checked')) {
+
+                        filterObj["qType"] = gFilterqType;
+                        filterObj["qId"] = $('#filter_question option:selected').val();
+                        filterObj["oValue"] = $('#filter_option option:selected').val();
+                        filterObj["qText"] = $('#filter_text').val();
+                        filterObj["qStartDate"] = getUtcDate($('#startDate'), true, false);		// Get start of day
+                        filterObj["qEndDate"] = getUtcDate($('#endDate'), false, true);			// Get end of day
+                        if (gFilterqType === "int") {
+                            filterObj["qInteger"] = $('#filter_integer').val();
+                        }
+                        filterObj["lang"] = $('#filter_language option:selected').val();
+                        assignObj["filter"] = filterObj;
+
+                    }
+                }
+
+                assignString = JSON.stringify(assignObj);
+                globals.gCurrentUserId = undefined;
+                globals.gCurrentUserName = undefined;
+
+                addHourglass();
+                $.ajax({
+                    type: "POST",
+                    url: "/surveyKPI/assignments/addSurvey/" + globals.gCurrentProject,
+                    cache: false,
+                    data: {settings: assignString},
+                    dataType: 'json',
+                    success: function (data, status) {
+                        removeHourglass();
+                        $('#addTask').modal("hide");
+                        globals.gCurrentTaskGroup = data.tg_id;
+                        refreshTaskGroupData();
+                        refreshAssignmentData();
+                    }, error: function (data, status) {
+                        removeHourglass();
+                        if (data.responseText.indexOf("<html>") !== 0) {
+                            alert(localise.set["c_error"] + " : " + data.responseText);
+                        } else {
+                            alert(localise.set["msg_err_upd"]);
+                        }
+
+                    }
+                });
+
 
             });
 
