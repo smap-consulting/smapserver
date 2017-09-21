@@ -2298,7 +2298,8 @@ function updateLabel(type, formIndex, itemIndex, optionList, element, newVal, qn
         	&& prop !== "type"
 			&& prop !== "linked_survey"
 			&& prop !== "display_name"
-			&& prop !== "appearance") {	// Whatever the property for a calculation type the label field contains the calculation expression
+			&& prop !== "appearance"
+        	&& prop !== "parameters") {	// Whatever the property for a calculation type the label field contains the calculation expression
 		changeType = "property";
 		prop = "calculation";
 	} else {

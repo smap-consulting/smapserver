@@ -147,8 +147,8 @@ public class QuestionManager {
 				+ "calculate, "
 				+ "defaultanswer, "
 				+ "appearance, "
+				+ "parameters, "
 				+ "visible, "
-				+ "path, "
 				+ "readonly, "
 				+ "relevant, "
 				+ "qconstraint, "
@@ -277,8 +277,8 @@ public class QuestionManager {
 				}
 				pstmtInsertQuestion.setString(11, q.defaultanswer );
 				pstmtInsertQuestion.setString(12, q.appearance);
-				pstmtInsertQuestion.setBoolean(13, q.visible);
-				pstmtInsertQuestion.setString(14, "");	// path is no longer used
+				pstmtInsertQuestion.setString(13, q.parameters);
+				pstmtInsertQuestion.setBoolean(14, q.visible);
 				pstmtInsertQuestion.setBoolean(15, readonly);
 				pstmtInsertQuestion.setString(16, q.relevant);
 				pstmtInsertQuestion.setString(17, q.constraint);
@@ -1547,8 +1547,8 @@ public class QuestionManager {
 				 + "constraint_msg,"
 				 + "required_msg,"
 				 + "appearance,"
+				 + "parameters,"
 				 + "enabled,"
-				 + "path,"
 				 + "nodeset,"
 				 + "nodeset_value,"
 				 + "nodeset_label,"
@@ -1582,8 +1582,8 @@ public class QuestionManager {
 				 + "constraint_msg, "
 				 + "required_msg, "
 				 + "appearance, "
+				 + "parameters, "
 				 + "enabled, "
-				 + "path, "
 				 + "nodeset, "
 				 + "nodeset_value, "
 				 + "nodeset_label, "

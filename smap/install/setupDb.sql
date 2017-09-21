@@ -505,6 +505,7 @@ CREATE TABLE question (
 	constraint_msg text,
 	required_msg text,
 	appearance text,
+	parameters text,
 	enabled BOOLEAN default true,
 	path text,
 	nodeset text,						-- the xpath to an itemset containing choices, includes filter defn

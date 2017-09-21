@@ -65,7 +65,7 @@ public class JdbcQuestionManager {
 			+ "constraint_msg,"
 			+ "required_msg,"
 			+ "appearance,"
-			+ "path,"
+			+ "parameters,"
 			+ "nodeset,"
 			+ "nodeset_value,"
 			+ "nodeset_label,"
@@ -74,7 +74,7 @@ public class JdbcQuestionManager {
 			+ "l_id,"
 			+ "autoplay,"
 			+ "accuracy) "
-			+ "values (nextval('q_seq'), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?"
+			+ "values (nextval('q_seq'), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?"
 				+ ", ?, ?, ?, ?, ?, ?, ?, ?, ?, ?"
 				+ ", ?, ?, ?, ?, ?, ?, ?, ?, ?);";
 	
@@ -102,7 +102,7 @@ public class JdbcQuestionManager {
 			+ "constraint_msg,"
 			+ "required_msg,"
 			+ "appearance,"
-			+ "path,"  
+			+ "parameters,"
 			+ "nodeset,"
 			+ "nodeset_value,"
 			+ "nodeset_label,"
@@ -154,7 +154,7 @@ public class JdbcQuestionManager {
 		pstmt.setString(18, q.getConstraintMsg()); // ok
 		pstmt.setString(19, q.getRequiredMsg());
 		pstmt.setString(20, q.getAppearance(false, null));
-		pstmt.setString(21, "");		// path deprecated
+		pstmt.setString(21, q.getParameters());
 		
 		String nodeset = null;
 		String nodeset_value = null;
@@ -258,7 +258,7 @@ public class JdbcQuestionManager {
 			q.setConstraintMsg(rs.getString(19));
 			q.setRequiredMsg(rs.getString(20));
 			q.setAppearance(rs.getString(21));
-			//q.setPath(rs.getString(22));				// Don't get path from database
+			q.setParameters(rs.getString(22));
 			q.setNodeset(rs.getString(23));
 			q.setNodesetValue(rs.getString(24));
 			q.setNodesetLabel(rs.getString(25));

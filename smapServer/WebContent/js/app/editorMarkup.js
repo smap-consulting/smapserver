@@ -639,11 +639,11 @@ define([
 
 		} else {
 			h[++idx] = '<textarea class="labelProp has_tt';
-			if(question.type === 'calculate' && selProperty !== "appearance" && selProperty !== "display_name") {
+			if(question.type === 'calculate' && selProperty !== "appearance" && selProperty !== "parameters" && selProperty !== "display_name") {
 				h[++idx] = ' calculate';
 			}
 			h[++idx] = '" title="';
-			if(question.type === 'calculate' && selProperty !== "appearance" && selProperty !== "display_name") {
+			if(question.type === 'calculate' && selProperty !== "appearance" && selProperty !== "parameters" && selProperty !== "display_name") {
 				h[++idx] = 'Add calculation here';
 			} else {
 				h[++idx] = type === "option" ? "Choice Label" : selLabel;
@@ -654,7 +654,7 @@ define([
 			if(type === "option" && selProperty !== "label") {
 				h[++idx] = ' readonly tabindex="-1"';
 			}
-			if(type === "question" && selProperty !== "appearance" && 
+			if(type === "question" && selProperty !== "appearance" && selProperty !== "parameters" &&
 					((question.source != "user" && 
 					question.type != "begin group" && 
 					question.type != "begin repeat"
@@ -664,7 +664,7 @@ define([
 				h[++idx] = ' not required';
 			} else {
 				h[++idx] = '>';
-				if(question.type === 'calculate' && selProperty !== "appearance" && selProperty !== "display_name") {
+				if(question.type === 'calculate' && selProperty !== "appearance" && selProperty !== "parameters" && selProperty !== "display_name") {
 					h[++idx] = question.calculation;
 				} else {
 					if(selProperty === "label") { 

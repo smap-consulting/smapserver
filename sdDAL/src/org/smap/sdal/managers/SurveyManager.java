@@ -699,6 +699,7 @@ public class SurveyManager {
 				+ "q.seq, " 
 				+ "q.defaultanswer, "
 				+ "q.appearance, "
+				+ "q.parameters, "
 				+ "q.qconstraint, "
 				+ "q.constraint_msg, "
 				+ "q.required_msg, "
@@ -710,7 +711,6 @@ public class SurveyManager {
 				+ "q.published, "
 				+ "q.column_name, "
 				+ "q.source_param, "
-				+ "q.path, "
 				+ "q.soft_deleted, "
 				+ "q.autoplay,"
 				+ "q.accuracy,"
@@ -867,21 +867,20 @@ public class SurveyManager {
 				q.seq = rsGetQuestions.getInt(9);
 				q.defaultanswer = rsGetQuestions.getString(10);
 				q.appearance = GeneralUtilityMethods.convertAllXpathNames(rsGetQuestions.getString(11), true);
-				
-				q.constraint = GeneralUtilityMethods.convertAllXpathNames(rsGetQuestions.getString(12), true);
-				q.constraint_msg = rsGetQuestions.getString(13);
-				q.required_msg = rsGetQuestions.getString(14);
-				q.nodeset = rsGetQuestions.getString(15);	// Used when writing to HTML
+				q.parameters = rsGetQuestions.getString(12);
+				q.constraint = GeneralUtilityMethods.convertAllXpathNames(rsGetQuestions.getString(13), true);
+				q.constraint_msg = rsGetQuestions.getString(14);
+				q.required_msg = rsGetQuestions.getString(15);
+				q.nodeset = rsGetQuestions.getString(16);	// Used when writing to HTML
 				q.choice_filter = GeneralUtilityMethods.getChoiceFilterFromNodeset(q.nodeset, true);
 				
-				q.relevant = GeneralUtilityMethods.convertAllXpathNames(rsGetQuestions.getString(16), true);
-				q.visible = rsGetQuestions.getBoolean(17);
-				q.readonly = rsGetQuestions.getBoolean(18);
-				q.required = rsGetQuestions.getBoolean(19);
-				q.published = rsGetQuestions.getBoolean(20);
-				q.columnName = rsGetQuestions.getString(21);
-				q.source_param = rsGetQuestions.getString(22);
-				//q.path = rsGetQuestions.getString(23);
+				q.relevant = GeneralUtilityMethods.convertAllXpathNames(rsGetQuestions.getString(17), true);
+				q.visible = rsGetQuestions.getBoolean(18);
+				q.readonly = rsGetQuestions.getBoolean(19);
+				q.required = rsGetQuestions.getBoolean(20);
+				q.published = rsGetQuestions.getBoolean(21);
+				q.columnName = rsGetQuestions.getString(22);
+				q.source_param = rsGetQuestions.getString(23);
 				q.soft_deleted = rsGetQuestions.getBoolean(24);
 				q.autoplay = rsGetQuestions.getString(25);
 				q.accuracy = rsGetQuestions.getString(26);
@@ -1881,7 +1880,8 @@ public class SurveyManager {
 					}
 					
 					if(ci.property.prop.equals("relevant") || ci.property.prop.equals("constraint") 
-							|| ci.property.prop.equals("calculation") || ci.property.prop.equals("appearance")) {
+							|| ci.property.prop.equals("calculation") || ci.property.prop.equals("appearance")
+							|| ci.property.prop.equals("parameters")) {
 						if(ci.property.oldVal != null && ci.property.oldVal.contains("null")) {
 							ci.property.oldVal = "_force_update";
 						}
@@ -2127,7 +2127,7 @@ public class SurveyManager {
 						}
 						
 						// if the old question type was a begin group then delete the end group
-						if(ci.property.oldVal.equals("begin group")) {
+						if(ci.property.oldVal != null && ci.property.oldVal.equals("begin group")) {
 							String endGroupName = ci.property.name + "_groupEnd";
 							
 							// Delete the end group
@@ -3109,6 +3109,7 @@ public class SurveyManager {
 				+ "q.seq, " 
 				+ "q.defaultanswer, "
 				+ "q.appearance, "
+				+ "q.parameters, "
 				+ "q.qconstraint, "
 				+ "q.constraint_msg, "
 				+ "q.required_msg, "
@@ -3153,24 +3154,25 @@ public class SurveyManager {
 				q.seq = rsGetQuestions.getInt(8);
 				q.defaultanswer = rsGetQuestions.getString(9);
 				q.appearance = GeneralUtilityMethods.convertAllXpathNames(rsGetQuestions.getString(10), true);
+				q.parameters = rsGetQuestions.getString(11);
 				
-				q.constraint = GeneralUtilityMethods.convertAllXpathNames(rsGetQuestions.getString(11), true);
-				q.constraint_msg = rsGetQuestions.getString(12);
-				q.required_msg = rsGetQuestions.getString(13);
-				q.choice_filter = GeneralUtilityMethods.getChoiceFilterFromNodeset(rsGetQuestions.getString(14), true);
+				q.constraint = GeneralUtilityMethods.convertAllXpathNames(rsGetQuestions.getString(12), true);
+				q.constraint_msg = rsGetQuestions.getString(13);
+				q.required_msg = rsGetQuestions.getString(14);
+				q.choice_filter = GeneralUtilityMethods.getChoiceFilterFromNodeset(rsGetQuestions.getString(15), true);
 				
-				q.relevant = GeneralUtilityMethods.convertAllXpathNames(rsGetQuestions.getString(15), true);
-				q.visible = rsGetQuestions.getBoolean(16);
-				q.readonly = rsGetQuestions.getBoolean(17);
-				q.required = rsGetQuestions.getBoolean(18);
-				q.published = rsGetQuestions.getBoolean(19);
-				q.columnName = rsGetQuestions.getString(20);
-				q.source_param = rsGetQuestions.getString(21);
-				q.soft_deleted = rsGetQuestions.getBoolean(22);
-				q.autoplay = rsGetQuestions.getString(23);
-				q.accuracy = rsGetQuestions.getString(24);
-				q.linked_survey = rsGetQuestions.getInt(25);
-				q.l_id = rsGetQuestions.getInt(26);
+				q.relevant = GeneralUtilityMethods.convertAllXpathNames(rsGetQuestions.getString(16), true);
+				q.visible = rsGetQuestions.getBoolean(17);
+				q.readonly = rsGetQuestions.getBoolean(18);
+				q.required = rsGetQuestions.getBoolean(19);
+				q.published = rsGetQuestions.getBoolean(20);
+				q.columnName = rsGetQuestions.getString(21);
+				q.source_param = rsGetQuestions.getString(22);
+				q.soft_deleted = rsGetQuestions.getBoolean(23);
+				q.autoplay = rsGetQuestions.getString(24);
+				q.accuracy = rsGetQuestions.getString(25);
+				q.linked_survey = rsGetQuestions.getInt(26);
+				q.l_id = rsGetQuestions.getInt(27);
 				if(q.autoplay == null) {
 					q.autoplay = "none";
 				}

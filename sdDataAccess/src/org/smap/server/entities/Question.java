@@ -97,6 +97,8 @@ public class Question {
 	
 	private String appearance;
 	
+	private String parameters;
+	
 	private String path = null;	// Xpath to this question (use only when loading from xform)
 	
 	private String relativePath;	// Path within the form
@@ -300,6 +302,10 @@ public class Question {
 		}
 		
 		return v;
+	}
+	
+	public String getParameters() {
+		return parameters;
 	}
 	
 	public boolean getEnabled() {		// deprecate
@@ -510,6 +516,10 @@ public class Question {
 	
 	public void setAppearance(String v) {
 		appearance = v;
+	}
+	
+	public void setParameters(String v) {
+		parameters = v;
 	}
 
 	public void setFormRef(String formRef) {

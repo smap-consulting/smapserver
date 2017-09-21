@@ -516,6 +516,7 @@ define({
     "ed_qh": "Question Hint",
     "ed_cl": "Choice List",
     "ed_appearance": "Appearance",
+    "ed_parameters": "Parameters",
     "ed_con": "Constraint",
     "ed_con_msg": "Constraint Message",
     "ed_rel": "Relevant",
