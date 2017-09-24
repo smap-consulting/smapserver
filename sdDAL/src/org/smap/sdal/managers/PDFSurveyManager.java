@@ -767,7 +767,7 @@ public class PDFSurveyManager {
 				Form form = survey.forms.get(r.fIdx);
 				org.smap.sdal.model.Question question = form.questions.get(r.qIdx);
 
-				if(includeResult(r, question, appendix, gv)) {
+				if(includeResult(r, question, appendix, gv, generateBlank)) {
 					if(question.type.equals("begin group")) {
 						if(question.isNewPage()) {
 							document.newPage();
@@ -775,7 +775,7 @@ public class PDFSurveyManager {
 					} else if(question.type.equals("end group")) {
 						//ignore
 					} else {
-						Row row = prepareRow(record, survey, j, languageIdx, gv, length, appendix, parentRecords);
+						Row row = prepareRow(record, survey, j, languageIdx, gv, length, appendix, parentRecords, generateBlank);
 						PdfPTable newTable = processRow(
 								sd, 
 								parser, 
@@ -818,13 +818,16 @@ public class PDFSurveyManager {
 	 */
 	private boolean includeResult(Result r, org.smap.sdal.model.Question question, 
 			boolean appendix,
-			GlobalVariables gv) {
+			GlobalVariables gv,
+			boolean generateBlank) {
 
 		boolean include = true;
 		boolean inMeta = question.inMeta;
 
 		// Don't include the question if it has been marked as not to be included
-		if(question.appearance != null) {
+		if(!generateBlank && isSkipped(question, r)) {
+			include = false;
+		} else if(question.appearance != null) {
 			if(question.appearance.contains("pdfno")) {
 				include = false;
 			} else {
@@ -869,7 +872,7 @@ public class PDFSurveyManager {
 	/*
 	 * Add the table row to the document
 	 */
-	PdfPTable processRow(
+	private PdfPTable processRow(
 			Connection sd, 
 			Parser parser, 
 			Row row, 
@@ -918,6 +921,18 @@ public class PDFSurveyManager {
 		}
 		return table;
 	}
+	
+	/*
+	 * Return true if an answer has not been supplied to a question
+	 */
+	private boolean isSkipped(org.smap.sdal.model.Question q, Result r) {
+		boolean skipped = false;
+		
+		if(!q.type.equals("note")) {
+			skipped = (r.value == null || r.value.trim().length() == 0);
+		}
+		return skipped;
+	}
 
 	/*
 	 * Add a row of questions
@@ -935,7 +950,8 @@ public class PDFSurveyManager {
 			GlobalVariables gv,
 			int recNumber,
 			boolean appendix,
-			ArrayList<ArrayList<Result>> parentRecords) {
+			ArrayList<ArrayList<Result>> parentRecords,
+			boolean generateBlank) {
 
 		Row row = new Row();
 		row.groupWidth = gv.cols.length;
@@ -972,7 +988,7 @@ public class PDFSurveyManager {
 
 
 				if(updateCols == null || isNewPage) {
-					if(includeResult(r, question, appendix, gv)) {
+					if(includeResult(r, question, appendix, gv, generateBlank)) {
 						includeQuestion(row.items, 
 								gv, 
 								i, 

@@ -48,7 +48,8 @@
 	footable: '../../../../smapServer/WebContent/js/libs/wb/plugins/footable/footable.all.min',
 	peity: '../../../../smapServer/WebContent/js/libs/wb/plugins/peity/jquery.peity.min',
 	icheck: '../../../../smapServer/WebContent/js/libs/wb/plugins/iCheck/icheck.min',
-	calendar: '../../../../smapServer/WebContent/js/libs/wb/plugins/fullcalendar/fullcalendar.min'
+	calendar: '../../../../smapServer/WebContent/js/libs/wb/plugins/fullcalendar/fullcalendar.min',
+	es: '../../../../smapServer/WebContent/js/libs/wb/plugins/fullcalendar/es'
     },
     dir: '../tasks',
     modules: [

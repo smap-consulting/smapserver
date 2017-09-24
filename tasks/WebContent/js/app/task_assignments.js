@@ -615,6 +615,7 @@ define(['jquery', 'bootstrap', 'mapbox_app', 'common', 'localise',
                         gCalendarInitialised = true;
                         setTimeout(function () {
                             initialiseCalendar();
+                            $('#calendar').fullCalendar('option', 'locale', gUserLocale);
                         }, 500);
                     } else {
                         $('#calendar').fullCalendar('render');
@@ -1534,7 +1535,7 @@ define(['jquery', 'bootstrap', 'mapbox_app', 'common', 'localise',
                     console.log('Coordinates: ' + jsEvent.pageX + ',' + jsEvent.pageY);
                     console.log('Current view: ' + view.name);
 
-                    // change the day's background color just for fun
+                    // change the day's background color
                     //$(this).css('background-color', 'red');
                     $('#calendar').fullCalendar('gotoDate', date);
                     $('#calendar').fullCalendar('changeView', 'agendaDay');

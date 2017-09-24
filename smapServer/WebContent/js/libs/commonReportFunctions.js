@@ -81,9 +81,6 @@ function getDisplayDescription(fn, reportType, survey, question, group, option, 
 	// Add filter
 	if(filter) {
 		var filterObj = JSON.parse(filter);
-		console.log("Filter desc");
-		console.log(filterObj);
-		console.log(filter);
 		txt[++idx] = " <b>Where ";
 		txt[++idx] = filterObj.qName;
 		txt[++idx] = " equals ";

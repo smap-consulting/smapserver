@@ -55,6 +55,7 @@ requirejs.config({
     	peity: '../../../../js/libs/wb/peity/jquery.peity.min',
     	icheck: '../../../../js/libs/wb/plugins/iCheck/icheck.min',
     	calendar: '../../../../js/libs/wb/plugins/fullcalendar/fullcalendar.min',
+        es: '../../../../js/libs/wb/plugins/fullcalendar/es',
     	jquery_ui: '../../../../js/libs/wb/jquery-ui.custom.min'
     },
     shim: {
@@ -79,7 +80,8 @@ requirejs.config({
     	'peity': ['jquery'],
     	'icheck': ['jquery'],
     	'calendar': ['jquery_ui'],
-    	'jquery_ui': ['jquery']
+    	'jquery_ui': ['jquery'],
+        'es': ['calendar']
 	
     	}
     });
