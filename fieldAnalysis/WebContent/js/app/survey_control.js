@@ -790,7 +790,7 @@ function getFilterValues(sId, qId, value, qType, language) {
 function getTextValues(sId, qId, value) {
 	addHourglass();
 	$.ajax({
-		url: "/surveyKPI/review/" + sId+ "/results/distinct/" + qId,
+		url: "/surveyKPI/review/" + sId+ "/results/distinct/" + qId + "?sort=asc",
 		dataType: 'json',
 		cache: false,
 		success: function(data) {
@@ -855,24 +855,26 @@ function updateFilterOptions(data, value, isSelect) {
 		h = [],
 		idx = -1;
 	$elem.empty();
-	
-	console.log("Update Filter Options: " + isSelect);
-			
-	for(i = 0; i < data.length; i++) {
-		h[++idx] = '<option value="';
-		if(isSelect) {
-			h[++idx] = data[i].value; 
-		} else {
+
+	if(isSelect) {
+		var sortedList = data.slice();
+		sortedList.sort(function(a, b) {return a.label.toLocaleLowerCase() > b.label.toLocaleLowerCase()});
+        for (i = 0; i < sortedList.length; i++) {
+            h[++idx] = '<option value="';
+			h[++idx] = sortedList[i].value;
+            h[++idx] = '">';
+			h[++idx] = sortedList[i].label;
+            h[++idx] = '</option>';
+        }
+	} else {
+        for (i = 0; i < data.length; i++) {
+            h[++idx] = '<option value="';
 			h[++idx] = data[i].text;
-		}
-		h[++idx] = '">';
-		if(isSelect) {
-			h[++idx] = data[i].label; 
-		} else {
+            h[++idx] = '">';
 			h[++idx] = data[i].text;
-		}
-		h[++idx] = '</option>';
-	}
+            h[++idx] = '</option>';
+        }
+    }
 			
 	$elem.append(h.join(''));
 			

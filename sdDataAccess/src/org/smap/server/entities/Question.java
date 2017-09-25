@@ -64,6 +64,8 @@ public class Question {
 	private String column_name;
 
 	private String qType = "string";
+	
+	private String dataType;
 
 	private String question;
 
@@ -177,6 +179,10 @@ public class Question {
 
 	public String getType() {
 		return qType;
+	}
+	
+	public String getDataType() {
+		return dataType;
 	}
 
 	public String getSubType() {
@@ -305,7 +311,7 @@ public class Question {
 	}
 	
 	public String getParameters() {
-		return parameters;
+		return cleanParams(parameters);
 	}
 	
 	public boolean getEnabled() {		// deprecate
@@ -442,8 +448,22 @@ public class Question {
 		column_name = v;
 	}
 
-	public void setType(String type) {
-		qType = type;
+	public void setType(String v) {
+		qType = v;
+	}
+	
+	public void setDataType(String v) {
+		if(v != null) {
+			if(v.equals("int") || v.equals("integer")) {
+				dataType = "int";
+			} else if(v.equals("decimal")) {
+				dataType = v;
+			}
+			dataType = v;
+		} else {
+			v = null;
+		}
+
 	}
 
 	public void setQuestion(String question) {
@@ -641,19 +661,19 @@ public class Question {
 			String[] px = v.trim().split("=");
 			if(px.length == 2) {
 				if(parameters == null) {
-					parameters = v.trim();
+					parameters = px[0].trim() + "=" + px[1].trim();
 				} else {
 					String[] params = parameters.split(" ");
 					boolean replaced = false;
-					for(int j = 0; j  < parameters.length(); j++) {
+					for(int j = 0; j  < params.length; j++) {
 						if(params[j].trim().startsWith(px[0].trim() + "=")) {
-							params[j] = v;
+							params[j] = px[0].trim() + "=" + px[1].trim();
 							replaced = true;
 							break;
 						}
 					}
 					if(!replaced) {
-						parameters += " " + v;
+						parameters += " " + px[0].trim() + "=" + px[1].trim();
 					} else {
 						parameters = "";
 						for(int i = 0; i < params.length; i++) {
@@ -760,6 +780,43 @@ public class Question {
 	    		}
 	    	}
 	    	return in;
+	    }
+	    
+	    /*
+	     * Remove inconvenient spaces form parameters
+	     */
+	    private String cleanParams(String in) {
+	    	StringBuffer out = new StringBuffer("");
+	    	
+	    	if(in != null) {
+	    		boolean validLocn = false;
+	    		boolean foundEquals = false;
+	    		for(int i = 0; i < in.length(); i++) {
+	    			
+	    			if(in.charAt(i) != ' ') {
+	    				out.append(in.charAt(i));
+	    			}
+	    			
+	    			// Determine if the location is valid for a space
+	    			// a. After an equals has been found and after some text
+	    			if(in.charAt(i) == '=') {
+	    				foundEquals = true;
+	    			}
+	    			if(foundEquals && in.charAt(i) != '=' && in.charAt(i) != ' ') {
+	    				validLocn = true;
+	    				foundEquals = false;
+	    			}
+	    			
+	    			// only add a space when the location is valid for a space
+	    			if(in.charAt(i) == ' ' && validLocn) {
+	    				out.append(' ');
+	    				validLocn = false;
+	    			}
+	    			
+	    		}
+	    	}
+	    	
+	    	return out.toString();
 	    }
 	 
 }

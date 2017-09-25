@@ -92,26 +92,26 @@ public class PutXForm {
      * Process a cascading select instance
      */
     private void processCascadingSelect(Node n) {
-    	
-    	String instanceId = null;
-    	
-    	// Get the instance identifier
-    	NamedNodeMap nmL = n.getAttributes();
-    	if(nmL != null) {
-    		Node id = nmL.getNamedItem("id");
-    		if(id != null) {
-    			 instanceId = id.getNodeValue();
-    		}
-    	}
-    	
-    	
-    	if(instanceId != null) {
-    		Node topInstance = UtilityMethods.getFirstElement(n);	
-    		// According to XForms spec "Instance data always has a single root element", however instances can be specified for files in odk without a root element
-    		if(topInstance != null) {
-    			processCascadingItems(topInstance, instanceId);
-    		}
-    	}
+
+	    	String instanceId = null;
+	
+	    	// Get the instance identifier
+	    	NamedNodeMap nmL = n.getAttributes();
+	    	if(nmL != null) {
+	    		Node id = nmL.getNamedItem("id");
+	    		if(id != null) {
+	    			instanceId = id.getNodeValue();
+	    		}
+	    	}
+	
+	
+	    	if(instanceId != null) {
+	    		Node topInstance = UtilityMethods.getFirstElement(n);	
+	    		// According to XForms spec "Instance data always has a single root element", however instances can be specified for files in odk without a root element
+	    		if(topInstance != null) {
+	    			processCascadingItems(topInstance, instanceId);
+	    		}
+	    	}
     }
     
     /*
@@ -343,7 +343,7 @@ public class PutXForm {
 						processBody(eList.item(i), newFormRef, lastGroupQuestion);
 						
 					} else if(eName.equals("input") || eName.equals("select") || eName.equals("select1")
-							|| eName.equals("trigger") || eName.equals("upload")) {
+							|| eName.equals("trigger") || eName.equals("upload") || eName.equals("range")) {
 						
 						String newFormRef = processBodyQuestion(eList.item(i), formRef);
 						if(formRef == null) {
@@ -558,15 +558,16 @@ public class PutXForm {
 	    		}
 	    	}
 	
+	    	// Set the type
 	    	String eName = n.getNodeName();    	// Set the select, select1 type
 	    	if(eName.equals("select")) {
 	    		q.setType("select");
 	    	} else if(eName.equals("select1")) {
 	    		q.setType("select1");		
-	    	}
-	
-	    	if(eName.equals("trigger")) {		// Set the trigger type
+	    	} else if(eName.equals("trigger")) {		// Set the trigger type
 	    		q.setType("acknowledge");
+	    	} else if(eName.equals("range")) {	
+	    		q.setType("range");
 	    	}
 	
 	    	if(q.getSource() == null) {    	// Set the source (where the source is null then no results will be stored for this question)
@@ -592,6 +593,12 @@ public class PutXForm {
 	    			template.addManifestFromAppearance(appearance);	
 	    		}
 	    	}
+	    	
+	    	// Set parameters
+	    q.addParameter(getParam("max-pixels", nm));
+	    q.addParameter(getParam("start", nm));
+	    q.addParameter(getParam("end", nm));
+	    q.addParameter(getParam("step", nm));
 	
 	    	// Set the autoplay
 	    	Node autoplayNode = nm.getNamedItem("autoplay");	
@@ -644,10 +651,10 @@ public class PutXForm {
      * @returns reference to top level form
      */
     String createTopLevelForm(String path) {
-    	String formRef = null;
-    	String smapFormName = "main";	// Always use main as the top level form name
-    	
-    	String topFormRef = template.getFirstFormRef();
+	    	String formRef = null;
+	    	String smapFormName = "main";	// Always use main as the top level form name
+	    	
+	    	String topFormRef = template.getFirstFormRef();
 		if(topFormRef == null) {
 			//String parentFormName = UtilityMethods.getFirstFromPath(path);
 			//if(parentFormName == null) {
@@ -886,31 +893,40 @@ public class PutXForm {
     	
     }
     
-private String getRepeatAppearance(Node n) { 	 
+    private String getRepeatAppearance(Node n) { 	 
     	
-    	// Get the group to be checked
-    	//Question q = template.getQuestion(questionRef);   
-    	
-		NodeList eList = n.getChildNodes();
-    	    
-    	if (eList != null) {
+	    	// Get the group to be checked
+	    	//Question q = template.getQuestion(questionRef);   
+	    	
+			NodeList eList = n.getChildNodes();
+	    	    
+	    	if (eList != null) {
 			for(int i = 0; i < eList.getLength(); i++) {
-		    	if(eList.item(i).getNodeName().equals("repeat")) {
-		    		
-		    		Node nrep = eList.item(i);
-		    		NamedNodeMap nm = nrep.getAttributes();
-		    		Node appNode = nm.getNamedItem("appearance");	
-					
-					if(appNode != null) {
-						String appearance = appNode.getNodeValue();
-						return appearance;
-					}
-		    	} 
+			    	if(eList.item(i).getNodeName().equals("repeat")) {
+			    		
+			    		Node nrep = eList.item(i);
+			    		NamedNodeMap nm = nrep.getAttributes();
+			    		Node appNode = nm.getNamedItem("appearance");	
+						
+						if(appNode != null) {
+							String appearance = appNode.getNodeValue();
+							return appearance;
+						}
+			    	} 
 			}
-    	}
-    	
-    	return null;
-    	
+	    	}
+	    	
+	    	return null;
+    }
+    
+    // Get parameter as a String
+    private String getParam(String p, NamedNodeMap nm) {
+    		Node paramNode = nm.getNamedItem(p);
+    		if(paramNode != null) {
+    			return p + "=" + paramNode.getNodeValue();
+    		} else {
+    			return null;
+    		}
     }
     
     /*
@@ -996,12 +1012,20 @@ private String getRepeatAppearance(Node n) {
 	    			
 	    		} else if (name.equals("type")) {
 	    			String type = attribute.getNodeValue();
+	    			
+	    			// Remove namespaces
+	    			if(type.indexOf(":") >= 0) {
+	    				type = type.substring(type.indexOf(":") + 1);
+	    			}
 	    			if(type.equals("integer")) {	// standardise on int
 	    				type = "int";
 	    			}
 	    			if(!type.equals("binary")) {	// binary types set to audio, image or video by the question
 	    				q.setType(type);  
+	    				q.setDataType(type);
 	    			}
+	    			
+	    			
 	    			if(type.equals("geopoint") || type.equals("geoshape") || type.equals("geotrace")) {	// Geo point data types will be named "the_geom"
 	    				q.setName("the_geom");
 	    			}

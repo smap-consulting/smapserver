@@ -929,7 +929,7 @@ public class PDFSurveyManager {
 		boolean skipped = false;
 		
 		if(!q.type.equals("note")) {
-			skipped = (r.value == null || r.value.trim().length() == 0);
+			skipped = ((r.value == null || r.value.trim().length() == 0) && r.choices == null);
 		}
 		return skipped;
 	}

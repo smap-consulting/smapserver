@@ -223,7 +223,7 @@ public class XFormData {
 				superUser = GeneralUtilityMethods.isSuperUser(sd, request.getRemoteUser());
 			} catch (Exception e) {
 			}
-			a.isValidSurvey(sd, user, survey.id, false, superUser); // Throw an exception of the user is not authorised
+			a.isValidSurvey(sd, user, survey.id, false, superUser); // Throw an exception if the user is not authorised
 																	// to upload this survey
 
 			/*
@@ -381,6 +381,7 @@ public class XFormData {
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
+			throw new Exception(e);
 		}
 
 		saveDetails.instanceDir = instanceDir;

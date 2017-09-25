@@ -577,6 +577,7 @@ define({
     "ed_gps_line": "GPS Line",
     "ed_gps_area": "GPS Area",
     "ed_ack": "Acknowledge",
+    "ed_range": "Range",
     "ed_qs": "Questions set ",
 
 

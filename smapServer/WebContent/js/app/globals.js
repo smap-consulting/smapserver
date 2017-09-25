@@ -513,6 +513,16 @@ define(function () {
                 source: "user"
             },
             {
+                name: "Range",
+                type: "range",
+                trans: "ed_range",
+                glyphicon: "resize-horizontal",
+                text: "Range",
+                canSelect: true,
+                visible: true,
+                source: "user"
+            },
+            {
                 name: "Unknown Type",
                 glyphicon: "record",
                 canSelect: false

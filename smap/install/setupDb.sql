@@ -488,7 +488,8 @@ CREATE TABLE question (
 	column_name text,							-- Name of column in results table, qname with postgres constraints
 	display_name text,							-- Name displayed to user
 	column_name_applied boolean default false,	-- If set true column name has been added to results
-	qType text,
+	qType text,									-- Question type, select, begin repeat (also int, decimal for legacy reasons)
+	dataType text,								-- Decimal, int etc
 	question text,
 	qtext_id text,
 	defaultAnswer text,

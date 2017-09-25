@@ -746,6 +746,12 @@ public class GetXForm {
 
 		// Add type
 		String type = q.getType();
+		String dataType = q.getDataType();
+		
+		if(type.equals("range") && dataType == null) {
+			dataType = getDataTypeFromRange(q.getParameters());
+		}
+		
 		if (type.equals("audio") || type.equals("video") || type.equals("image")) {
 			type = "binary";
 		} else if (type.equals("begin repeat") && count) {
@@ -753,7 +759,13 @@ public class GetXForm {
 		}
 		if (!type.equals("begin group") && !type.equals("begin repeat") && !type.equals("geopolygon")
 				&& !type.equals("geolinestring")) {
-			questionElement.setAttribute("type", type);
+			// Use the data type if it exists
+			if(dataType != null && dataType.trim().length() > 0) {
+				dataType = "xsd:" + dataType;
+				questionElement.setAttribute("type", dataType);
+			} else {
+				questionElement.setAttribute("type", type);
+			}
 		}
 
 		// Add reference
@@ -805,11 +817,10 @@ public class GetXForm {
 				for(int i = 0; i < pArray.length; i++) {
 					String[] px = pArray[i].split("=");
 					if(px.length == 2) {
-						if(px[0].equals("max-pixels")) {
-							questionElement.setAttribute("orx:max-pixels", px[1]);
-						}
-					}
-					
+						if(px[0].trim().equals("max-pixels")) {
+							questionElement.setAttribute("orx:max-pixels", px[1].trim());
+						} 
+					}	
 				}
 			}
 		}
@@ -891,6 +902,8 @@ public class GetXForm {
 			questionElement = outputXML.createElement("group");
 		} else if (type.equals("acknowledge")) {
 			questionElement = outputXML.createElement("trigger");
+		} else if (type.equals("range")) {
+			questionElement = outputXML.createElement("range");
 		} else {
 			log.info("Warning Unknown type- populateBodyQuestion: " + type);
 			questionElement = outputXML.createElement("input");
@@ -918,9 +931,29 @@ public class GetXForm {
 					appearance += "list-nolabel";
 				}
 			}
-			if (appearance != null) {
+			if (appearance != null && appearance.trim().length() > 0) {
 				appearance = GeneralUtilityMethods.removeSelfReferences(appearance, s.getIdent());
 				questionElement.setAttribute("appearance", appearance);
+			}
+		}
+		
+		// Add Parameters
+		String parameters = q.getParameters();
+		if (parameters != null && parameters.trim().length() > 0) {
+			String[] pArray = parameters.split(" ");
+			for(int i = 0; i < pArray.length; i++) {
+				String[] px = pArray[i].split("=");
+				if(px.length == 2) {
+					String px0 = px[0].trim();
+					String px1 = px[1].trim();
+					if(px0.equals("start")) {
+						questionElement.setAttribute("start", px1);
+					} else if(px0.equals("end")) {
+						questionElement.setAttribute("end", px1);
+					} else if(px0.equals("step")) {
+						questionElement.setAttribute("step", px1);
+					}
+				}
 			}
 		}
 
@@ -1902,6 +1935,30 @@ public class GetXForm {
 			key = fId + key;
 		}
 		return paths.get(key);
+	}
+	
+	/*
+	 * Work out the range data type from its parameters
+	 */
+	private String getDataTypeFromRange(String parameters) {
+		
+		String dataType = "integer";
+		
+		if(parameters != null) {
+			String[] pArray = parameters.split(" ");
+			for(int i = 0; i < pArray.length; i++) {
+				String[] px = pArray[i].split("=");
+				if(px.length == 2) {
+					if(px[0].equals("start") || px[0].equals("end") || px[0].equals("step")) {
+						if(px[1].indexOf(".") >= 0) {
+							dataType = "decimal";
+							break;
+						}
+					} 
+				}
+			}
+		} 
+		return dataType;
 	}
 
 }

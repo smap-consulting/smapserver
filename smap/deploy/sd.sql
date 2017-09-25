@@ -795,3 +795,4 @@ ALTER TABLE public.form_dependencies OWNER TO ws;
 -- Upgrade to 17.08
 ALTER TABLE upload_event add column audit_file_path text;
 alter table question add column parameters text;
+alter table question add column dataType text;
