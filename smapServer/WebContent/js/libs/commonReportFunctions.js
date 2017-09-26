@@ -92,8 +92,38 @@ function getDisplayDescription(fn, reportType, survey, question, group, option, 
 }
 
 /*
+ * Process URLs to make them displayable
+ */
+function processMedia (property) {
+    var output = [],
+        media,
+        i;
+
+    if( Object.prototype.toString.call(property) !== '[object Array]' ) {
+        property = [ property ];
+    }
+
+    for(i = 0; i < property.length; i++) {
+        media = getMedia(property[i]);
+
+        if(typeof media !== "undefined") {  // Add links to media files
+            output[i] = '<a href="' + media.url
+                + '" target="_blank"><img src="'
+                + media.thumbNail + '" alt="Picture"></a>';
+
+        } else {
+            output[i] = property[i];
+        }
+    }
+
+    return output;
+
+}
+
+/*
  * Add html references to media files
  * Return all properties as an Array
+ * Deprecate this approach and progressively replace with processMedia()
  */
 function addAnchors (property) {
 	var output = [],
