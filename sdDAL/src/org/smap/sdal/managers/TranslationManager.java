@@ -75,7 +75,7 @@ public class TranslationManager {
 			pstmtQuestionLevel = sd.prepareStatement(sqlQuestionLevel);	 			
 			pstmtQuestionLevel.setString(1, user);
 			pstmtQuestionLevel.setInt(2, surveyId);
-			//log.info("Question level manifests: " + pstmtQuestionLevel.toString());
+
 			ResultSet rs = pstmtQuestionLevel.executeQuery();
 			
 			while (rs.next()) {								
@@ -105,7 +105,6 @@ public class TranslationManager {
 			 */
 			pstmtSurveyLevel = sd.prepareStatement(sqlSurveyLevel);	 			
 			pstmtSurveyLevel.setInt(1, surveyId);
-			log.info("SQL survey level manifests:" + pstmtSurveyLevel.toString());
 			
 			rs = pstmtSurveyLevel.executeQuery();
 			if(rs.next()) {
@@ -145,8 +144,6 @@ public class TranslationManager {
 			if (pstmtSurveyLevel != null) { try {pstmtSurveyLevel.close();} catch (SQLException e) {}}
 		}
 		
-		log.info("Manifest length: " + manifests.size());
-		
 		return manifests;
 	}
 	
@@ -173,7 +170,6 @@ public class TranslationManager {
 			 */
 			pstmt = sd.prepareStatement(sql);	 			
 			pstmt.setInt(1, surveyId);
-			log.info("SQL survey level manifests:" + pstmt.toString());
 			
 			rs = pstmt.executeQuery();
 			if(rs.next()) {
@@ -207,8 +203,6 @@ public class TranslationManager {
 		} finally {
 			if (pstmt != null) { try {pstmt.close();} catch (SQLException e) {}}
 		}
-		
-		log.info("Linked Manifest length: " + manifests.size());
 		
 		return manifests;
 	}
@@ -266,7 +260,7 @@ public class TranslationManager {
 						m.type = "linked";
 					}
 					pstmtPull.setString(2, "%pulldata%" + m.baseName + "%");
-					log.info("Looking for pulldata manifests: " + pstmtPull.toString());
+					//log.info("Looking for pulldata manifests: " + pstmtPull.toString());
 					rs = pstmtPull.executeQuery();
 					if(rs.next() && rs.getInt(1) > 0) {
 						if(m.type.equals("csv")) {
@@ -291,8 +285,6 @@ public class TranslationManager {
 			if (pstmt != null) { try {pstmt.close();} catch (SQLException e) {}}
 			if (pstmtPull != null) { try {pstmtPull.close();} catch (SQLException e) {}}
 		}
-		
-		log.info("Linked Manifest length: " + manifests.size());
 		
 		return manifests;
 	}
@@ -323,7 +315,6 @@ public class TranslationManager {
 			pstmtQuestionLevel.setString(1, user);
 			pstmtQuestionLevel.setInt(2, surveyId);
 			
-			//log.info("SQL: " + pstmtQuestionLevel.toString());
 			resultSet = pstmtQuestionLevel.executeQuery();
 			
 			if(resultSet.next()) {
