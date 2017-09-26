@@ -99,7 +99,6 @@ public class GetXForm {
 		try {
 			sd = SDDataSource.getConnection("getXForm");
 
-			log.info("Getting survey as XML-------------------------------");
 			// Create a new XML Document
 			DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
 			DocumentBuilder b = dbf.newDocumentBuilder();
@@ -469,8 +468,6 @@ public class GetXForm {
 	public void populateBody(Connection sd, Document outputDoc, Element parent) throws Exception {
 		Element bodyElement = outputDoc.createElement("h:body");
 
-		log.info("Populate body:" + bodyElement.toString());
-
 		/*
 		 * Add class if it is set
 		 */
@@ -506,8 +503,6 @@ public class GetXForm {
 
 		Element currentParent = parentElement;
 		Stack<Element> elementStack = new Stack<Element>(); // Store the elements for non repeat groups
-
-		log.info("Populate form: " + f.getName() + " : " + parentElement.toString());
 
 		/*
 		 * Add the questions from the template
@@ -1315,7 +1310,6 @@ public class GetXForm {
 
 		// Get template details
 		String firstFormRef = template.getFirstFormRef();
-		log.info("First form ref: " + firstFormRef);
 		Form firstForm = template.getForm(firstFormRef);
 
 		// Get database driver and connection to the results database
@@ -1350,7 +1344,6 @@ public class GetXForm {
 				}
 			}
 
-			log.info("Generate XML");
 			// Generate the XML
 			boolean hasData = false;
 			if (priKey > 0) {
@@ -1360,7 +1353,6 @@ public class GetXForm {
 			} else if (key != null && keyval != null) {
 				// Create a blank form containing only the key values
 				hasData = true;
-				log.info("Outputting blank form");
 				populateBlankForm(outputXML, firstForm, sd, template, null, sId, key, keyval, templateName, false);
 			}
 
@@ -1424,14 +1416,13 @@ public class GetXForm {
 			if (rs.next()) {
 				if (rs.getInt(1) > 0) {
 					isValid = true;
-					log.info("Is a valid primary key");
 				}
 			}
 
 		} catch (Exception e) {
 			String msg = e.getMessage();
 			if (msg.contains("does not exist")) {
-				log.info("Excetion checking primary key: " + msg);
+				log.info("Exception checking primary key: " + msg);
 				// Presumably no data has been uploaded yet - therefore no key but not an error
 			} else {
 				e.printStackTrace();
@@ -1543,7 +1534,6 @@ public class GetXForm {
 				value = keyval;
 			}
 
-			log.info("Qtype: " + qType + " qName: " + qName);
 			if (qType.equals("begin repeat") || qType.equals("geolinestring") || qType.equals("geopolygon")) {
 
 				Form subForm = template.getSubForm(form, q);
@@ -1766,9 +1756,9 @@ public class GetXForm {
 		} else {
 			sql += " where parkey=" + parentId + ";";
 		}
-		log.info(sql);
-
+		
 		PreparedStatement pstmt = cResults.prepareStatement(sql);
+		log.info(pstmt.toString());
 		ResultSet resultSet = pstmt.executeQuery();
 
 		// For each record returned from the database add the data values to the
@@ -1825,9 +1815,9 @@ public class GetXForm {
 							hasColumns = true;
 						}
 						sqlSelect += " from " + form.getTableName() + " where prikey=" + priKey + ";";
-						log.info(sqlSelect);
 
 						pstmt = cResults.prepareStatement(sqlSelect);
+						log.info(pstmt.toString());
 						ResultSet resultSetOptions = pstmt.executeQuery();
 						resultSetOptions.next(); // There will only be one record
 

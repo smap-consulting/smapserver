@@ -78,13 +78,13 @@ public class UtilityMethodsEmail {
 			sql = "SELECT DISTINCT f.table_name, f_id FROM form f " +
 					" where f.s_id = ? " + 
 					" and f.parentform = ?;";
-			log.info(sql + " : " + sId + " : " + fId);
 			
 			if (pstmt != null) try {pstmt.close();} catch(Exception e) {};
 			pstmt = cSD.prepareStatement(sql);
 			pstmt.setInt(1, sId);
 			pstmt.setInt(2, fId);
 			
+			log.info(pstmt.toString());
 			ResultSet tableSet = pstmt.executeQuery();
 			while(tableSet.next()) {
 				String childTable = tableSet.getString(1);
@@ -421,8 +421,6 @@ public class UtilityMethodsEmail {
 				}
 			}
 			
-			log.info("Using server email: " + emailServer.smtpHost + " domain: " + emailServer.emailDomain);
-			
 		} catch (SQLException e) {
 			log.log(Level.SEVERE,"Error", e);
 			throw e;
@@ -571,7 +569,6 @@ public class UtilityMethodsEmail {
 		}
 		
 		String cmd = null;
-		log.info("Creating thumbnail for content type: " + contentType);
 		if(contentType.startsWith("image")) {
 			cmd = "/usr/bin/convert -thumbnail 100x100 \"" + source + "\" \"" + dest + "\"";
 		} else if(contentType.startsWith("video")) {
@@ -645,7 +642,6 @@ public class UtilityMethodsEmail {
 						} else if(basePath != null && oId > 0) {
 							ManifestValue manifest = new ManifestValue();
 							getFileUrl(manifest, s.ident, v, basePath, oId, s.id);
-							log.info("Url: " + manifest.url + " : " + v);
 							if(t.equals("image")) {
 								l.image = v;
 								l.imageUrl = manifest.url;
@@ -800,7 +796,6 @@ public class UtilityMethodsEmail {
 		path = basePath + "/media/" + sIdent + "/" + fileName;	
 		thumbsPath = basePath + "/media/" + sIdent + "/thumbs/" + fileName;	
 		
-		log.info("Info: Getting file url for file: " + path);
 		file = new File(path);
 		if(file.exists()) {
 			manifest.url = "/surveyKPI/file/" + fileName + "/survey/" + sId;
@@ -815,7 +810,6 @@ public class UtilityMethodsEmail {
 			// Second try the organisation level
 			path = basePath + "/media/organisation/" + oId + "/" + fileName;
 			thumbsPath = basePath + "/media/organisation/" + oId + "/thumbs/" + fileName;
-			log.info("Info: Getting file url for file: " + path);
 			file = new File(path);
 			if(file.exists()) {
 				manifest.url = "/surveyKPI/file/" + fileName + "/organisation";
