@@ -466,6 +466,9 @@ $(document).ready(function() {
 	$('#timing_data').change(function() {
 		globals.model.settingsChange();
 	});
+    $('#exclude_empty').change(function() {
+        globals.model.settingsChange();
+    });
 	$('#addPdfTemplate').off().click(function() {
 		globals.model.settingsAddPdfClicked();
 	});
@@ -2066,6 +2069,7 @@ function updateSettingsData() {
 	}
 	$('#task_file').prop('checked', globals.model.survey.task_file);
 	$('#timing_data').prop('checked', globals.model.survey.timing_data);
+    $('#exclude_empty').prop('checked', globals.model.survey.exclude_empty);
 }
 
 

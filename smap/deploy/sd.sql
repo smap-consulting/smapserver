@@ -796,3 +796,6 @@ ALTER TABLE public.form_dependencies OWNER TO ws;
 ALTER TABLE upload_event add column audit_file_path text;
 alter table question add column parameters text;
 alter table question add column dataType text;
+
+-- Upgrade to 17.09
+alter table survey add column exclude_empty boolean;

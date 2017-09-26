@@ -145,6 +145,7 @@ public class Review extends Application {
 	public Response getDistinctTextResults(@Context HttpServletRequest request,
 			@PathParam("sId") int sId,				// Survey Id
 			@PathParam("qId") int qId,				// Question Id 
+			@QueryParam("sort") String sort,
 			@QueryParam("targetQuestion") int targetQId				// Target Question Id 
 			) { 
 	
@@ -178,6 +179,11 @@ public class Review extends Application {
 		try {
 			dConnection = ResultsDataSource.getConnection("surveyKPI-Review");
 
+			if(sort != null) {
+				if(!sort.equals("asc") && !sort.equals("desc")) {
+					sort = null;	// invalid sort
+				}
+			}
 			/*
 			 * Get the table name and column name containing the text data
 			 */
@@ -235,7 +241,7 @@ public class Review extends Application {
 						" where _bad = 'false' " +
 						" and " + name + " is not null " +
 						" group by " + name + targetN +
-						" order by " + name + targetN +";";
+						" order by " + name + targetN;
 				pstmt = dConnection.prepareStatement(sql);
 				log.info("Getting data for review: " + pstmt.toString());
 				resultSet = pstmt.executeQuery();

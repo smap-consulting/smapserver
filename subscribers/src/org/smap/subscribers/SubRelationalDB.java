@@ -174,7 +174,7 @@ public class SubRelationalDB extends Subscriber {
 					formStatus, updateId, survey.id, uploadTime, surveyNotes, 
 					locationTrigger, survey.key_policy);
 
-			applyNotifications(ue_id, remoteUser, server, survey.id);
+			applyNotifications(ue_id, remoteUser, server, survey.id, survey.exclude_empty);
 			applyAssignmentStatus(ue_id, remoteUser);
 			se.setStatus("success");			
 
@@ -261,7 +261,7 @@ public class SubRelationalDB extends Subscriber {
 	/*
 	 * Apply notifications
 	 */
-	private void applyNotifications(int ueId, String remoteUser, String server, int sId) {
+	private void applyNotifications(int ueId, String remoteUser, String server, int sId, boolean excludeEmpty) {
 
 		PreparedStatement pstmtGetUploadEvent = null;
 
@@ -307,7 +307,8 @@ public class SubRelationalDB extends Subscriber {
 						sId,
 						ident,
 						instanceId,
-						pId);	
+						pId,
+						excludeEmpty);	
 
 				// Apply Tasks
 				TaskManager tm = new TaskManager();
@@ -357,7 +358,6 @@ public class SubRelationalDB extends Subscriber {
 			int sId, Date uploadTime, String surveyNotes, String locationTrigger,
 			String keyPolicy) throws SQLInsertException {
 
-		String response = null;
 		Connection cResults = null;
 		Connection cMeta = null;
 		PreparedStatement pstmtHrk = null;
@@ -478,7 +478,6 @@ public class SubRelationalDB extends Subscriber {
 			if(cResults != null) {
 				try {
 
-					response = "Error: Rolling back: " + e.getMessage();
 					e.printStackTrace();
 					cResults.rollback();
 					cResults.setAutoCommit(true);
@@ -1189,6 +1188,11 @@ public class SubRelationalDB extends Subscriber {
 					if(value.length() > 0) {
 						value = "'" + col.getValue() + "'";
 					} else {
+						value = "null";
+					}
+
+				} else if(qType.equals("range") ) {
+					if(value.length() == 0) {
 						value = "null";
 					}
 

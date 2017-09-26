@@ -579,6 +579,7 @@ define({
     "ed_ack": "Acknowledge",
     "ed_range": "Range",
     "ed_qs": "Questions set ",
+    "ed_ee": "Don't include empty answers in reports",
 
 
     // Managed Forms

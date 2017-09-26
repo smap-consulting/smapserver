@@ -654,7 +654,8 @@ public class Surveys extends Application {
 					+ "version = ?, "
 					+ "class = ?,"
 					+ "hrk = ?,"
-					+ "key_policy = ? "
+					+ "key_policy = ?, "
+					+ "exclude_empty = ? "
 					+ "where s_id = ?;";		
 		
 			if(survey.surveyClass != null && survey.surveyClass.equals("none")) {
@@ -672,7 +673,8 @@ public class Surveys extends Application {
 			pstmt.setString(9, survey.surveyClass);
 			pstmt.setString(10, survey.hrk);
 			pstmt.setString(11, survey.key_policy);
-			pstmt.setInt(12, sId);
+			pstmt.setBoolean(12, survey.exclude_empty);
+			pstmt.setInt(13, sId);
 			
 			log.info("Saving survey: " + pstmt.toString());
 			int count = pstmt.executeUpdate();

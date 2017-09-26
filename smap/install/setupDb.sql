@@ -419,6 +419,7 @@ CREATE TABLE survey (
 	based_on text,									-- Survey and form this survey was based on
 	shared_table boolean default false,				-- True if this survey shares its table
 	pulldata text,									-- Settings to customise pulling data from another survey into a csv file
+	exclude_empty boolean default false,				-- True if reports should not include empty data
 	created timestamp with time zone				-- Date / Time the survey was created
 	);
 ALTER TABLE survey OWNER TO ws;

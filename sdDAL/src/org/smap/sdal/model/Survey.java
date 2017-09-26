@@ -46,6 +46,7 @@ public class Survey {
 	public String basedOn;
 	public boolean sharedTable;
 	public Timestamp created;
+	public boolean exclude_empty;
 
 	
 	// Getters

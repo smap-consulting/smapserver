@@ -440,6 +440,8 @@ public class TableManager {
 						colType = "text";
 					} else if(colType.equals("acknowledge")) {
 						colType = "text";
+					} else if(colType.equals("range")) {
+						colType = "double precision";
 					} else if(colType.equals("geopoint")) {
 
 						// Add geometry columns after the table is created using AddGeometryColumn()
@@ -740,6 +742,8 @@ public class TableManager {
 									} else if(qd.type.equals("audio") || qd.type.equals("image") || qd.type.equals("video")) {
 										qd.type = "text";					
 									} else if(qd.type.equals("decimal")) {
+										qd.type = "double precision";
+									} else if(qd.type.equals("range")) {
 										qd.type = "double precision";
 									} else if(qd.type.equals("barcode")) {
 										qd.type = "text";

@@ -858,7 +858,18 @@ function updateFilterOptions(data, value, isSelect) {
 
 	if(isSelect) {
 		var sortedList = data.slice();
-		sortedList.sort(function(a, b) {return a.label.toLocaleLowerCase() > b.label.toLocaleLowerCase()});
+		sortedList.sort(function(a, b) {
+			var nameA = a.label.toLowerCase();
+			var nameB = b.label.toLowerCase();
+
+			if (nameA < nameB) {
+                return -1;
+            }
+            if (nameA > nameB) {
+                return 1;
+            }
+            return 0;
+		});
         for (i = 0; i < sortedList.length; i++) {
             h[++idx] = '<option value="';
 			h[++idx] = sortedList[i].value;

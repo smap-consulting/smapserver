@@ -281,7 +281,7 @@ public class SurveyManager {
 		sql.append("select s.s_id, s.name, s.ident, s.display_name, s.deleted, s.blocked, p.name, p.id,"
 				+ "s.def_lang, s.task_file, s.timing_data, u.o_id, s.class,"
 				+ "s.instance_name, s.hrk, s.based_on, s.shared_table, s.created, s.loaded_from_xls,"
-				+ "s.pulldata, s.version, s.key_policy "
+				+ "s.pulldata, s.version, s.key_policy, s.exclude_empty "
 				+ "from survey s, users u, user_project up, project p "
 				+ "where u.id = up.u_id "
 				+ "and p.id = up.p_id "
@@ -293,7 +293,6 @@ public class SurveyManager {
 			// Add RBAC
 			sql.append(GeneralUtilityMethods.getSurveyRBAC());
 		}
-	
 		
 		PreparedStatement pstmt = null;
 		
@@ -336,6 +335,7 @@ public class SurveyManager {
 				
 				s.version = resultSet.getInt(21);
 				s.key_policy = resultSet.getString(22);
+				s.exclude_empty = resultSet.getBoolean(23);
 				// Get the pdf template
 				File templateFile = GeneralUtilityMethods.getPdfTemplate(basePath, s.displayName, s.p_id);
 				if(templateFile.exists()) {

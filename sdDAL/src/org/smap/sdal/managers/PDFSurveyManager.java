@@ -126,6 +126,8 @@ public class PDFSurveyManager {
 	int marginTop_2 = 50;
 	int marginBottom_2 = 100;
 
+	boolean mExcludeEmpty = false;
+	
 	private class GlobalVariables {																// Level descended in form hierarchy
 		//HashMap<String, Integer> count = new HashMap<String, Integer> ();		// Record number at a location given by depth_length as a string
 		int [] cols = {NUMBER_QUESTION_COLS};	// Current Array of columns
@@ -161,6 +163,7 @@ public class PDFSurveyManager {
 			language = "none";
 		}
 
+		mExcludeEmpty = survey.exclude_empty;
 
 		User user = null;
 
@@ -825,7 +828,7 @@ public class PDFSurveyManager {
 		boolean inMeta = question.inMeta;
 
 		// Don't include the question if it has been marked as not to be included
-		if(!generateBlank && isSkipped(question, r)) {
+		if(!generateBlank && mExcludeEmpty && isSkipped(question, r) ) {
 			include = false;
 		} else if(question.appearance != null) {
 			if(question.appearance.contains("pdfno")) {
@@ -927,9 +930,18 @@ public class PDFSurveyManager {
 	 */
 	private boolean isSkipped(org.smap.sdal.model.Question q, Result r) {
 		boolean skipped = false;
+		boolean choiceSet = false;
 		
+		if(r.choices != null) {
+			for(Result c : r.choices) {
+				if(c.isSet) {
+					choiceSet = true;
+					break;
+				}
+			}
+		}
 		if(!q.type.equals("note")) {
-			skipped = ((r.value == null || r.value.trim().length() == 0) && r.choices == null);
+			skipped = ((r.value == null || r.value.trim().length() == 0) && !choiceSet);
 		}
 		return skipped;
 	}
@@ -1750,12 +1762,10 @@ public class PDFSurveyManager {
 
 		Font f = null;
 		String lang;
-		boolean isRtl;
 
 		if(value != null && value.trim().length() > 0) {
 			lang = GeneralUtilityMethods.getLanguage(value);
 			f = getFont(lang);
-			isRtl = isRtl(lang);
 
 			Paragraph para = new Paragraph("", f);	
 			para.setIndentationLeft(indent);

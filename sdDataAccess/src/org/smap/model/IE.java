@@ -16,6 +16,7 @@ public class IE {
 	private String value = null;
 	private String type = null;	
 	private String qType = null;
+	private String dataType = null;
 	private boolean phoneOnly = false;		// Security setting to prevent sensitive data being stored on server
 	private int seq = 0;
 	private String path = null;	// The path by which this element is known in the XML template
@@ -59,6 +60,10 @@ public class IE {
 		return qType;
 	}
 	
+	public String getDataType() {
+		return dataType;
+	}
+	
 	public boolean isPhoneOnly() {
 		return phoneOnly;
 	}
@@ -93,6 +98,10 @@ public class IE {
 	
 	public void setQType(String v) {
 		this.qType = v;
+	}
+	
+	public void setDataType(String v) {
+		this.dataType = v;
 	}
 	
 	public void setPhoneOnly(boolean v) {
@@ -169,6 +178,7 @@ public class IE {
 								|| qt.equals("image")
 								|| qt.equals("video")
 								|| qt.equals("dateTime")
+								|| qt.equals("range")
 								|| qt.equals("time")
 								|| qt.equals("barcode")
 								|| qt.equals("geoshape")
