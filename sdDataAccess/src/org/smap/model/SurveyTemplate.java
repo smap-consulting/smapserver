@@ -14,6 +14,7 @@ import java.util.Set;
 import java.util.Vector;
 
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
+import org.smap.sdal.managers.LogManager;
 import org.smap.sdal.managers.MessagingManager;
 import org.smap.sdal.model.ChangeItem;
 import org.smap.sdal.model.ChangeSet;
@@ -38,6 +39,8 @@ public class SurveyTemplate {
 	
 	private static Logger log =
 			 Logger.getLogger(SurveyTemplate.class.getName());
+	
+	LogManager lm = new LogManager();		// Application log
 	
 	// The model data
 	int surveyId;
@@ -1110,6 +1113,8 @@ public class SurveyTemplate {
 			// Update the form dependencies so that when new results are received it is simple to identify the impacted forms			
 			GeneralUtilityMethods.updateFormDependencies(sd, sId);
 			
+			lm.writeLog(sd, sId, user, "create survey", "Survey loaded from xls form");
+			
 			sd.commit();
 		} catch (Exception e) {
 			try{sd.rollback();} catch(Exception ex) {}
@@ -1617,7 +1622,7 @@ public class SurveyTemplate {
 		try {
 			for(Question q : questionList) {
 	
-				if(q.getType().equals("select1")) {
+				if(q.getType().startsWith("select")) {
 					
 					// Check to see if this appearance references a manifest file
 					String appearance = q.getAppearance(false, null);
