@@ -27,9 +27,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Savepoint;
 import java.sql.Statement;
-import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Level;
@@ -1399,7 +1397,7 @@ public class SurveyManager {
 					pstmtGetOptionTextId.setInt(1, listId);
 					pstmtGetOptionTextId.setString(2, ci.property.name);
 					
-					log.info("Getting text id for option: " + pstmtGetOptionTextId.toString());
+					// (debug) log.info("Getting text id for option: " + pstmtGetOptionTextId.toString());
 					ResultSet rs = pstmtGetOptionTextId.executeQuery();
 					if(rs.next()) {
 						text_id = rs.getString(1);
@@ -1444,13 +1442,13 @@ public class SurveyManager {
 						if(isQuestion) {
 							pstmtNewQuestionLabel.setString(1, ci.property.key);
 							pstmtNewQuestionLabel.setInt(2, ci.property.qId);
-							log.info("Update question table with text_id: " + pstmtNewQuestionLabel.toString());
+							// (debug) log.info("Update question table with text_id: " + pstmtNewQuestionLabel.toString());
 							pstmtNewQuestionLabel.executeUpdate();
 						} else if(isOption) {
 							pstmtNewOptionLabel.setString(1, text_id);
 							pstmtNewOptionLabel.setInt(2, listId);
 							pstmtNewOptionLabel.setString(3, ci.property.name);
-							log.info("Update option label with label_id: " + pstmtNewOptionLabel.toString());
+							// (debug) log.info("Update option label with label_id: " + pstmtNewOptionLabel.toString());
 							pstmtNewOptionLabel.executeUpdate();
 						}
 						
@@ -1461,7 +1459,7 @@ public class SurveyManager {
 						if(isQuestion) {
 							pstmtNewQuestionHint.setString(1, ci.property.key);
 							pstmtNewQuestionHint.setInt(2, ci.property.qId);
-							log.info("Update question table with hint_id: " + pstmtNewQuestionHint.toString());
+							// (debug) log.info("Update question table with hint_id: " + pstmtNewQuestionHint.toString());
 							pstmtNewQuestionHint.executeUpdate();
 						}
 							
@@ -1526,9 +1524,9 @@ public class SurveyManager {
 		}
 		pstmtLangOldVal.setString(5,  transType);
 		
-		log.info("Update question translation: " + pstmtLangOldVal.toString());
+		// (debug) log.info("Update question translation: " + pstmtLangOldVal.toString());
 		
-		int count = pstmtLangOldVal.executeUpdate();
+		pstmtLangOldVal.executeUpdate();
 		
 	}
 	
@@ -1556,7 +1554,7 @@ public class SurveyManager {
 			}
 			pstmtLangNew.setString(5,  transType);
 			
-			log.info("Insert new question label: " + pstmtLangNew.toString());
+			// (debug) log.info("Insert new question label: " + pstmtLangNew.toString());
 			
 			pstmtLangNew.executeUpdate();
 		} else {
@@ -1564,7 +1562,7 @@ public class SurveyManager {
 			pstmtDeleteLabel.setInt(1, sId);
 			pstmtDeleteLabel.setString(2, ci.property.key);
 			pstmtDeleteLabel.setString(3, ci.property.propType);
-			log.info("Delete media label: " + pstmtDeleteLabel.toString());
+			// (debug) log.info("Delete media label: " + pstmtDeleteLabel.toString());
 			pstmtDeleteLabel.executeUpdate();
 			ci.property.key = null;		// Clear the key in the question table
 		}  
@@ -1643,7 +1641,7 @@ public class SurveyManager {
 				
 				Gson gson=  new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd").create();
 				
-				log.info("Get text_id for option: " + pstmtOptionGet.toString());
+				// (debug) log.info("Get text_id for option: " + pstmtOptionGet.toString());
 				rs = pstmtOptionGet.executeQuery();
 				if(rs.next()) {
 					
@@ -1653,7 +1651,7 @@ public class SurveyManager {
 					pstmtLangUpdate.setInt(2, sId);
 					pstmtLangUpdate.setString(3, text_id);
 					pstmtLangUpdate.setString(4, ci.option.value);
-					log.info("Update existing option label: " + pstmtLangUpdate.toString());
+					// (debug) log.info("Update existing option label: " + pstmtLangUpdate.toString());
 					count = pstmtLangUpdate.executeUpdate();
 					
 					pstmtOptionUpdate.setString(1, gson.toJson(ci.option.cascade_filters));
@@ -1676,7 +1674,7 @@ public class SurveyManager {
 					pstmtOptionInsert.setString(5, GeneralUtilityMethods.cleanName(ci.option.value, false, false, false) );
 					pstmtOptionInsert.setString(6, gson.toJson(ci.option.cascade_filters));
 					
-					log.info("===================== Insert new option from file: " + pstmtOptionInsert.toString());
+					// (debug) log.info("===================== Insert new option from file: " + pstmtOptionInsert.toString());
 					count = pstmtOptionInsert.executeUpdate();
 					
 					// Set label
@@ -1686,7 +1684,7 @@ public class SurveyManager {
 					pstmtLangInsert.setString(5, ci.option.externalLabel);
 					for(String language : languages) {
 						pstmtLangInsert.setString(2, language);
-						log.info("----------------------------- Insert new translation for option from file: " + pstmtLangInsert.toString());
+						// (debug) log.info("----------------------------- Insert new translation for option from file: " + pstmtLangInsert.toString());
 						count += pstmtLangInsert.executeUpdate();
 					}	
 					
