@@ -60,6 +60,7 @@ import org.smap.sdal.Utilities.AuthorisationException;
 import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.SDDataSource;
+import org.smap.sdal.managers.LogManager;
 import org.smap.server.utilities.PutXForm;
 
 import com.google.gson.Gson;
@@ -76,6 +77,8 @@ public class TemplateUpload extends Application {
 	
 	private static Logger log =
 			 Logger.getLogger(TemplateUpload.class.getName());
+	
+	LogManager lm = new LogManager();		// Application log
 	
 	Authorise a = new Authorise(null, Authorise.ANALYST);
 	

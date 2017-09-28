@@ -63,6 +63,8 @@ public class SurveyManager {
 	
 	private static Logger log =
 			 Logger.getLogger(SurveyManager.class.getName());
+	
+	LogManager lm = new LogManager();		// Application log
 
 	public static final int UPLOAD_TIME_ID = -100;		// Pseudo question id for upload time
 	
@@ -393,7 +395,8 @@ public class SurveyManager {
 			int projectId,
 			boolean existing,
 			int existingSurveyId,
-			boolean sharedResults
+			boolean sharedResults,
+			String user
 			) throws SQLException, Exception {
 		
 		int sId;
@@ -579,6 +582,7 @@ public class SurveyManager {
 				pstmt.execute();
 			}
 			
+			lm.writeLog(sd, sId, user, "create survey", "Survey created in online editor");
 			sd.commit();
 			sd.setAutoCommit(true);
 

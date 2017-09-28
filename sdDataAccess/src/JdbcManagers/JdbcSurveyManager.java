@@ -55,20 +55,6 @@ public class JdbcSurveyManager {
 			+ "ident = ? "
 			+ "where s_id = ?;";
 	
-	// update calculates that reference "self" ie this survey to use the ident
-	/*
-	PreparedStatement pstmtUpdateSelfCalcs = null;
-	String sqlUpdateSelfCalcs = "update question set "
-			+ "calculate = replace(calculate, 'linked_self', 'linked_' || ?) "
-			+ "where f_id in (select f_id from form where s_id = ?)";
-	
-	// update manifests that reference "self"
-	PreparedStatement pstmtUpdateSelfCalcsManifest = null;
-	String sqlUpdateSelfCalcsManifest = "update survey set "
-			+ "manifest = replace(manifest, 'linked_self', 'linked_' || ?) "
-			+ "where s_id = ?";
-			*/
-	
 	// Retrieve
 	PreparedStatement pstmtGetByIdent = null;
 	PreparedStatement pstmtGetById = null;
