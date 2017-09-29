@@ -100,7 +100,7 @@ function addAnchors (property, minsize) {
 	var output = [],
 		media,
 		i,
-		style;
+		style = '';
 	
 	if( Object.prototype.toString.call(property) !== '[object Array]' ) {
 		property = [ property ];

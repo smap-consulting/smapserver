@@ -302,7 +302,6 @@ define([
                     }
                 }
             }
-            console.log("  changed: " + itemIndex + " " + value + " " + currentValue);
 
             if (gTasks.gUpdate.length > 0) {
                 $('#saveRecord').prop("disabled", false);

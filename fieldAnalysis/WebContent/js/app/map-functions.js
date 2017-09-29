@@ -824,7 +824,7 @@ function addSharedMaps(map, sharedMaps) {
 						h[++idx] = aDataItem.records[i];
 						h[++idx] = '</td>';
 						h[++idx] = '<td>';
-						h[++idx] = addAnchors(aDataItem.sourceData[i]).join(',');
+						h[++idx] = addAnchors(aDataItem.sourceData[i], true).join(',');
 						h[++idx] = '</td>';
 						h[++idx] = '</tr>';
 					}
@@ -904,10 +904,10 @@ function addSharedMaps(map, sharedMaps) {
 							} else if (key_orig === "_start" || key_orig === "_end" || key_orig === "Upload Time") {
 								value_c = localTime(value_c);
 							}
-							h[++idx] = '<td>' + addAnchors(value_c).join(',') + '</td>';
+							h[++idx] = '<td>' + addAnchors(value_c, true).join(',') + '</td>';
 						}
 					} else {
-						h[++idx] = '<td>' + addAnchors(value).join(',') + '</td>';
+						h[++idx] = '<td>' + addAnchors(value, true).join(',') + '</td>';
 					}
 					h[++idx] = '</tr>';
 				}

@@ -181,7 +181,7 @@ function generateTable(elementId, data, disp_desc, survey_ident, sId) {
 			}
 			for(k = 0; k < cols.length; k++) {
 				key = cols[k];
-				val = addAnchors(groups[i].properties[key]);
+				val = addAnchors(groups[i].properties[key], true);
 				recordObject[curGroup].push(val);
 			}
 		}
