@@ -96,10 +96,11 @@ function getDisplayDescription(fn, reportType, survey, question, group, option, 
  * Return all properties as an Array
  * Deprecate this approach and progressively replace with processMedia()
  */
-function addAnchors (property) {
+function addAnchors (property, minsize) {
 	var output = [],
 		media,
-		i;
+		i,
+		style;
 	
 	if( Object.prototype.toString.call(property) !== '[object Array]' ) {
 		property = [ property ];
@@ -110,7 +111,10 @@ function addAnchors (property) {
 	    
 	    if(typeof media !== "undefined") {  // Add links to media files
 			if(media.type === "audio") {
-				output[i] = '<audio controls><source src="' + media.url
+				if(minsize) {
+					style = ' style="width:75px;"';
+				}
+				output[i] = '<audio controls' + style + '><source src="' + media.url
 					+ '" type="' + media.source_type + '">'
 					+ 'Your browser does not support this audio type'
 					+ '</audio>';

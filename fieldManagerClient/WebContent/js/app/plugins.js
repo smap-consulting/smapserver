@@ -220,7 +220,7 @@ function addItems(start_rec, settings, current_tg) {
 					j = 0;
 					for(i = 0; i < addressParamsObj.length; i++) {
 						if(addressParamsObj[i].selected) {
-							value = addAnchors(addressObj[j].value).join(',');
+							value = addAnchors(addressObj[j].value, true).join(',');
 							
 							if(addressParamsObj[i].isBarcode) {
 								tab[++idx] = '<td class="barcode">' + value + '</td>';

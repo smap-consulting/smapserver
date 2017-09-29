@@ -56,9 +56,9 @@ define([
                 configItem = columns[i];
 
                 if (configItem.mgmt) {
-                    h[++idx] = getEditMarkup(configItem, i, first, record);
+                    h[++idx] = getEditMarkup(configItem, i, first, record, columns);
                 } else {
-                    m[++cnt] = getEditMarkup(configItem, i, first, record);
+                    m[++cnt] = getEditMarkup(configItem, i, first, record, columns);
                 }
                 if (!configItem.readonly) {
                     first = false;
@@ -93,7 +93,7 @@ define([
         /*
          * Get the markup to edit the record
          */
-        function getEditMarkup(configItem, itemIndex, first, record) {
+        function getEditMarkup(configItem, itemIndex, first, record, columns) {
 
             var h = [],
                 idx = -1;
@@ -116,7 +116,7 @@ define([
                 }
 
             } else {
-                h[++idx] = addEditableColumnMarkup(configItem, record[configItem.name], itemIndex, first);
+                h[++idx] = addEditableColumnMarkup(configItem, record[configItem.name], itemIndex, first, columns, record);
                 first = false;
             }
             h[++idx] = '</div>';
@@ -130,13 +130,36 @@ define([
         /*
          * Add the markup for an editable column
          */
-        function addEditableColumnMarkup(column, value, itemIndex, first) {
+        function addEditableColumnMarkup(column, value, itemIndex, first, columns, record) {
             var h = [],
                 idx = -1,
-                i;
+                i,
+                sourceColumn;
 
-            if (column.type === "text" || column.type === "decimal" || column.type === "integer") {
-                if(idx < -100) {
+            // Check for a source column
+            if(column.parameters && column.parameters.source) {
+                var sourceColumn = getColumn(column.parameters.source, columns);
+            }
+
+            if(sourceColumn) {
+                h[++idx] = addSourceQuestion(sourceColumn, record);
+            }
+
+            if (column.type === "text") {
+                if(column.parameters && column.parameters.rows) {
+                    h[++idx] = ' <textarea rows=';
+                    h[++idx] = column.parameters.rows;
+                    h[++idx] = ' class="form-control editable" ';
+                    h[++idx] = '" data-item="';
+                    h[++idx] = itemIndex;
+                    if (first) {
+                        h[++idx] = '" autofocus>';
+                    } else {
+                        h[++idx] = '">';
+                    }
+                    h[++idx] = value;
+                    h[++idx] = '</textarea>';
+                } else {
                     h[++idx] = ' <input type="text"';
                     h[++idx] = '" class="form-control editable" value="';
                     h[++idx] = value;
@@ -147,18 +170,6 @@ define([
                     } else {
                         h[++idx] = '"/>';
                     }
-                } else {
-                    h[++idx] = ' <textarea rows=5 ';
-                    h[++idx] = '" class="form-control editable" ';
-                    h[++idx] = '" data-item="';
-                    h[++idx] = itemIndex;
-                    if (first) {
-                        h[++idx] = '" autofocus/>';
-                    } else {
-                        h[++idx] = '">';
-                    }
-                    h[++idx] = value;
-                    h[++idx] = '</textarea>';
                 }
             } else if (column.type === "decimal" || column.type === "integer") {
                 h[++idx] = ' <input type="number"';
@@ -209,5 +220,94 @@ define([
             }
 
             return h.join('');
+        }
+
+        function getColumn(qname, columns) {
+            var i,
+                col;
+            for(i = 0; i < columns.length; i++) {
+                if(qname === columns[i].name) {
+                    col = columns[i];
+                    break;
+                }
+            }
+            return col;
+
+        }
+
+
+        function addSourceQuestion(column, record) {
+            var v = addAnchors(record[column.name])[0];
+            var h = [];
+            var idx = -1;
+
+            if(v.indexOf('<') == 0) {
+                h[++idx] = v;
+            } else {
+                h[++idx] = '<input type="text" disabled="" class="form-control" value="';
+                h[++idx] = v;
+                h[++idx] = '">';
+            }
+
+            return h.join('');
+        }
+
+        /*
+         * User has changed a managed value
+         */
+        function dataChanged($this) {
+
+            var
+                itemIndex = $this.data("item"),
+                value = $this.val(),
+                record = gTasks.gSelectedRecord,
+                columns = gTasks.cache.surveyConfig[globals.gViewId].columns,
+                currentValue,
+                name = columns[itemIndex].name,
+                i,
+                foundExistingUpdate;
+
+            currentValue = record[columns[itemIndex].name];
+            if (typeof currentValue === "undefined") {
+                currentValue = "";
+            }
+
+            if (currentValue !== value) {
+                // Add new value to array, or update existing
+                foundExistingUpdate = false;
+                for (i = 0; i < gTasks.gUpdate.length; i++) {
+                    if (gTasks.gUpdate[i].name === name) {
+                        foundExistingUpdate = true;
+                        gTasks.gUpdate[i].value = value;
+                        break;
+                    }
+                }
+
+                if (!foundExistingUpdate) {
+                    // Add new value
+                    gTasks.gUpdate.push({
+                        name: name,
+                        value: value,
+                        currentValue: currentValue,
+                        prikey: gTasks.gPriKey
+                    });
+                }
+
+            } else {
+                // Delete value from array of updates
+                for (i = 0; i < gTasks.gUpdate.length; i++) {
+                    if (gTasks.gUpdate[i].name === name) {
+                        gTasks.gUpdate.splice(i, 1);
+                        break;
+                    }
+                }
+            }
+            console.log("  changed: " + itemIndex + " " + value + " " + currentValue);
+
+            if (gTasks.gUpdate.length > 0) {
+                $('#saveRecord').prop("disabled", false);
+            } else {
+                $('#saveRecord').prop("disabled", true);
+            }
         }
     });

@@ -778,9 +778,9 @@ function addSharedMaps(map, sharedMaps) {
 				} else {
 					computedResult = "";	// No aggregation required
 				}
-				h[++idx] = addAnchors(computedResult).join(',');
+				h[++idx] = addAnchors(computedResult, true).join(',');
 			} else {
-				h[++idx] = addAnchors(aDataItem.result).join(',');
+				h[++idx] = addAnchors(aDataItem.result, true).join(',');
 			}
 			h[++idx] = '</td>';
 			h[++idx] = '</tr>';
@@ -805,7 +805,7 @@ function addSharedMaps(map, sharedMaps) {
 					h[++idx] = clusterData[i].attributes.group_value;
 					h[++idx] = '</td>';
 					h[++idx] = '<td>';
-					h[++idx] = addAnchors(clusterData[i].attributes.result).join(',');
+					h[++idx] = addAnchors(clusterData[i].attributes.result, true).join(',');
 					h[++idx] = '</td>';
 					h[++idx] = '</tr>';
 				}

@@ -354,6 +354,8 @@ public class XLSCustomReportsManager {
 			                						} catch (Exception e) {
 			                							// Ignore exceptions
 			                						}
+		                						} else if(p[0].equals("source")) {	
+		                							currentCol.parameters.put(p[0], p[1]);						
 		                						}
 		                					} 
 		                				}

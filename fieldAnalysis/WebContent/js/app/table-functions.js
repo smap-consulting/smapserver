@@ -252,7 +252,7 @@ function generateTable(elementId, data, disp_desc, survey_ident, sId) {
 							if(val === "0") {
 								gTab[++gIdx] = "";
 							} else {
-								gTab[++gIdx] = addAnchors(val).join(',');
+								gTab[++gIdx] = addAnchors(val, true).join(',');
 							}
 							gTab[++gIdx] = '</td>';
 						}
@@ -284,7 +284,7 @@ function generateTable(elementId, data, disp_desc, survey_ident, sId) {
 						if(val === "0" && key.trim().indexOf(" ") > 0) {	// Only select multiples can have a space in the key
 							gTab[++gIdx] = "";
 						} else {
-							gTab[++gIdx] = addAnchors(val).join(',');
+							gTab[++gIdx] = addAnchors(val, true).join(',');
 						}
 						gTab[++gIdx] = '</td>';
 					}
