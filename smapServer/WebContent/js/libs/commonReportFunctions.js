@@ -109,9 +109,16 @@ function addAnchors (property) {
 	    media = getMedia(property[i]);
 	    
 	    if(typeof media !== "undefined") {  // Add links to media files
-			output[i] = '<a href="' + media.url
-				+ '" target="_blank"><img src="'
-				+ media.thumbNail + '" alt="Picture"></a>';
+			if(media.type === "audio") {
+				output[i] = '<audio controls><source src="' + media.url
+					+ '" type="' + media.source_type + '">'
+					+ 'Your browser does not support this audio type'
+					+ '</audio>';
+			} else {
+                output[i] = '<a href="' + media.url
+                    + '" target="_blank"><img src="'
+                    + media.thumbNail + '" alt="Picture"></a>';
+            }
 	
 		} else { 
 			output[i] = property[i];
@@ -128,7 +135,7 @@ function addAnchors (property) {
 function getMedia(property) {
 	
 	var idx, name, ext, urlBase, thumbNail, flv, type,
-		media = undefined;
+		media;
 	
 	if(typeof property === "string" && (property.indexOf("//") === 0 || property.indexOf("http") === 0)) {  // Add links to media files
 		
@@ -146,7 +153,7 @@ function getMedia(property) {
 		flv = urlBase + "flv/" + name + ".flv";
 		
 		// Create a media object
-		media = new Object();
+		media = {};
 		media.name = name;
 		if(ext === "jpg" || ext === "png" || ext === "gif" || ext === "jpeg" || ext === "ico") {
 			media.type = "image";
@@ -157,6 +164,9 @@ function getMedia(property) {
 			media.url = flv; 
 			media.thumbNail = thumbNail;
 		} else if(ext === "mp3" || ext === "amr" || ext === "3ga" || ext === "m4a") {
+			if(ext == "m4a") {
+				media.source_type = "audio/mp4";
+			}
 			media.type = "audio";
 			media.url = property;		// Don't convert audio files
 			media.thumbNail = "/fieldAnalysis/img/audio-icon.png"

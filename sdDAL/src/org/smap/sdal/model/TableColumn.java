@@ -1,6 +1,7 @@
 package org.smap.sdal.model;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 /*
  * TableColumn class used to manage data shown in a table
@@ -31,6 +32,7 @@ public class TableColumn {
 	public ArrayList<KeyValue> choices;			// If type is select_one
 	public ArrayList<Action> actions;			// Actions to take when the column changes
 	public ArrayList<TableColumnMarkup> markup;	// Specify how to present the data
+	public HashMap<String, String> parameters;
 	
 	// Manage extraction of data
 	public SqlFrag calculation = null;

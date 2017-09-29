@@ -338,6 +338,27 @@ public class XLSCustomReportsManager {
 		                				}
 		                			}
 		                			
+		                			// Get parameters
+		                			String parameters = getColumn(row, "parameters", header, lastCellNum, null);
+		                			currentCol.parameters = null;
+		                			if(parameters != null) {
+		                				currentCol.parameters = new HashMap<String, String> ();
+		                				String [] params = parameters.split(" ");
+		                				for(int i = 0; i < params.length; i++) {
+		                					String[] p = params[i].split("=");
+		                					if(p.length > 1) {
+		                						if(p[0].equals("rows")) {
+			                						try {
+			                							int rows = Integer.valueOf(p[1]);
+			                							currentCol.parameters.put(p[0], p[1]);
+			                						} catch (Exception e) {
+			                							// Ignore exceptions
+			                						}
+		                						}
+		                					} 
+		                				}
+		                			}
+		                			
 		                			// Get calculation state
 		                			if(currentCol.type.equals("calculate")) {
 			                			String calculation = getColumn(row, "calculation", header, lastCellNum, null);
@@ -379,8 +400,7 @@ public class XLSCustomReportsManager {
 			                					if(currentCol.markup == null) {
 			                						currentCol.markup = new ArrayList<TableColumnMarkup> ();
 			                					}
-			                					currentCol.markup.add(new TableColumnMarkup(name, getMarkup(appearance)));
-			                					
+			                					currentCol.markup.add(new TableColumnMarkup(name, getMarkup(appearance)));	
 			                				} 
 		                				} else {
 		                					throw new Exception(localisation.getString("mf_mv") + 

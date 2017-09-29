@@ -106,9 +106,15 @@ define([
             // Add Data
             h[++idx] = ' <div class="col-md-8">';
             if (configItem.readonly) {		// Read only text
-                h[++idx] = '<input type="text" disabled="" class="form-control" value="';
-                h[++idx] = record[configItem.name];
-                h[++idx] = '">';
+                var v = addAnchors(record[configItem.name])[0];
+                if(v.indexOf('<') == 0) {
+                    h[++idx] = v;
+                } else {
+                    h[++idx] = '<input type="text" disabled="" class="form-control" value="';
+                    h[++idx] = v;
+                    h[++idx] = '">';
+                }
+
             } else {
                 h[++idx] = addEditableColumnMarkup(configItem, record[configItem.name], itemIndex, first);
                 first = false;
@@ -130,14 +136,32 @@ define([
                 i;
 
             if (column.type === "text" || column.type === "decimal" || column.type === "integer") {
-                h[++idx] = ' <input type="';
-                if (column.type === "text") {
-                    h[++idx] = "text";
-                } else if (column.type === "decimal") {
-                    h[++idx] = "number";
-                } else if (column.type === "integer") {
-                    h[++idx] = "number";
+                if(idx < -100) {
+                    h[++idx] = ' <input type="text"';
+                    h[++idx] = '" class="form-control editable" value="';
+                    h[++idx] = value;
+                    h[++idx] = '" data-item="';
+                    h[++idx] = itemIndex;
+                    if (first) {
+                        h[++idx] = '" autofocus/>';
+                    } else {
+                        h[++idx] = '"/>';
+                    }
+                } else {
+                    h[++idx] = ' <textarea rows=5 ';
+                    h[++idx] = '" class="form-control editable" ';
+                    h[++idx] = '" data-item="';
+                    h[++idx] = itemIndex;
+                    if (first) {
+                        h[++idx] = '" autofocus/>';
+                    } else {
+                        h[++idx] = '">';
+                    }
+                    h[++idx] = value;
+                    h[++idx] = '</textarea>';
                 }
+            } else if (column.type === "decimal" || column.type === "integer") {
+                h[++idx] = ' <input type="number"';
                 h[++idx] = '" class="form-control editable" value="';
                 h[++idx] = value;
                 h[++idx] = '" data-item="';
