@@ -110,19 +110,34 @@ function addAnchors (property, minsize) {
 	    media = getMedia(property[i]);
 	    
 	    if(typeof media !== "undefined") {  // Add links to media files
-			if(media.type === "audio") {
-				if(minsize) {
-					style = ' style="width:75px;"';
-				}
-				output[i] = '<audio controls' + style + '><source src="' + media.url
-					+ '" type="' + media.source_type + '">'
-					+ 'Your browser does not support this audio type'
-					+ '</audio>';
-			} else {
+			if(media.supported) {
+                if (media.type === "audio") {
+                    if (minsize) {
+                        style = ' style="width:75px;"';
+                    }
+                    output[i] = '<audio controls' + style + '><source src="' + media.url
+                        + '" type="' + media.source_type + '">'
+                        + 'Your browser does not support this audio type'
+                        + '</audio>';
+                } else if (media.type === "video") {
+                    if (minsize) {
+                        style = ' style="width:100px;"';
+                    }
+                    output[i] = '<video controls' + style +
+                        (minsize ? 'width="75px" height="100px"' : '')
+                        + '><source src="' + media.url
+                        + '" type="' + media.source_type + '">'
+                        + 'Your browser does not support this video type'
+                        + '</video>';
+                } else {
+                    output[i] = '<a href="' + media.url
+                        + '" target="_blank"><img src="'
+                        + media.thumbNail + '" alt="Picture"></a>';
+                }
+            } else {
                 output[i] = '<a href="' + media.url
-                    + '" target="_blank"><img src="'
-                    + media.thumbNail + '" alt="Picture"></a>';
-            }
+                    + '" download style="color:#0000FF;">' + localise.set["c_download"] + '</a>';
+			}
 	
 		} else { 
 			output[i] = property[i];
@@ -159,18 +174,40 @@ function getMedia(property) {
 		// Create a media object
 		media = {};
 		media.name = name;
+		media.supported = true;
 		if(ext === "jpg" || ext === "png" || ext === "gif" || ext === "jpeg" || ext === "ico") {
 			media.type = "image";
 			media.url = property; 
 			media.thumbNail = thumbNail;
 		} else if(ext === "mp4" || ext === "3gp" || ext === "flv" || ext === "m4p" || ext === "mov") {
+            if(ext == "mp4") {
+                media.source_type = "video/mp4";
+            } else  if(ext == "3gp") {
+                media.supported = false;
+                media.source_type = "video/3gp";
+            } else  if(ext == "flv") {
+                media.supported = false;
+                media.source_type = "video/x-flv";
+            } else  if(ext == "mov") {
+                media.supported = false;
+                media.source_type = "video/quicktime";
+            }
 			media.type = "video";
-			media.url = flv; 
+			media.url = property;
 			media.thumbNail = thumbNail;
-		} else if(ext === "mp3" || ext === "amr" || ext === "3ga" || ext === "m4a") {
+		} else if(ext === "mp3" || ext === "amr" || ext === "3ga" || ext === "m4a" || ext === "ogg" || ext === "wav") {
 			if(ext == "m4a") {
 				media.source_type = "audio/mp4";
-			}
+			} else if(ext == "mp3") {
+                media.source_type = "audio/mp3";
+            } else if(ext == "amr") {
+				media.supported = false;
+                media.source_type = "audio/amr";
+            } else if(ext == "ogg") {
+                media.source_type = "audio/ogg";
+            } else if(ext == "wav") {
+                media.source_type = "audio/wav";
+            }
 			media.type = "audio";
 			media.url = property;		// Don't convert audio files
 			media.thumbNail = "/fieldAnalysis/img/audio-icon.png"
