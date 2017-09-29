@@ -770,65 +770,6 @@ require([
     }
 
     /*
-     * User has changed a managed value
-     */
-    function dataChanged($this) {
-
-        var
-            itemIndex = $this.data("item"),
-            value = $this.val(),
-            record = gTasks.gSelectedRecord,
-            columns = gTasks.cache.surveyConfig[globals.gViewId].columns,
-            currentValue,
-            name = columns[itemIndex].name,
-            i,
-            foundExistingUpdate;
-
-        currentValue = record[columns[itemIndex].name];
-        if (typeof currentValue === "undefined") {
-            currentValue = "";
-        }
-
-        if (currentValue !== value) {
-            // Add new value to array, or update existing
-            foundExistingUpdate = false;
-            for (i = 0; i < gTasks.gUpdate.length; i++) {
-                if (gTasks.gUpdate[i].name === name) {
-                    foundExistingUpdate = true;
-                    gTasks.gUpdate[i].value = value;
-                    break;
-                }
-            }
-
-            if (!foundExistingUpdate) {
-                // Add new value
-                gTasks.gUpdate.push({
-                    name: name,
-                    value: value,
-                    currentValue: currentValue,
-                    prikey: gTasks.gPriKey
-                });
-            }
-
-        } else {
-            // Delete value from array of updates
-            for (i = 0; i < gTasks.gUpdate.length; i++) {
-                if (gTasks.gUpdate[i].name === name) {
-                    gTasks.gUpdate.splice(i, 1);
-                    break;
-                }
-            }
-        }
-        console.log("  changed: " + itemIndex + " " + value + " " + currentValue);
-
-        if (gTasks.gUpdate.length > 0) {
-            $('#saveRecord').prop("disabled", false);
-        } else {
-            $('#saveRecord').prop("disabled", true);
-        }
-    }
-
-    /*
      * Show the survey data along with the management columns
      * If masterRecord is specified then only show that record
      */
