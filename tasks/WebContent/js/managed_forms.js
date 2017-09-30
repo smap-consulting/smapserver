@@ -409,7 +409,7 @@ require([
                 dataType: 'json',
                 cache: false,
                 success: function (data) {
-
+                    removeHourglass();
                     gTasks.cache.surveyRoles[sId] = data;
                     showRoles(gTasks.cache.surveyRoles[sId]);
                 },
