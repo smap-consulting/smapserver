@@ -125,6 +125,7 @@ require([
         gMapView = false;           // Set true when the map tab is shown
     var gChartView = false;         // Set true when the chart view is shown
     var gTimingView = false;        // Set true when the timing view is shown
+    var gRefreshingData = false;    // Prevent double click on  refresh button
 
     window.gTasks = {
         cache: {
@@ -696,6 +697,7 @@ require([
                 },
                 error: function (xhr, textStatus, err) {
                     removeHourglass();
+                    gRefreshingData = false;
                     if (xhr.readyState == 0 || xhr.status == 0) {
                         return;  // Not an error
                     } else {
@@ -734,6 +736,7 @@ require([
         } else {
             // No managed surveys in this project
             $('#content').empty();
+            gRefreshingData = false;
         }
     }
 
@@ -742,13 +745,14 @@ require([
      */
     function refreshData() {
 
-        // Clear gTasks.cache
-        //gTasks.cache.surveyConfig = {};
-        gTasks.cache.managedData = {};
-        gTasks.cache.surveyList = {};
+        if(!gRefreshingData) {
+            gRefreshingData = true;
+            gTasks.cache.managedData = {};
+            gTasks.cache.surveyList = {};
 
-        // Get the list of available surveys
-        loadManagedSurveys(globals.gCurrentProject, surveyChanged);
+            // Get the list of available surveys
+            loadManagedSurveys(globals.gCurrentProject, surveyChanged);
+        }
 
     }
 
@@ -791,7 +795,8 @@ require([
             headItem,
             hColSort = [],
             hDups = [],
-            hColSortIdx = -1;
+            hColSortIdx = -1,
+            hDupsIdx = -1;
 
 
         if (globals.gMainTable) {
@@ -810,7 +815,9 @@ require([
             headItem = columns[i];
 
             hColSort[hColSortIdx++] = addToColumnSort(headItem);
-            hDups[hColSortIdx++] = addToDuplicateReportSelect(headItem);
+            if(isDuplicates) {
+                hDups[hDupsIdx++] = addToDuplicateReportSelect(headItem);
+            }
 
             shownColumns.push({
                 "data": headItem.name
@@ -862,6 +869,7 @@ require([
 
 
         url += "&format=dt";
+        url += "&sort=prikey&dirn=desc";
 
         $.fn.dataTable.ext.errMode = 'none';
 
@@ -871,16 +879,18 @@ require([
             select: true,
             ajax: url,
             columns: shownColumns,
-            order: [[0, "desc"]],
+            order: [0],
             initComplete: function (settings, json) {
                 console.log("initComplete");
                 gDataLoaded = true;
+                gRefreshingData = false;
                 if (gConfigLoaded) {
                     initialise();
                     map.refreshAllLayers(gMapView);
                     chart.refreshAllCharts(gChartView, gTimingView, true);
                 }
                 columns = gTasks.cache.surveyConfig[globals.gViewId].columns;
+
                 globals.gMainTable.columns().flatten().each(function (colIdx) {
                     if (columns[colIdx].filter || columns[colIdx].type === "select1") {
                         var select = $('<select class="form-control"/>')
@@ -914,6 +924,7 @@ require([
                                 select.append($('<option value="' + d + '">' + d + '</option>'));
                             });
 
+
                         // Set current value
                         if (columns[colIdx].filterValue) {
                             select.val(columns[colIdx].filterValue).trigger('change');
@@ -946,6 +957,7 @@ require([
         // Respond to an error
         globals.gMainTable.on('error.dt', function (e, settings, techNote, message) {
             alert('An error has been reported by DataTables: ', message);
+            gRefreshingData = false;
         });
 
         // Respond to selection of a row
@@ -1041,6 +1053,7 @@ require([
 
         // Set checkboxes in column sort section of settings
 
+        /* performance problem if these are enabled
         $('input', '#tab-columns-content,#tab-barcode-content').iCheck({
             checkboxClass: 'icheckbox_square-green',
             radioClass: 'iradio_square-green'
@@ -1055,15 +1068,18 @@ require([
                 $(this).iCheck('check');
             }
         });
+        */
 
         /*
          * Duplicates modal
          */
-        $('#duplicateSelect').html(hDups.join(''));
-        $('input', '#duplicateSelect').iCheck({
-            checkboxClass: 'icheckbox_square-green',
-            radioClass: 'iradio_square-green'
-        });
+        if(isDuplicates) {
+            $('#duplicateSelect').html(hDups.join(''));
+            $('input', '#duplicateSelect').iCheck({
+                checkboxClass: 'icheckbox_square-green',
+                radioClass: 'iradio_square-green'
+            });
+        }
 
     }
 
@@ -1244,11 +1260,14 @@ require([
 
                     if (typeof callback == "function") {
                         callback();
+                    } else {
+                        gRefreshingData = false;
                     }
                 },
                 error: function (xhr, textStatus, err) {
 
                     removeHourglass();
+                    gRefreshingData = false;
                     if (xhr.readyState == 0 || xhr.status == 0) {
                         return;  // Not an error
                     } else {
@@ -1256,6 +1275,8 @@ require([
                     }
                 }
             });
+        } else {
+            gRefreshingData = false;
         }
     }
 
