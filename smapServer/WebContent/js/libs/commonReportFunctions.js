@@ -131,8 +131,9 @@ function addAnchors (property, minsize) {
                         + '</video>';
                 } else {
                     output[i] = '<a href="' + media.url
-                        + '" target="_blank"><img src="'
-                        + media.thumbNail + '" alt="Picture"></a>';
+                        + '" target="_blank"><img style="width:100%;" src="'
+                        + (minsize ? media.thumbNail : media.url)
+						+ '" alt="Picture"></a>';
                 }
             } else {
                 output[i] = '<a href="' + media.url

@@ -107,12 +107,17 @@ define([
             h[++idx] = ' <div class="col-md-8">';
             if (configItem.readonly) {		// Read only text
                 var v = addAnchors(record[configItem.name])[0];
-                if(v.indexOf('<') == 0) {
+                if(v && v.indexOf('<') == 0) {
                     h[++idx] = v;
                 } else {
-                    h[++idx] = '<input type="text" disabled="" class="form-control" value="';
+                    h[++idx] = ' <textarea readonly style="overflow-y:scroll;" rows=1';
+                    h[++idx] = ' class="form-control">';
                     h[++idx] = v;
-                    h[++idx] = '">';
+                    h[++idx] = '</textarea>';
+
+                    //h[++idx] = '<input type="text" disabled="" class="form-control" value="';
+                    //h[++idx] = v;
+                    //h[++idx] = '">';
                 }
 
             } else {
@@ -142,7 +147,7 @@ define([
             }
 
             if(sourceColumn) {
-                h[++idx] = addSourceQuestion(sourceColumn, record);
+                h[++idx] = addSourceQuestion(sourceColumn, record, column.parameters.rows);
             }
 
             if (column.type === "text") {
@@ -236,7 +241,7 @@ define([
         }
 
 
-        function addSourceQuestion(column, record) {
+        function addSourceQuestion(column, record, ref_rows) {
             var v = addAnchors(record[column.name])[0];
             var h = [];
             var idx = -1;
@@ -244,9 +249,14 @@ define([
             if(v.indexOf('<') == 0) {
                 h[++idx] = v;
             } else {
-                h[++idx] = '<input type="text" disabled="" class="form-control" value="';
+                if(!ref_rows || ref_rows <= 1) {
+                    ref_rows = 1;
+                }
+                h[++idx] = ' <textarea readonly style="overflow-y:scroll;" rows=';
+                h[++idx] = ref_rows;
+                h[++idx] = ' class="form-control">';
                 h[++idx] = v;
-                h[++idx] = '">';
+                h[++idx] = '</textarea>';
             }
 
             return h.join('');

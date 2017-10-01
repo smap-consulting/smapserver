@@ -229,6 +229,7 @@ define({
     "c_discard": "Discard",
     "c_keys": "Keys",
     "c_counts": "Counts",
+    "c_unsav": "You have unsaved changes are you sure you want to leave?",
 
     // File Types
     "ft": "File Type",
@@ -580,6 +581,10 @@ define({
     "ed_range": "Range",
     "ed_qs": "Questions set ",
     "ed_ee": "Don't include empty answers in reports",
+    "ed_er": "Cannot save until errors are fixed",
+    "ed_blocked": "The survey has been blocked. Changes cannot be saved.  You can unblock the survey on the form management page.",
+    "ed_cml": "Cannot modify languages while there are unsaved changes",
+    "ed_csr": "Cannot set questions required, or not required, while there are unsaved changes",
 
 
     // Managed Forms

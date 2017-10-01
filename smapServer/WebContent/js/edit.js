@@ -194,7 +194,7 @@ $(document).ready(function() {
 	// Add menu functions
 	$('#m_open').off().click(function() {	// Open an existing form
 		if(globals.changes.length > 0) {
-			if (confirm("You have unsaved changes are you sure you want to leave?")) {
+			if (confirm(localise.set["c_unsav"])) {
 				openForm("existing");
 			}
 		} else {
@@ -204,7 +204,7 @@ $(document).ready(function() {
 	});
 	$('#m_new').off().click(function() {	// Open a new form
 		if(globals.changes.length > 0) {
-			if (confirm("You have unsaved changes are you sure you want to leave?")) {
+			if (confirm(localise.set["c_unsav"])) {
 				openForm("new");
 			}
 		} else {
@@ -215,13 +215,12 @@ $(document).ready(function() {
 	$('.m_save_survey').off().click(function() {	// Save a survey to the server
 		changeset.validateAll();
 		if(globals.model.survey.blocked) {
-			bootbox.alert("The survey has been blocked. Changes cannot be saved.  You can unblock the " +
-			"survey on the form management page.");
+			bootbox.alert(localise.set["ed_blocked"]);
 		} else {
 			if(changeset.numberIssues("error") === 0) {
 				changeset.save(surveyListDone);
 			} else {
-				bootbox.alert("Cannot save until errors are fixed");
+				bootbox.alert(localise.set["ed_er"]);
 			}
 		}
 	});
@@ -241,7 +240,7 @@ $(document).ready(function() {
 	$('.m_languages').off().click(function() {
 		
 		if($(this).closest('li').hasClass('disabled')) {
-			bootbox.alert("Cannot modify languages while there are unsaved changes");
+			bootbox.alert(localise.set["ed_cml"]);
 		} else {
 			gTempLanguages = globals.model.survey.languages.slice();
 			updateLanguageView();
@@ -261,7 +260,7 @@ $(document).ready(function() {
 
     $('#m_required').off().click(function() {
 		if($(this).closest('li').hasClass('disabled')) {
-			bootbox.alert("Cannot set questions required while there are unsaved changes");
+			bootbox.alert(localise.set["ed_csr"]);
 		} else {
 			setAllRequired(true);
 		}
@@ -269,7 +268,7 @@ $(document).ready(function() {
 	
 	$('#m_not_required').off().click(function() {
 		if($(this).closest('li').hasClass('disabled')) {
-			bootbox.alert("Cannot set questions not required while there are unsaved changes");
+			bootbox.alert(localise.set["ed_csr"]);
 		} else {
 			setAllRequired(false);
 		}

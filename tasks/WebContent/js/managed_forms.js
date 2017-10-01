@@ -45,7 +45,7 @@ requirejs.config({
         lang_location: '../../../../js',
         file_input: '../../../../js/libs/bootstrap.file-input',
         datetimepicker: '../../../../js/libs/bootstrap-datetimepicker.min',
-        datatables: '../../../../js/libs/DataTables/datatables',
+        datatables: '../../../../js/libs/DataTables/datatables.min',
         'datatables.net': '../../../../js/libs/DataTables/DataTables/js/datatables.net',
         'datatables.net-bs': '../../../../js/libs/DataTables/DataTables/js/datatables.bootstrap',
         'datatables.select': '../../../../js/libs/DataTables/Select/js/dataTables.select.min',
@@ -204,7 +204,7 @@ require([
 
         /*
          * Set up dialog to edit a record
-         */
+         *xxxx
         $('#editRecord').on('show.bs.modal', function (event) {
             var
                 record = gTasks.gSelectedRecord,
@@ -219,6 +219,26 @@ require([
             }
             actioncommon.showEditRecordForm(record, columns, $editForm, $surveyForm);
 
+        });
+        */
+        $('#exitEditRecord').click(function() {
+            if(gTasks.gUpdate.length > 0) {
+                if (!confirm(localise.set["c_unsav"])) {
+                    return;
+                }
+            }
+            $('.overviewSection').show();
+            $('.editRecordSection').hide();
+        });
+
+        $('#er_form_data').change(function(){
+            if($(this).prop('checked')) {
+                $('.showFormData').show();
+                $('.showMgmtData').addClass('col-sm-6').removeClass('col-sm-12');
+            } else {
+                $('.showFormData').hide();
+                $('.showMgmtData').addClass('col-sm-12').removeClass('col-sm-6');
+            }
         });
 
         /*
@@ -236,6 +256,9 @@ require([
                 data: {settings: saveString},
                 success: function (data, status) {
                     removeHourglass();
+                    gTasks.gUpdate = [];
+                    $('#saveRecord').prop("disabled", true);
+
                     globals.gMainTable.ajax.reload();
                 }, error: function (data, status) {
                     removeHourglass();
@@ -966,7 +989,21 @@ require([
             var rowData = globals.gMainTable.rows(indexes).data().toArray();
             if (isManagedForms) {
                 gTasks.gSelectedRecord = rowData[0];
-                $('#editRecord').modal("show");
+                //$('#editRecord').modal("show"); xxxx
+                var
+                    record = gTasks.gSelectedRecord,
+                    columns = gTasks.cache.surveyConfig[globals.gViewId].columns,
+                    $editForm = $('#editRecordForm'),
+                    $surveyForm = $('#surveyForm');
+
+                $('.shareRecordOnly, .role_select').hide();
+                $('#srLink').val("");
+                if (globals.gIsSecurityAdministrator) {
+                    getSurveyRoles(globals.gCurrentSurvey);
+                }
+                actioncommon.showEditRecordForm(record, columns, $editForm, $surveyForm);
+                $('.overviewSection').hide();
+                $('.editRecordSection').show();
             } else if (isBrowseResults) {
                 // TODO check if the user has maintain privilege
             }

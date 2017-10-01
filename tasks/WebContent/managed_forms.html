@@ -125,7 +125,8 @@
                 <ul class="nav navbar-top-links navbar-right">
 
                     <li>
-                        <a href="#" id="m_refresh"><span class="lang" data-lang="m_refresh">refresh</span></a>
+                        <a href="#" id="m_refresh"><span class="lang overviewSection"
+                                                         data-lang="m_refresh">refresh</span></a>
                     </li>
                     <li>
                         <a class="right-sidebar-toggle">
@@ -139,7 +140,7 @@
         </div>
 
         <!-- Header Row -->
-        <div class="row wrapper border-bottom white-bg page-heading">
+        <div class="row wrapper border-bottom white-bg page-heading overviewSection">
             <div class="row">
                 <div class="col-sm-2">
                     <h2 class="lang" data-lang="m_mf">manage</h2>
@@ -196,9 +197,8 @@
             </div>
         </div>
 
-
         <div class="wrapper wrapper-content animated fadeInRight">
-            <div class="row">
+            <div class="row overviewSection">
                 <div class="col-md-12">
                     <div class="ibox float-e-margins">
                         <div class="ibox-title">
@@ -308,6 +308,66 @@
                 </div>
             </div>
 
+            <div class="row editRecordSection" style="display:none;">
+                <div class="col-md-12">
+                    <div class="ibox float-e-margins">
+                        <div class="ibox-content">
+                            <div class="row border-bottom">
+                                <div class="col-md-12">
+                                    <label>
+                                        <input type="checkbox" name="formdata" value="yes" id="er_form_data" checked="checked" />
+                                        <span class="lang" data-lang="mf_fd">form data</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-sm-6 b-r showFormData">
+                                    <h3 class="m-t-none m-b lang" data-lang="mf_fd">form data</h3>
+                                    <form id="surveyForm" role="form" class="form-horizontal">
+
+                                    </form>
+                                </div>
+                                <div class="col-sm-6 b-r showMgmtData"><h3 class="m-t-none m-b lang" data-lang="mf_md">mgmt data</h3>
+
+                                    <form id="editRecordForm" role="form" class="form-horizontal">
+
+                                    </form>
+                                    <button id="exitEditRecord" type="button" class="btn btn-default lang" data-lang="c_back">
+                                        back
+                                    </button>
+                                    <button id="saveRecord" type="button" class="btn btn-primary lang"
+                                            data-dismiss="modal"
+                                            data-lang="c_save">Save
+                                    </button>
+                                    <button id="shareRecord" type="button" class="btn btn-info"><span class="lang"
+                                                                                                      data-lang="n_share">get link</span>
+                                    </button>
+                                    <div class="shareRecordOnly well">
+                                        <form role="form" class="form-horizontal">
+                                            <div class="form-group role_select">
+                                                <h4 class="lang" data-lang="c_roles">roles</h4>
+                                                <div class="role_select_roles"></div>
+                                            </div>
+                                            <div class="form-group">
+                                                <div class="input-group">
+                                                    <span class="input-group-btn">
+                                                        <button id="getSharedRecord" class="btn btn-info" type="button"><i
+                                                                class="fa fa-share-alt"></i></button>
+                                                    </span>
+                                                    <input type="text" id="srLink" required class="form-control"
+                                                           readonly>
+                                                </div>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </div>
 
@@ -361,7 +421,7 @@
 
 </div>
 
-<!-- Modal to edit a record -->
+<!-- Modal to edit a record
 <div id="editRecord" class="modal fade" aria-hidden="true">
     <div class="modal-dialog custom-modal-width">
         <div class="modal-content">
@@ -415,7 +475,7 @@
         </div>
     </div>
 </div>
-
+-->
 <!-- Modal to edit a chart widget -->
 <div id="editChart" class="modal fade" aria-hidden="true">
     <div class="modal-dialog custom-modal-width">
