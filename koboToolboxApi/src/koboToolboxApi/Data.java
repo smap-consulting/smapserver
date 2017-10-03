@@ -51,6 +51,7 @@ import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.managers.CustomReportsManager;
 import org.smap.sdal.managers.LogManager;
 import org.smap.sdal.managers.TableDataManager;
+import org.smap.sdal.model.ReportConfig;
 import org.smap.sdal.model.TableColumn;
 
 /*
@@ -259,8 +260,8 @@ public class Data extends Application {
 
 			if(mgmt) {
 				CustomReportsManager crm = new CustomReportsManager ();
-				ArrayList<TableColumn> managedColumns = crm.get(sd, managedId, -1);
-				columns.addAll(managedColumns);
+				ReportConfig config = crm.get(sd, managedId, -1);
+				columns.addAll(config.columns);
 			}
 
 			TableDataManager tdm = new TableDataManager();
@@ -458,8 +459,8 @@ public class Data extends Application {
 
 			if(mgmt) {
 				CustomReportsManager crm = new CustomReportsManager ();
-				ArrayList<TableColumn> managedColumns = crm.get(sd, managedId, -1);
-				columns.addAll(managedColumns);
+				ReportConfig config = crm.get(sd, managedId, -1);
+				columns.addAll(config.columns);
 			}
 
 			if(GeneralUtilityMethods.tableExists(cResults, table_name)) {

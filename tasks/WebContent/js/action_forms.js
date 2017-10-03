@@ -135,6 +135,16 @@ require([
         gTasks.cache.surveyConfig[globals.gViewId].columns = gSurveyConfig.columns;
         gTasks.gSelectedRecord = gRecord[0];
 
+        $('#er_form_data').change(function(){
+            if($(this).prop('checked')) {
+                $('.showFormData').show();
+                $('.showMgmtData').addClass('col-sm-6').removeClass('col-sm-12');
+            } else {
+                $('.showFormData').hide();
+                $('.showMgmtData').addClass('col-sm-12').removeClass('col-sm-6');
+            }
+        });
+
         // Show the dialog
         actioncommon.showEditRecordForm(gRecord[0], gSurveyConfig.columns, $editForm, $surveyForm);
 

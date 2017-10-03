@@ -114,10 +114,6 @@ define([
                     h[++idx] = ' class="form-control">';
                     h[++idx] = v;
                     h[++idx] = '</textarea>';
-
-                    //h[++idx] = '<input type="text" disabled="" class="form-control" value="';
-                    //h[++idx] = v;
-                    //h[++idx] = '">';
                 }
 
             } else {

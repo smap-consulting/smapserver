@@ -46,6 +46,7 @@ import org.smap.sdal.model.Form;
 import org.smap.sdal.model.Link;
 import org.smap.sdal.model.ManagedFormItem;
 import org.smap.sdal.model.Role;
+import org.smap.sdal.model.SurveyViewDefn;
 import org.smap.sdal.model.TableColumn;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -339,10 +340,10 @@ public class ManagedForms extends Application {
 			
 		if(managedId > 0 && sId > 0) {
 				
-			try {
-				ArrayList<TableColumn> managedColumns = new ArrayList<TableColumn> ();				
+			try {	
+				SurveyViewDefn svd = new SurveyViewDefn();
 				SurveyViewManager qm = new SurveyViewManager();
-				qm.getDataProcessingConfig(sd, managedId, managedColumns, null, oId);
+				qm.getDataProcessingConfig(sd, managedId, svd, null, oId);
 					
 				org.smap.sdal.model.Form f = GeneralUtilityMethods.getTopLevelForm(sd, sId);	// Get the table name of the top level form		
 				ArrayList<TableColumn> formColumns = GeneralUtilityMethods.getColumnsInForm(sd, 
@@ -365,7 +366,7 @@ public class ManagedForms extends Application {
 						false		// Don't include audit data
 						);
 				
-				for(TableColumn mc : managedColumns) {
+				for(TableColumn mc : svd.columns) {
 					
 					if(mc.type.equals("calculate")) {
 						
@@ -374,7 +375,7 @@ public class ManagedForms extends Application {
 							boolean referenceExists = false;
 							
 							// Check to see if the referenced column is in the managed form
-							for(TableColumn mc2 : managedColumns) {
+							for(TableColumn mc2 : svd.columns) {
 								if(refColumn.equals(mc2.name)) {
 									referenceExists = true;
 									break;
@@ -403,6 +404,7 @@ public class ManagedForms extends Application {
 					
 				}
 			} catch (Exception e) {
+				log.log(Level.SEVERE, e.getMessage(), e);
 				compatibleMsg.append(e.getMessage());
 			}
 		}

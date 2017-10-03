@@ -7,6 +7,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -17,6 +18,7 @@ import org.smap.sdal.model.KeyValue;
 import org.smap.sdal.model.SurveyViewDefn;
 import org.smap.sdal.model.ManagedFormItem;
 import org.smap.sdal.model.MapLayer;
+import org.smap.sdal.model.ReportConfig;
 import org.smap.sdal.model.TableColumn;
 import org.smap.sdal.model.TableColumnConfig;
 
@@ -190,7 +192,7 @@ public class SurveyViewManager {
 			 * Add the managed form columns and configuration
 			 */
 			if(managedId > 0) {
-				getDataProcessingConfig(sd, managedId, svd.columns, configColumns, oId);
+				getDataProcessingConfig(sd, managedId, svd, configColumns, oId);
 			}
 			
 			/*
@@ -365,14 +367,18 @@ public class SurveyViewManager {
 	 * Get the managed columns
 	 */
 	public void getDataProcessingConfig(Connection sd, int crId, 
-			ArrayList<TableColumn> formColumns, 
+			SurveyViewDefn svd, 
 			ArrayList<TableColumnConfig> configColumns,
 			int oId) throws Exception {
 		
 		CustomReportsManager crm = new CustomReportsManager ();
-		ArrayList<TableColumn> managedColumns = crm.get(sd, crId, oId);
-		for(int i = 0; i < managedColumns.size(); i++) {
-			TableColumn tc = managedColumns.get(i);
+		ReportConfig config = crm.get(sd, crId, oId);
+		
+		// Get the managed form's parameters
+		svd.parameters = config.settings;
+		
+		for(int i = 0; i < config.columns.size(); i++) {
+			TableColumn tc = config.columns.get(i);
 
 			tc.mgmt = true;
 			if(configColumns != null) {
@@ -388,10 +394,10 @@ public class SurveyViewManager {
 			}
 			
 			// remove columns from the data form that are in the configuration form
-			for(int j = 0; j < formColumns.size(); j++) {
-				TableColumn fc = formColumns.get(j);
+			for(int j = 0; j < svd.columns.size(); j++) {
+				TableColumn fc = svd.columns.get(j);
 				if(fc.name.equals(tc.name)) {
-					formColumns.remove(j);
+					svd.columns.remove(j);
 					break;
 				}
 			}
@@ -409,7 +415,7 @@ public class SurveyViewManager {
 				tc.choices = newChoices;
 			}
 			// Add the management column to the array of columns
-			formColumns.add(tc);
+			svd.columns.add(tc);
 		}
 		
 	}

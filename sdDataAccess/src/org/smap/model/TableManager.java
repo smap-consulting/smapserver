@@ -14,6 +14,7 @@ import org.smap.model.SurveyTemplate;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.managers.SurveyViewManager;
 import org.smap.sdal.model.ChangeItem;
+import org.smap.sdal.model.SurveyViewDefn;
 import org.smap.sdal.model.TableColumn;
 import org.smap.server.entities.Form;
 import org.smap.server.entities.Option;
@@ -146,14 +147,14 @@ public class TableManager {
 			String sqlAdd = null;
 			PreparedStatement pstmtAdd = null;
 
-			ArrayList<TableColumn> columns = new ArrayList<TableColumn> ();
+			SurveyViewDefn svd = new SurveyViewDefn();
 			SurveyViewManager qm = new SurveyViewManager();
-			qm.getDataProcessingConfig(sd, managedId, columns, null, GeneralUtilityMethods.getOrganisationIdForSurvey(sd, sId));
+			qm.getDataProcessingConfig(sd, managedId, svd, null, GeneralUtilityMethods.getOrganisationIdForSurvey(sd, sId));
 
 			org.smap.sdal.model.Form f = GeneralUtilityMethods.getTopLevelForm(sd, sId);	// Get the table name of the top level form
 
-			for(int i = 0; i < columns.size(); i++) {
-				TableColumn tc = columns.get(i);
+			for(int i = 0; i < svd.columns.size(); i++) {
+				TableColumn tc = svd.columns.get(i);
 				if(tc.type != null) {
 
 					if(tc.type.equals("calculate")) {

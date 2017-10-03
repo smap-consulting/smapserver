@@ -743,7 +743,7 @@ require([
 
         globals.gViewId = 0;        // TODO remember views set for each survey and restore
 
-        if (globals.gCurrentSurvey > 0) {
+        if (globals.gCurrentSurvey > 0 && typeof gTasks.gSelectedSurveyIndex !== "undefined") {
 
             saveCurrentProject(-1, globals.gCurrentSurvey);
             if (isManagedForms) {
@@ -804,6 +804,7 @@ require([
 
         var x = 1,
             columns = gTasks.cache.surveyConfig[globals.gViewId].columns,
+            parameters,
             shownColumns = [],
             hiddenColumns = [],
             visibleColumns = [],
@@ -913,7 +914,13 @@ require([
                     chart.refreshAllCharts(gChartView, gTimingView, true);
                 }
                 columns = gTasks.cache.surveyConfig[globals.gViewId].columns;
+                parameters = gTasks.cache.surveyConfig[globals.gViewId].parameters;
 
+                if(parameters && parameters.form_data === 'off') {
+                    $('.manageFormData').hide();
+                    $('.showFormData').hide();
+                    $('.showMgmtData').addClass('col-sm-12').removeClass('col-sm-6');
+                }
                 globals.gMainTable.columns().flatten().each(function (colIdx) {
                     if (columns[colIdx].filter || columns[colIdx].type === "select1") {
                         var select = $('<select class="form-control"/>')

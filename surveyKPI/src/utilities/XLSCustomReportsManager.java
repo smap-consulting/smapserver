@@ -52,6 +52,7 @@ import org.smap.sdal.model.LQAS;
 import org.smap.sdal.model.LQASGroup;
 import org.smap.sdal.model.LQASItem;
 import org.smap.sdal.model.LQASdataItem;
+import org.smap.sdal.model.ReportConfig;
 import org.smap.sdal.model.SurveyViewDefn;
 import org.smap.sdal.model.SqlFrag;
 import org.smap.sdal.model.TableColumn;
@@ -170,10 +171,11 @@ public class XLSCustomReportsManager {
 	/*
 	 * Create an oversight form definition from an XLS file
 	 */
-	public ArrayList<TableColumn> getOversightDefinition(Connection sd, int oId, String type, 
+	public ReportConfig getOversightDefinition(Connection sd, int oId, String type, 
 			InputStream inputStream, ResourceBundle localisation, boolean isSecurityManager) throws Exception {
 		
-		ArrayList<TableColumn> defn = new ArrayList<TableColumn> ();
+		ReportConfig config = new ReportConfig();
+		config.columns = new ArrayList<TableColumn> ();
 		Sheet sheet = null;
 		Sheet settingsSheet = null;
         Row row = null;
@@ -259,7 +261,7 @@ public class XLSCustomReportsManager {
 	                			// Process the row
 		                		if(rowType.equals("column")) {
 		                			currentCol = new TableColumn();
-		                			defn.add(currentCol);
+		                			config.columns.add(currentCol);
 		                			
 		                			// Get data type
 		                			String dataType = getColumn(row, "data type", header, lastCellNum, null);
@@ -339,27 +341,7 @@ public class XLSCustomReportsManager {
 		                			}
 		                			
 		                			// Get parameters
-		                			String parameters = getColumn(row, "parameters", header, lastCellNum, null);
-		                			currentCol.parameters = null;
-		                			if(parameters != null) {
-		                				currentCol.parameters = new HashMap<String, String> ();
-		                				String [] params = parameters.split(" ");
-		                				for(int i = 0; i < params.length; i++) {
-		                					String[] p = params[i].split("=");
-		                					if(p.length > 1) {
-		                						if(p[0].equals("rows")) {
-			                						try {
-			                							int rows = Integer.valueOf(p[1]);
-			                							currentCol.parameters.put(p[0], p[1]);
-			                						} catch (Exception e) {
-			                							// Ignore exceptions
-			                						}
-		                						} else if(p[0].equals("source")) {	
-		                							currentCol.parameters.put(p[0], p[1]);						
-		                						}
-		                					} 
-		                				}
-		                			}
+		                			currentCol.parameters = getParamObj(getColumn(row, "parameters", header, lastCellNum, null));
 		                			
 		                			// Get calculation state
 		                			if(currentCol.type.equals("calculate")) {
@@ -522,6 +504,8 @@ public class XLSCustomReportsManager {
 		                						" " + localisation.getString("mf_or") + ": " + (j + 1));
 		                			} 
 		                			
+		                		} else if(rowType.equals("settings")) {
+		                			config.settings = getParamObj(getColumn(row, "parameters", header, lastCellNum, null));
 		                		} else {
 		                			throw new Exception(localisation.getString("mf_ur") + 
 		                					" " + localisation.getString("mf_or") + ": " + (j + 1));
@@ -543,7 +527,7 @@ public class XLSCustomReportsManager {
 			}
 		}
 	
-		return defn;
+		return config;
 		
 		
 	}
@@ -558,7 +542,7 @@ public class XLSCustomReportsManager {
 			int oId, 
 			String type, 
 			OutputStream outputStream, 
-			ArrayList<TableColumn> defn,
+			ReportConfig config,
 			ResourceBundle localisation) throws Exception {
 		
         boolean isXLSX;
@@ -577,7 +561,7 @@ public class XLSCustomReportsManager {
 		
 		ArrayList<Column> cols = getColumnList(localisation);
 		createHeader(cols, sheet, styles);	
-		processCustomReportListForXLS(defn, sheet, styles, cols);
+		processCustomReportListForXLS(config, sheet, styles, cols);
 		
 		wb.write(outputStream);
 		outputStream.close();
@@ -1023,16 +1007,15 @@ public class XLSCustomReportsManager {
 	}
 
 	/*
-	 * Convert an oversight list array to XLS
+	 * Convert an oversight report configurationto XLS
 	 */
 	private void processCustomReportListForXLS(
-			ArrayList<TableColumn> defn, 
+			ReportConfig config, 
 			Sheet sheet,
 			Map<String, CellStyle> styles,
 			ArrayList<Column> cols) throws IOException {
 		
-		System.out.println("Number of columns: " + defn.size());
-		for(TableColumn tc : defn)  {
+		for(TableColumn tc : config.columns)  {
 				
 			Row row = sheet.createRow(rowNumber++);
 			
@@ -1122,6 +1105,35 @@ public class XLSCustomReportsManager {
 			cell.setCellStyle(style);	
 			cell.setCellValue(value);
 		}
+	}
+	
+	private HashMap<String, String> getParamObj(String parameters) {
+		
+		HashMap<String, String> paramObj = null;
+		
+		if(parameters != null) {
+			paramObj = new HashMap<String, String> ();
+			String [] params = parameters.split(" ");
+			for(int i = 0; i < params.length; i++) {
+				String[] p = params[i].split("=");
+				if(p.length > 1) {
+					if(p[0].equals("rows")) {
+						try {
+							int rows = Integer.valueOf(p[1]);
+							paramObj.put(p[0], p[1]);
+						} catch (Exception e) {
+							// Ignore exceptions
+						}
+					} else if(p[0].equals("source")) {	
+						paramObj.put(p[0], p[1]);						
+					} else if(p[0].equals("form_data")) {	
+						paramObj.put(p[0], p[1]);						
+					}
+				} 
+			}
+		}
+		
+		return paramObj;
 	}
 	
 }

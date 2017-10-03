@@ -49,6 +49,7 @@ import org.smap.sdal.managers.SurveyManager;
 import org.smap.sdal.model.ChangeSet;
 import org.smap.sdal.model.CustomReportItem;
 import org.smap.sdal.model.LQAS;
+import org.smap.sdal.model.ReportConfig;
 import org.smap.sdal.model.Survey;
 import org.smap.sdal.model.TableColumn;
 
@@ -59,6 +60,7 @@ import java.io.File;
 import java.io.IOException;
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
@@ -412,7 +414,6 @@ public class UploadFiles extends Application {
 			String fieldName = null;
 			String reportName = null;
 			String reportType = null;
-			String returnType = null;
 
 			while(itr.hasNext()) {
 				
@@ -424,9 +425,7 @@ public class UploadFiles extends Application {
 						reportName = item.getString();
 					} else if(fieldName.equals("type")) {
 						reportType = item.getString();
-					} else if(fieldName.equals("returntype")) {
-						returnType = item.getString();
-					}
+					} 
 				} else if(!item.isFormField()) {
 					// Handle Uploaded files.
 					log.info("Field Name = "+item.getFieldName()+
@@ -471,12 +470,17 @@ public class UploadFiles extends Application {
 				
 				// Process xls file
 				XLSCustomReportsManager xcr = new XLSCustomReportsManager();
-				ArrayList<TableColumn> config = xcr.getOversightDefinition(sd, oId, filetype, fileItem.getInputStream(), localisation, isSecurityManager);
+				ReportConfig config = xcr.getOversightDefinition(sd, 
+						oId, 
+						filetype, 
+						fileItem.getInputStream(), 
+						localisation, 
+						isSecurityManager);
 				
 				/*
 				 * Only save configuration if we found some columns, otherwise its likely to be an error
 				 */
-				if(config.size() > 0) {
+				if(config.columns.size() > 0) {
 					
 					// Save configuration to the database
 					log.info("userevent: " + request.getRemoteUser() + " : upload custom report from xls file: " + fileName + " for organisation: " + oId);
@@ -486,9 +490,9 @@ public class UploadFiles extends Application {
 					String configString = gson.toJson(config);
 					
 					crm.save(sd, reportName, configString, oId, reportType);
-					lm.writeLog(sd, 0, request.getRemoteUser(), "resources", config.size() + " custom report definition uploaded from file " + fileName);
+					lm.writeLog(sd, 0, request.getRemoteUser(), "resources", config.columns.size() + " custom report definition uploaded from file " + fileName);
 					
-					ArrayList<CustomReportItem> reportsList = crm.getList(sd, oId, returnType, false);
+					ArrayList<CustomReportItem> reportsList = crm.getList(sd, oId, reportType, false);
 					// Return custom report list			 
 					String resp = gson.toJson(reportsList);
 				

@@ -22,6 +22,8 @@ import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.model.Action;
 import org.smap.sdal.model.Form;
 import org.smap.sdal.model.Project;
+import org.smap.sdal.model.ReportConfig;
+import org.smap.sdal.model.SurveyViewDefn;
 import org.smap.sdal.model.TableColumn;
 import org.smap.sdal.model.User;
 import com.google.gson.Gson;
@@ -312,9 +314,9 @@ public class ActionManager {
 			/*
 			 * Get the data processing columns
 			 */
-			ArrayList<TableColumn> columns = new ArrayList<TableColumn>();
+			SurveyViewDefn svd = new SurveyViewDefn();
 			SurveyViewManager svm = new SurveyViewManager();
-			svm.getDataProcessingConfig(sd, managedId, columns, null, oId);
+			svm.getDataProcessingConfig(sd, managedId, svd, null, oId);
 
 			Form f = GeneralUtilityMethods.getTopLevelForm(sd, sId); // Get the table name of the top level form
 			DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
@@ -333,8 +335,8 @@ public class ActionManager {
 				// 2. Confirm this is an editable managed column
 				boolean updateable = false;
 				TableColumn tc = null;
-				for (int j = 0; j < columns.size(); j++) {
-					TableColumn xx = columns.get(j);
+				for (int j = 0; j < svd.columns.size(); j++) {
+					TableColumn xx = svd.columns.get(j);
 					if (xx.name.equals(u.name)) {
 						if (!xx.readonly) {
 							updateable = true;

@@ -52,6 +52,7 @@ import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.managers.CustomReportsManager;
 import org.smap.sdal.managers.LogManager;
 import org.smap.sdal.managers.TableDataManager;
+import org.smap.sdal.model.ReportConfig;
 import org.smap.sdal.model.TableColumn;
 
 import com.google.gson.Gson;
@@ -277,8 +278,8 @@ public class Data_CSV extends Application {
 
 			if (mgmt) {
 				CustomReportsManager crm = new CustomReportsManager();
-				ArrayList<TableColumn> managedColumns = crm.get(sd, managedId, -1);
-				columns.addAll(managedColumns);
+				ReportConfig config = crm.get(sd, managedId, -1);
+				columns.addAll(config.columns);
 			}
 
 			boolean colHeadingAdded = false;

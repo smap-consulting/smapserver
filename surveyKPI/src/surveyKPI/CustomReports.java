@@ -39,6 +39,7 @@ import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.managers.CustomReportsManager;
 import org.smap.sdal.model.CustomReportItem;
+import org.smap.sdal.model.ReportConfig;
 import org.smap.sdal.model.TableColumn;
 
 import com.google.gson.Gson;
@@ -209,7 +210,7 @@ public class CustomReports extends Application {
 			ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
 			
 			CustomReportsManager crm = new CustomReportsManager ();
-			ArrayList<TableColumn> defn = crm.get(sd, id, oId);
+			ReportConfig config = crm.get(sd, id, oId);
 			
 			GeneralUtilityMethods.setFilenameInResponse(filename + "." + filetype, response);
 			response.setHeader("Content-type",  "application/vnd.ms-excel; charset=UTF-8");
@@ -221,7 +222,7 @@ public class CustomReports extends Application {
 					oId,
 					filetype,
 					response.getOutputStream(), 
-					defn, 
+					config, 
 					localisation);
 			
 			responseVal = Response.ok().build();

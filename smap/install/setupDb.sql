@@ -448,7 +448,7 @@ CREATE TABLE custom_report (
 	o_id integer REFERENCES organisation(id) ON DELETE CASCADE,
 	name text,
 	type text,								-- oversight || lqas
-	config text								-- Custom report configuration as json object
+	config text								-- Custom report columns as json object
 	);
 ALTER TABLE custom_report OWNER TO ws;
 CREATE UNIQUE INDEX custom_report_name ON custom_report(o_id, name);
