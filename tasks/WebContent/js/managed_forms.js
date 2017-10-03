@@ -222,13 +222,14 @@ require([
         });
         */
         $('#exitEditRecord').click(function() {
-            if(gTasks.gUpdate.length > 0) {
-                if (!confirm(localise.set["c_unsav"])) {
-                    return;
-                }
-            }
-            $('.overviewSection').show();
-            $('.editRecordSection').hide();
+            window.history.back();
+            //exitEdit();
+            //history.popstate();
+        });
+
+        window.addEventListener("popstate", function(e) {
+            exitEdit();
+            return false;
         });
 
         $('#er_form_data').change(function(){
@@ -921,6 +922,7 @@ require([
                     $('.showFormData').hide();
                     $('.showMgmtData').addClass('col-sm-12').removeClass('col-sm-6');
                 }
+
                 globals.gMainTable.columns().flatten().each(function (colIdx) {
                     if (columns[colIdx].filter || columns[colIdx].type === "select1") {
                         var select = $('<select class="form-control"/>')
@@ -995,6 +997,7 @@ require([
             .off('select').on('select', function (e, dt, type, indexes) {
             var rowData = globals.gMainTable.rows(indexes).data().toArray();
             if (isManagedForms) {
+                window.location.hash="#edit";
                 gTasks.gSelectedRecord = rowData[0];
                 //$('#editRecord').modal("show"); xxxx
                 var
@@ -1629,9 +1632,16 @@ require([
         }
         
         $('#date_question').empty().html(h.join(''));
+    }
 
-
-
+    function exitEdit() {
+        if(gTasks.gUpdate.length > 0) {
+            if (!confirm(localise.set["c_unsav"])) {
+                return;
+            }
+        }
+        $('.overviewSection').show();
+        $('.editRecordSection').hide();
     }
 
 });

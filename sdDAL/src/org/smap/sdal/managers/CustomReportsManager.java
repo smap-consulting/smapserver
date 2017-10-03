@@ -103,7 +103,7 @@ public class CustomReportsManager {
 				if (negateType) {
 					pstmt = sd.prepareStatement(sql1 + sql2b + sql3);
 				} else {
-					if(type.equals("oversight")) {
+					if(type.equals("oversight") || type.equals("oversight1")) {
 						// Temporarily add for backward compatibility version 17.09
 						pstmt = sd.prepareStatement(sql1 + sql4 + sql3);
 					} else {
@@ -115,7 +115,7 @@ public class CustomReportsManager {
 			}
 
 			pstmt.setInt(1, oId);
-			if (type != null && !type.equals("oversight")) {
+			if (type != null && !type.equals("oversight") && !type.equals("oversight1")) {
 				pstmt.setString(2, type);
 			}
 
