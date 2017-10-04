@@ -1119,7 +1119,7 @@ public class XLSCustomReportsManager {
 				if(p.length > 1) {
 					if(p[0].equals("rows")) {
 						try {
-							int rows = Integer.valueOf(p[1]);
+							int rows = Integer.valueOf(p[1]);   // Check that rows is an integer
 							paramObj.put(p[0], p[1]);
 						} catch (Exception e) {
 							// Ignore exceptions
@@ -1128,7 +1128,10 @@ public class XLSCustomReportsManager {
 						paramObj.put(p[0], p[1]);						
 					} else if(p[0].equals("form_data")) {	
 						paramObj.put(p[0], p[1]);						
+					} else if(p[0].equals("auto")) {	
+						paramObj.put(p[0], p[1]);						
 					}
+					// Ignore parameters that we don't know about
 				} 
 			}
 		}

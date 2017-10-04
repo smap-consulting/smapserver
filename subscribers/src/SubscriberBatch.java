@@ -322,6 +322,7 @@ public class SubscriberBatch {
 			// Erase any templates that were deleted more than a set time ago
 			eraseOldTemplates(sd, cResults, basePath);
 			
+			// Send any pending messages
 			MessagingManagerApply mma = new MessagingManagerApply();
 			String serverName = GeneralUtilityMethods.getSubmissionServer(sd);
 			mma.applyOutbound(sd, serverName);

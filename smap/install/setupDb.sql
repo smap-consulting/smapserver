@@ -413,6 +413,7 @@ CREATE TABLE survey (
 	instance_name text,								-- The rule for naming a survey instance form its data
 	last_updated_time DATE,
 	managed_id integer,								-- Identifier of configuration for managing records
+	auto_update_image boolean default false,			-- Set true if the managed form requires an image to be automatically updated
 	loaded_from_xls boolean default false,			-- Set true if the survey was initially loaded from an XLS Form
 	hrk text,										-- human readable key
 	key_policy text,								-- Whether to discard, add or merge duplicates of the HRK

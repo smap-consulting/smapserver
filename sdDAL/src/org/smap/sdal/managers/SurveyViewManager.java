@@ -517,9 +517,7 @@ public class SurveyViewManager {
 		}
 		return keep;
 	}
-	
-	
-	
+		
 	/*
 	 * Set a default hide value
 	 */
@@ -542,11 +540,6 @@ public class SurveyViewManager {
 		
 		return hide;
 	}
-	
-
-	
-
-	
 }
 
 

@@ -81,63 +81,6 @@ public class ManagedForms extends Application {
 		authorisations.add(Authorise.MANAGE);		// Enumerators with MANAGE access can process managed forms
 		a = new Authorise(authorisations, null);		
 	}
-	
-	/*
-	 * Return the management configuration
-	 *
-	@GET
-	@Path("/config/{sId}/{dpId}")
-	@Produces("application/json")
-	public Response getReportConfig(@Context HttpServletRequest request,
-			@PathParam("sId") int sId,
-			@PathParam("dpId") int managedId) { 
-		
-		// Authorisation - Access
-		Connection sd = SDDataSource.getConnection("surveyKPI-GetReportConfig");
-		boolean superUser = false;
-		try {
-			superUser = GeneralUtilityMethods.isSuperUser(sd, request.getRemoteUser());
-		} catch (Exception e) {
-		}
-		a.isAuthorised(sd, request.getRemoteUser());
-		a.isValidSurvey(sd, request.getRemoteUser(), sId, false, superUser);
-		if(managedId > 0) {
-			a.isValidManagedForm(sd, request.getRemoteUser(), managedId);
-		}
-		// End Authorisation
-		
-		Connection cResults = ResultsDataSource.getConnection("surveyKPI-GetReportConfig");
-		Response response = null;
-		Gson gson=  new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd").create();
-		try {
-			int uId = GeneralUtilityMethods.getUserId(sd, request.getRemoteUser());
-			int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser(), 0);
-			SurveyViewManager qm = new SurveyViewManager();
-			SurveyViewDefn mfc = qm.getSurveyView(sd, cResults, uId, 0, sId, managedId, request.getRemoteUser(), oId, superUser);
-
-			// Remove data that is only used on the server
-			for(TableColumn tc : mfc.columns) {
-				tc.actions = null;
-				tc.calculation = null;
-			}
-			response = Response.ok(gson.toJson(mfc)).build();
-		
-				
-		} catch (SQLException e) {
-			log.log(Level.SEVERE, "SQL Error", e);
-		    response = Response.serverError().entity(e.getMessage()).build();			
-		} catch (Exception e) {
-			log.log(Level.SEVERE, "Error", e);
-		    response = Response.serverError().entity(e.getMessage()).build();
-		} finally {
-			SDDataSource.closeConnection("surveyKPI-GetReportConfig", sd);
-			ResultsDataSource.closeConnection("surveyKPI-GetReportConfig", cResults);
-		}
-
-
-		return response;
-	}
-	*/
 
 	/*
 	 * Return the surveys in the project along with their management information
@@ -170,7 +113,6 @@ public class ManagedForms extends Application {
 			SDDataSource.closeConnection("surveyKPI-GetManagedForms", sd);
 		}
 
-
 		return response;
 	}
 	
@@ -190,14 +132,6 @@ public class ManagedForms extends Application {
 		
 		Response response = null;
 		String requester = "surveyMobileAPI-UpdateManagedRecord";
-
-		try {
-		    Class.forName("org.postgresql.Driver");	 
-		} catch (ClassNotFoundException e) {
-			log.log(Level.SEVERE,"Error: Can't find PostgreSQL JDBC Driver", e);
-			response = Response.serverError().build();
-		    return response;
-		}
 		
 		// Authorisation - Access
 		Connection sd = SDDataSource.getConnection(requester);
@@ -245,14 +179,6 @@ public class ManagedForms extends Application {
 			) { 
 		
 		Response response = null;
-
-		try {
-		    Class.forName("org.postgresql.Driver");	 
-		} catch (ClassNotFoundException e) {
-			log.log(Level.SEVERE,"Error: Can't find PostgreSQL JDBC Driver", e);
-			response = Response.serverError().build();
-		    return response;
-		}
 		
 		Gson gson=  new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
 		AddManaged am = gson.fromJson(settings, AddManaged.class);
@@ -284,11 +210,25 @@ public class ManagedForms extends Application {
 			Form f = GeneralUtilityMethods.getTopLevelForm(sd, am.sId);	// Get the table name of the top level form
 			TableManager tm = new TableManager();
 			
+			// 0. Ensure that the form data columns are fully published, don't add managed columns at this stage
+			String sIdent = null;
+			if(am.manageId > 0) {
+				sIdent = GeneralUtilityMethods.getSurveyIdent(sd, am.sId);
+				boolean tableChanged = tm.createTable(cResults, sd, f.tableName, sIdent, am.sId, 0);
+				// Add any previously unpublished columns not in a changeset (Occurs if this is a new survey sharing an existing table)
+				boolean tablePublished = tm.addUnpublishedColumns(sd, cResults, am.sId);			
+				if(tableChanged || tablePublished) {
+					tm.markPublished(sd, am.sId);		// only mark published if there have been changes made
+				}
+			}
+			
 			// 1. Check that the managed form is compatible with the survey
-			String compatibleMsg = compatibleManagedForm(sd, localisation, am.sId, 
-					am.manageId, request.getRemoteUser(), oId, superUser);
-			if(compatibleMsg != null) {
-				throw new Exception(localisation.getString("mf_nc") + " " + compatibleMsg);
+			if(am.manageId > 0) {
+				String compatibleMsg = compatibleManagedForm(sd, localisation, am.sId, 
+						am.manageId, request.getRemoteUser(), oId, superUser);
+				if(compatibleMsg != null) {
+					throw new Exception(localisation.getString("mf_nc") + " " + compatibleMsg);
+				}
 			}
 			
 			// 2. Add the management id to the survey record
@@ -300,13 +240,18 @@ public class ManagedForms extends Application {
 			
 			// 3. Create results tables if they do not exist
 			if(am.manageId > 0) {
-				String sIdent = GeneralUtilityMethods.getSurveyIdent(sd, am.sId);
+				sIdent = GeneralUtilityMethods.getSurveyIdent(sd, am.sId);
 				boolean tableChanged = tm.createTable(cResults, sd, f.tableName, sIdent, am.sId, am.manageId);
 				// Add any previously unpublished columns not in a changeset (Occurs if this is a new survey sharing an existing table)
 				boolean tablePublished = tm.addUnpublishedColumns(sd, cResults, am.sId);			
 				if(tableChanged || tablePublished) {
 					tm.markPublished(sd, am.sId);		// only mark published if there have been changes made
 				}
+			}
+			
+			// 4. Clear the auto update indicators if the managed form is being removed
+			if(am.manageId == 0) {
+				GeneralUtilityMethods.setAutoUpdateImage(sd, am.sId, false);
 			}
 			
 			response = Response.ok().build();
@@ -329,6 +274,8 @@ public class ManagedForms extends Application {
 	 * Verify that
 	 *  1. Calculations in the managed form refer to questions in either the managed form or the form
 	 *     we are attaching to
+	 *     
+	 *  Also add an indicator to the survey if there is an auto update of images required
 	 */
 	private String compatibleManagedForm(Connection sd, ResourceBundle localisation, int sId, 
 			int managedId,
@@ -366,43 +313,36 @@ public class ManagedForms extends Application {
 						false		// Don't include audit data
 						);
 				
+				boolean autoUpdateImage = false;
 				for(TableColumn mc : svd.columns) {
 					
 					if(mc.type.equals("calculate")) {
 						
 						for(int i = 0; i < mc.calculation.columns.size(); i++) {
 							String refColumn = mc.calculation.columns.get(i);
-							boolean referenceExists = false;
-							
-							// Check to see if the referenced column is in the managed form
-							for(TableColumn mc2 : svd.columns) {
-								if(refColumn.equals(mc2.name)) {
-									referenceExists = true;
-									break;
-								}
-							}
-							
-							// Check to see if the referenced column is in the form that is being attached to
-							if(!referenceExists) {
-								for(TableColumn fc2 : formColumns) {
-									if(refColumn.equals(fc2.name)) {
-										referenceExists = true;
-										break;
-									}
-								}
-							}
-							
-							// Report the missing reference
-							if(!referenceExists) {
-								compatibleMsg.append(localisation.getString("mf_col") + " " + 
-										refColumn + " " + localisation.getString("mf_cninc"));
-							}
-						}
-						
-						
+							TableColumn refDetails = new TableColumn();
+							compatibleMsg.append(getCompatabilityMsg(refColumn, svd, formColumns, localisation, refDetails));
+						}		
 					}
 					
+					if(mc.parameters != null && mc.parameters.get("source") != null) {
+						String refColumn = mc.parameters.get("source");
+						TableColumn refDetails = new TableColumn();
+						compatibleMsg.append(getCompatabilityMsg(refColumn, svd, formColumns, localisation, refDetails));
+						
+						if(refDetails.type != null && refDetails.type.equals("image") && mc.parameters.get("auto") != null && mc.parameters.get("auto").equals("yes")) {
+							autoUpdateImage = true;
+						}
+					}		
 				}
+				
+				if(compatibleMsg.length() > 0) {
+					autoUpdateImage = false;		// Managed form is not compatible and will be rejected
+				}
+				GeneralUtilityMethods.setAutoUpdateImage(sd, sId, autoUpdateImage);
+				
+				
+				
 			} catch (Exception e) {
 				log.log(Level.SEVERE, e.getMessage(), e);
 				compatibleMsg.append(e.getMessage());
@@ -415,6 +355,46 @@ public class ManagedForms extends Application {
 			return compatibleMsg.toString();
 		}
 
+	}
+	
+	/*
+	 * Get a compatability error message if the referenced column is not in the form
+	 */
+	String getCompatabilityMsg(String refColumn, SurveyViewDefn svd, 
+			ArrayList<TableColumn> formColumns, 
+			ResourceBundle localisation,
+			TableColumn refDetails) {
+		String msg = "";
+		
+		boolean referenceExists = false;
+		
+		// Check to see if the referenced column is in the managed form
+		for(TableColumn mc2 : svd.columns) {
+			if(refColumn.equals(mc2.name)) {
+				refDetails.type = mc2.type;
+				referenceExists = true;
+				break;
+			}
+		}
+		
+		// Check to see if the referenced column is in the form that is being attached to
+		if(!referenceExists) {
+			for(TableColumn fc2 : formColumns) {
+				if(refColumn.equals(fc2.name)) {
+					refDetails.type = fc2.type;
+					referenceExists = true;
+					break;
+				}
+			}
+		}
+		
+		// Report the missing reference
+		if(!referenceExists) {
+			msg = localisation.getString("mf_col") + " " + 
+					refColumn + " " + localisation.getString("mf_cninc") + "\n";
+		}
+		
+		return msg;
 	}
 	
 	/*
@@ -432,14 +412,6 @@ public class ManagedForms extends Application {
 			) { 
 		
 		Response response = null;
-
-		try {
-		    Class.forName("org.postgresql.Driver");	 
-		} catch (ClassNotFoundException e) {
-			log.log(Level.SEVERE,"Error: Can't find PostgreSQL JDBC Driver", e);
-			response = Response.serverError().build();
-		    return response;
-		}
 		
 		String sqlCanUpdate = "select p_id from survey "
 				+ "where s_id = ? "
@@ -542,14 +514,6 @@ public class ManagedForms extends Application {
 			) { 
 		
 		Response response = null;
-
-		try {
-		    Class.forName("org.postgresql.Driver");	 
-		} catch (ClassNotFoundException e) {
-			log.log(Level.SEVERE,"Error: Can't find PostgreSQL JDBC Driver", e);
-			response = Response.serverError().build();
-		    return response;
-		}
 		
 		String sql = "select settings from general_settings where u_id = ? and s_id = ? and key = ?;";
 		PreparedStatement pstmt = null;

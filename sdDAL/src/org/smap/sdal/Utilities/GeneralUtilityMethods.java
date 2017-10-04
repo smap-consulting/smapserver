@@ -4431,6 +4431,30 @@ public class GeneralUtilityMethods {
 		}	
 
 	}
+	
+	/*
+	 * Update the survey version
+	 */
+	public static void setAutoUpdateImage(Connection sd, int sId, boolean v) throws SQLException {
+
+		String sql = "update survey set auto_update_image = ? where s_id = ?";
+		PreparedStatement pstmt = null;
+
+		try {
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setBoolean(1, v);
+			pstmt.setInt(2, sId);	
+			log.info("Set auto update: " + pstmt.toString());
+			pstmt.executeUpdate();
+
+		} catch(SQLException e) {
+			log.log(Level.SEVERE,"Error", e);
+			throw e;
+		} finally {
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+		}	
+
+	}
 
 	/*
 	 * Convert a :: separated String into surveyId and Question Id

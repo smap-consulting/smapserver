@@ -18,6 +18,7 @@ import org.smap.notifications.interfaces.EmitDeviceNotification;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.UtilityMethodsEmail;
 import org.smap.sdal.model.EmailServer;
+import org.smap.sdal.model.ImageLabelMessage;
 import org.smap.sdal.model.SurveyMessage;
 import org.smap.sdal.model.TaskMessage;
 import org.smap.sdal.model.UserMessage;
@@ -88,6 +89,20 @@ public class MessagingManager {
 		int oId = GeneralUtilityMethods.getOrganisationIdForSurvey(sd, sId);	
 		if(oId >= 0) {
 			createMessage(sd, oId, "survey", null, data);
+		}
+	}
+	
+	/*
+	 * Create a message resulting from uploading an image that has image processing enabled
+	 */
+	public void imageProcesingSub(Connection sd, int sId, String path, String tableName, String colName, String colType) throws SQLException {
+		Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
+		ImageLabelMessage ilm = new ImageLabelMessage(path, tableName, colName, colType);
+		
+		String data = gson.toJson(ilm);
+		int oId = GeneralUtilityMethods.getOrganisationIdForSurvey(sd, sId);	
+		if(oId >= 0) {
+			createMessage(sd, oId, "imagelabel", null, data);
 		}
 	}
 	
