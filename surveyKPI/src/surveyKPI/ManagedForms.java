@@ -41,6 +41,7 @@ import org.smap.sdal.managers.LinkageManager;
 import org.smap.sdal.managers.SurveyViewManager;
 import org.smap.sdal.model.Action;
 import org.smap.sdal.model.ActionLink;
+import org.smap.sdal.model.AutoUpdate;
 import org.smap.sdal.model.Filter;
 import org.smap.sdal.model.Form;
 import org.smap.sdal.model.Link;
@@ -251,7 +252,7 @@ public class ManagedForms extends Application {
 			
 			// 4. Clear the auto update indicators if the managed form is being removed
 			if(am.manageId == 0) {
-				GeneralUtilityMethods.setAutoUpdateImage(sd, am.sId, false);
+				GeneralUtilityMethods.setAutoUpdates(sd, am.sId, am.manageId, null);
 			}
 			
 			response = Response.ok().build();
@@ -275,7 +276,8 @@ public class ManagedForms extends Application {
 	 *  1. Calculations in the managed form refer to questions in either the managed form or the form
 	 *     we are attaching to
 	 *     
-	 *  Also add an indicator to the survey if there is an auto update of images required
+	 *  Also add details on the auto updates to the survey so that they can be readily applied on changes to that
+	 *  survey.
 	 */
 	private String compatibleManagedForm(Connection sd, ResourceBundle localisation, int sId, 
 			int managedId,
@@ -284,6 +286,7 @@ public class ManagedForms extends Application {
 			boolean superUser) {
 		
 		StringBuffer compatibleMsg = new StringBuffer("");
+		ArrayList<AutoUpdate> autoUpdates = new ArrayList<AutoUpdate> ();
 			
 		if(managedId > 0 && sId > 0) {
 				
@@ -313,7 +316,6 @@ public class ManagedForms extends Application {
 						false		// Don't include audit data
 						);
 				
-				boolean autoUpdateImage = false;
 				for(TableColumn mc : svd.columns) {
 					
 					if(mc.type.equals("calculate")) {
@@ -331,15 +333,20 @@ public class ManagedForms extends Application {
 						compatibleMsg.append(getCompatabilityMsg(refColumn, svd, formColumns, localisation, refDetails));
 						
 						if(refDetails.type != null && refDetails.type.equals("image") && mc.parameters.get("auto") != null && mc.parameters.get("auto").equals("yes")) {
-							autoUpdateImage = true;
+							AutoUpdate au = new AutoUpdate("imagelabel");
+							au.labelColType = "text";
+							au.sourceColName = refColumn;
+							au.targetColName = mc.name;
+							au.tableName =f.tableName;
+							autoUpdates.add(au);
 						}
 					}		
 				}
 				
 				if(compatibleMsg.length() > 0) {
-					autoUpdateImage = false;		// Managed form is not compatible and will be rejected
+					autoUpdates = null;		// Managed form is not compatible and will be rejected
 				}
-				GeneralUtilityMethods.setAutoUpdateImage(sd, sId, autoUpdateImage);
+				GeneralUtilityMethods.setAutoUpdates(sd, sId, managedId, autoUpdates);
 				
 				
 				

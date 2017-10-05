@@ -18,7 +18,6 @@ import org.smap.notifications.interfaces.EmitDeviceNotification;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.UtilityMethodsEmail;
 import org.smap.sdal.model.EmailServer;
-import org.smap.sdal.model.ImageLabelMessage;
 import org.smap.sdal.model.SurveyMessage;
 import org.smap.sdal.model.TaskMessage;
 import org.smap.sdal.model.UserMessage;
@@ -69,7 +68,6 @@ public class MessagingManagerApply {
 		HashMap<Integer, TaskMessage> changedTasks = new HashMap<> ();
 		HashMap<Integer, SurveyMessage> changedSurveys = new HashMap<> ();
 		HashMap<String, String> usersImpacted =   new HashMap<> ();
-		ArrayList<ImageLabelMessage> imageLabelRequests = new ArrayList<ImageLabelMessage> ();
 
 		String sqlGetMessages = "select id, "
 				+ "o_id, "
@@ -133,12 +131,6 @@ public class MessagingManagerApply {
 					
 					usersImpacted.put(um.ident, um.ident);
 					
-				} else if(topic.equals("imagelabel")) {
-					Gson gson=  new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
-					ImageLabelMessage ilm = gson.fromJson(data, ImageLabelMessage.class);
-					
-					imageLabelRequests.add(ilm);
-					
 				} else {
 					// Assume a direct email to be processed immediately
 
@@ -198,14 +190,6 @@ public class MessagingManagerApply {
 			// For each user send a notification to each of their devices
 			for(String user : usersImpacted.keySet()) {
 				emitDevice.notify(serverName, user);
-			}
-			
-			/*
-			 * Process image label requests
-			 */
-			for(ImageLabelMessage ilm : imageLabelRequests) {
-				System.out.println("Process image label request for: " + ilm.imagePath);
-				
 			}
 			
 			

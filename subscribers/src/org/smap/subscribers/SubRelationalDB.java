@@ -23,6 +23,7 @@ import java.io.File;
 import java.io.InputStream;
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Type;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -43,11 +44,13 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import org.smap.model.IE;
 import org.smap.model.SurveyInstance;
 import org.smap.model.TableManager;
+import org.smap.notifications.interfaces.ImageProcessing;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.managers.MessagingManager;
 import org.smap.sdal.managers.NotificationManager;
 import org.smap.sdal.managers.SurveyManager;
 import org.smap.sdal.managers.TaskManager;
+import org.smap.sdal.model.AutoUpdate;
 import org.smap.sdal.model.Survey;
 import org.smap.server.entities.SubscriberEvent;
 import org.smap.server.exceptions.SQLInsertException;
@@ -56,6 +59,7 @@ import org.w3c.dom.Document;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
 
 
 public class SubRelationalDB extends Subscriber {
@@ -176,6 +180,9 @@ public class SubRelationalDB extends Subscriber {
 
 			applyNotifications(ue_id, remoteUser, server, survey.id, survey.exclude_empty);
 			applyAssignmentStatus(ue_id, remoteUser);
+			if(survey.autoUpdates != null && survey.managed_id > 0) {
+				applyAutoUpdates(survey, server, remoteUser);
+			}
 			se.setStatus("success");			
 
 		} catch (SQLInsertException e) {
@@ -351,6 +358,116 @@ public class SubRelationalDB extends Subscriber {
 			}
 		}
 	}
+	
+	/*
+	 * Apply notifications
+	 */
+	private void applyAutoUpdates(Survey survey, String server, String remoteUser) {
+
+		PreparedStatement pstmtGetUploadEvent = null;
+		HashMap<Integer, ArrayList<AutoUpdate>> updates = null;
+		Gson gson = new GsonBuilder().disableHtmlEscaping().create();
+		Type type = new TypeToken<HashMap<Integer, ArrayList<AutoUpdate>>>(){}.getType();
+
+		PreparedStatement pstmt = null;
+		PreparedStatement pstmtUpdate = null;
+
+		Connection sd = null;
+		Connection cResults = null;
+
+		try {
+			Class.forName(dbClass);	 
+			sd = DriverManager.getConnection(databaseMeta, user, password);
+			cResults = DriverManager.getConnection(database, user, password);
+
+			System.out.println("Apply auto updates: " + survey.autoUpdates);
+			ImageProcessing ip = new ImageProcessing();
+		
+			// 1.  Get the details of managed forms and each image question that needs to be processed
+			updates = gson.fromJson(survey.autoUpdates, type);
+			
+			// 2. For each managed form get the list of questions
+			for(Integer mfId : updates.keySet()) {
+				ArrayList<AutoUpdate> updateItems = updates.get(mfId);
+				
+				// 3. For each update item get the records that are null and need updating
+				for(AutoUpdate item : updateItems) {
+					
+					System.out.println("Updating: " + item.targetColName);
+					if(GeneralUtilityMethods.hasColumn(cResults, item.tableName, item.sourceColName) &&
+							GeneralUtilityMethods.hasColumn(cResults, item.tableName, item.targetColName)) {
+						
+						String sql = "select prikey," + item.sourceColName + " from " + item.tableName + " where " +
+								item.targetColName + " is null and " + item.sourceColName + " is not null";
+						if(pstmt != null) {try {pstmt.close();} catch(Exception e) {}}
+						pstmt = cResults.prepareStatement(sql);
+						
+						String sqlUpdate = "update " + item.tableName + " set " +
+								item.targetColName + " = ? where prikey = ?";
+						if(pstmtUpdate != null) {try {pstmtUpdate.close();} catch(Exception e) {}}
+						pstmtUpdate = cResults.prepareStatement(sqlUpdate);
+						
+						log.info("Get auto updates: " + pstmt.toString());						
+						ResultSet rs = pstmt.executeQuery();
+						while (rs.next()) {
+							int prikey = rs.getInt(1);
+							String source = rs.getString(2);
+							System.out.println("Transcribing: " + source);
+							if(source.trim().startsWith("attachments")) {
+								if(item.type.equals("imagelabel")) {
+									String labels = ip.getLabels(server, remoteUser, "/smap/" + source, item.labelColType);
+									System.out.println("Labels: " + labels);
+									
+									// 4. Write labels to database
+									pstmtUpdate.setString(1, labels);
+									pstmtUpdate.setInt(2, prikey);
+									log.info("Update with labels: " + pstmtUpdate.toString());
+									pstmtUpdate.executeUpdate();
+								} else {
+									log.info("Error: cannot perform auto update for update type: " + item.type);
+								}
+							}
+						}
+						
+					} else {
+						log.info("Error: cannot perform auto update for: " + item.tableName + " : " 
+								+ item.sourceColName + " : " + item.targetColName);
+					}
+					
+				}
+			}
+			
+
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+
+			if(pstmt != null) {try {pstmt.close();} catch(Exception e) {}}
+			if(pstmtUpdate != null) {try {pstmtUpdate.close();} catch(Exception e) {}}
+
+
+			try {
+				if (sd != null) {
+					sd.close();
+					sd = null;
+				}
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+
+			try {
+				if (cResults != null) {
+					cResults.close();
+					cResults = null;
+				}
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
 
 	/*
 	 * Write the submission to the database

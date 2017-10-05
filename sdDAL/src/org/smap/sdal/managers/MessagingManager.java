@@ -2,27 +2,13 @@ package org.smap.sdal.managers;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Locale;
-import java.util.ResourceBundle;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import javax.mail.internet.AddressException;
-import javax.mail.internet.InternetAddress;
-
-import org.smap.notifications.interfaces.EmitDeviceNotification;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
-import org.smap.sdal.Utilities.UtilityMethodsEmail;
-import org.smap.sdal.model.EmailServer;
-import org.smap.sdal.model.ImageLabelMessage;
 import org.smap.sdal.model.SurveyMessage;
 import org.smap.sdal.model.TaskMessage;
 import org.smap.sdal.model.UserMessage;
-import org.smap.sdal.model.Organisation;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
@@ -89,20 +75,6 @@ public class MessagingManager {
 		int oId = GeneralUtilityMethods.getOrganisationIdForSurvey(sd, sId);	
 		if(oId >= 0) {
 			createMessage(sd, oId, "survey", null, data);
-		}
-	}
-	
-	/*
-	 * Create a message resulting from uploading an image that has image processing enabled
-	 */
-	public void imageProcesingSub(Connection sd, int sId, String path, String tableName, String colName, String colType) throws SQLException {
-		Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
-		ImageLabelMessage ilm = new ImageLabelMessage(path, tableName, colName, colType);
-		
-		String data = gson.toJson(ilm);
-		int oId = GeneralUtilityMethods.getOrganisationIdForSurvey(sd, sId);	
-		if(oId >= 0) {
-			createMessage(sd, oId, "imagelabel", null, data);
 		}
 	}
 	

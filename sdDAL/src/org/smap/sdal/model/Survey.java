@@ -47,6 +47,7 @@ public class Survey {
 	public boolean sharedTable;
 	public Timestamp created;
 	public boolean exclude_empty;
+	public String autoUpdates;
 
 	
 	// Getters

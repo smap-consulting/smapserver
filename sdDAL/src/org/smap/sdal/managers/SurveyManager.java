@@ -1120,13 +1120,17 @@ public class SurveyManager {
 		
 		Survey s = null;	// Survey to return
 		ResultSet resultSet = null;
-		String sql = "select s.p_id, s.s_id, s.blocked, s.class, s.deleted, s.display_name, s.key_policy " +
-				" from survey s" +
-				" where s.ident = ?; ";
+		String sql = "select s.p_id, s.s_id, s.blocked, s.class, s.deleted, "
+				+ "s.display_name, s.key_policy, s.auto_updates, "
+				+ "s.managed_id "
+				+ "from survey s "
+				+ "where s.ident = ?";
 		
-		String sql2 = "select s.p_id, s.s_id, s.blocked, s.class, s.deleted, s.display_name, s.key_policy " +		// Hack due to issue with upgrade of a server where ident not set to survey id by default
-				" from survey s" +
-				" where s.s_id = ?; ";
+		String sql2 = "select s.p_id, s.s_id, s.blocked, s.class, s.deleted, "
+				+ "s.display_name, s.key_policy, s.auto_updates, "
+				+ "s.managed_id " 		// Hack due to issue with upgrade of a server where ident not set to survey id by default
+				+ "from survey s " 
+				+ "where s.s_id = ?";
 		
 		PreparedStatement pstmt = null;
 		PreparedStatement pstmt2 = null;
@@ -1146,6 +1150,8 @@ public class SurveyManager {
 				s.deleted = resultSet.getBoolean(5);
 				s.displayName = resultSet.getString(6);
 				s.key_policy = resultSet.getString(7);
+				s.autoUpdates = resultSet.getString(8);
+				s.managed_id = resultSet.getInt(9);
 				
 				
 			} else {	// Attempt to find the survey assuming the ident is the survey id

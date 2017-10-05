@@ -33,6 +33,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.smap.sdal.managers.RoleManager;
 import org.smap.sdal.managers.SurveyManager;
+import org.smap.sdal.model.AutoUpdate;
 import org.smap.sdal.model.ChangeItem;
 import org.smap.sdal.model.ChoiceList;
 import org.smap.sdal.model.FileDescription;
@@ -4435,14 +4436,45 @@ public class GeneralUtilityMethods {
 	/*
 	 * Update the survey version
 	 */
-	public static void setAutoUpdateImage(Connection sd, int sId, boolean v) throws SQLException {
+	public static void setAutoUpdates(Connection sd, int sId, int managedId, ArrayList<AutoUpdate> autoUpdates) throws SQLException {
 
-		String sql = "update survey set auto_update_image = ? where s_id = ?";
+		String sqlGet = "select auto_updates from survey where s_id = ? and auto_updates is not null";
+		PreparedStatement pstmtGet = null;
+		String sql = "update survey set auto_updates = ? where s_id = ?";
 		PreparedStatement pstmt = null;
 
+		HashMap<Integer, ArrayList<AutoUpdate>> storedUpdate = null;
+		Gson gson = new GsonBuilder().disableHtmlEscaping().create();
+		Type type = new TypeToken<HashMap<Integer, ArrayList<AutoUpdate>>>(){}.getType();
 		try {
+			// Get the current auto updates
+			pstmtGet = sd.prepareStatement(sqlGet);
+			pstmtGet.setInt(1, sId);
+			ResultSet rs = pstmtGet.executeQuery();
+			if(rs.next()) {
+				String auString = rs.getString(1);
+				storedUpdate = gson.fromJson(auString, type);
+			}
+			
+			// Create a new structure if none already exists
+			if(storedUpdate == null) {
+				storedUpdate = new HashMap<Integer, ArrayList<AutoUpdate>> ();
+			}
+			
+			// Merge in the new value for this managed form
+			if(autoUpdates == null) {
+				storedUpdate.clear();
+			} else {
+				storedUpdate.put(managedId, autoUpdates);
+			}
+			
+			// Save the updated value
+			String saveString = null;
+			if(!storedUpdate.isEmpty()) {
+				saveString = gson.toJson(storedUpdate);
+			}
 			pstmt = sd.prepareStatement(sql);
-			pstmt.setBoolean(1, v);
+			pstmt.setString(1, saveString);
 			pstmt.setInt(2, sId);	
 			log.info("Set auto update: " + pstmt.toString());
 			pstmt.executeUpdate();
@@ -4451,6 +4483,7 @@ public class GeneralUtilityMethods {
 			log.log(Level.SEVERE,"Error", e);
 			throw e;
 		} finally {
+			try {if (pstmtGet != null) {pstmtGet.close();}} catch (SQLException e) {}
 			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 		}	
 

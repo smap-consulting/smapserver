@@ -94,14 +94,21 @@ public class CustomReportsManager {
 		String sql2b = "and type != ? ";
 		String sql3 = "order by name asc";
 		String sql4 = "and (type = 'oversight' or type = 'oversight1') ";
+		String sql5 = "and type != 'oversight' and type != 'oversight1' ";
 
 		PreparedStatement pstmt = null;
 
+		log.info("Type is: " + type + " Negate type is: " + negateType);
 		try {
 
 			if (type != null) {
 				if (negateType) {
-					pstmt = sd.prepareStatement(sql1 + sql2b + sql3);
+					if(type.equals("oversight") || type.equals("oversight1")) {
+						// Temporarily add for backward compatibility version 17.09
+						pstmt = sd.prepareStatement(sql1 + sql5 + sql3);
+					} else {
+						pstmt = sd.prepareStatement(sql1 + sql2b + sql3);
+					}
 				} else {
 					if(type.equals("oversight") || type.equals("oversight1")) {
 						// Temporarily add for backward compatibility version 17.09
