@@ -32,6 +32,9 @@ workspace.xml
 # Properties
 aws.properties
 
+monitor.sh
+manage.sh
+
 # enketo 
 smapServer/WebContent/build/css.orig
 combined.min.js

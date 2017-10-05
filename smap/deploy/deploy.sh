@@ -116,7 +116,7 @@ systemctl start subscribers
 systemctl start subscribers_fwd
 fi
 
-#
+# Restart Servers
 service postgresql start
 service tomcat7 start
 service apache2 start
