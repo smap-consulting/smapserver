@@ -22,6 +22,8 @@ import org.smap.sdal.model.SurveyMessage;
 import org.smap.sdal.model.TaskMessage;
 import org.smap.sdal.model.UserMessage;
 import org.smap.sdal.model.Organisation;
+import org.smap.sdal.model.ProjectMessage;
+
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
@@ -67,6 +69,7 @@ public class MessagingManagerApply {
 		
 		HashMap<Integer, TaskMessage> changedTasks = new HashMap<> ();
 		HashMap<Integer, SurveyMessage> changedSurveys = new HashMap<> ();
+		HashMap<Integer, ProjectMessage> changedProjects = new HashMap<> ();
 		HashMap<String, String> usersImpacted =   new HashMap<> ();
 
 		String sqlGetMessages = "select id, "
@@ -131,6 +134,12 @@ public class MessagingManagerApply {
 					
 					usersImpacted.put(um.ident, um.ident);
 					
+				} else if(topic.equals("project")) {
+					Gson gson=  new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
+					ProjectMessage pm = gson.fromJson(data, ProjectMessage.class);
+					
+					changedProjects.put(pm.id, pm);
+					
 				} else {
 					// Assume a direct email to be processed immediately
 
@@ -182,6 +191,14 @@ public class MessagingManagerApply {
 			// Get a list of users impacted by survey changes without duplicates
 			for(Integer sId : changedSurveys.keySet()) {
 				ArrayList<String> users = getSurveyUsers(sd, sId);
+				for(String user : users) {
+					usersImpacted.put(user, user);
+				}				
+			}
+			
+			// Get a list of users impacted by project changes without duplicates
+			for(Integer pId : changedProjects.keySet()) {
+				ArrayList<String> users = getProjectUsers(sd, pId);
 				for(String user : users) {
 					usersImpacted.put(user, user);
 				}				
@@ -259,6 +276,39 @@ public class MessagingManagerApply {
 		
 		return users;
 	}
+	
+	/*
+	 * Get users of a project
+	 */
+	ArrayList<String> getProjectUsers(Connection sd, int pId) throws SQLException {
+		
+		ArrayList<String> users = new ArrayList<String> ();
+		String sql = "select u.ident "
+				+ "from users u, user_project up, user_group ug "
+				+ "where u.id = up.u_id "
+				+ "and u.id = ug.u_id "
+				+ "and ug.g_id = 3 "			// enum
+				+ "and up.p_id = ?";
+
+		PreparedStatement pstmt = null;
+		
+		try {
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setInt(1, pId);
+			log.info("Get Project users: " + pstmt.toString());
+			ResultSet rs = pstmt.executeQuery();
+			while(rs.next()) {
+				users.add(rs.getString(1));
+			}
+		} finally {
+
+			try {if (pstmt != null) {	pstmt.close();}} catch (SQLException e) {}
+
+		}
+		
+		return users;
+	}
+	
 	
 	/*
 	 * Get users of a task

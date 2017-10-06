@@ -364,7 +364,6 @@ public class SubRelationalDB extends Subscriber {
 	 */
 	private void applyAutoUpdates(Survey survey, String server, String remoteUser) {
 
-		PreparedStatement pstmtGetUploadEvent = null;
 		HashMap<Integer, ArrayList<AutoUpdate>> updates = null;
 		Gson gson = new GsonBuilder().disableHtmlEscaping().create();
 		Type type = new TypeToken<HashMap<Integer, ArrayList<AutoUpdate>>>(){}.getType();

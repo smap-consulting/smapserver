@@ -6,6 +6,7 @@ import java.sql.SQLException;
 import java.util.logging.Logger;
 
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
+import org.smap.sdal.model.ProjectMessage;
 import org.smap.sdal.model.SurveyMessage;
 import org.smap.sdal.model.TaskMessage;
 import org.smap.sdal.model.UserMessage;
@@ -75,6 +76,18 @@ public class MessagingManager {
 		int oId = GeneralUtilityMethods.getOrganisationIdForSurvey(sd, sId);	
 		if(oId >= 0) {
 			createMessage(sd, oId, "survey", null, data);
+		}
+	}
+	
+	/*
+	 * Create a message resulting from a change to a project
+	 */
+	public void projectChange(Connection sd, int pId, int oId) throws SQLException {
+		Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
+		ProjectMessage sm = new ProjectMessage(pId);
+		String data = gson.toJson(sm);
+		if(oId >= 0) {
+			createMessage(sd, oId, "project", null, data);
 		}
 	}
 	

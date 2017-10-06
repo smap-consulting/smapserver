@@ -737,7 +737,7 @@ public class GeneralUtilityMethods {
 
 		int o_id = -1;
 
-		String sqlGetOrgId = "select p.o_id "
+		String sql = "select p.o_id "
 				+ " from survey s, project p "
 				+ "where s.p_id = p.id "
 				+ "and s.s_id = ?";
@@ -746,8 +746,42 @@ public class GeneralUtilityMethods {
 
 		try {
 
-			pstmt = sd.prepareStatement(sqlGetOrgId);
+			pstmt = sd.prepareStatement(sql);
 			pstmt.setInt(1, sId);
+			ResultSet rs = pstmt.executeQuery();
+			if(rs.next()) {
+				o_id = rs.getInt(1);	
+			}
+
+		} catch(SQLException e) {
+			log.log(Level.SEVERE,"Error", e);
+			throw e;
+		} finally {
+			try {if (pstmt != null) { pstmt.close();}} catch (SQLException e) {}
+		}
+
+		return o_id;
+	}
+	
+	/*
+	 * Get the organisation id for the project
+	 */
+	static public int getOrganisationIdForProject(
+			Connection sd, 
+			int pId) throws SQLException {
+
+		int o_id = -1;
+
+		String sql = "select p.o_id "
+				+ " from project p "
+				+ "where p.id = ?";
+
+		PreparedStatement pstmt = null;
+
+		try {
+
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setInt(1, pId);
 			ResultSet rs = pstmt.executeQuery();
 			if(rs.next()) {
 				o_id = rs.getInt(1);	

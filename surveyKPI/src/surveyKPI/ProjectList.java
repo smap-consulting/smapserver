@@ -35,6 +35,7 @@ import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.Utilities.UtilityMethodsEmail;
+import org.smap.sdal.managers.MessagingManager;
 import org.smap.sdal.managers.ProjectManager;
 import org.smap.sdal.model.Organisation;
 import org.smap.sdal.model.Project;
@@ -229,6 +230,10 @@ public class ProjectList extends Application {
 							log.info("update project: " + pstmt.toString());
 							pstmt.executeUpdate();
 						}
+						
+						// Record the project change so that devices can be notified
+						MessagingManager mm = new MessagingManager();
+						mm.projectChange(connectionSD, p.id, o_id);
 					}
 				}
 			
