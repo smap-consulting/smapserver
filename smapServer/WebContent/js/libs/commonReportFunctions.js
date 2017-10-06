@@ -116,7 +116,7 @@ function addAnchors (property, minsize) {
                         style = ' style="width:75px;"';
                     }
                     output[i] = '<audio controls' + style + '><source src="' + media.url
-                        + '" type="' + media.source_type + '">'
+                        + '" type="' + media.source_type + '"/>'
                         + 'Your browser does not support this audio type'
                         + '</audio>';
                 } else if (media.type === "video") {

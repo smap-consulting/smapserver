@@ -1,7 +1,7 @@
 ({
     appDir: '../WebContent',
     locale: "en",
-    optimize: 'none',
+//    optimize: 'none',
     wrapShim: false,
     waitSeconds: 0,
     baseUrl: 'js/libs',

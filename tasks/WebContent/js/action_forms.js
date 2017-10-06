@@ -196,6 +196,7 @@ require([
                 if (isConfirm) {
                     setStatus();
                 }
+                swal.close();
                 window.history.back();
             });
     }
