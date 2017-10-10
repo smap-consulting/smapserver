@@ -38,6 +38,7 @@ import org.smap.sdal.Utilities.JsonAuthorisationException;
 import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.managers.ExternalFileManager;
+import org.smap.sdal.managers.SurveyManager;
 import org.smap.sdal.managers.TranslationManager;
 import org.smap.sdal.model.Assignment;
 import org.smap.sdal.model.Geometry;
@@ -204,13 +205,14 @@ public class MyAssignments extends Application {
 		int oId = GeneralUtilityMethods.getOrganisationId(connectionSD, userName, 0);
 
 		try {
-			String sql = null;
+			StringBuffer sql = null;
+			boolean superUser = GeneralUtilityMethods.isSuperUser(connectionSD, request.getRemoteUser());
 
 			cRel = ResultsDataSource.getConnection("surveyKPI-MyAssignments");
 			connectionSD.setAutoCommit(true);
 
 			// Get the assignments
-			sql = "SELECT " +
+			sql = new StringBuffer("SELECT " +
 					"t.id as task_id," +
 					"t.type," +
 					"t.title," +
@@ -240,9 +242,9 @@ public class MyAssignments extends Application {
 					"and (a.status = 'pending' or a.status = 'cancelled' or a.status = 'missed' " +
 					"or a.status = 'accepted' or (a.status = 'submitted' and t.repeat)) " +
 					"and u.ident = ? " +
-					"and p.o_id = ?";
+					"and p.o_id = ?");
 
-			pstmt = connectionSD.prepareStatement(sql);	
+			pstmt = connectionSD.prepareStatement(sql.toString());	
 			pstmt.setString(1, userName);
 			pstmt.setInt(2, oId);
 
@@ -293,13 +295,13 @@ public class MyAssignments extends Application {
 
 					ta.location.geometry = new Geometry();
 					if(geo_type.equals("POINT")) {
-						sql = "select ST_AsText(geo_point) from tasks where id = ?;";
+						sql = new StringBuffer("select ST_AsText(geo_point) from tasks where id = ?;");
 					} else if (geo_type.equals("POLYGON")) {
-						sql = "select ST_AsText(geo_polygon) from tasks where id = ?;";
+						sql = new StringBuffer("select ST_AsText(geo_polygon) from tasks where id = ?;");
 					} else if (geo_type.equals("LINESTRING")) {
-						sql = "select ST_AsText(geo_linestring) from tasks where id = ?;";
+						sql = new StringBuffer("select ST_AsText(geo_linestring) from tasks where id = ?;");
 					}
-					pstmtGeo = connectionSD.prepareStatement(sql);
+					pstmtGeo = connectionSD.prepareStatement(sql.toString());
 					pstmtGeo.setInt(1, t_id);
 					ResultSet resultSetGeo = pstmtGeo.executeQuery();
 					if(resultSetGeo.next()) {
@@ -322,7 +324,16 @@ public class MyAssignments extends Application {
 			/*
 			 * Get the complete list of forms accessible by this user
 			 */
-			sql = "SELECT " +
+			SurveyManager sm = new SurveyManager();
+			ArrayList<org.smap.sdal.model.Survey> surveys = sm.getSurveys(connectionSD, pstmt,
+					request.getRemoteUser(), 
+					false, 
+					false, 
+					0,
+					superUser);
+			
+			/*
+			sql = new StringBuffer("SELECT " +
 					"s.s_id," +
 					"s.ident, " +
 					"s.version, " +
@@ -337,21 +348,23 @@ public class MyAssignments extends Application {
 					"and s.deleted = 'false' " +
 					"and s.blocked = 'false'" +
 					"and u.ident = ? " +
-					"and p.o_id = ?";
-
-			pstmtGetForms = connectionSD.prepareStatement(sql);	
+					"and p.o_id = ?");
+			
+			pstmtGetForms = connectionSD.prepareStatement(sql.toString());	
 			pstmtGetForms.setString(1, userName);
 			pstmtGetForms.setInt(2, oId);
 
 			log.info("Getting forms: " + pstmtGetForms.toString());
 			resultSet = pstmtGetForms.executeQuery();
 
+			*/
 			TranslationManager translationMgr = new TranslationManager();
 
 			tr.forms = new ArrayList<FormLocator> ();
-			while(resultSet.next()) {
-				int sId = resultSet.getInt("s_id");
-				String sIdent = resultSet.getString("ident");
+			//while(resultSet.next()) {
+			for (org.smap.sdal.model.Survey survey : surveys) {
+				//int sId = resultSet.getInt("s_id");
+				//String sIdent = resultSet.getString("ident");
 				boolean newManifestFile = false;
 
 				/*
@@ -359,7 +372,7 @@ public class MyAssignments extends Application {
 				 *  generate the new CSV files if the linked data has changed
 				 */
 				List<ManifestValue> manifestList = translationMgr.
-						getLinkedManifests(connectionSD, sId, sIdent);
+						getLinkedManifests(connectionSD, survey.id, survey.ident);
 
 				for( ManifestValue m : manifestList) {
 
@@ -374,7 +387,7 @@ public class MyAssignments extends Application {
 					 */
 					ExternalFileManager efm = new ExternalFileManager();
 					String basepath = GeneralUtilityMethods.getBasePath(request);
-					String dirPath = basepath + "/media/" + sIdent+ "/" + userName + "/";
+					String dirPath = basepath + "/media/" + survey.ident + "/" + userName + "/";
 					filepath =  dirPath + m.fileName;
 
 					// Make sure the destination exists
@@ -383,7 +396,7 @@ public class MyAssignments extends Application {
 
 					log.info("CSV File is:  " + dirPath + " : directory path created");
 
-					fileRegenerated = efm.createLinkedFile(connectionSD, cRel, sId, m.fileName , filepath, userName);
+					fileRegenerated = efm.createLinkedFile(connectionSD, cRel, survey.id, m.fileName , filepath, userName);
 					if(fileRegenerated) {
 						newManifestFile = true;
 					}
@@ -392,13 +405,19 @@ public class MyAssignments extends Application {
 
 
 				FormLocator fl = new FormLocator();
-				fl.ident = resultSet.getString("ident");
-				fl.version = resultSet.getInt("version");
-				fl.name = resultSet.getString("display_name");
-				fl.project = resultSet.getString("name");
-				fl.pid = resultSet.getInt("pid");
-				fl.tasks_only = resultSet.getBoolean("tasks_only");
-				fl.hasManifest = translationMgr.hasManifest(connectionSD, userName, sId);
+				//fl.ident = resultSet.getString("ident");
+				//fl.version = resultSet.getInt("version");
+				//fl.name = resultSet.getString("display_name");
+				//fl.project = resultSet.getString("name");
+				//fl.pid = resultSet.getInt("pid");
+				//fl.tasks_only = resultSet.getBoolean("tasks_only");
+				fl.ident = survey.ident;
+				fl.version = survey.version;
+				fl.name = survey.displayName;
+				fl.project = survey.projectName;
+				fl.pid = survey.pId;
+				fl.tasks_only = survey.projectTasksOnly;
+				fl.hasManifest = translationMgr.hasManifest(connectionSD, userName, survey.id);
 
 				// If a new manifest then mark the form dirty so it will be downloaded
 				if(newManifestFile) {
@@ -414,7 +433,7 @@ public class MyAssignments extends Application {
 			 * Get the settings for the phone
 			 */
 			tr.settings = new FieldTaskSettings();
-			sql = "SELECT " +
+			sql = new StringBuffer("SELECT " +
 					"o.ft_delete_submitted," +
 					"o.ft_send_trail, " +
 					"o.ft_sync_incomplete, " +
@@ -424,9 +443,9 @@ public class MyAssignments extends Application {
 					"o.ft_send_wifi_cell " +
 					"from organisation o, users u " +
 					"where u.o_id = o.id " +
-					"and u.ident = ?;";
+					"and u.ident = ?;");
 
-			pstmtGetSettings = connectionSD.prepareStatement(sql);	
+			pstmtGetSettings = connectionSD.prepareStatement(sql.toString());	
 			pstmtGetSettings.setString(1, userName);
 			log.info("Getting settings: " + pstmtGetSettings.toString());
 			resultSet = pstmtGetSettings.executeQuery();
@@ -446,15 +465,15 @@ public class MyAssignments extends Application {
 			 * Get the projects
 			 */
 			tr.projects = new ArrayList<Project> ();
-			sql = "select p.id, p.name, p.description " +
+			sql = new StringBuffer("select p.id, p.name, p.description " +
 					" from users u, user_project up, project p " + 
 					"where u.id = up.u_id " +
 					"and p.id = up.p_id " +
 					"and u.ident = ? " +
 					"and p.o_id = ? " +
-					"order by name ASC;";	
+					"order by name ASC;");	
 
-			pstmtGetProjects = connectionSD.prepareStatement(sql);	
+			pstmtGetProjects = connectionSD.prepareStatement(sql.toString());	
 			pstmtGetProjects.setString(1, userName);
 			pstmtGetProjects.setInt(2, oId);
 

@@ -81,7 +81,7 @@ public class SurveyManager {
 		ResultSet resultSet = null;
 		StringBuffer sql = new StringBuffer("");
 		sql.append("select distinct s.s_id, s.name, s.display_name, s.deleted, s.blocked, "
-				+ "s.ident, s.managed_id, s.version, s.loaded_from_xls "
+				+ "s.ident, s.managed_id, s.version, s.loaded_from_xls, p.name, p.id, p.tasks_only "
 				+ "from survey s, users u, user_project up, project p "
 				+ "where u.id = up.u_id "
 				+ "and p.id = up.p_id "
@@ -89,8 +89,7 @@ public class SurveyManager {
 				+ "and p.o_id = u.o_id "
 				+ "and u.ident = ? ");
 			
-		if(!superUser) {
-			// Add RBAC
+		if(!superUser) {					// Add RBAC
 			sql.append(GeneralUtilityMethods.getSurveyRBAC());
 		}
 		
@@ -132,6 +131,10 @@ public class SurveyManager {
 			s.setManagedId(resultSet.getInt(7));
 			s.setVersion(resultSet.getInt(8));
 			s.setLoadedFromXLS(resultSet.getBoolean(9));
+			s.setProjectName(resultSet.getString(10));
+			s.setProjectId(resultSet.getInt(11));
+			s.setProjectTasksOnly(resultSet.getBoolean(12));
+			
 			
 			surveys.add(s);
 		} 

@@ -1730,9 +1730,7 @@ public class GeneralUtilityMethods {
 			 * Only add audit values that are in this form
 			 * Also make sure we had a timing value for very column in this form
 			 */
-			log.info("==== " + initAudit.toString());
 			for(String col : columns) {
-				log.info("Col: " + col);
 				if(!col.startsWith("_") && !col.equals("meta")) {
 					int t = 0;
 					try {

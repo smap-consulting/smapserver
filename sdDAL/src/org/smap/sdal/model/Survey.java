@@ -48,6 +48,9 @@ public class Survey {
 	public Timestamp created;
 	public boolean exclude_empty;
 	public String autoUpdates;
+	public String projectName;
+	public int pId;
+	public boolean projectTasksOnly;
 
 	
 	// Getters
@@ -163,5 +166,8 @@ public class Survey {
 	public void setManagedId(int v) { managed_id = v;};
 	public void setVersion(int v) { version = v;};
 	public void setLoadedFromXLS(boolean v) { loadedFromXLS = v;};
+	public void setProjectName(String v) { projectName = v;};
+	public void setProjectId(int v) { pId = v;};
+	public void setProjectTasksOnly(boolean v) { projectTasksOnly = v;};
 	
 }

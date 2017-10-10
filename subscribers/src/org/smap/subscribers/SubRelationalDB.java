@@ -379,7 +379,6 @@ public class SubRelationalDB extends Subscriber {
 			sd = DriverManager.getConnection(databaseMeta, user, password);
 			cResults = DriverManager.getConnection(database, user, password);
 
-			System.out.println("Apply auto updates: " + survey.autoUpdates);
 			ImageProcessing ip = new ImageProcessing();
 		
 			// 1.  Get the details of managed forms and each image question that needs to be processed
@@ -392,7 +391,6 @@ public class SubRelationalDB extends Subscriber {
 				// 3. For each update item get the records that are null and need updating
 				for(AutoUpdate item : updateItems) {
 					
-					System.out.println("Updating: " + item.targetColName);
 					if(GeneralUtilityMethods.hasColumn(cResults, item.tableName, item.sourceColName) &&
 							GeneralUtilityMethods.hasColumn(cResults, item.tableName, item.targetColName)) {
 						
@@ -411,11 +409,9 @@ public class SubRelationalDB extends Subscriber {
 						while (rs.next()) {
 							int prikey = rs.getInt(1);
 							String source = rs.getString(2);
-							System.out.println("Transcribing: " + source);
 							if(source.trim().startsWith("attachments")) {
 								if(item.type.equals("imagelabel")) {
 									String labels = ip.getLabels(server, remoteUser, "/smap/" + source, item.labelColType);
-									System.out.println("Labels: " + labels);
 									
 									// 4. Write labels to database
 									pstmtUpdate.setString(1, labels);
@@ -936,7 +932,6 @@ public class SubRelationalDB extends Subscriber {
 			ResultSet rs = pstmtHrk.executeQuery();
 			if(rs.next()) {
 				hrk = rs.getString(1);
-				log.info("===== Hrk: " + hrk);
 			}
 
 			// Get the prikey of the source table
@@ -947,7 +942,6 @@ public class SubRelationalDB extends Subscriber {
 			rs = pstmtSource.executeQuery();
 			if(rs.next()) {
 				sourceKey = rs.getInt(1);
-				log.info("===== Source Prikey: " + sourceKey);
 
 				// Get the columns to merge
 				pstmtCols = cRel.prepareStatement(sqlCols);
@@ -965,7 +959,6 @@ public class SubRelationalDB extends Subscriber {
 						String val = rsGetTarget.getString(1);
 
 						if( val == null || val.trim().length() == 0) {
-							log.info("        --------- updating");
 
 							String sqlUpdateTarget = "update " + table + " set " + col + " = (select " + col + " from " + table + " where prikey = ?) "
 									+ "where prikey = ?";
