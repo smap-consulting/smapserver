@@ -1448,6 +1448,7 @@ define(['jquery', 'bootstrap', 'mapbox_app', 'common', 'localise',
             url = "/webForm/" + form_id;
             if (update_id) {
                 url += "?datakey=instanceid&datakeyvalue=" + update_id;
+                url += "&viewOnly=true"
             }
 
             return url;

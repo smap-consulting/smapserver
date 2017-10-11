@@ -97,6 +97,7 @@ public class WebForm extends Application {
 	private JsonResponse jr = null;
 	SurveyTemplate template = null;
 	ResourceBundle localisation = null;
+	boolean viewOnly = false;
 
 	/*
 	 * Get instance data Respond with JSON
@@ -204,15 +205,17 @@ public class WebForm extends Application {
 	@Produces(MediaType.TEXT_HTML)
 	public Response getFormHTML(@Context HttpServletRequest request, @PathParam("ident") String formIdent,
 			@QueryParam("datakey") String datakey, // Optional keys to instance data
-			@QueryParam("datakeyvalue") String datakeyvalue, @QueryParam("assignment_id") int assignmentId,
+			@QueryParam("datakeyvalue") String datakeyvalue, 
+			@QueryParam("assignment_id") int assignmentId,
+			@QueryParam("viewOnly") boolean vo,
 			@QueryParam("callback") String callback) throws IOException {
 
 		mimeType = "html";
 		if (callback != null) {
 			// I guess they really want JSONP
 			mimeType = "json";
-
 		}
+		viewOnly = vo;
 
 		return getWebform(request, formIdent, datakey, datakeyvalue, assignmentId, callback,
 				request.getRemoteUser(), false, true, false);
@@ -228,15 +231,18 @@ public class WebForm extends Application {
 	public Response getFormHTMLTemporaryUser(@Context HttpServletRequest request, @PathParam("ident") String formIdent,
 			@PathParam("temp_user") String tempUser, @QueryParam("datakey") String datakey, // Optional keys to instance
 																							// data
-			@QueryParam("datakeyvalue") String datakeyvalue, @QueryParam("assignment_id") int assignmentId,
+			@QueryParam("datakeyvalue") String datakeyvalue, 
+			@QueryParam("assignment_id") int assignmentId,
+			@QueryParam("viewOnly") boolean vo,
 			@QueryParam("callback") String callback) throws IOException {
 
 		mimeType = "html";
 		if (callback != null) {
 			// I guess they really want JSONP
 			mimeType = "json";
-
 		}
+		viewOnly = vo;
+		
 		return getWebform(request, formIdent, datakey, datakeyvalue, assignmentId, callback, tempUser, false,
 				true, true);
 	}
@@ -538,6 +544,13 @@ public class WebForm extends Application {
 			output.append("surveyData.key='");
 			output.append(accessKey);
 			output.append("';\n");
+		}
+		
+		// Add viewOnly flag if set
+		if(viewOnly) {
+			output.append("surveyData.viewOnly=true;\n");
+		} else {
+			output.append("surveyData.viewOnly=false;\n");
 		}
 
 		output.append("</script>\n");
