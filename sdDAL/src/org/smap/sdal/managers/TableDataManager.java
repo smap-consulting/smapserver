@@ -217,7 +217,7 @@ public class TableDataManager {
 
 					// String name = rsMetaData.getColumnName(i);
 					// name = c.humanName;
-					name = c.name;
+					name = c.humanName;
 
 					if (c.type != null && c.type.equals("decimal")) {
 						Double dValue = rs.getDouble(i + 1);
