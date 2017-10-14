@@ -54,7 +54,7 @@ public class GetHtml {
 	/*
 	 * Get the Html as a string
 	 */
-	public String get(HttpServletRequest request, int sId, boolean superUser) {
+	public String get(HttpServletRequest request, int sId, boolean superUser, String userIdent) {
 
 		String response = null;
 
@@ -65,7 +65,7 @@ public class GetHtml {
 
 		try {
 
-			survey = sm.getById(sd, null, request.getRemoteUser(), sId, true, basePath, null, false, false, true, false,
+			survey = sm.getById(sd, null, userIdent, sId, true, basePath, null, false, false, true, false,
 					false, "real", false, superUser, 0, null);
 
 			log.info("Getting survey as Html-------------------------------");

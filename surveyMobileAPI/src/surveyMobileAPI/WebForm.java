@@ -98,6 +98,7 @@ public class WebForm extends Application {
 	SurveyTemplate template = null;
 	ResourceBundle localisation = null;
 	boolean viewOnly = false;
+	String userIdent = null;
 
 	/*
 	 * Get instance data Respond with JSON
@@ -111,21 +112,20 @@ public class WebForm extends Application {
 
 		log.info("Requesting json instance");
 
-		String user = null;
 		Response resp = null;
 		String requester = "surveyMobileAPI-Webform";
 		Connection connectionSD = SDDataSource.getConnection(requester);
 
 		try {
-			user = GeneralUtilityMethods.getDynamicUser(connectionSD, authorisationKey);
-			resp = getInstanceData(connectionSD, request, formIdent, updateid, user, false);
+			userIdent = GeneralUtilityMethods.getDynamicUser(connectionSD, authorisationKey);
+			resp = getInstanceData(connectionSD, request, formIdent, updateid, userIdent, false);
 		} catch (SQLException e) {
 			e.printStackTrace();
 		} finally {
 			SDDataSource.closeConnection(requester, connectionSD);
 		}
 
-		if (user == null) {
+		if (userIdent == null) {
 			log.info("User not found for key");
 			throw new JsonAuthorisationException();
 		}
@@ -145,15 +145,14 @@ public class WebForm extends Application {
 
 		log.info("Requesting json instance no key");
 
-		String user = null;
 		Response resp = null;
 		String requester = "surveyMobileAPI-Webform";
 		Connection connectionSD = SDDataSource.getConnection(requester);
 
 		try {
-			user = request.getRemoteUser();
-			log.info("Requesting instance as: " + user);
-			resp = getInstanceData(connectionSD, request, formIdent, updateid, user, true);
+			userIdent = request.getRemoteUser();
+			log.info("Requesting instance as: " + userIdent);
+			resp = getInstanceData(connectionSD, request, formIdent, updateid, userIdent, true);
 		} catch (Exception e) {
 			e.printStackTrace();
 		} finally {
@@ -177,25 +176,24 @@ public class WebForm extends Application {
 
 		log.info("Requesting json");
 
-		String user = null;
 		String requester = "WebForm - getFormJson";
 		Connection connectionSD = SDDataSource.getConnection(requester);
 
 		try {
-			user = GeneralUtilityMethods.getDynamicUser(connectionSD, authorisationKey);
+			userIdent = GeneralUtilityMethods.getDynamicUser(connectionSD, authorisationKey);
 		} catch (SQLException e) {
 			e.printStackTrace();
 		} finally {
 			SDDataSource.closeConnection(requester, connectionSD);
 		}
 
-		if (user == null) {
+		if (userIdent == null) {
 			log.info("User not found for key");
 			throw new JsonAuthorisationException();
 		}
 
 		mimeType = "json";
-		return getWebform(request, formIdent, datakey, datakeyvalue, assignmentId, callback, user, false, false,
+		return getWebform(request, formIdent, datakey, datakeyvalue, assignmentId, callback, false, false,
 				false);
 	}
 
@@ -217,8 +215,9 @@ public class WebForm extends Application {
 		}
 		viewOnly = vo;
 
+		userIdent = request.getRemoteUser();
 		return getWebform(request, formIdent, datakey, datakeyvalue, assignmentId, callback,
-				request.getRemoteUser(), false, true, false);
+				false, true, false);
 	}
 
 	/*
@@ -243,7 +242,8 @@ public class WebForm extends Application {
 		}
 		viewOnly = vo;
 		
-		return getWebform(request, formIdent, datakey, datakeyvalue, assignmentId, callback, tempUser, false,
+		userIdent = tempUser;
+		return getWebform(request, formIdent, datakey, datakeyvalue, assignmentId, callback, false,
 				true, true);
 	}
 
@@ -251,7 +251,7 @@ public class WebForm extends Application {
 	 * Get the response as either HTML or JSON
 	 */
 	private Response getWebform(HttpServletRequest request, String formIdent, String datakey,
-			String datakeyvalue, int assignmentId, String callback, String user, boolean simplifyMedia,
+			String datakeyvalue, int assignmentId, String callback, boolean simplifyMedia,
 			boolean isWebForm, boolean isTemporaryUser) {
 
 		Response response = null;
@@ -282,14 +282,14 @@ public class WebForm extends Application {
 		StringBuffer outputString = new StringBuffer();
 
 		
-		if (user != null) {
+		if (userIdent != null) {
 			
 			// Authorisation
 			Connection connectionSD = SDDataSource.getConnection(requester);
 			if (isTemporaryUser) {
-				a.isValidTemporaryUser(connectionSD, user);
+				a.isValidTemporaryUser(connectionSD, userIdent);
 			}
-			a.isAuthorised(connectionSD, user);
+			a.isAuthorised(connectionSD, userIdent);
 			SurveyManager surveyManager = new SurveyManager();
 			survey = surveyManager.getSurveyId(connectionSD, formIdent); // Get the survey id from the templateName / key
 			if (survey == null) {
@@ -299,22 +299,22 @@ public class WebForm extends Application {
 				superUser = GeneralUtilityMethods.isSuperUser(connectionSD, request.getRemoteUser());
 			} catch (Exception e) {
 			}
-			a.isValidSurvey(connectionSD, user, survey.id, false, superUser); // Validate that the user has access																			
+			a.isValidSurvey(connectionSD, userIdent, survey.id, false, superUser); // Validate that the user has access																			
 			a.isBlocked(connectionSD, survey.id, false); // Validate that the survey is not blocked
 			// End Authorisation
 			
 			// Get the organisation id and an access key to upload the results of this form
 			// (used from iPhones which do not do authentication on POSTs)
 			try {
-				orgId = GeneralUtilityMethods.getOrganisationId(connectionSD, user, 0);
-				accessKey = GeneralUtilityMethods.getNewAccessKey(connectionSD, user, formIdent);
+				orgId = GeneralUtilityMethods.getOrganisationId(connectionSD, userIdent, 0);
+				accessKey = GeneralUtilityMethods.getNewAccessKey(connectionSD, userIdent, formIdent);
 
 				// Get the users locale
 				Locale locale = new Locale(
 						GeneralUtilityMethods.getUserLanguage(connectionSD, request.getRemoteUser()));
 				localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
 				
-				manifestList = translationMgr.getManifestBySurvey(connectionSD, user, survey.id, basePath, formIdent);
+				manifestList = translationMgr.getManifestBySurvey(connectionSD, userIdent, survey.id, basePath, formIdent);
 				serverData = sm.getServer(connectionSD);
 				
 			} catch (Exception e) {
@@ -394,7 +394,7 @@ public class WebForm extends Application {
 			String respString = outputString.toString();
 			response = Response.status(Status.OK).entity(respString).build();
 
-			log.info("userevent: " + user + " : webForm : " + formIdent);
+			log.info("userevent: " + userIdent + " : webForm : " + formIdent);
 
 		} catch (Exception e) {
 			response = Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
@@ -617,7 +617,7 @@ public class WebForm extends Application {
 		// "/XSL/openrosa2html5form.xsl");
 
 		GetHtml getHtml = new GetHtml();
-		String html = getHtml.get(request, template.getSurvey().getId(), false);
+		String html = getHtml.get(request, template.getSurvey().getId(), false, userIdent);
 
 		// Convert escaped XML into HTML
 		html = html.replaceAll("&gt;", ">");

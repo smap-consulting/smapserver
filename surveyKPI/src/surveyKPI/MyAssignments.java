@@ -326,7 +326,7 @@ public class MyAssignments extends Application {
 			 */
 			SurveyManager sm = new SurveyManager();
 			ArrayList<org.smap.sdal.model.Survey> surveys = sm.getSurveys(connectionSD, pstmt,
-					request.getRemoteUser(), 
+					userName,
 					false, 
 					false, 
 					0,
