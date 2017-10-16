@@ -15,7 +15,8 @@ public class patch {
 		//}
 		
 		if(args.length < 3) {
-			System.out.println("Usage: java -jar patch.jar test_run sd_db results_db");
+			System.out.println("Usage: java -jar patch.jar test_run sd_db action");
+			System.out.println("    where action can be both, purge or erased");
 			return;
 		}
 		
@@ -32,13 +33,14 @@ public class patch {
 		}
 		System.out.println("Test run only:" + testRun);
 		String sd_db = "jdbc:postgresql://127.0.0.1:5432/" + args[1];
-		String results_db = "jdbc:postgresql://127.0.0.1:5432/" + args[2];
+		//String results_db = "jdbc:postgresql://127.0.0.1:5432/" + args[2];
+		String action = args[2];
 		
 		
 		try {
 		    Class.forName(dbClass);	 
 			connectionSD = DriverManager.getConnection(sd_db, "ws", "ws1234");
-			connectionResults = DriverManager.getConnection(results_db, "ws", "ws1234");
+			//connectionResults = DriverManager.getConnection(results_db, "ws", "ws1234");
 				
 			//connectionSD.setAutoCommit(false);
 			//connectionResults.setAutoCommit(false);
@@ -98,9 +100,21 @@ public class patch {
 			//cn.apply(testRun, connectionSD);
 			
 			// Add stress test data for mobile clinic
-			System.out.println("Adding stress test data for clinics");
-			ClinicTestData ctd = new ClinicTestData();
-			ctd.apply(connectionSD, connectionResults);
+			//System.out.println("Adding stress test data for clinics");
+			//ClinicTestData ctd = new ClinicTestData();
+			//ctd.apply(connectionSD, connectionResults);
+			
+			if(action.equals("both") || action.equals("purge")) {
+				System.out.println("Purging old upload surveys directories");
+				PurgeUploadedDirectories pu = new PurgeUploadedDirectories();
+				pu.apply(testRun, connectionSD);
+			}
+			
+			if(action.equals("both") || action.equals("erased")) {
+				System.out.println("Deleting upload folders where the survey has been deleted");
+				PurgeErasedSurveys pe = new PurgeErasedSurveys();
+				pe.apply(testRun, connectionSD);
+			}
 			
 			
 			
