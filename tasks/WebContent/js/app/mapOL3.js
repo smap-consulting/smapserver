@@ -407,7 +407,10 @@ define([
                 data: {mapView: saveString},
                 success: function (data, status) {
                     removeHourglass();
-                    globals.gViewId = data.viewId;
+                    if(globals.gViewId != data.viewId) {  // Store data under new viewId
+                        gTasks.cache.surveyConfig[data.viewId] = gTasks.cache.surveyConfig[globals.gViewId];
+                        globals.gViewId = data.viewId;
+                    }
                 }, error: function (data, status) {
                     removeHourglass();
                     alert(localise.set["msg_err_save"] + " " + data.responseText);

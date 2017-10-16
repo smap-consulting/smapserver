@@ -1182,9 +1182,9 @@ require([
             h[++idx] = ' class="columnSelect" value="';
             h[++idx] = item.name;
             h[++idx] = '"';
-            //if(!item.hide) {
-            //	h[++idx] = ' checked';
-            //}
+            if(!item.hide) {
+            	h[++idx] = ' checked';
+            }
             h[++idx] = '>';
             h[++idx] = '</div>';
             h[++idx] = '</div>';
@@ -1527,7 +1527,10 @@ require([
             data: {view: saveView},
             success: function (data, status) {
                 removeHourglass();
-                globals.gViewId = data.viewId;
+                if(globals.gViewId != data.viewId) {  // Store data under new viewId
+                    gTasks.cache.surveyConfig[data.viewId] = gTasks.cache.surveyConfig[globals.gViewId];
+                    globals.gViewId = data.viewId;
+                }
                 $('#right-sidebar').removeClass("sidebar-open");
             }, error: function (data, status) {
                 removeHourglass();
