@@ -101,11 +101,11 @@ public class NotificationList extends Application {
 		PreparedStatement pstmt = null;
 		
 		try {
-			NotificationManager fm = new NotificationManager();
-			ArrayList<Notification> fList = fm.getProjectNotifications(connectionSD, pstmt, request.getRemoteUser(), projectId);
+			NotificationManager nm = new NotificationManager();
+			ArrayList<Notification> nList = nm.getProjectNotifications(connectionSD, pstmt, request.getRemoteUser(), projectId);
 			
 			Gson gson = new GsonBuilder().disableHtmlEscaping().create();
-			String resp = gson.toJson(fList);
+			String resp = gson.toJson(nList);
 			response = Response.ok(resp).build();
 			
 		} catch (SQLException e) {

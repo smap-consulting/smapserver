@@ -89,6 +89,7 @@ public class UploadFiles extends Application {
 	@Produces("application/json")
 	@Path("/media")
 	public Response sendMedia(
+			@QueryParam("getlist") boolean getlist,
 			@Context HttpServletRequest request
 			) throws IOException {
 		
@@ -184,13 +185,17 @@ public class UploadFiles extends Application {
 					    	applyCSVChanges(connectionSD, cResults, user, sId, fileName, savedFile, basePath, mediaInfo);
 					    }
 					    
-					    MediaResponse mResponse = new MediaResponse ();
-					    mResponse.files = mediaInfo.get();			
-						Gson gson = new GsonBuilder().disableHtmlEscaping().create();
-						String resp = gson.toJson(mResponse);
-						log.info("Responding with " + mResponse.files.size() + " files");
-						
-						response = Response.ok(resp).build();	
+					    if(getlist) {
+						    MediaResponse mResponse = new MediaResponse ();
+						    mResponse.files = mediaInfo.get();			
+							Gson gson = new GsonBuilder().disableHtmlEscaping().create();
+							String resp = gson.toJson(mResponse);
+							log.info("Responding with " + mResponse.files.size() + " files");
+							
+							response = Response.ok(resp).build();
+					    } else {
+					    		response = Response.ok().build();
+					    }
 						
 					} else {
 						log.log(Level.SEVERE, "Media folder not found");

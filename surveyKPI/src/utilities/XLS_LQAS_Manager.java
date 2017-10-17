@@ -18,7 +18,6 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 
 */
 
-import java.io.IOException;
 import java.io.OutputStream;
 
 //import org.apache.poi.hssf.usermodel.HSSFWorkbook;
@@ -41,12 +40,9 @@ import model.LotRow;
 import model.LotSummary;
 import net.sourceforge.jeval.Evaluator;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.xssf.usermodel.*;
 import org.apache.poi.ss.usermodel.*;
-import org.apache.poi.hssf.usermodel.HSSFCellStyle;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
-import org.apache.poi.hssf.util.HSSFColor;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.model.LQAS;
 import org.smap.sdal.model.LQASGroup;
@@ -54,8 +50,6 @@ import org.smap.sdal.model.LQASItem;
 import org.smap.sdal.model.LQASdataItem;
 import org.smap.sdal.model.LQASdataItemOld;
 import org.smap.sdal.model.LQASold;
-
-import surveyKPI.ExportLQAS;
 
 /*
  * Class to manage the creation of an LQAS workbook

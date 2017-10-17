@@ -717,6 +717,7 @@ function uploadFiles(url, formName, callback1, param, callback2) {
 	var f = document.forms.namedItem(formName),
 		formData = new FormData(f);
 	
+	url = addUrlParam(url, "getlist=true");
 	addHourglass();
 	$('#submitFiles').addClass('disabled');
     $.ajax({
@@ -766,6 +767,18 @@ function uploadFiles(url, formName, callback1, param, callback2) {
 			}
         }
     });
+}
+
+/*
+ * Add a parameter to a URL
+ */
+function addUrlParam(url, param) {
+	if(url.indexOf("?") > 0) {
+		url += "&" + param;
+	} else {
+		url += "?" + param;
+	}
+	return url;
 }
 
 /*
