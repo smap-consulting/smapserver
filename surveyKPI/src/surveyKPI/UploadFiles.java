@@ -51,8 +51,6 @@ import org.smap.sdal.model.CustomReportItem;
 import org.smap.sdal.model.LQAS;
 import org.smap.sdal.model.ReportConfig;
 import org.smap.sdal.model.Survey;
-import org.smap.sdal.model.TableColumn;
-
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
@@ -60,7 +58,6 @@ import java.io.File;
 import java.io.IOException;
 import java.sql.*;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
@@ -100,9 +97,7 @@ public class UploadFiles extends Application {
 		DiskFileItemFactory  fileItemFactory = new DiskFileItemFactory ();		
 		String user = request.getRemoteUser();
 
-		//String original_url = "/edit.html?mesg=error loading media file";
 		int sId = -1;
-		//String settings = "false";
 	
 		log.info("upload files - media -----------------------");
 		
@@ -318,7 +313,6 @@ public class UploadFiles extends Application {
 			) throws IOException {
 		
 		Response response = null;
-		String serverName = request.getServerName();
 		String user = request.getRemoteUser();
 		boolean superUser = false;
 		
@@ -560,7 +554,6 @@ public class UploadFiles extends Application {
 			String fieldName = null;
 			String reportName = null;
 			String reportType = null;
-			String returnType = null;
 
 			while(itr.hasNext()) {
 				
@@ -572,9 +565,7 @@ public class UploadFiles extends Application {
 						reportName = item.getString();
 					} else if(fieldName.equals("type")) {
 						reportType = item.getString();
-					} else if(fieldName.equals("returntype")) {
-						returnType = item.getString();
-					}
+					} 
 				} else if(!item.isFormField()) {
 					// Handle Uploaded files.
 					log.info("Field Name = "+item.getFieldName()+

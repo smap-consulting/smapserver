@@ -537,6 +537,10 @@ public class UtilityMethodsEmail {
           	ct = "audio/m4a";
           } else if (extension.equals("csv")) {
           	ct = "text/csv";
+          } else if (extension.equals("xlsx")) {
+            	ct = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+          } else if (extension.equals("xls")) {
+          	ct = "application/vnd.ms-excel";
           } else if (extension.equals("amr")) {
           	ct = "audio/amr";
           } else if (extension.equals("xls")) {

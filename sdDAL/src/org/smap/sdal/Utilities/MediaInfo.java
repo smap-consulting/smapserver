@@ -29,9 +29,12 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -149,11 +152,14 @@ public class MediaInfo {
 			    }
 			} );
 			
+			DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
+			
 			for(int i = 0; i < files.size(); i++) {
 				MediaItem mi = new MediaItem();
 				File f = files.get(i);
 				mi.name = f.getName();
 				mi.size = f.length();
+				mi.modified = df.format(new Date(f.lastModified()));
 				if(server != null) {
 					mi.url = server + folderUrl + "/" + mi.name;
 					
@@ -171,6 +177,12 @@ public class MediaInfo {
 						mi.type = "geojson";
 					} else if(contentType.equals("application/todo")) {
 						mi.type = "todo";
+					} else if(contentType.equals("text/csv")) {
+						mi.type = "csv";
+					} else if(contentType.equals("application/vnd.ms-excel")) {
+						mi.type = "xls";
+					} else if(contentType.equals("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")) {
+						mi.type = "xlsx";
 					} else {
 						mi.type = "unknown";
 					}
@@ -194,7 +206,6 @@ public class MediaInfo {
 				} else {
 					log.log(Level.SEVERE, "Media Server is null");
 				}
-				mi.deleteType = "DELETE";
 				media.add(mi);
 			}
 		} else {

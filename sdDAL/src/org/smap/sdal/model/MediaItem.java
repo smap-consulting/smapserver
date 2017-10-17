@@ -19,20 +19,11 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 public class MediaItem {
-	public String name;
-	public long size;	
+	public String name;	
 	public String url;	
 	public String thumbnailUrl;	
 	public String deleteUrl;		
-	public String deleteType;
 	public String type;
-	
-	// The following are used when updating the link between files and questions / options on the server
-	/*
-	public boolean surveyLevel;		// Set true if this is a survey level media item
-	public int qId;
-	public int oId;
-	public String type;
-	*/
-
+	public long size;
+	public String modified;
 }
