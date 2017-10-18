@@ -90,6 +90,7 @@ public class UploadFiles extends Application {
 	@Path("/media")
 	public Response sendMedia(
 			@QueryParam("getlist") boolean getlist,
+			@QueryParam("survey_id") int sId,
 			@Context HttpServletRequest request
 			) throws IOException {
 		
@@ -97,8 +98,6 @@ public class UploadFiles extends Application {
 		
 		DiskFileItemFactory  fileItemFactory = new DiskFileItemFactory ();		
 		String user = request.getRemoteUser();
-
-		int sId = -1;
 	
 		log.info("upload files - media -----------------------");
 		
@@ -123,9 +122,7 @@ public class UploadFiles extends Application {
 				
 				if(item.isFormField()) {
 				
-					if(item.getFieldName().equals("original_url")) {
-						//original_url = item.getString();
-					} else if(item.getFieldName().equals("survey_id")) {
+					if(item.getFieldName().equals("survey_id")) {
 						try {
 							sId = Integer.parseInt(item.getString());
 						} catch (Exception e) {

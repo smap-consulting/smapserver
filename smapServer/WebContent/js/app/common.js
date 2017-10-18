@@ -970,7 +970,7 @@ function getFilesFromServer(url, sId, callback) {
 	
 	if(sId) {
 		gSId = sId;
-		url += '?sId=' + sId;
+		url += '?survey_id=' + sId;
 	}
 	
 	addHourglass();
