@@ -68,6 +68,10 @@ public class GetHtml {
 			survey = sm.getById(sd, null, userIdent, sId, true, basePath, null, false, false, true, false,
 					false, "real", false, superUser, 0, null);
 
+			if(survey == null) {
+				throw new Exception("Survey not available - Check to see if it has been deleted or Security Roles applied");
+			}
+			
 			log.info("Getting survey as Html-------------------------------");
 			// Create a new XML Document
 			DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();

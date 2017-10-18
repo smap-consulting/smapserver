@@ -571,6 +571,7 @@ CREATE TABLE forward (
 	id INTEGER DEFAULT NEXTVAL('forward_seq') CONSTRAINT pk_forward PRIMARY KEY,
 	s_id INTEGER REFERENCES survey ON DELETE CASCADE,
 	enabled boolean,
+	filter text,
 	target text,
 	remote_s_id text,
 	remote_s_name text,

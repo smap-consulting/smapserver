@@ -165,6 +165,7 @@ define(['jquery','localise', 'common', 'globals',  'tablesorter', 'bootstrap'],
 
                 notification.s_id = $('#survey').val();
                 notification.enabled = $('#nt_enabled').is(':checked');
+                notification.filter = $('#not_filter').val();
 
                 if(gSelectedNotification !== -1) {
                     notification.id = gSelectedNotification;
@@ -307,6 +308,7 @@ define(['jquery','localise', 'common', 'globals',  'tablesorter', 'bootstrap'],
                 setTargetDependencies(notification.target)
 
                 $('#survey').val(notification.s_id);
+                $('#not_filter').val(notification.filter);
                 if(notification.notifyDetails && notification.notifyDetails.emails) {
                     if(notification.notifyDetails.emailQuestion) {
                         surveyChanged(notification.notifyDetails.emailQuestion);

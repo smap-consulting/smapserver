@@ -800,3 +800,6 @@ alter table question add column dataType text;
 -- Upgrade to 17.09
 alter table survey add column exclude_empty boolean;
 alter table survey add column auto_updates text;
+
+-- Upgrade to 17.10
+alter table forward add column filter text;

@@ -301,8 +301,8 @@ public class SubRelationalDB extends Subscriber {
 
 				// Apply notifications
 				String urlprefix = "https://" + server + "/";
-				NotificationManager fm = new NotificationManager();
-				fm.notifyForSubmission(
+				NotificationManager nm = new NotificationManager();
+				nm.notifyForSubmission(
 						sd, 
 						cResults,
 						ueId, 

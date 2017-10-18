@@ -45,6 +45,7 @@ import org.smap.sdal.model.LinkedTarget;
 import org.smap.sdal.model.ManifestInfo;
 import org.smap.sdal.model.Option;
 import org.smap.sdal.model.RoleColumnFilter;
+import org.smap.sdal.model.Survey;
 import org.smap.sdal.model.SurveyLinkDetails;
 import org.smap.sdal.model.TableColumn;
 
@@ -4677,6 +4678,10 @@ public class GeneralUtilityMethods {
 			zos.closeEntry();
 		}
 		zos.close();
+	}
+	
+	public static boolean testFilter(Survey survey, String filter, String instanceId) {
+		return false;
 	}
 
 }

@@ -163,7 +163,6 @@ public class SubscriberBatch {
 								se.setSubscriber(s.getSubscriberName());
 								se.setDest(s.getDest());
 								String uploadFile = ue.getFilePath();
-								String auditFile = ue.getAuditFilePath();
 								
 								System.out.println("Upload file: " + uploadFile);
 								InputStream is = null;

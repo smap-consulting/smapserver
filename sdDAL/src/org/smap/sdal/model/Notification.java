@@ -4,6 +4,7 @@ public class Notification {
 	public int id;
 	public String target;
 	public int s_id;
+	public String filter;
 	public String s_name;
 	public String remote_s_ident;	
 	public boolean enabled;
