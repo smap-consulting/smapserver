@@ -311,7 +311,7 @@ public class UploadFiles extends Application {
 	@Path("/media")
 	public Response getMedia(
 			@Context HttpServletRequest request,
-			@QueryParam("sId") int sId
+			@QueryParam("survey_id") int sId
 			) throws IOException {
 		
 		Response response = null;
