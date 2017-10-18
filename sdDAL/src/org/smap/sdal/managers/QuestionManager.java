@@ -1258,7 +1258,7 @@ public class QuestionManager {
 	public ChangeSet getCSVChangeSetForQuestion(Connection sd, 
 			File csvFile,
 			String csvFileName,
-			org.smap.sdal.model.Question q) {
+			org.smap.sdal.model.Question q) throws Exception {
 		
 		ChangeSet cs = new ChangeSet();
 		

@@ -111,7 +111,8 @@ $.fn.bootstrapFileInput = function() {
 
       // Don't try to show the name if there is none
       if (!fileDesc) {
-        return;
+          $target.addClass('alert-success').removeClass('alert-danger').html("").val("");
+          return;
       }
 
       if($target.hasClass("alert")) {
