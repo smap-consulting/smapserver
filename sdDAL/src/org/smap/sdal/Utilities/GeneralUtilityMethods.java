@@ -1633,7 +1633,7 @@ public class GeneralUtilityMethods {
 			int l_id,
 			int qId,
 			String qType,
-			String qAppearance) {
+			String qAppearance) throws Exception {
 
 		BufferedReader br = null;
 		try {
@@ -1674,8 +1674,6 @@ public class GeneralUtilityMethods {
 			}
 
 			// TODO delete all file options that were not in the latest file (file version number)
-		} catch (Exception e) {
-			log.log(Level.SEVERE,"Error", e);
 		} finally {
 			try {br.close();} catch(Exception e) {};
 		}
@@ -1760,6 +1758,7 @@ public class GeneralUtilityMethods {
 
 		if(cols == null) {
 			// No column in this CSV file so there are not going to be any matches
+			log.info("No columns found in CSV file");
 			return vlc;
 		}
 		/*
@@ -1785,19 +1784,23 @@ public class GeneralUtilityMethods {
 				vlc.value = -1;
 				vlc.label = -1;
 				for(int i = 0; i < cols.length; i++) {
-					if(cols[i].toLowerCase().equals(valueName.toLowerCase())) {
+					if(cols[i].toLowerCase().trim().equals(valueName.toLowerCase().trim())) {
 						vlc.value = i;
-					} else if(cols[i].toLowerCase().equals(labelName.toLowerCase())) {
+					}
+					if(cols[i].toLowerCase().trim().equals(labelName.toLowerCase().trim())) {
 						vlc.label = i;
 					}
+				}
+				if(vlc.value == -1) {
+					throw new Exception("Column " + valueName + " not found in csv file for question " + qDisplayName);
+					
+				} else if(vlc.label == -1) {
+					throw new Exception("Column " + labelName + " not found in csv file for question " + qDisplayName);
 				}
 			} else {
 				throw new Exception("The names of the columns to use in this csv file "
 						+ "have not been set in question " + qDisplayName);
 			}
-		} catch (Exception e) {
-			log.log(Level.SEVERE,"Error", e);
-			throw e;
 		} finally {
 			if (pstmt != null) try {pstmt.close();} catch(Exception e) {};
 		}
