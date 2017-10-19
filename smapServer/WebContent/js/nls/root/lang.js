@@ -463,6 +463,7 @@ define({
     "mon_l200": "(last 200)",
     "mon_gtb": "Group Totals by",
     "mon_nl": "Not Loaded",
+    "mon_ue": "Upload Errors",
     "mon_dup": "Duplicates",
     "mon_att": "Extra Attachments",
     "mon_sa": "Show As",

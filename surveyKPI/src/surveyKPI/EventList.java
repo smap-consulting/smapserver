@@ -31,6 +31,7 @@ import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 import org.smap.sdal.Utilities.Authorise;
+import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.SDDataSource;
 
 import java.sql.*;
@@ -74,6 +75,7 @@ public class EventList extends Application {
 			@QueryParam("hide_merged") boolean hideMerged,
 			@QueryParam("hide_success") boolean hideSuccess,
 			@QueryParam("hide_not_loaded") boolean hideNotLoaded,
+			@QueryParam("hide_upload_errors") boolean hideUploadErrors,
 			@QueryParam("is_forward") boolean is_forward,
 			@QueryParam("start_key") int start_key,
 			@QueryParam("rec_limit") int rec_limit) {
@@ -86,7 +88,8 @@ public class EventList extends Application {
 		}
 		
 		log.info("Get events, Project id: " + projectId + " Survey id: " + sName);
-
+		HashMap<Integer, String> surveyNames = new HashMap<Integer, String> ();
+		
 		String user = request.getRemoteUser();
 		// Authorisation - Access
 		Connection connectionSD = SDDataSource.getConnection("surveyKPI-EventList");
@@ -113,6 +116,7 @@ public class EventList extends Application {
 			subscriberSelect = "AND se.subscriber != 'results_db' ";
 		}
 
+		
 		PreparedStatement pstmt = null;
 		ResultSet resultSet = null;
 		try {
@@ -129,9 +133,9 @@ public class EventList extends Application {
 				if(projectId != 0) {	// set to 0 to get all available projects
 					projSelect = "AND up.p_id = ? ";
 				}
-				sql = "SELECT se.se_id, ue.ue_id, ue.upload_time, ue.user_name, ue.imei, ue.file_name, ue.survey_name, ue.location, " +
+				sql = "SELECT se.se_id, ue.ue_id, ue.s_id, ue.upload_time, ue.user_name, ue.imei, ue.file_name, ue.survey_name, ue.location, " +
 						"se.status as se_status, se.reason as se_reason, " +
-						"ue.status as ue_status, ue.reason as ue_reason, " +
+						//"ue.status as ue_status, ue.reason as ue_reason, " +
 						"se.dest as dest, ue.ident," +
 						"ue.status as upload_status, ue.reason as upload_reason " +
 						"from upload_event ue " +
@@ -157,9 +161,9 @@ public class EventList extends Application {
 				}
 				
 			} else {
-				sql = "SELECT se.se_id, ue.ue_id, ue.upload_time, ue.user_name, ue.imei, ue.file_name, ue.survey_name, ue.location, " +
+				sql = "SELECT se.se_id, ue.ue_id, ue.s_id, ue.upload_time, ue.user_name, ue.imei, ue.file_name, ue.survey_name, ue.location, " +
 						"se.status as se_status, se.reason as se_reason, " +
-						"ue.status as ue_status, ue.reason as ue_reason, " +
+						//"ue.status as ue_status, ue.reason as ue_reason, " +
 						"se.dest as dest, ue.ident, " +
 						"ue.status as upload_status, ue.reason as upload_reason " +
 						"FROM upload_event ue " +
@@ -196,18 +200,20 @@ public class EventList extends Application {
 				 String upload_status = resultSet.getString("upload_status");
 				 String upload_reason = resultSet.getString("upload_reason");
 				 
-				 if(upload_status.equals("error")) {	// Didn't make it to the subscriber
-					 status = "error";
-					 se_reason = upload_reason;
-				 }
+				 // Update don't equate upload errors with subscriber errors
+				 //if(upload_status.equals("error")) {	// Didn't make it to the subscriber
+					 //status = "error";
+					 //se_reason = upload_reason;
+				 //}
 				 
 				 if(
 						 (status == null && !hideNotLoaded) ||
 						 (status != null && !hideSuccess && status.equals("success")) ||
 						 (status != null && !hideErrors && status.equals("error") && (se_reason == null || !se_reason.startsWith("Duplicate survey:"))) ||
 						 (status != null && !hideDuplicates && status.equals("error") && (se_reason != null && se_reason.startsWith("Duplicate survey:")) ||
-						 (status != null && !hideMerged && status.equals("merged")))
-						 ) {
+						 (status != null && !hideMerged && status.equals("merged")) ||
+						 (upload_status != null && upload_status.equals("error") && !hideUploadErrors)
+						 )) {
 					
 					
 					// Only return max limit
@@ -244,16 +250,29 @@ public class EventList extends Application {
 					jp.put("upload_time", resultSet.getString("upload_time"));
 					jp.put("user_name", resultSet.getString("user_name"));
 					jp.put("file_name", resultSet.getString("file_name"));
-					jp.put("survey_name", resultSet.getString("survey_name"));
+					int sId = resultSet.getInt("s_id");
+					String nm = surveyNames.get(sId);
+					if(nm == null) {
+						nm = GeneralUtilityMethods.getSurveyName(connectionSD, sId);
+						if(nm == null) { // erased survey
+							nm = resultSet.getString("survey_name");
+						}
+					}
+					jp.put("survey_name", nm);
 					jp.put("dest", resultSet.getString("dest"));
 					jp.put("imei", resultSet.getString("imei"));
 					jp.put("ident", resultSet.getString("ident"));
-					if(status == null) {					// Not loaded by subscriber
-							status = "not_loaded";
-							se_reason = "Not added to database";
+					if(upload_status != null && upload_status.equals("error")) {
+						jp.put("status", "upload error");
+						jp.put("reason", upload_reason);
+					} else {
+						if(status == null) {					// Not loaded by subscriber
+								status = "not_loaded";
+								se_reason = "Not added to database";
+						}
+						jp.put("status", status);
+						jp.put("reason", se_reason);
 					}
-					jp.put("status", status);
-					jp.put("reason", se_reason);
 					jr.put("properties", jp);
 					ja.put(jr);
 					
@@ -456,6 +475,7 @@ public class EventList extends Application {
 		int duplicates = 0;
 		int merged = 0;
 		int notLoaded = 0;
+		int uploadErrors = 0;
 	}
 	
 	// Get totals for notifications
@@ -554,6 +574,7 @@ public class EventList extends Application {
 			@QueryParam("hide_merged") boolean hideMerged,
 			@QueryParam("hide_success") boolean hideSuccess,
 			@QueryParam("hide_not_loaded") boolean hideNotLoaded,
+			@QueryParam("hide_upload_errors") boolean hideUploadErrors,
 			@QueryParam("groupby") String groupby,
 			@QueryParam("is_forward") boolean is_forward) {
 
@@ -593,6 +614,9 @@ public class EventList extends Application {
 			}
 			if(!hideNotLoaded) {
 				addStatusTotals("not_loaded", sName, projectId, user, pstmt, connectionSD, groupby, sList, is_forward); 
+			}
+			if(!hideUploadErrors) {
+				addStatusTotals("upload_errors", sName, projectId, user, pstmt, connectionSD, groupby, sList, is_forward); 
 			}
 			
 			
@@ -637,6 +661,9 @@ public class EventList extends Application {
 				if(!hideNotLoaded) {
 					jp.put("not_loaded", st.notLoaded);
 				}
+				if(!hideUploadErrors) {
+					jp.put("upload_errors", st.uploadErrors);
+				}
 				jr.put("properties", jp);
 				ja.put(jr);
 			}
@@ -666,17 +693,20 @@ public class EventList extends Application {
 			HashMap<String,StatusTotal> sList,
 			boolean isForward) throws SQLException {
 		
+		HashMap<Integer, String> surveyNames = new HashMap<Integer, String> ();
 		String selectStatus = null;
 		if(status.equals("success")) {
 			selectStatus = "AND se.status = 'success' ";
 		} else if(status.equals("errors")) {
-			selectStatus = "AND (ue.status = 'error' or (coalesce(se.status,'') = 'error' AND coalesce(se.reason,'') not like 'Duplicate survey:%')) ";
+			selectStatus = "AND (coalesce(se.status,'') = 'error' AND coalesce(se.reason,'') not like 'Duplicate survey:%') ";
 		} else if(status.equals("not_loaded")) {
-			selectStatus = "AND se.status is null ";
+			selectStatus = "AND ue.status != 'error' and se.status is null ";
 		} else if(status.equals("duplicates")) {
 			selectStatus = "AND se.status = 'error' AND se.reason like 'Duplicate survey:%' ";
 		} else if(status.equals("merged")) {
 			selectStatus = "AND se.status = 'merged' ";
+		} else if(status.equals("upload_errors")) {
+			selectStatus = "AND ue.status = 'error' ";
 		}
 		
 		String subscriberSelect = "";
@@ -695,14 +725,14 @@ public class EventList extends Application {
 			String aggregate;
 			String getDest;
 			if(isForward) {
-				aggregate = "ue.survey_name, se.dest";
+				aggregate = "ue.s_id, se.dest";
 				getDest = ",se.dest ";
 			} else {
-				aggregate = "ue.survey_name";
+				aggregate = "ue.s_id";
 				getDest = "";
 			}
 			
-			sql = "SELECT count(*), ue.survey_name " +
+			sql = "SELECT count(*), ue.s_id " +
 					getDest +
 					"FROM upload_event ue " +
 					"left outer join subscriber_event se " +
@@ -859,6 +889,31 @@ public class EventList extends Application {
 				 dest = resultSet.getString(3);
 			 }
 			 
+			 if(sName == null || sName.equals("_all")) {
+				 // Convert survey id to display name
+				 int sId = 0;
+				 try {
+					 sId = Integer.valueOf(key);
+				 } catch(Exception e) {
+					 
+				 }
+				 if(sId > 0) {
+					 String nm = surveyNames.get(sId);
+					if(nm == null) {
+						nm = GeneralUtilityMethods.getSurveyName(connectionSD, sId);
+						if(nm == null) { // erased survey
+							nm = resultSet.getString("survey_name");
+						}
+					}
+					if(nm == null) {
+						key = "unknown";
+					} else {
+						key = nm;
+					}
+				 } else {
+					 key = "erased";
+				 }
+			 }
 			 StatusTotal st = sList.get(key + dest);
 			
 			 if(st == null) {
@@ -877,6 +932,8 @@ public class EventList extends Application {
 				 st.merged = count;
 			 } else if(status.equals("not_loaded")) {
 				 st.notLoaded = count;
+			 } else if(status.equals("upload_errors")) {
+				 st.uploadErrors = count;
 			 }
 		 }
 	}
