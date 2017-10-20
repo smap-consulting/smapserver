@@ -155,9 +155,17 @@ public class MediaInfo {
 			DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
 			
 			for(int i = 0; i < files.size(); i++) {
-				MediaItem mi = new MediaItem();
+				
 				File f = files.get(i);
-				mi.name = f.getName();
+				
+				// Ignore file names ending in .old as these are previous versions of csv files
+				String fileName = f.getName();
+				if(fileName.endsWith(".old")) {
+					continue;
+				}
+				
+				MediaItem mi = new MediaItem();
+				mi.name = fileName;
 				mi.size = f.length();
 				mi.modified = df.format(new Date(f.lastModified()));
 				if(server != null) {

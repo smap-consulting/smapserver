@@ -1605,6 +1605,7 @@ public class SurveyManager {
 		PreparedStatement pstmtOptionInsert = null;
 		PreparedStatement pstmtMaxSeq = null;
 		PreparedStatement pstmtOptionUpdate = null;
+		PreparedStatement pstmtOptionDelete = null;
 		
 		try {
 			
@@ -1622,6 +1623,11 @@ public class SurveyManager {
 					+ "where l_id = ? "
 					+ "and ovalue = ?"; 			
 			pstmtOptionUpdate = connectionSD.prepareStatement(sqlOptionUpdate);
+			
+			String sqlOptionDelete = "delete from option "
+					+ "where l_id = ? "
+					+ "and ovalue = ?"; 			
+			pstmtOptionDelete = connectionSD.prepareStatement(sqlOptionDelete);
 			
 			String sqlLangInsert = "insert into translation  (t_id, s_id, language, text_id, type, value) values(nextval('t_seq'), ?, ?, ?, ?, ?);"; 			
 			pstmtLangInsert = connectionSD.prepareStatement(sqlLangInsert);
@@ -1654,54 +1660,61 @@ public class SurveyManager {
 				
 				Gson gson=  new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd").create();
 				
-				// (debug) log.info("Get text_id for option: " + pstmtOptionGet.toString());
-				rs = pstmtOptionGet.executeQuery();
-				if(rs.next()) {
-					
-					String text_id = rs.getString(1);
-					
-					pstmtLangUpdate.setString(1, ci.option.externalLabel);
-					pstmtLangUpdate.setInt(2, sId);
-					pstmtLangUpdate.setString(3, text_id);
-					pstmtLangUpdate.setString(4, ci.option.value);
-					// (debug) log.info("Update existing option label: " + pstmtLangUpdate.toString());
-					count = pstmtLangUpdate.executeUpdate();
-					
-					pstmtOptionUpdate.setString(1, gson.toJson(ci.option.cascade_filters));
-					pstmtOptionUpdate.setInt(2, ci.option.l_id);
-					pstmtOptionUpdate.setString(3, ci.option.value);
-					pstmtOptionUpdate.executeUpdate();
+				if(ci.action.equals("delete")) {
+					pstmtOptionDelete.setInt(1, ci.option.l_id);
+					pstmtOptionDelete.setString(2, ci.option.value);
+					log.info(pstmtOptionDelete.toString());
+					pstmtOptionDelete.executeUpdate();
 					
 				} else {
-					
-					// Create a new option
-					
-					// Set text id
-					maxSeq++;
-					String text_id = "external_" + ci.option.l_id + "_" + maxSeq;
-					// Insert new option		
-					pstmtOptionInsert.setInt(1, ci.option.l_id);
-					pstmtOptionInsert.setInt(2, maxSeq);
-					pstmtOptionInsert.setString(3, text_id);
-					pstmtOptionInsert.setString(4, ci.option.value);
-					pstmtOptionInsert.setString(5, GeneralUtilityMethods.cleanName(ci.option.value, false, false, false) );
-					pstmtOptionInsert.setString(6, gson.toJson(ci.option.cascade_filters));
-					
-					// (debug) log.info("===================== Insert new option from file: " + pstmtOptionInsert.toString());
-					count = pstmtOptionInsert.executeUpdate();
-					
-					// Set label
-					pstmtLangInsert.setInt(1, sId);
-					pstmtLangInsert.setString(3, text_id);
-					pstmtLangInsert.setString(4, "none");
-					pstmtLangInsert.setString(5, ci.option.externalLabel);
-					for(String language : languages) {
-						pstmtLangInsert.setString(2, language);
-						// (debug) log.info("----------------------------- Insert new translation for option from file: " + pstmtLangInsert.toString());
-						count += pstmtLangInsert.executeUpdate();
-					}	
-					
-				}			
+					rs = pstmtOptionGet.executeQuery();
+					if(rs.next()) {
+						
+						String text_id = rs.getString(1);
+						
+						pstmtLangUpdate.setString(1, ci.option.externalLabel);
+						pstmtLangUpdate.setInt(2, sId);
+						pstmtLangUpdate.setString(3, text_id);
+						pstmtLangUpdate.setString(4, ci.option.value);
+						// (debug) log.info("Update existing option label: " + pstmtLangUpdate.toString());
+						count = pstmtLangUpdate.executeUpdate();
+						
+						pstmtOptionUpdate.setString(1, gson.toJson(ci.option.cascade_filters));
+						pstmtOptionUpdate.setInt(2, ci.option.l_id);
+						pstmtOptionUpdate.setString(3, ci.option.value);
+						pstmtOptionUpdate.executeUpdate();
+						
+					} else {
+						
+						// Create a new option
+						
+						// Set text id
+						maxSeq++;
+						String text_id = "external_" + ci.option.l_id + "_" + maxSeq;
+						// Insert new option		
+						pstmtOptionInsert.setInt(1, ci.option.l_id);
+						pstmtOptionInsert.setInt(2, maxSeq);
+						pstmtOptionInsert.setString(3, text_id);
+						pstmtOptionInsert.setString(4, ci.option.value);
+						pstmtOptionInsert.setString(5, GeneralUtilityMethods.cleanName(ci.option.value, false, false, false) );
+						pstmtOptionInsert.setString(6, gson.toJson(ci.option.cascade_filters));
+						
+						// (debug) log.info("===================== Insert new option from file: " + pstmtOptionInsert.toString());
+						count = pstmtOptionInsert.executeUpdate();
+						
+						// Set label
+						pstmtLangInsert.setInt(1, sId);
+						pstmtLangInsert.setString(3, text_id);
+						pstmtLangInsert.setString(4, "none");
+						pstmtLangInsert.setString(5, ci.option.externalLabel);
+						for(String language : languages) {
+							pstmtLangInsert.setString(2, language);
+							// (debug) log.info("----------------------------- Insert new translation for option from file: " + pstmtLangInsert.toString());
+							count += pstmtLangInsert.executeUpdate();
+						}	
+						
+					}
+				}
 				
 				if(logIndividualChangeSets) {
 					// Write the change log
@@ -1736,6 +1749,7 @@ public class SurveyManager {
 			try {if (pstmtOptionGet != null) {pstmtOptionGet.close();}} catch (SQLException e) {}
 			try {if (pstmtMaxSeq != null) {pstmtMaxSeq.close();}} catch (SQLException e) {}
 			try {if (pstmtOptionUpdate != null) {pstmtOptionUpdate.close();}} catch (SQLException e) {}
+			try {if (pstmtOptionDelete != null) {pstmtOptionDelete.close();}} catch (SQLException e) {}
 		}
 	}
 		
@@ -3077,6 +3091,7 @@ public class SurveyManager {
 										sd,
 										cs.items,
 										file,
+										null,			// ignore any previous versions of the CSV file
 										filename,
 										q.columnName,
 										q.l_id,

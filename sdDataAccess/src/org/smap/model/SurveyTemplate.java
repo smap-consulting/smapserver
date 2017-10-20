@@ -1658,6 +1658,7 @@ public class SurveyTemplate {
 										connectionSD,
 										cs.items,
 										file,
+										null,
 										filename,
 										q.getName(),
 										q.getListId(),
