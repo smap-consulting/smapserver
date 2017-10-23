@@ -152,8 +152,8 @@ public class NotificationManager {
 					" remote_host = ?, " +
 					" remote_user = ?, " +
 					" notify_details = ?, " +
-					" target = ? " +
-					" filter = ?, " +
+					" target = ?, " +
+					" filter = ? " +
 					" where id = ?; ";
 		}
 			
@@ -431,7 +431,14 @@ public class NotificationManager {
 				 */
 				boolean proceed = true;
 				if(filter != null && filter.trim().length() > 0) {
-					proceed = GeneralUtilityMethods.testFilter(survey, filter, instanceId);
+					try {
+						proceed = GeneralUtilityMethods.testFilter(cResults, localisation, survey, filter, instanceId);
+					} catch(Exception e) {
+						lm.writeLog(sd, sId, "subscriber", "notification", 
+								localisation.getString("filter_error")
+								.replace("%s1", filter)
+								.replaceAll("%s2", e.getMessage()));
+					}
 				}
 				
 				if(!proceed) {

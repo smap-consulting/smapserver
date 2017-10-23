@@ -1,33 +1,34 @@
 <!doctype html>
 <html class="no-js" lang="en">
 <head>
-	<meta name="keywords" content="" />
-	<meta name="description" content="" />
-	<meta http-equiv="content-type" content="text/html; charset=utf-8" />
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="keywords" content=""/>
+    <meta name="description" content=""/>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-	<title>Data Filtering Help</title>
-	
-	<link rel="shortcut icon" href="favicon.ico" />
-	<link rel="stylesheet" href="css/normalize.css" />
-	<link rel="stylesheet" href="css/bootstrap.min.css" /> 
-		<link rel="stylesheet" href="css/smap-bs.css">	
-	<link rel="stylesheet" href="css/bootstrap-datetimepicker.min.css" />
-	<link rel="stylesheet" href="css/smap-docs.css" type="text/css">
-    
-   	<!--[if lt IE 9]>
-		<script src="//html5shim.googlecode.com/svn/trunk/html5.js"></script>
-	<![endif]-->
-    
-	
-	<script type="text/javascript"> if (!window.console) console = {log: function() {}}; </script>
-	<script src="js/libs/modernizr.js"></script>
+    <title>Data Filtering Help</title>
 
+    <link rel="shortcut icon" href="favicon.ico"/>
+    <link rel="stylesheet" href="css/normalize.css"/>
+    <link rel="stylesheet" href="css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="css/smap-bs.css">
+    <link rel="stylesheet" href="css/bootstrap-datetimepicker.min.css"/>
+    <link rel="stylesheet" href="css/smap-docs.css" type="text/css">
+
+    <!--[if lt IE 9]>
+    <script src="//html5shim.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+
+
+    <script type="text/javascript"> if (!window.console) console = {
+        log: function () {
+        }
+    }; </script>
+    <script src="js/libs/modernizr.js"></script>
 
 
 </head>
 <body>
-
 
 
 <!--#if expr="true" -->
@@ -36,92 +37,165 @@
 <!--#else -->
 <!-- Default Header without SSI -->
 <header class="navbar navbar-default navbar-static-top" role="banner">
-  <div class="container">
-    <div class="navbar-header">
-      <button class="navbar-toggle" type="button" data-toggle="collapse" data-target=".navbar-collapse">
-        <span class="sr-only">Toggle navigation</span>
-        <span class="icon-bar"></span>
-        <span class="icon-bar"></span>
-        <span class="icon-bar"></span>
-      </button>
-      <a href="#" class="navbar-brand">
-      	<span class="glyphicon glyphicon-question-sign" aria-hidden="true"></span>
-     	 Data Filtering Help
-      </a>
+    <div class="container">
+        <div class="navbar-header">
+            <button class="navbar-toggle" type="button" data-toggle="collapse" data-target=".navbar-collapse">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a href="#" class="navbar-brand">
+                <span class="glyphicon glyphicon-question-sign" aria-hidden="true"></span>
+                Data Filtering Help
+            </a>
+        </div>
+
+
     </div>
-
-
-  </div>
 </header>
 <!--#endif -->
 
 <div class="container help">
-	<div class="row">
-	   	<div class="col-md-9" role="main">
-	   		
-	   		<div class="bs-docs-section">
-	   			<h1 id="questions" class="page-header">
-	   				<a class="anchorjs-link " href="#questions" aria-label="Anchor link for: questions"
-	   				data-anchorjs-icon="" style="font-family: anchorjs-icons; font-style: normal; 
+    <div class="row">
+        <div class="col-md-9" role="main">
+
+            <div class="bs-docs-section">
+                <h1 id="introduction" class="page-header">
+                    <a class="anchorjs-link " href="#introduction" aria-label="Anchor link for: introduction"
+                       data-anchorjs-icon="" style="font-family: anchorjs-icons; font-style: normal;
+	   				font-variant: normal; font-weight: normal; position: absolute; margin-left: -1em;
+	   				padding-right: 0.5em; margin-bottom: 2em;">Introduction</a>
+                </h1>
+                <p>You can create expressions that work on submitted results.  These are in some
+                ways similar to the expressions that you use in a relevance or a constraint however
+                they are a little different.  If you are familiar with SQL you may recognise the
+                syntax.  If you find that the filter does not seem to work check the logs as errors
+                will be reported there.</p>
+            </div>
+
+            <div class="bs-docs-section">
+                <h1 id="questions" class="page-header">
+                    <a class="anchorjs-link " href="#questions" aria-label="Anchor link for: questions"
+                       data-anchorjs-icon="" style="font-family: anchorjs-icons; font-style: normal;
 	   				font-variant: normal; font-weight: normal; position: absolute; margin-left: -1em; 
 	   				padding-right: 0.5em; margin-bottom: 2em;">Questions</a>
-	   			</h1>
-	   			<h2>Referring to Questions</h2>
-	   			<p>Use the same approach that is used for referring to questions in a relevance.  That is surround
-				the question name with curly brackets and put a dollar sign in front.</p>
+                </h1>
+                <h2>Referring to Questions</h2>
+                <p>Use the same approach that is used for referring to questions in a relevance. That is surround
+                    the question name with curly brackets and put a dollar sign in front.</p>
 
-				<b>Examples</b>
-				<ul>
-					<li>${person_name} = 'Tom'</li>
-					<li>${age} > 5</li>
-				</ul>
+                <b>Examples</b>
+                <ul>
+                    <li>${person_name} = 'Tom'</li>
+                    <li>${age} > 5</li>
+                </ul>
 
-				<h2>Supported Question Types</h2>
-				<ul>
-					<li>text</li>
-					<li>integer</li>
-					<li>decimal</li>
-					<li>select_one</li>
-					<li>barcode</li>
-					<li>calculation</li>
-					<li>date</li>
-					<li>date and time</li>
-					<li>time</li>
-					<li>acknowldege</li>
-					<li>range</li>
-				</ul>
-				<h2>Minimal-Support</h2>
-				These question types can be used only to check to see if they were answered. For example "${video_question} empty"
-				<ul>
-					<li>image</li>
-					<li>audio</li>
-					<li>video</li>
-					<li>geopoint</li>
-					<li>polygon</li>
-					<li>line</li>
-				</ul>
-				<h2>Un-Supported</h2>
-				The following question types currently cannot be used to filter data
-				<ul>
-					<li>select_multiple</li>
+                <h2>Supported Question Types</h2>
+                <ul>
+                    <li>text</li>
+                    <li>integer</li>
+                    <li>decimal</li>
+                    <li>select_one</li>
+                    <li>barcode</li>
+                    <li>calculation</li>
+                    <li>date</li>
+                    <li>date and time</li>
+                    <li>time</li>
+                    <li>acknowldege</li>
+                    <li>range</li>
+                </ul>
+                <h2>Minimal-Support</h2>
+                These question types can be used only to check to see if they were answered. For example
+                "${video_question} empty"
+                <ul>
+                    <li>image</li>
+                    <li>audio</li>
+                    <li>video</li>
+                    <li>geopoint</li>
+                    <li>polygon</li>
+                    <li>line</li>
+                </ul>
+                <h2>Un-Supported</h2>
+                The following question types currently cannot be used to filter data
+                <ul>
+                    <li>select_multiple</li>
 
-				</ul>
-	   		</div>
-	   	</div>
+                </ul>
+            </div>
 
-	   	
-	   	<div class="col-md-3" role="complementary">
-		   	<nav class="bs-docs-sidebar hidden-print hidden-xs hidden-sm affix">
-	            <ul class="nav bs-docs-sidenav">
-	
-	                <li class="">
-	  					<a href="#questions">Questions</a>
-	  								
-					</li>
-				</ul>
-			</nav>
-		</div>
-	</div>	   	
+
+            <h1 id="operators" class="page-header">
+                <a class="anchorjs-link " href="#operators" aria-label="Anchor link for: operators"
+                   data-anchorjs-icon="" style="font-family: anchorjs-icons; font-style: normal;
+	   				font-variant: normal; font-weight: normal; position: absolute; margin-left: -1em; 
+	   				padding-right: 0.5em; margin-bottom: 2em;">Operators</a>
+            </h1>
+            <h2>Operators</h2>
+            <p>These are used for comparisons and to build up more complex expressions.  There must be a space each
+            both sides of these operators.</p>
+
+            <ul>
+                <li>= (equals)</li>
+                <li>> (greater than)</li>
+                <li>< (less than)</li>
+                <li>>= (Greater than or equals)</li>
+                <li><= (Less than or equals)</li>
+                <li>- (minus)</li>
+                <li>+ (plus)</li>
+                <li>* (times)</li>
+                <li>/ (divide)</li>
+                <li>and</li>
+                <li>or</li>
+            </ul>
+            <b>Examples</b>
+            <ul>
+                <li>${age} > 25</li>
+                <li>${age} > 25 or ${name} = 'tom'</li>
+            </ul>
+
+            <h1 id="brackets" class="page-header">
+                <a class="anchorjs-link " href="#brackets" aria-label="Anchor link for: brackets"
+                   data-anchorjs-icon="" style="font-family: anchorjs-icons; font-style: normal;
+	   				font-variant: normal; font-weight: normal; position: absolute; margin-left: -1em;
+	   				padding-right: 0.5em; margin-bottom: 2em;">Brackets</a>
+            </h1>
+            <h2>Brackets</h2>
+            <p>Use smooth brackets for "association".  Like for operators these brackets must have spaces
+            around them.</p>
+
+            <ul>
+                <li>=(</li>
+                <li>>)</li>
+            </ul>
+            <b>Examples</b>
+            <ul>
+                <li>${age} > 25 or ( ${name} = 'tom' and ${age} > 5 )</li>
+            </ul>
+
+        </div>
+
+
+        <div class="col-md-3" role="complementary">
+            <nav class="bs-docs-sidebar hidden-print hidden-xs hidden-sm affix">
+                <ul class="nav bs-docs-sidenav">
+
+                    <li class="">
+                        <a href="#introduction">Introduction</a>
+                    </li>
+                    <li class="">
+                        <a href="#questions">Questions</a>
+                    </li>
+                    <li class="">
+                        <a href="#operators">Operators</a>
+                    </li>
+                    <li class="">
+                        <a href="#brackets">Brackets</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
 
 </div>
 

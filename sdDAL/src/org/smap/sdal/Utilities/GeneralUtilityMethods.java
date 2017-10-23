@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
+import java.util.ResourceBundle;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -46,6 +47,8 @@ import org.smap.sdal.model.LinkedTarget;
 import org.smap.sdal.model.ManifestInfo;
 import org.smap.sdal.model.Option;
 import org.smap.sdal.model.RoleColumnFilter;
+import org.smap.sdal.model.SqlFrag;
+import org.smap.sdal.model.SqlFragParam;
 import org.smap.sdal.model.Survey;
 import org.smap.sdal.model.SurveyLinkDetails;
 import org.smap.sdal.model.TableColumn;
@@ -4897,8 +4900,94 @@ public class GeneralUtilityMethods {
 		zos.close();
 	}
 
-	public static boolean testFilter(Survey survey, String filter, String instanceId) {
-		return false;
+	public static boolean testFilter(Connection cResults, ResourceBundle localisation, Survey survey, String filter, String instanceId) throws Exception {
+		
+		boolean testResult = false;
+		
+		StringBuffer filterQuery = new StringBuffer("select count(*) from ");
+		filterQuery.append(getTableOuterJoin(survey.forms, 0, null));
+		filterQuery.append(" where ");
+		filterQuery.append(getMainTable(survey.forms));
+		filterQuery.append(".instanceid = ?");
+		
+		// Add the filter
+		filterQuery.append(" and (");
+		SqlFrag frag = new SqlFrag();
+		frag.addSqlFragment(filter, localisation, false);
+		filterQuery.append(frag.sql);
+		filterQuery.append(")");
+		
+		PreparedStatement pstmt = null;
+		try {
+			pstmt = cResults.prepareStatement(filterQuery.toString());
+			pstmt.setString(1, instanceId);
+			
+			int idx = 2;
+			for(SqlFragParam p : frag.params) {
+				if(p.type.equals("text")) {
+					pstmt.setString(idx++,  p.sValue);
+				} else if(p.type.equals("integer")) {
+					pstmt.setInt(idx++,  p.iValue);
+				} else if(p.type.equals("double")) {
+					pstmt.setDouble(idx++,  p.dValue);
+				} else {
+					throw new Exception("Unknown parameter type: " + p.type);
+				}
+			}
+			
+			log.info("Evaluate Filter: " + pstmt.toString());
+			ResultSet rs = pstmt.executeQuery();
+			if(rs.next()) {
+				if(rs.getInt(1) > 0) {
+					testResult = true;
+				}
+			}
+	
+		} catch(Exception e) { 
+			throw new Exception(e);
+		} finally {
+			if(pstmt != null) try {pstmt.close();} catch(Exception e) {}
+		}
+		
+		System.out.println(" Test Result:  " + testResult);
+		return testResult;
 	}
 
+	/*
+	 * 
+	 */
+	private static String getMainTable(ArrayList<Form> forms) throws Exception {
+		for (Form f : forms) {
+			if(f.parentform == 0) {
+				return f.tableName;
+			}
+		}
+		throw new Exception("Main table not found");
+	}
+	/*
+	 * Get an outer join that will get all the data in the survey
+	 */
+	private static String getTableOuterJoin(ArrayList<Form> forms, int parent, String parentTableName) {
+		StringBuffer out = new StringBuffer("");
+		
+		for (Form f : forms) {
+			if(f.parentform == parent) {
+				if(parent != 0) {
+					out.append(" left outer join ");
+				}
+				out.append(f.tableName);
+				if(parent != 0) {
+					out.append(" on ");
+					out.append(parentTableName);
+					out.append(".prikey");
+					out.append(" = ");
+					out.append(f.tableName);
+					out.append(".parkey");
+				}
+				out.append(getTableOuterJoin(forms, f.id, f.tableName));
+			}
+		}
+	
+		return out.toString();
+	}
 }
