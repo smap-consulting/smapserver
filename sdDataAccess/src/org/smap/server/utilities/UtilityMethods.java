@@ -3,6 +3,7 @@ package org.smap.server.utilities;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
+import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
 import org.smap.model.IE;
@@ -13,6 +14,8 @@ import org.w3c.dom.NodeList;
 
 public class UtilityMethods {
 
+	private static Logger log = Logger.getLogger(GetHtml.class.getName());
+	
 	public static String getLastFromPath(String path) {
 		if(path != null) {
 			int startIdx = path.lastIndexOf('/') + 1;
@@ -242,7 +245,7 @@ public class UtilityMethods {
 			String filterQuestion = GeneralUtilityMethods.getFirstSearchQuestionFromAppearance(appearance);
 			
 			if(filterQuestion != null) {
-				System.out.println("Add filter from: " + appearance + " to: " + nodeset);
+				log.info("Add filter from: " + appearance + " to: " + nodeset);
 				if(v != null) {
 					// First remove any filter added through setting of choice_filter this is incompatible with the use of search()
 					int idx = v.indexOf('[');

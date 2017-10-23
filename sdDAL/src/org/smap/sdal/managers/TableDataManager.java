@@ -1,26 +1,17 @@
 package org.smap.sdal.managers;
 
-import java.lang.reflect.Type;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONObject;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
-import org.smap.sdal.model.Form;
-import org.smap.sdal.model.SurveyViewDefn;
-import org.smap.sdal.model.ManagedFormItem;
 import org.smap.sdal.model.SqlFrag;
-import org.smap.sdal.model.SqlFragParam;
 import org.smap.sdal.model.TableColumn;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.reflect.TypeToken;
 
 /*****************************************************************************
  * 

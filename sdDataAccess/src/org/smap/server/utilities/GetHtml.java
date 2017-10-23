@@ -524,8 +524,7 @@ public class GetHtml {
 	}
 
 	/*
-	 * Add the contents of a select that has nodesets - minimal - autocomplete -
-	 * search
+	 * Add the contents of a select that has nodesets - minimal - autocomplete - search
 	 */
 	private void addMinimalSelectContentsItemset(Element parent, Question q, Form form) throws Exception {
 

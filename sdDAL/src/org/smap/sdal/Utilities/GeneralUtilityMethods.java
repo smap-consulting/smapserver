@@ -33,6 +33,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
+import org.smap.sdal.managers.LogManager;
 import org.smap.sdal.managers.RoleManager;
 import org.smap.sdal.managers.SurveyManager;
 import org.smap.sdal.model.AutoUpdate;
@@ -56,10 +57,13 @@ import org.smap.sdal.model.TableColumn;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
+import com.sun.org.apache.bcel.internal.generic.LMUL;
 
 public class GeneralUtilityMethods {
 
 	private static Logger log = Logger.getLogger(GeneralUtilityMethods.class.getName());
+	
+	private static LogManager lm = new LogManager();		// Application log
 
 	private static int LENGTH_QUESTION_NAME = 45; // 63 max size of postgresql column names. Allow 10 chars for options
 													// + 2 chars for option separator
@@ -1700,9 +1704,6 @@ public class GeneralUtilityMethods {
 
 			}
 
-		} catch(Exception e) {
-			log.log(Level.SEVERE, e.getMessage(), e);
-			throw new Exception(e);
 		} finally {
 			try {brNew.close();} catch (Exception e) {};
 			if (brOld != null) {	try {brNew.close();} catch (Exception e) {}};
@@ -1820,7 +1821,7 @@ public class GeneralUtilityMethods {
 	 * Return the columns in a CSV file that have the value and label for the given
 	 * question
 	 */
-	public static ValueLabelCols getValueLabelCols(Connection connectionSD, int qId, String qDisplayName, String[] cols)
+	public static ValueLabelCols getValueLabelCols(Connection sd, int qId, String qDisplayName, String[] cols)
 			throws Exception {
 
 		ValueLabelCols vlc = new ValueLabelCols();
@@ -1840,7 +1841,7 @@ public class GeneralUtilityMethods {
 				+ "and externalfile ='false';";
 
 		try {
-			pstmt = connectionSD.prepareStatement(sql);
+			pstmt = sd.prepareStatement(sql);
 			pstmt.setInt(1, qId);
 			log.info("Get value/label combos: " + pstmt.toString());
 			ResultSet rs = pstmt.executeQuery();
@@ -1859,22 +1860,22 @@ public class GeneralUtilityMethods {
 					}
 				}
 				if (vlc.value == -1) {
-					throw new Exception("Column " + valueName + " not found in csv file for question " + qDisplayName);
+					String msg = "Column " + valueName + " not found in csv file for question " + qDisplayName;
+					lm.writeLog(sd, 0, "", "csv file", msg);
+					throw new Exception(msg);
 
 				} else if (vlc.label == -1) {
-					throw new Exception("Column " + labelName + " not found in csv file for question " + qDisplayName);
+					String msg = "Column " + labelName + " not found in csv file for question " + qDisplayName;
+					lm.writeLog(sd, 0, "", "csv file", msg);
+					throw new Exception(msg);
 				}
 			} else {
-				throw new Exception("The names of the columns to use in this csv file "
-						+ "have not been set in question " + qDisplayName);
+				String msg = "The names of the columns to use in this csv file have not been set in question " + qDisplayName;
+				lm.writeLog(sd, 0, "", "csv file", msg);
+				throw new Exception(msg);
 			}
 		} finally {
-			if (pstmt != null)
-				try {
-					pstmt.close();
-				} catch (Exception e) {
-				}
-			;
+			if (pstmt != null) try {	pstmt.close();} catch (Exception e) {};
 		}
 		return vlc;
 	}

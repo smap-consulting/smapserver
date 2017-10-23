@@ -708,7 +708,12 @@ public class UploadFiles extends Application {
 					}
 				}
 
-				applyCSVChangesToSurvey(connectionSD, cResults, user, s.id, csvFileName, csvFile, oldCsvFile);
+				try {
+					applyCSVChangesToSurvey(connectionSD, cResults, user, s.id, csvFileName, csvFile, oldCsvFile);
+				} catch (Exception e) {
+					log.log(Level.SEVERE, e.getMessage(), e);
+					// Continue for other surveys
+				}
 			}
 		}
 	}
