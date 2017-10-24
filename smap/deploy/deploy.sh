@@ -105,7 +105,7 @@ then
 fi
 
 # Delete temporary files
-sudo rm -rf /smap/temp/*
+rm -rf /smap/temp/*
 
 if [ $u1604 -eq 0 ]; then
 service subscribers start
@@ -120,3 +120,7 @@ fi
 service postgresql start
 service tomcat7 start
 service apache2 start
+
+# Hosted Only
+# Start disk monitor
+./manage.sh
