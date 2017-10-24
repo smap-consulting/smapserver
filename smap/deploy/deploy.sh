@@ -123,4 +123,4 @@ service apache2 start
 
 # Hosted Only
 # Start disk monitor
-./manage.sh
+~/smap/deploy/manage.sh
