@@ -68,10 +68,10 @@
 	   				padding-right: 0.5em; margin-bottom: 2em;">Introduction</a>
                 </h1>
                 <p>You can create expressions that work on submitted results.  These are in some
-                ways similar to the expressions that you use in a relevance or a constraint however
-                they are a little different.  If you are familiar with SQL you may recognise the
-                syntax.  If you find that the filter does not seem to work check the logs as errors
-                will be reported there.</p>
+                    ways similar to the expressions that you use in a relevance or a constraint however
+                    they are a little different.  If you are familiar with SQL you may recognise the
+                    syntax.  If you find that the filter does not seem to work check the logs as errors
+                    will be reported there.</p>
             </div>
 
             <div class="bs-docs-section">
@@ -84,6 +84,10 @@
                 <h2>Referring to Questions</h2>
                 <p>Use the same approach that is used for referring to questions in a relevance. That is surround
                     the question name with curly brackets and put a dollar sign in front.</p>
+                <p>Questions can be in any form. For example you may have a survey that gathers information on
+                    comapanies and the projects that they are involved in.  The following filter will trigger on a
+                    company name of "Widgets" that has at least one project with a value over 100,000</p>
+                <p style="padding-left: 50pt;">${company_name} = 'Widgets' and ${project_value} > 100000</p>
 
                 <b>Examples</b>
                 <ul>
@@ -133,7 +137,7 @@
             </h1>
             <h2>Operators</h2>
             <p>These are used for comparisons and to build up more complex expressions.  There must be a space each
-            both sides of these operators.</p>
+                both sides of these operators.</p>
 
             <ul>
                 <li>= (equals)</li>
@@ -147,11 +151,15 @@
                 <li>/ (divide)</li>
                 <li>and</li>
                 <li>or</li>
+                <li>like (Similar to.  Use the % symbol to match a range of characters.
+                    Use the _ underscore character to match a single character)</li>
             </ul>
             <b>Examples</b>
             <ul>
                 <li>${age} > 25</li>
                 <li>${age} > 25 or ${name} = 'tom'</li>
+                <li>${name} like 'sam%'   (Matches "sam", "samuel", "sammy" etc)</li>
+                <li>${city} like '_erlin'   (Matches "Berlin", "berlin")</li>
             </ul>
 
             <h1 id="brackets" class="page-header">
@@ -162,7 +170,7 @@
             </h1>
             <h2>Brackets</h2>
             <p>Use smooth brackets for "association".  Like for operators these brackets must have spaces
-            around them.</p>
+                around them.</p>
 
             <ul>
                 <li>=(</li>

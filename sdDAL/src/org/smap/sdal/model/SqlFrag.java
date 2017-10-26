@@ -174,6 +174,7 @@ public class SqlFrag {
 				token.equals("(") ||
 				token.equals("or") ||
 				token.equals("and") || 
+				token.equals("like") || 
 				token.equals("integer") || 
 				token.equals("current_date") ||
 				token.equals("now()")) {
