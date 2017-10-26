@@ -6,7 +6,7 @@ node tools/r.js -o tools/build.js
 # Create a tar file and copy to the deploy directory
 export COPYFILE_DISABLE=true
 tar -zcf tasks.tgz tasks
-cp tasks.tgz ~/deploy
+cp tasks.tgz ~/os_deploy
 
 # deploy to local
 sudo rm -rf /Library/WebServer/Documents/tasks

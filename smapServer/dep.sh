@@ -7,7 +7,7 @@ export COPYFILE_DISABLE=true
 # Create a tar file and copy to the deploy directory
 cd smapServer
 tar -zcf smapServer.tgz *
-cp smapServer.tgz ~/deploy
+cp smapServer.tgz ~/os_deploy
 rm smapServer.tgz
 cd ..
 

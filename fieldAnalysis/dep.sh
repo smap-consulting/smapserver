@@ -6,7 +6,7 @@ node tools/r.js -o tools/build.js
 # Create a tar file and copy to the deploy directory
 export COPYFILE_DISABLE=true
 tar -zcf fieldAnalysis.tgz fieldAnalysis
-cp fieldAnalysis.tgz ~/deploy
+cp fieldAnalysis.tgz ~/os_deploy
 
 # deploy to local
 sudo rm -rf /Library/WebServer/Documents/fieldAnalysis
