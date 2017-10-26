@@ -27,7 +27,6 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
-import org.smap.notifications.interfaces.EmitNotifications;
 import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.SDDataSource;
@@ -167,19 +166,6 @@ public class Register extends Application {
 			p.name = "default";
 			p.desc = "Default Project - Created on registration";
 			pm.createProject(sd, p, o_id, u_id, request.getRemoteUser());
-			
-			/*
-			 * 4. Create a notification recording this event
-			 */
-			try {
-				EmitNotifications en = new EmitNotifications();
-				en.publish(EmitNotifications.AWS_REGISTER_ORGANISATION,
-						getRegistrationMsg(rd, request.getServerName()),
-						"Register new organisation");
-			} catch (Exception e) {
-				// Don't fail on this step
-				log.log(Level.SEVERE, e.getMessage(), e);
-			}
 			
 			response = Response.ok().build();
 		

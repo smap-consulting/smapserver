@@ -14,7 +14,6 @@ import java.util.logging.Logger;
 import javax.mail.internet.AddressException;
 import javax.mail.internet.InternetAddress;
 
-import org.smap.notifications.interfaces.EmitDeviceNotification;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.UtilityMethodsEmail;
 import org.smap.sdal.model.EmailServer;
@@ -85,7 +84,6 @@ public class MessagingManagerApply {
 
 		try {
 
-			EmitDeviceNotification emitDevice = new EmitDeviceNotification();
 			pstmtGetMessages = sd.prepareStatement(sqlGetMessages);
 			pstmtConfirm = sd.prepareStatement(sqlConfirm);
 
@@ -203,12 +201,6 @@ public class MessagingManagerApply {
 					usersImpacted.put(user, user);
 				}				
 			}
-			
-			// For each user send a notification to each of their devices
-			for(String user : usersImpacted.keySet()) {
-				emitDevice.notify(serverName, user);
-			}
-			
 			
 
 		} catch (Exception e) {

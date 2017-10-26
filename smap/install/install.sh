@@ -120,9 +120,6 @@ sudo chmod -R 0777 $filelocn/attachments
 sudo chmod -R 0777 $filelocn/media
 sudo chmod -R 0777 $filelocn/uploadedSurveys
 
-sudo mkdir /usr/share/tomcat7/.aws
-sudo chown -R tomcat7 /usr/share/tomcat7/.aws
-
 # If auto configuration is set then copy the pre-set configuration files to their target destination
 
 if [ "$config" != "manual" ]

@@ -5,7 +5,6 @@
 	<projects>
 		<project>sdDAL</project>
 		<project>sdDataAccess</project>
-		<project>aws</project>
 		<project>notifications</project>
 		<project>grammars</project>
 	</projects>
