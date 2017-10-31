@@ -345,6 +345,8 @@ public class ManagedForms extends Application {
 				
 				if(compatibleMsg.length() > 0) {
 					autoUpdates = null;		// Managed form is not compatible and will be rejected
+				} else if(autoUpdates != null && autoUpdates.isEmpty()) {
+					autoUpdates = null;
 				}
 				GeneralUtilityMethods.setAutoUpdates(sd, sId, managedId, autoUpdates);
 				
