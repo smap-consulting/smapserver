@@ -214,7 +214,6 @@ public class TableReports extends Application {
 					/*
 					 * Return the zip file
 					 */
-					//FileOutputStream fos = new FileOutputStream(filePath + ".zip");
 					ZipOutputStream zos = new ZipOutputStream(response.getOutputStream());
 					byte[] buffer = new byte[1024];
 					for(int i = 0; i < chartArray.size(); i++) {

@@ -49,7 +49,7 @@ define([
             } else {
 
                 if(chart.groups[0].type === "duration") {
-                    p = config.graph.addMeasureAxis("p", "_duration");
+                    p = config.graph.addMeasureAxis("p", "Survey Duration");
                     series = config.graph.addSeries(chart.groupDataNames[1], dimple.plot.pie);
 
                 } else {

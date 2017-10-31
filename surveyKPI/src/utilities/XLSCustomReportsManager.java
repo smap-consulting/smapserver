@@ -129,7 +129,18 @@ public class XLSCustomReportsManager {
 						}
 					}	
 				}
-			}  
+			} else if(name.equals("parameters")) {
+				value = "";
+				int count = 0;
+				for(String k : props.parameters.keySet()) {
+					if(count++ > 0) {
+						value += " ";
+					}
+					value += k;
+					value += "=";
+					value += props.parameters.get(k);
+				}
+			}
 			
 			if(value == null) {
 				value = "";
@@ -341,7 +352,11 @@ public class XLSCustomReportsManager {
 		                			}
 		                			
 		                			// Get parameters
-		                			currentCol.parameters = getParamObj(getColumn(row, "parameters", header, lastCellNum, null));
+		                			try {
+		                				currentCol.parameters = getParamObj(getColumn(row, "parameters", header, lastCellNum, null));
+		                			} catch (Exception e) {
+		                				// Ignore errors if parameters are not found
+		                			}
 		                			
 		                			// Get calculation state
 		                			if(currentCol.type.equals("calculate")) {
@@ -981,6 +996,7 @@ public class XLSCustomReportsManager {
 		cols.add(new Column(localisation, colNumber++, "condition"));
 		cols.add(new Column(localisation, colNumber++, "value"));
 		cols.add(new Column(localisation, colNumber++, "appearance"));
+		cols.add(new Column(localisation, colNumber++, "parameters"));
 		
 		return cols;
 	}
