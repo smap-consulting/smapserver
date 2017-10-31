@@ -342,9 +342,9 @@ require([
 				 if(headItem.include) {
 					 h[++idx] = '<td>';
 					 if(headItem.readonly || !headItem.inline) {
-						 h[++idx] = record[headItem.name];
+						 h[++idx] = record[headItem.humanName];
 					 } else {
-						 h[++idx] = addEditableColumnMarkup(headItem, record[headItem.name], i);
+						 h[++idx] = addEditableColumnMarkup(headItem, record[headItem.humanName], i);
 					 }
 					 h[++idx] = '</td>';
 				 }

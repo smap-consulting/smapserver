@@ -53,7 +53,7 @@ define([
             } else {
 
                 if(chart.groups[0].type === "duration") {
-                    y = config.graph.addMeasureAxis("y", "_duration");
+                    y = config.graph.addMeasureAxis("y", "Survey Duration");
                 } else {
                     y = config.graph.addMeasureAxis("y", chart.groupDataNames[0]);
                 }

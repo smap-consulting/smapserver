@@ -202,25 +202,6 @@ require([
             $("#surveySelect").modal("show");
         });
 
-        /*
-         * Set up dialog to edit a record
-         *xxxx
-        $('#editRecord').on('show.bs.modal', function (event) {
-            var
-                record = gTasks.gSelectedRecord,
-                columns = gTasks.cache.surveyConfig[globals.gViewId].columns,
-                $editForm = $('#editRecordForm'),
-                $surveyForm = $('#surveyForm');
-
-            $('.shareRecordOnly, .role_select').hide();
-            $('#srLink').val("");
-            if (globals.gIsSecurityAdministrator) {
-                getSurveyRoles(globals.gCurrentSurvey);
-            }
-            actioncommon.showEditRecordForm(record, columns, $editForm, $surveyForm);
-
-        });
-        */
         $('#exitEditRecord').click(function() {
             window.history.back();
             //exitEdit();
@@ -845,7 +826,7 @@ require([
             }
 
             shownColumns.push({
-                "data": headItem.name
+                "data": headItem.humanName
             });
             h[++idx] = '<th>';
             h[++idx] = '<span class="ch">';

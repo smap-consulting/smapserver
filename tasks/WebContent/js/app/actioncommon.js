@@ -106,7 +106,7 @@ define([
             // Add Data
             h[++idx] = ' <div class="col-md-8">';
             if (configItem.readonly) {		// Read only text
-                var v = addAnchors(record[configItem.name])[0];
+                var v = addAnchors(record[configItem.humanName])[0];
                 if(v && v.indexOf('<') == 0) {
                     h[++idx] = v;
                 } else {
@@ -117,7 +117,7 @@ define([
                 }
 
             } else {
-                h[++idx] = addEditableColumnMarkup(configItem, record[configItem.name], itemIndex, first, columns, record);
+                h[++idx] = addEditableColumnMarkup(configItem, record[configItem.humanName], itemIndex, first, columns, record);
                 first = false;
             }
             h[++idx] = '</div>';

@@ -341,7 +341,11 @@ public class XLSCustomReportsManager {
 		                			}
 		                			
 		                			// Get parameters
-		                			currentCol.parameters = getParamObj(getColumn(row, "parameters", header, lastCellNum, null));
+		                			try {
+		                				currentCol.parameters = getParamObj(getColumn(row, "parameters", header, lastCellNum, null));
+		                			} catch (Exception e) {
+		                				// Ignore errors if parameters are not found
+		                			}
 		                			
 		                			// Get calculation state
 		                			if(currentCol.type.equals("calculate")) {

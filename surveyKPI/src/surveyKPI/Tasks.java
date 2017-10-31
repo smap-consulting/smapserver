@@ -176,11 +176,55 @@ public class Tasks extends Application {
 	}
 	
 	/*
-	 * Get the locations
+	 * Get the task group definition
 	 */
 	@GET
 	@Produces("application/json")
-	@Path("/locations")
+	@Path("/definition/{tgId}")
+	public Response getLocations(
+			@PathParam("tgId") int tgId,
+			@Context HttpServletRequest request
+			) throws IOException {
+		
+		GeneralUtilityMethods.assertBusinessServer(request.getServerName());
+		
+		Response response = null;
+		Connection sd = null; 
+		
+		// Authorisation - Access
+		sd = SDDataSource.getConnection("surveyKPI - Tasks - getLocations");
+		a.isAuthorised(sd, request.getRemoteUser());
+		// End authorisation
+	
+		try {
+			
+			// Get locations
+			int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser(), 0);
+			TaskManager tm = new TaskManager();
+			ArrayList<Location> locations = tm.getLocations(sd, oId);
+			
+			
+			// Return tags to calling program
+			Gson gson = new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
+			String resp = gson.toJson(locations);	
+			response = Response.ok(resp).build();	
+			
+		} catch(Exception ex) {
+			log.log(Level.SEVERE,ex.getMessage(), ex);
+			response = Response.serverError().entity(ex.getMessage()).build();
+		} finally {
+			SDDataSource.closeConnection("surveyKPI - Tasks - getLocations",sd);
+		}
+		
+		return response;
+	}
+	
+	/*
+	 * Get the task group definition
+	 */
+	@GET
+	@Produces("application/json")
+	@Path("/defi")
 	public Response getLocations(
 			@Context HttpServletRequest request
 			) throws IOException {

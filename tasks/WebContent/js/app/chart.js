@@ -204,7 +204,7 @@ define([
                             chart_type: "other",
                             fn: "count",
                             groups: [{
-                                name: columns[i].select_name ? columns[i].select_name  : columns[i].name,
+                                name: columns[i].select_name ? columns[i].select_name  : columns[i].humanName,
                                 dataLabel: columns[i].select_name ? columns[i].select_name  : columns[i].humanName,
                                 l_id: columns[i].l_id,
                                 type: columns[i].type
@@ -551,18 +551,18 @@ define([
                         var di = {};
                         di.count = 1;
                         for (j = 0; j < columns.length; j++) {
-                            var val = results[i][columns[j].name];
+                            var val = results[i][columns[j].humanName];
                             if(columns[j].l_id > 0) {
                                 if(chart.qlabel) {
                                     val = lookupChoiceLabel(columns[j].l_id, val);  // Convert to the default label
                                 }
                             }
-                            di[columns[j].name] = val;
+                            di[columns[j].humanName] = val;
                         }
-                        if (!di._duration) {         // Make sure durations have a number
-                            di._duration = 0;
+                        if (!di["Survey Duration"]) {         // Make sure durations have a number
+                            di["Survey Duration"] = 0;
                         }
-                        di._duration = +di._duration;
+                        di["Survey Duration"] = +di["Survey Duration"];
                         gTasks.cache.surveyConfig[globals.gViewId].processedData[datalabel].push(di);
                     }
                 }
@@ -1251,28 +1251,12 @@ define([
                 index = -1;
 
             for (i = 0; i < columns.length; i++) {
-                if (columns[i].name === name) {
+                if (columns[i].humanName === name) {
                     index = i;
                     break;
                 }
             }
             return index;
-        }
-
-        /*
-         * Get the human name  column name
-         */
-        function getCol(qname, columns) {
-            var col = -1,
-                i;
-
-            for (i = 0; i < columns.length; i++) {
-                if (qname === columns[i].name) {
-                    col = i;
-                    break;
-                }
-            }
-            return col;
         }
 
         function saveChart() {
@@ -1315,7 +1299,7 @@ define([
                     group = {
                         qIdx: qIdx1,
                         type: columns[qIdx1].type,
-                        name: columns[qIdx1].select_name ? columns[qIdx1].select_name : columns[qIdx1].name,
+                        name: columns[qIdx1].select_name ? columns[qIdx1].select_name : columns[qIdx1].humanName,
                         dataLabel: columns[qIdx1].select_name ? columns[qIdx1].select_name : columns[qIdx1].humanName,
                         l_id: columns[qIdx1].l_id,
                         choices: columns[qIdx1].choices,
@@ -1329,7 +1313,7 @@ define([
                     group = {
                         qIdx: qIdx2,
                         type: columns[qIdx2].type,
-                        name: columns[qIdx2].select_name ? columns[qIdx2].select_name : columns[qIdx2].name,
+                        name: columns[qIdx2].select_name ? columns[qIdx2].select_name : columns[qIdx2].humanName,
                         dataLabel: columns[qIdx2].select_name ? columns[qIdx2].select_name : columns[qIdx2].humanName,
                         l_id: columns[qIdx2].l_id,
                         choices: columns[qIdx2].choices,
