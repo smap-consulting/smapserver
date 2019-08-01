@@ -123,7 +123,7 @@ public class Log extends Application {
 		
 		try {
 	
-			int oId = GeneralUtilityMethods.getOrganisationId(sd, user, 0);
+			int oId = GeneralUtilityMethods.getOrganisationId(sd, user);
 			
 			/*
 			 * Get total log entries
@@ -186,8 +186,17 @@ public class Log extends Application {
 					}
 				}
 				li.userIdent = rs.getString("user_ident");
+				if(li.userIdent == null) {
+					li.userIdent = "";
+				}
 				li.event = rs.getString("event");
+				if(li.event == null) {
+					li.event = "";
+				}
 				li.note = rs.getString("note");
+				if(li.note == null) {
+					li.note = "";
+				}
 						
 				logs.data.add(li);
 			}

@@ -5,7 +5,7 @@ import java.util.logging.Logger;
 
 import javax.servlet.http.HttpServletRequest;
 
-import koboToolboxApi.Tasks;
+import koboToolboxApi.TaskStatistics;
 
 /*
  * Smap extension
@@ -13,7 +13,7 @@ import koboToolboxApi.Tasks;
 public class StatsResultsC3 {
 	
 	private static Logger log =
-			 Logger.getLogger(Tasks.class.getName());
+			 Logger.getLogger(TaskStatistics.class.getName());
 	
 	private ArrayList<ArrayList<Integer>> data;
 	public ArrayList<String> groups;

@@ -15,13 +15,13 @@ import org.smap.sdal.managers.SurveyManager;
 import org.smap.sdal.model.Form;
 import org.smap.sdal.model.Survey;
 
-public class DataManager {
+public class AuditManager {
 	
 	private static Logger log =
-			 Logger.getLogger(DataManager.class.getName());
+			 Logger.getLogger(AuditManager.class.getName());
 
 	private ResourceBundle localisation;
-	public DataManager(ResourceBundle l) {
+	public AuditManager(ResourceBundle l) {
 		localisation = l;
 	}
 	public ArrayList<DataEndPoint> getDataEndPoints(Connection sd, 
@@ -40,9 +40,9 @@ public class DataManager {
 		
 		String urlprefix = request.getScheme() + "://" + request.getServerName();
 		if(csv) {
-			urlprefix += "/api/v1/data.csv/";	
+			urlprefix += "/api/v1/audit.csv/";	
 		} else {
-			urlprefix += "/api/v1/data/";
+			urlprefix += "/api/v1/audit/";
 		}
 		
 		for(Survey s: surveys) {
@@ -51,14 +51,14 @@ public class DataManager {
 			dep.id_string = s.ident;
 			dep.title = s.displayName;
 			dep.description = s.displayName;
-			dep.url = urlprefix + dep.id_string + "?links=true";
+			dep.url = urlprefix + dep.id_string;
 			
-			if(s.forms != null && s.forms.size() > 0) {
-				dep.subforms = new HashMap<String, String> ();
-				for(Form f : s.forms) {
-					dep.subforms.put(f.name, urlprefix + dep.id_string + "?form=" + f.name);
-				}
-			}
+			//if(s.forms != null && s.forms.size() > 0) {
+			//	dep.subforms = new HashMap<String, String> ();
+			//	for(Form f : s.forms) {
+			//		dep.subforms.put(f.name, dep.url + "?form=" + f.name);
+			//	}
+			//}
 			data.add(dep);
 		}
 		

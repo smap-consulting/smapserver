@@ -19,6 +19,7 @@ public class DataEndPoint {
 	public String getCSVColumns() {
 		return "id, id_string, title, description, url";
 	}
+	
 	public String getCSVData() {
 		StringBuffer r = new StringBuffer();
 		
@@ -44,6 +45,13 @@ public class DataEndPoint {
 			r.append("\"" + url.replaceAll("\"", "\"\"") + "\"");
 		}
 		
+		return r.toString();
+	}
+	
+	public String getSubForm(String name, String url) {
+		StringBuffer r = new StringBuffer();
+		r.append(",,,").append("\"" + name.replaceAll("\"", "\"\"") + "\"").append(",");
+		r.append("\"" + url.replaceAll("\"", "\"\"") + "\"");
 		return r.toString();
 	}
 }
