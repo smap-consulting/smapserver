@@ -92,4 +92,5 @@ Temporary Items
 *.xml
 */target
 libraries
+notifications
 patches
