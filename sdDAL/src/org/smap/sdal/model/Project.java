@@ -28,4 +28,6 @@ public class Project {
 	public String changed_by;
 	public String changed_ts;
 	public ArrayList<Integer> restrictUsers;
+	
+	public ProjectLinks links = null;
 }

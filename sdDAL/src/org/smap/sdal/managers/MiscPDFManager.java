@@ -9,10 +9,12 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.smap.sdal.model.TaskFeature;
@@ -60,6 +62,9 @@ public class MiscPDFManager {
 	private static Logger log =
 			 Logger.getLogger(MiscPDFManager.class.getName());
 	
+	private ResourceBundle localisation = null;
+	private String tz;
+	
 	int marginLeft = 36;
 	int marginRight = 36;
 	int marginTop_1 = 300;
@@ -75,9 +80,6 @@ public class MiscPDFManager {
 
 			document.setMargins(marginLeft, marginRight, marginTop_2, marginBottom_2);
 			
-			//if(pageNumber > 1) {
-			//	writer.setCropBoxSize(new Rectangle(marginLeft, marginRight, marginTop_2, marginBottom_2));
-			//}
 		}
 		public void onEndPage(PdfWriter writer, Document document) {
 			
@@ -93,12 +95,20 @@ public class MiscPDFManager {
 	public static Font defaultFont = null;
 	public static BaseColor VLG = new BaseColor(0xE8,0xE8,0xE8);
 
+	public MiscPDFManager(ResourceBundle l, String tz) {
+		localisation = l;
+		if(tz == null) {
+			tz = "UTC";
+		}
+		this.tz = tz;
+	}
+	
 	/*
 	 * Call this function to create a PDF
 	 * Return a suggested name for the PDF file derived from the results
 	 */
 	public void createUsagePdf(
-			Connection connectionSD,
+			Connection sd,
 			OutputStream outputStream,
 			String basePath, 
 			HttpServletResponse response,
@@ -140,31 +150,32 @@ public class MiscPDFManager {
 			defaultFont = FontFactory.getFont("default", BaseFont.IDENTITY_H, 
 				    BaseFont.EMBEDDED, 10); 
 			
-			filename = "usage_" + year + "_" + month + ".pdf";	// Todo add org name
+			filename = org_name + "_" + year + "_" + month + ".pdf";
 			
 			/*
 			 * Get the usage results
 			 */
-			String sql = "SELECT users.id as id," +
-					"users.ident as ident, " +
-					"users.name as name, " +
-					"(select count (*) from upload_event ue, subscriber_event se " +
-						"where ue.ue_id = se.ue_id " + 
-						"and se.status = 'success' " +
-						"and se.subscriber = 'results_db' " +
-						"and extract(month from upload_time) = ? " + 	// current month
-						"and extract(year from upload_time) = ? " + 	// current year
-						"and ue.user_name = users.ident) as month, " +
-					"(select count (*) from upload_event ue, subscriber_event se " +
-						"where ue.ue_id = se.ue_id " +
-						"and se.status = 'success'" +
-						"and se.subscriber = 'results_db'" +
-						"and ue.user_name = users.ident) as all_time " +
-					"from users " +	
-					"where users.o_id = ? " + 
-					"order by users.ident;";
+			String sql = "SELECT users.id as id,"
+					+ "users.ident as ident, "
+					+ "users.name as name, "
+					+ "(select count (*) from upload_event ue, subscriber_event se "
+						+ "where ue.ue_id = se.ue_id "
+						+ "and se.status = 'success' "
+						+ "and se.subscriber = 'results_db' "
+						+ "and extract(month from upload_time) = ? " 	// current month
+						+ "and extract(year from upload_time) = ? " 		// current year
+						+ "and ue.user_name = users.ident) as month, "
+					+ "(select count (*) from upload_event ue, subscriber_event se "
+						+ "where ue.ue_id = se.ue_id "
+						+ "and se.status = 'success' "
+						+ "and se.subscriber = 'results_db' "
+						+ "and ue.user_name = users.ident) as all_time "
+					+ "from users "	
+					+ "where users.o_id = ? "
+					+ "and not users.temporary " 
+					+ "order by users.ident;";
 			
-			pstmt = connectionSD.prepareStatement(sql);
+			pstmt = sd.prepareStatement(sql);
 			pstmt.setInt(1, month);
 			pstmt.setInt(2, year);
 			pstmt.setInt(3, o_id);
@@ -316,6 +327,7 @@ public class MiscPDFManager {
 			Connection sd,
 			OutputStream outputStream,
 			String basePath, 
+			HttpServletRequest request,
 			HttpServletResponse response,
 			int tgId) {
 		
@@ -345,8 +357,9 @@ public class MiscPDFManager {
 			/*
 			 * Get the tasks for this task group
 			 */
-			TaskManager tm = new TaskManager();
-			TaskListGeoJson t = tm.getTasks(sd, tgId, false, 0);	
+			String urlprefix = request.getScheme() + "://" + request.getServerName();
+			TaskManager tm = new TaskManager(localisation, tz);
+			TaskListGeoJson t = tm.getTasks(sd, urlprefix, 0, tgId, 0, false, 0, null, "all", 0, 0, "scheduled", "desc");	
 			PdfWriter writer = null;			
 				
 
@@ -384,7 +397,7 @@ public class MiscPDFManager {
 			for(TaskFeature tf : t.features) {
 				TaskProperties p = tf.properties;
 
-				table.addCell(p.form_name);
+				table.addCell(p.survey_name);
 				table.addCell(p.name);
 				table.addCell(p.status);
 				table.addCell(p.assignee_name);
@@ -392,7 +405,6 @@ public class MiscPDFManager {
 			}
 			
 
-			
 			document.add(table);
 			document.close();
 				

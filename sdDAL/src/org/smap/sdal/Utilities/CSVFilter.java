@@ -180,7 +180,7 @@ public class CSVFilter {
 	public HashMap<String, String> GetCascadeFilter(String[] optionCols) {
 
 		HashMap<String, String> filter = new HashMap<String, String> ();
-		if(r1!= null && r1.column != -1) {
+		if(r1 != null && r1.column != -1) {
 			filter.put("_smap_cascade", optionCols[r1.column]);
 		}
 		return filter;

@@ -2,11 +2,9 @@ package org.smap.sdal.model;
 
 public class ServerSideCalculate {
 	private int id;
-	private int seq;
 	private String name;
 	private String fn;
 	private String units;
-	private String parameters;
 	private String form;
 	private int formId;
 	

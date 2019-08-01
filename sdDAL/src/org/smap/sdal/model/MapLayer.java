@@ -6,5 +6,7 @@ package org.smap.sdal.model;
 public class MapLayer {
 	public String title;
 	public boolean local;
-	public String clump;
+	public String clump;				// heatmap || blank
+	public boolean fixed;
+	public boolean enabled;
 }

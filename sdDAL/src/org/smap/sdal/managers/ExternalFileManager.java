@@ -6,24 +6,21 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.lang.reflect.Type;
-import java.sql.Array;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
+import java.util.ResourceBundle;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
-import org.smap.sdal.model.Action;
+import org.smap.sdal.constants.SmapServerMeta;
 import org.smap.sdal.model.Form;
 import org.smap.sdal.model.Pulldata;
 import org.smap.sdal.model.SqlFrag;
-import org.smap.sdal.model.TableColumn;
-
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
@@ -51,11 +48,17 @@ import com.google.gson.reflect.TypeToken;
 public class ExternalFileManager {
 
 	private static Logger log = Logger.getLogger(ExternalFileManager.class.getName());
+	
+	private static ResourceBundle localisation = null;
 
 	LogManager lm = new LogManager(); // Application log
 
 	private static String PD_IDENT = "linked_s_pd_";
 
+	public ExternalFileManager(ResourceBundle l) {
+		localisation = l;
+	}
+	
 	/*
 	 * Class to return SQL
 	 */
@@ -78,7 +81,10 @@ public class ExternalFileManager {
 		try {
 			pstmt = sd.prepareStatement(sql);
 			pstmt.setInt(1, sId);
+			log.info("Linker changed: " + pstmt.toString());
 			pstmt.executeUpdate();
+		} catch (Exception e) {
+			log.log(Level.SEVERE, "Linker changed", e);
 		} finally {
 			if (pstmt != null) {
 				try {
@@ -93,12 +99,13 @@ public class ExternalFileManager {
 	/*
 	 * Create a linked file
 	 */
-	public boolean createLinkedFile(Connection sd, Connection cRel, int sId, // The survey that contains the manifest
-																				// item
-			String filename, String filepath, String userName) throws Exception {
+	public boolean createLinkedFile(Connection sd, Connection cRel, int sId, // The survey that contains the manifest item
+			String filename, String filepath, String userName, String tz) throws Exception {
 
 		ResultSet rs = null;
 		boolean linked_s_pd = false;
+		boolean chart = false;
+		String chart_key = null;
 		String sIdent = null;
 		int linked_sId = 0;
 		String data_key = null;
@@ -125,11 +132,12 @@ public class ExternalFileManager {
 
 			ArrayList<String> uniqueColumns = new ArrayList<String>();
 			/*
-			 * Get parameters There are two types of linked CSV files generated 1. Parent
-			 * child records where there can be many records from a sub form that match the
-			 * key. Filename starts with "linked_s_pd_" (PD_IDENT) 2. Normal lookup where
-			 * there is only one record that should match a key. Filename starts with
-			 * "linked_"
+			 * Get parameters There are two types of linked CSV files generated 
+			 * 1. Parent child records where there can be many records from a sub form that match the
+			 *  key. Filename starts with "linked_s_pd_" (PD_IDENT) 
+			 * 2. Normal lookup where there is only one record that should match a key. Filename starts with
+			 *  "linked_"
+			 * 3. Time series data.  Filename starts with "chart_s"
 			 */
 			if (filename.startsWith(PD_IDENT)) {
 				linked_s_pd = true;
@@ -145,34 +153,42 @@ public class ExternalFileManager {
 					}.getType();
 					pdArray = new Gson().fromJson(rs.getString(1), type);
 					if (pdArray == null) {
-						throw new Exception("Pulldata definition not found for survey: " + sId + " and file " + filename
+						log.info("Error: Pulldata definition not found for survey: " + sId + " and file " + filename
 								+ ". Set the pulldata definition from the online editor file menu.");
-					}
-					for (int i = 0; i < pdArray.size(); i++) {
-						String pulldataIdent = pdArray.get(i).survey;
-
-						if (pulldataIdent.equals("self")) {
-							pulldataIdent = sIdent;
-						}
-						log.info("PulldataIdent: " + pulldataIdent);
-
-						if (pulldataIdent.equals(sIdent)) {
-							data_key = pdArray.get(i).data_key;
-							non_unique_key = pdArray.get(i).repeats;
-							break;
+					} else {
+						for (int i = 0; i < pdArray.size(); i++) {
+							String pulldataIdent = pdArray.get(i).survey;
+	
+							if (pulldataIdent.equals("self")) {
+								pulldataIdent = sIdent;
+							}
+							log.info("PulldataIdent:" + pulldataIdent + ", sIdent:" + sIdent + ":");
+	
+							if (pulldataIdent.equals(sIdent)) {
+								data_key = pdArray.get(i).data_key;
+								non_unique_key = true;
+								break;
+							}
 						}
 					}
 				} else {
-					throw new Exception("No record found for pull data");
+					log.info("Error: No record found for pull data");
 				}
 
 				if (data_key == null) {
-					throw new Exception("Pulldata data_key not found");
+					log.info("Error: Pulldata data_key was null");
 				}
 
-			} else {
+			} else if (filename.startsWith("linked_s")){
 				int idx = filename.indexOf('_');
 				sIdent = filename.substring(idx + 1);
+			} else if (filename.startsWith("chart_s")) {  // Form: chart_sxx_yyyy_keyname we want sxx_yyyy
+				chart = true;
+				int idx1 = filename.indexOf('_');
+				int idx2 = filename.indexOf('_', idx1 + 1);
+				idx2 = filename.indexOf('_', idx2 + 1);
+				sIdent = filename.substring(idx1 + 1, idx2);
+				chart_key = filename.substring(idx2 + 1);
 			}
 
 			if (sIdent != null && sIdent.equals("self")) {
@@ -184,7 +200,7 @@ public class ExternalFileManager {
 
 			// 2. Determine whether or not the file needs to be regenerated
 			log.info("Test for regenerate of file: " + f.getAbsolutePath() + " File exists: " + f.exists());
-			regenerate = regenerateFile(sd, cRel, linked_sId, sId, f.exists(), f.getAbsolutePath(), userName);
+			regenerate = regenerateFile(sd, cRel, linked_sId, sId, f, userName);
 
 			// 3.Get columns from appearance
 			if (regenerate) {
@@ -226,20 +242,20 @@ public class ExternalFileManager {
 				}
 
 				// 5. Get the sql
-				RoleManager rm = new RoleManager();
-				SqlDef sqlDef = getSql(sd, linked_sId, uniqueColumns, linked_s_pd, data_key, userName, rm);
+				RoleManager rm = new RoleManager(localisation);
+				SqlDef sqlDef = getSql(sd, linked_sId, uniqueColumns, linked_s_pd, data_key, userName, rm, chart_key);
 				pstmtData = cRel.prepareStatement(sqlDef.sql);
 				int paramCount = 1;
 				if (sqlDef.hasRbacFilter) {
-					paramCount = rm.setRbacParameters(pstmtData, sqlDef.rfArray, paramCount);
+					paramCount = GeneralUtilityMethods.setArrayFragParams(pstmtData, sqlDef.rfArray, paramCount, tz);
 				}
-				log.info("Get CSV data: " + pstmtData.toString());
 
 				// 6. Create the file
 				if (linked_s_pd && non_unique_key) {
 
 					log.info("create linked file for linked_s_pd: " + sIdent);
 
+					log.info("Get CSV data: " + pstmtData.toString());
 					rs = pstmtData.executeQuery();
 
 					BufferedWriter bw = new BufferedWriter(
@@ -269,7 +285,10 @@ public class ExternalFileManager {
 					String dkv = null;
 					while (rs.next()) {
 						dkv = rs.getString("_data_key");
-						if (dkv != null && !dkv.equals(currentDkv)) {
+						if(dkv == null) {
+							continue;	// Ignore null keys
+						}
+						if (!dkv.equals(currentDkv)) {
 							// A new data key
 							writeRecords(non_unique_key, nonUniqueRecords, bw, currentDkv);
 							nonUniqueRecords = new ArrayList<StringBuilder>();
@@ -299,6 +318,64 @@ public class ExternalFileManager {
 
 					bw.flush();
 					bw.close();
+				} else if (chart) {
+					log.info("create linked file for chart: " + sIdent);
+					HashMap<String, ArrayList<String>> chartData = new HashMap<> ();
+					
+					if(rs != null) {
+						rs.close();
+					}
+					rs = pstmtData.executeQuery();
+
+					BufferedWriter bw = new BufferedWriter(
+							new OutputStreamWriter(new FileOutputStream(f.getAbsoluteFile()), "UTF8"));
+
+					// Write header
+					bw.write(chart_key);
+					
+					for (int i = 0; i < sqlDef.colNames.size(); i++) {
+						String col = sqlDef.colNames.get(i);
+						if(!col.equals(chart_key)) {
+							bw.write(",");
+							bw.write(col);
+						}
+					}
+					bw.newLine();
+
+					// Write data
+					String currentDkv = null; // Current value of the data key
+					String dkv = null;
+					while (rs.next()) {
+						dkv = rs.getString(chart_key);
+						if (dkv != null && !dkv.equals(currentDkv)) {
+							// A new data key
+							if(currentDkv != null) {
+								writeChartRecords(sqlDef.colNames, chartData, bw, currentDkv, chart_key);
+								chartData = new HashMap<String, ArrayList<String>> ();
+							}
+						}
+						currentDkv = dkv;
+
+						for (int i = 0; i < sqlDef.colNames.size(); i++) {
+							String col = sqlDef.colNames.get(i);
+							if(!col.equals(chart_key)) {
+								ArrayList<String> vList = chartData.get(col);
+								if(vList == null) {
+									vList = new ArrayList<String> ();
+									chartData.put(col, vList);
+								}
+								vList.add(rs.getString(col));
+								
+							}
+						}
+
+					}
+
+					// Write the records for the final key
+					writeChartRecords(sqlDef.colNames, chartData, bw, currentDkv, chart_key);
+
+					bw.flush();
+					bw.close();
 				} else {
 					// Use PSQL to generate the file as it is faster
 					int code = 0;
@@ -317,29 +394,12 @@ public class ExternalFileManager {
 
 		} catch (Exception e) {
 			log.log(Level.SEVERE, "Exception", e);
-			lm.writeLog(sd, sId, userName, "error", "Creating CSV file: " + e.getMessage());
-			// throw new Exception(e.getMessage());
+			lm.writeLog(sd, sId, userName, LogManager.ERROR, "Creating CSV file: " + e.getMessage());
 		} finally {
-			if (pstmtAppearance != null)
-				try {
-					pstmtAppearance.close();
-				} catch (Exception e) {
-				}
-			if (pstmtCalculate != null)
-				try {
-					pstmtCalculate.close();
-				} catch (Exception e) {
-				}
-			if (pstmtData != null)
-				try {
-					pstmtData.close();
-				} catch (Exception e) {
-				}
-			if (pstmtPulldata != null)
-				try {
-					pstmtPulldata.close();
-				} catch (Exception e) {
-				}
+			if (pstmtAppearance != null)	{try {pstmtAppearance.close();} catch (Exception e) {}}
+			if (pstmtCalculate != null) {try {pstmtCalculate.close();	} catch (Exception e) {}}
+			if (pstmtData != null) {try {pstmtData.close();} catch (Exception e) {}}
+			if (pstmtPulldata != null) {	try {pstmtPulldata.close();} catch (Exception e) {}}
 		}
 
 		return regenerate;
@@ -370,24 +430,57 @@ public class ExternalFileManager {
 			bw.newLine();
 		}
 	}
+	
+	/*
+	 * Write timeseries data
+	 */
+	private void writeChartRecords(ArrayList<String> cols, HashMap<String, ArrayList<String>> data, BufferedWriter bw,
+			String dkv, String chart_key) throws IOException {
+
+		bw.write(dkv);
+		for(String col : cols) {
+			if(!col.equals(chart_key)) {
+				bw.write(",");
+				ArrayList<String> vList = data.get(col);
+				if(vList != null) {
+					int idx = 0;
+					for(String v : vList) {
+						if(v != null) {
+							if(idx++ > 0) {
+								bw.write(":");
+							}
+							bw.write(v);
+						}
+					}
+				}
+			}
+		}
+		bw.newLine();
+	}
+
 
 	/*
 	 * Return true if the file needs to be regenerated If regeneration is required
 	 * then also increment the version of the linking form so that it will get the
 	 * new version
 	 */
-	private boolean regenerateFile(Connection sd, Connection cRel, int linked_sId, int linker_sId, boolean fileExists,
-			String filepath, String user) throws SQLException {
+	private boolean regenerateFile(Connection sd, Connection cRel, int linked_sId, int linker_sId, File f, String user) throws SQLException {
 
+		boolean fileExists = f.exists();
+		String filepath = f.getAbsolutePath();
+		
 		boolean regenerate = false;
 		boolean tableExists = true;
 
-		String sql = "select count (*) from linked_forms " + "where linked_s_id = ? " + "and linker_s_id = ? "
+		String sql = "select count (*) from linked_forms " 
+				+ "where linked_s_id = ? " 
+				+ "and linker_s_id = ? "
 				+ "and link_file = ? ";
 		PreparedStatement pstmt = null;
 
 		String sqlInsert = "insert into linked_forms "
-				+ "(Linked_s_id, linker_s_id, link_file, user_ident, download_time) " + "values(?, ?, ?, ?, now())";
+				+ "(Linked_s_id, linker_s_id, link_file, user_ident, download_time) " 
+				+ "values(?, ?, ?, ?, now())";
 		PreparedStatement pstmtInsert = null;
 
 		try {
@@ -423,25 +516,16 @@ public class ExternalFileManager {
 					} else {
 						log.info("Table " + table + " not found. Probably no data has been submitted");
 						tableExists = false;
+						// Delete the file if it exists
+						f.delete();					
 					}
 
 				}
 
 			}
 		} finally {
-			if (pstmt != null) {
-				try {
-					pstmt.close();
-				} catch (Exception e) {
-				}
-			}
-			;
-			if (pstmtInsert != null) {
-				try {
-					pstmtInsert.close();
-				} catch (Exception e) {
-				}
-			}
+			if (pstmt != null) {	try {pstmt.close();} catch (Exception e) {}}
+			if (pstmtInsert != null) {try {pstmtInsert.close();} catch (Exception e) {}}
 		}
 
 		if (tableExists && !fileExists) {
@@ -462,9 +546,12 @@ public class ExternalFileManager {
 	 * generator from SDAL
 	 */
 	private SqlDef getSql(Connection sd, int sId, ArrayList<String> qnames, boolean linked_s_pd, String data_key,
-			String user, RoleManager rm) throws SQLException {
+			String user, RoleManager rm, String chart_key) throws Exception {
 
-		StringBuffer sql = new StringBuffer("select distinct ");
+		StringBuffer sql = new StringBuffer("select ");
+		if(chart_key == null) {		// Time series data should not be made distinct
+			sql.append("distinct ");
+		}
 		StringBuffer where = new StringBuffer("");
 		StringBuffer tabs = new StringBuffer("");
 		StringBuffer order_cols = new StringBuffer("");
@@ -491,7 +578,7 @@ public class ExternalFileManager {
 			pstmtGetCol.setInt(2, sId);
 
 			boolean first = true;
-			;
+			
 			if (linked_s_pd) {
 				linked_s_pd_sel = GeneralUtilityMethods.convertAllxlsNamesToQuery(data_key, sId, sd);
 				sql.append(linked_s_pd_sel);
@@ -511,9 +598,7 @@ public class ExternalFileManager {
 				if (rs.next()) {
 					colName = rs.getString(1);
 					fId = rs.getInt(2);
-				} else if (name.equals("_hrk") || name.equals("_device") || name.equals("_user")
-						|| name.equals("_start") || name.equals("_end") || name.equals("_upload_time")
-						|| name.equals("_survey_notes")) {
+				} else if(SmapServerMeta.isServerReferenceMeta(name)) {
 					colName = name; // For columns that are not questions such as _hrk, _device
 					fId = topForm.id;
 				} else {
@@ -574,7 +659,11 @@ public class ExternalFileManager {
 
 			// If this is a pulldata linked file then order the data by _data_key and then
 			// the primary keys of sub forms
-			if (linked_s_pd) {
+			if(chart_key != null) {
+				sql.append(" order by ");
+				sql.append(chart_key);
+				sql.append(" asc");
+			} else if (linked_s_pd) {
 				sql.append(" order by _data_key");
 				if (subTables.size() > 0) {
 					for (String subTable : subTables) {

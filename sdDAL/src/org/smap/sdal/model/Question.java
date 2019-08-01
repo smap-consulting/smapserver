@@ -33,6 +33,8 @@ public class Question {
 	public int sourceFormIndex;		// Used when the source form in an move is new
 	public String defaultanswer;
 	public String appearance;
+	public String app_choices;
+	public ArrayList<KeyValueSimp>  paramArray;
 	public String parameters;
 	public String choice_filter;
 	public String source;
@@ -46,6 +48,7 @@ public class Question {
 	public boolean visible;
 	public boolean readonly;
 	public boolean required;
+	public boolean compressed;
 	public boolean propertyType = false;	// If set these questions will not be shown in the editor
 	public boolean published;				// Set true if the question has been added to a results table
 	public boolean soft_deleted = false;	// Set true if the question has been deleted but exists in results tables
@@ -55,11 +58,15 @@ public class Question {
 												//  entry but I want to maintain compatibility with xlsform)
 	public String autoplay;
 	public String accuracy;
-	public int linked_survey;
+	public String intent;
 	public String linked_target;			//sId::qId of the target to link to
 	public ArrayList<Label> labels = new ArrayList<Label> ();
 	public String nodeset;
+	public String dataType;
+	public boolean external_choices;
+	public String external_table;
 	
+	public String repeatCount;			// Temporary data used during xls processing	
 	public boolean isTableList = false;	// Temporary flag used during HTML generation
 	
 	private static Logger log =
@@ -75,6 +82,9 @@ public class Question {
 		ArrayList<Option> externalChoices = new ArrayList<Option> ();
 		OptionList ol = s.optionLists.get(list_name);
 		ArrayList<Option> choiceArray = ol.options;
+		if(choiceArray == null) {
+			choiceArray = new ArrayList<Option> ();
+		}
 		boolean external = false;
 		for(int i = 0; i < choiceArray.size(); i++) {
 			if(choiceArray.get(i).externalFile) {
@@ -172,11 +182,7 @@ public class Question {
 	 * Return true if this is a select question
 	 */
 	public boolean isSelect() {
-		return type.startsWith("select");
+		return (type.startsWith("select") || type.equals("rank"));
 	}
-	
-	/*
-	 * Set the appearance
-	 */
 	
 }

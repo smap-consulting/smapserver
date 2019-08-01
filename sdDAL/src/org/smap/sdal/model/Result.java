@@ -13,7 +13,7 @@ public class Result {
 	public boolean isSet;		// Used with choices
 	public String type;	// form || choice || key || || user || a question type
 	public ArrayList<ArrayList<Result>> subForm = null;
-	public ArrayList<Result> choices = null;
+	//public ArrayList<Result> choices = null;   -- Move to compressed format
 	//public Label label;
 	public String appearance;	// Appearance directives including nopdf
 	
@@ -28,9 +28,10 @@ public class Result {
 		listName = ln;
 		appearance = app;
 		
-		if(t.startsWith("select")) {
-			choices = new ArrayList<Result> ();
-		} else if(t.equals("form")) {
+		//if(t.startsWith("select")) {
+		//	choices = new ArrayList<Result> ();
+		//} else 
+		if(t.equals("form")) {
 			subForm = new ArrayList<ArrayList<Result>> ();
 		}
 	}

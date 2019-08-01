@@ -41,6 +41,9 @@ public class Authorise {
 	public static String ORG = "org admin";
 	public static String MANAGE = "manage";
 	public static String SECURITY = "security";
+	public static String VIEW_DATA = "view data";
+	public static String ENTERPRISE = "enterprise admin";
+	public static String OWNER = "server owner";
 	
 	public static int ADMIN_ID = 1;
 	public static int ANALYST_ID = 2;
@@ -48,6 +51,9 @@ public class Authorise {
 	public static int ORG_ID = 4;
 	public static int MANAGE_ID = 5;
 	public static int SECURITY_ID = 6;
+	public static int VIEW_DATA_ID = 7;
+	public static final int ENTERPRISE_ID = 8;
+	public static final int OWNER_ID = 9;
 	
 	//private String requiredGroup;
 	ArrayList<String> permittedGroups; 
@@ -68,7 +74,7 @@ public class Authorise {
 	/*
 	 * Check to see if the user has the rights to perform the requested action
 	 */
-	public boolean isAuthorised(Connection conn, String user) {
+	public boolean isAuthorised(Connection sd, String user) {
 		ResultSet resultSet = null;
 		PreparedStatement pstmt = null;
 		int count = 0;
@@ -88,7 +94,7 @@ public class Authorise {
 		sql += ");";
 		
 		try {
-			pstmt = conn.prepareStatement(sql); 	
+			pstmt = sd.prepareStatement(sql); 	
 			pstmt.setString(1, user);
 			for(int i = 0; i < permittedGroups.size(); i++) {
 				pstmt.setString(i + 2, permittedGroups.get(i));
@@ -126,11 +132,11 @@ public class Authorise {
  			log.info(msg.toString());
  			
  			
- 			lm.writeLog(conn, 0, user, "error", msg.toString());		// Write the application log
+ 			lm.writeLog(sd, 0, user, "error", msg.toString());		// Write the application log
  			
  			// Close the connection as throwing an exception will end the service call
 			
- 			SDDataSource.closeConnection("isAuthorised", conn);
+ 			SDDataSource.closeConnection("isAuthorised", sd);
 			
 			if(sqlError) {
 				throw new ServerException();
@@ -193,6 +199,167 @@ public class Authorise {
 	}
 	
 	/*
+	 * Check to make sure the user id is in the organisation of the user making the request
+	 */
+	public boolean isValidUser(Connection sd, String adminUser, int uId) {
+		
+		ResultSet resultSet = null;
+		int count = 0;
+		boolean sqlError = false;
+		
+
+		String sql = "select u.id "
+					+ "from users u " 
+					+ "where u.id = ? "
+					+ "and u.o_id = ? "
+				+ "union "
+					+ "select uo.u_id "
+					+ "from user_organisation uo "
+					+ "where uo.u_id = ? "
+					+ "and uo.o_id = ?";				
+		PreparedStatement pstmt = null;
+		
+		try {
+			
+			int adminUserOrgId = GeneralUtilityMethods.getOrganisationId(sd, adminUser);
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setInt(1, uId);
+			pstmt.setInt(2, adminUserOrgId);
+			pstmt.setInt(3, uId);
+			pstmt.setInt(4, adminUserOrgId);
+			log.info("Validate user in correct organisation: " + pstmt.toString());
+			resultSet = pstmt.executeQuery();
+
+			if(resultSet.next()) {
+				count = 1;
+			}
+		} catch (Exception e) {
+			log.log(Level.SEVERE,"SQL Error during authorisation", e);
+			sqlError = true;
+		} finally {		
+			// Close the result set and prepared statement
+			try{
+				if(resultSet != null) {resultSet.close();};
+				if(pstmt != null) {pstmt.close();};
+			} catch (Exception ex) {
+				log.log(Level.SEVERE, "Unable to close resultSet or prepared statement");
+			}
+		}
+		
+		// Check to see if the user was authorised to access this service
+ 		if(count == 0 || sqlError) {
+ 			log.info("Authorisation failed for: " + adminUser);
+ 			SDDataSource.closeConnection("isAuthorised", sd);
+			
+			if(sqlError) {
+				throw new ServerException();
+			} else {
+				throw new AuthorisationException();
+			}
+		} 
+ 		
+		return true;
+	}
+	
+	/*
+	 * Check to make sure the billing organisation is valid
+	 */
+	public boolean isValidBillingOrganisation(Connection conn, int oId) {
+		ResultSet resultSet = null;
+		PreparedStatement pstmt = null;
+		int count = 0;
+		boolean sqlError = false;
+		
+		String sql = "select count(*) from organisation o " +
+				" where o.id = ? " +
+				" and o.billing_enabled";
+		
+		try {
+			pstmt = conn.prepareStatement(sql); 	
+			pstmt.setInt(1, oId);
+
+			resultSet = pstmt.executeQuery();
+			resultSet.next();
+			
+			count = resultSet.getInt(1);
+		} catch (Exception e) {
+			log.log(Level.SEVERE,"SQL Error during authorisation", e);
+			sqlError = true;
+		} finally {		
+			// Close the result set and prepared statement
+			try{
+				if(resultSet != null) {resultSet.close();};
+				if(pstmt != null) {pstmt.close();};
+			} catch (Exception ex) {
+				log.log(Level.SEVERE, "Unable to close resultSet or prepared statement");
+			}
+		}
+		
+		// Check to see if the org has billing enabled
+ 		if(count == 0 || sqlError) {
+ 			log.info("Authorisation failed for: " + oId + " billing needs to be enabled for this organisation");
+ 			SDDataSource.closeConnection("isAuthorised", conn);
+			
+			if(sqlError) {
+				throw new ServerException();
+			} else {
+				throw new AuthorisationException();
+			}
+		} 
+ 		
+		return true;
+	}
+	
+	/*
+	 * Check to make sure the billing enterprise is valid
+	 */
+	public boolean isValidBillingEnterprise(Connection conn, int eId) {
+		ResultSet resultSet = null;
+		PreparedStatement pstmt = null;
+		int count = 0;
+		boolean sqlError = false;
+		
+		String sql = "select count(*) from enterprise e " +
+				" where e.id = ? " +
+				" and e.billing_enabled";
+		
+		try {
+			pstmt = conn.prepareStatement(sql); 	
+			pstmt.setInt(1, eId);
+
+			resultSet = pstmt.executeQuery();
+			resultSet.next();
+			
+			count = resultSet.getInt(1);
+		} catch (Exception e) {
+			log.log(Level.SEVERE,"SQL Error during authorisation", e);
+			sqlError = true;
+		} finally {		
+			// Close the result set and prepared statement
+			try{
+				if(resultSet != null) {resultSet.close();};
+				if(pstmt != null) {pstmt.close();};
+			} catch (Exception ex) {
+				log.log(Level.SEVERE, "Unable to close resultSet or prepared statement");
+			}
+		}
+		
+		// Check to see if the ent has billing enabled
+ 		if(count == 0 || sqlError) {
+ 			log.info("Authorisation failed for: " + eId + " billing needs to be enabled for this enterprise");
+ 			SDDataSource.closeConnection("isAuthorised", conn);
+			
+			if(sqlError) {
+				throw new ServerException();
+			} else {
+				throw new AuthorisationException();
+			}
+		} 
+ 		
+		return true;
+	}
+	
+	/*
 	 * Verify that the user is entitled to access this particular survey
 	 */
 	public boolean isValidSurvey(Connection conn, String user, int sId, boolean isDeleted, boolean superUser)
@@ -234,6 +401,204 @@ public class Authorise {
 			log.info("IsValidSurvey: " + pstmt.toString());
 			
 			resultSet = pstmt.executeQuery();
+			if(resultSet.next()) {
+				count = resultSet.getInt(1);
+			}
+			
+		} catch (Exception e) {
+			log.log(Level.SEVERE,"Error in Authorisation", e);
+			sqlError = true;
+		} finally {
+			if(resultSet != null) {try{resultSet.close();}catch(Exception e) {}};
+			if(pstmt != null) {try{pstmt.close();} catch(Exception e) {}};
+		}
+		
+ 		if(count == 0) {
+ 			log.info("Survey validation failed for: " + user + " survey was: " + sId);
+ 			
+ 			SDDataSource.closeConnection("isValidSurvey", conn);
+			
+			if(sqlError) {
+				throw new ServerException();
+			} else {
+				throw new AuthorisationException();	 
+			}
+		} 
+ 		
+		return true;
+	}
+	
+	/*
+	 * Verify that the user is entitled to access this particular survey passing a survey ident
+	 */
+	public boolean isValidSurveyIdent(Connection conn, String user, String sIdent, boolean isDeleted, boolean superUser)
+			throws ServerException, AuthorisationException, NotFoundException {
+		ResultSet resultSet = null;
+		PreparedStatement pstmt = null;
+		int count = 0;
+		boolean sqlError = false;
+		
+		/*
+		 * 1) Make sure the survey has not been soft deleted and exists or alternately 
+		 *    that it has been soft deleted and exists
+		 * 2) Make sure survey is in a project that the user has access to
+		 */
+
+		StringBuffer sql = new StringBuffer("select count(*) from survey s, users u, user_project up, project p "
+				+ "where u.id = up.u_id "
+				+ "and p.id = up.p_id "
+				+ "and s.p_id = up.p_id "
+				+ "and s.ident = ? "
+				+ "and u.ident = ? "
+				+ "and s.deleted = ? ");
+		
+		try {		
+			
+			if(!superUser) {
+				// Add RBAC
+				sql.append(GeneralUtilityMethods.getSurveyRBAC());
+			}
+			
+			pstmt = conn.prepareStatement(sql.toString());
+			pstmt.setString(1, sIdent);
+			pstmt.setString(2, user);
+			pstmt.setBoolean(3, isDeleted);
+			
+			if(!superUser) {
+				pstmt.setString(4, user);
+			}
+			log.info("IsValidSurvey: " + pstmt.toString());
+			
+			resultSet = pstmt.executeQuery();
+			if(resultSet.next()) {
+				count = resultSet.getInt(1);
+			}
+			
+		} catch (Exception e) {
+			log.log(Level.SEVERE,"Error in Authorisation", e);
+			sqlError = true;
+		} finally {
+			if(resultSet != null) {try{resultSet.close();}catch(Exception e) {}};
+			if(pstmt != null) {try{pstmt.close();} catch(Exception e) {}};
+		}
+		
+ 		if(count == 0) {
+ 			log.info("Survey validation failed for: " + user + " survey was: " + sIdent);
+ 			
+ 			SDDataSource.closeConnection("isValidSurvey", conn);
+			
+			if(sqlError) {
+				throw new ServerException();
+			} else {
+				throw new AuthorisationException();	 
+			}
+		} 
+ 		
+		return true;
+	}
+	
+	/*
+	 * Verify that the user is in the same organisation as the message
+	 */
+	public boolean isValidMessage(Connection conn, String user, int messageId)
+			throws ServerException, AuthorisationException, NotFoundException {
+		
+		ResultSet resultSet = null;
+		PreparedStatement pstmt = null;
+		int count = 0;
+		boolean sqlError = false;
+		
+		/*
+		 * 1) Make sure the survey has not been soft deleted and exists or alternately 
+		 *    that it has been soft deleted and exists
+		 * 2) Make sure survey is in a project that the user has access to
+		 */
+
+		StringBuffer sql = new StringBuffer("select count(*) from message where id = ? and o_id in "
+				+ "( select o.id from organisation o, users u "
+				+ "where o.id = u.o_id "
+				+ "and u.ident = ?)");
+				
+		
+		try {		
+					
+			pstmt = conn.prepareStatement(sql.toString());
+			pstmt.setInt(1, messageId);
+			pstmt.setString(2, user);
+			
+			log.info("IsValidMessage: " + pstmt.toString());
+			
+			resultSet = pstmt.executeQuery();
+			resultSet.next();
+			
+			count = resultSet.getInt(1);
+		} catch (Exception e) {
+			log.log(Level.SEVERE,"Error in Authorisation", e);
+			sqlError = true;
+		} finally {
+			// Close the result set and prepared statement
+			try{
+				if(resultSet != null) {resultSet.close();};
+				if(pstmt != null) {pstmt.close();};
+			} catch (Exception ex) {
+				log.log(Level.SEVERE, "Unable to close resultSet or prepared statement");
+			}
+		}
+		
+ 		if(count == 0) {
+ 			log.info("Message validation failed for: " + user + " survey was: " + messageId);
+ 			
+ 			SDDataSource.closeConnection("isValidMessage", conn);
+			
+			if(sqlError) {
+				throw new ServerException();
+			} else {
+				throw new AuthorisationException();	 
+			}
+		} 
+ 		
+		return true;
+	}
+	
+	/*
+	 * Verify that the user is entitled to access this particular survey
+	 * Ignore whether or not it is deleted
+	 */
+	public boolean isValidDelSurvey(Connection conn, String user, int sId, boolean superUser)
+			throws ServerException, AuthorisationException, NotFoundException {
+		ResultSet resultSet = null;
+		PreparedStatement pstmt = null;
+		int count = 0;
+		boolean sqlError = false;
+		
+		/*
+		 * 1) Make sure survey is in a project that the user has access to
+		 */
+
+		StringBuffer sql = new StringBuffer("select count(*) from survey s, users u, user_project up, project p "
+				+ "where u.id = up.u_id "
+				+ "and p.id = up.p_id "
+				+ "and s.p_id = up.p_id "
+				+ "and s.s_id = ? "
+				+ "and u.ident = ? ");
+		
+		try {		
+			
+			if(!superUser) {
+				// Add RBAC
+				sql.append(GeneralUtilityMethods.getSurveyRBAC());
+			}
+			
+			pstmt = conn.prepareStatement(sql.toString());
+			pstmt.setInt(1, sId);
+			pstmt.setString(2, user);
+			
+			if(!superUser) {
+				pstmt.setString(3, user);
+			}
+			log.info("IsValidSurvey: " + pstmt.toString());
+			
+			resultSet = pstmt.executeQuery();
 			resultSet.next();
 			
 			count = resultSet.getInt(1);
@@ -258,7 +623,7 @@ public class Authorise {
 			if(sqlError) {
 				throw new ServerException();
 			} else {
-				throw new NotFoundException();	// Not found rather than not authorised as we could not find a resource that the user had access to
+				throw new AuthorisationException();	 
 			}
 		} 
  		
@@ -507,9 +872,77 @@ public class Authorise {
 	}
 	
 	/*
+	 * Verify that the user is entitled to access this group from
+	 */
+	public boolean isValidGroupSurvey(Connection conn, String user, int sId, String groupSurveyIdent)
+			throws ServerException, AuthorisationException, NotFoundException {
+		ResultSet resultSet = null;
+		PreparedStatement pstmt = null;
+		int count = 0;
+		boolean sqlError = false;
+		
+		/*
+		 * 1) Make sure the survey has not been soft deleted and exists or alternately 
+		 *    that it has been soft deleted and exists
+		 * 2) Make sure survey is in a project that the user has access to
+		 */
+
+		String sql = "select count(*) "
+				+ "from survey s, users u, user_project up "
+				+ "where s.p_id = up.p_id "
+				+ "and up.u_id = u.id "
+				+ "and u.ident = ? "
+				+ "and s.ident = ? "
+				+ "and (s.group_survey_id != 0 and s.group_survey_id = (select group_survey_id from survey where s_id = ?) "
+				+ "or s.group_survey_id = ? "
+				+ "or s.s_id = (select group_survey_id from survey where s_id = ?)) ";
+
+		try {
+			pstmt = conn.prepareStatement(sql);
+			pstmt.setString(1, user);
+			pstmt.setString(2,  groupSurveyIdent);
+			pstmt.setInt(3,  sId);
+			pstmt.setInt(4,  sId);
+			pstmt.setInt(5,  sId);
+			
+			log.info("IsValidGroupSurvey: " + pstmt.toString());
+			
+			resultSet = pstmt.executeQuery();
+			resultSet.next();
+			
+			count = resultSet.getInt(1);
+		} catch (Exception e) {
+			log.log(Level.SEVERE,"Error in Authorisation", e);
+			sqlError = true;
+		} finally {
+			// Close the result set and prepared statement
+			try{
+				if(resultSet != null) {resultSet.close();};
+				if(pstmt != null) {pstmt.close();};
+			} catch (Exception ex) {
+				log.log(Level.SEVERE, "Unable to close resultSet or prepared statement");
+			}
+		}
+		
+ 		if(count == 0) {
+ 			log.info("Survey validation failed for: " + user + " custom survey was: " + groupSurveyIdent);
+ 			
+ 			SDDataSource.closeConnection("isValidSurvey", conn);
+			
+			if(sqlError) {
+				throw new ServerException();
+			} else {
+				throw new NotFoundException();	// Not found rather than not authorised as we could not find a resource that the user had access to
+			}
+		} 
+ 		
+		return true;
+	}
+	
+	/*
 	 * Verify that the user is entitled to access this particular task group
 	 */
-	public boolean isValidTaskGroup(Connection conn, String user, int tgId, boolean isDeleted)
+	public boolean isValidTaskGroup(Connection conn, String user, int tgId)
 			throws ServerException, AuthorisationException, NotFoundException {
 		ResultSet resultSet = null;
 		PreparedStatement pstmt = null;
@@ -632,20 +1065,29 @@ public class Authorise {
 		int count = 0;
 		boolean sqlError = false;
 
-		String sql = "select count(*) from survey s " +
-				" where s.s_id = ? " +
-				" and s.blocked = ?;"; 
+		String sql = "select s.blocked, o.can_submit "
+				+ "from survey s, project p, organisation o "
+				+ "where s.s_id = ? "
+				+ "and s.p_id = p.id "
+				+ "and p.o_id = o.id ";
 		
 		try {
 			pstmt = conn.prepareStatement(sql);
 			pstmt.setInt(1, sId);
-			pstmt.setBoolean(2, isBlocked);
 			
 			log.info("isBlocked: " + pstmt.toString());
 			resultSet = pstmt.executeQuery();
 			resultSet.next();
 			
-			count = resultSet.getInt(1);
+			boolean surveyBlocked = resultSet.getBoolean("blocked");
+			boolean orgCanSubmit = resultSet.getBoolean("can_submit");	
+			
+			if(isBlocked && (surveyBlocked || !orgCanSubmit)) {
+				count = 1;
+			} else if (!isBlocked && (!surveyBlocked && orgCanSubmit)) {
+				count = 1;
+			}
+
 		} catch (Exception e) {
 			log.log(Level.SEVERE,"Error in Authorisation - isBlocked", e);
 			sqlError = true;
@@ -793,7 +1235,7 @@ public class Authorise {
 		
 		
 		try {
-			int oId = GeneralUtilityMethods.getOrganisationId(conn, user, 0);
+			int oId = GeneralUtilityMethods.getOrganisationId(conn, user);
 			
 			pstmt = conn.prepareStatement(sql);
 			pstmt.setInt(1, pId);
@@ -839,14 +1281,15 @@ public class Authorise {
 		int count = 0;
 		boolean sqlError = false;
 
-		String sql = "select count(*) from users u " +
-				" where u.o_id = ?" +
-				" and u.ident = ?;";
+		String sql = "select count(*) from users u "
+				+ "where (u.o_id = ? and u.ident = ?) "
+				+ "or u.id in (select u_id from user_organisation where o_id = ?)";
 		
 		try {
 			pstmt = conn.prepareStatement(sql);
 			pstmt.setInt(1, oId);
 			pstmt.setString(2, user);
+			pstmt.setInt(3, oId);
 			log.info("IsValidOrganisation: " + pstmt.toString());
 			resultSet = pstmt.executeQuery();
 			resultSet.next();
@@ -869,6 +1312,57 @@ public class Authorise {
  			log.info("Security: Project validation failed for: " + user + " organisation was: " + oId);
  			
  			SDDataSource.closeConnection("isValidOrganisation", conn);
+			
+			if(sqlError) {
+				throw new ServerException();
+			} else {
+				throw new AuthorisationException();
+			}
+		} 
+ 		
+		return true;
+	}
+	
+	/*
+	 * Verify that the user is a member of the same enterpise as the organisation
+	 */
+	public boolean isOrganisationInEnterprise(Connection conn, String user, int oId) {
+		ResultSet resultSet = null;
+		PreparedStatement pstmt = null;
+		int count = 0;
+		boolean sqlError = false;
+
+		String sql = "select count(*) from users u, organisation o "
+				+ "where u.o_id = o.id "
+				+ "and u.ident = ? "
+				+ "and o.e_id = (select e_id from organisation where id = ?)";
+		
+		try {
+			pstmt = conn.prepareStatement(sql);
+			pstmt.setString(1, user);
+			pstmt.setInt(2, oId);
+			log.info("IsOrganisationInEnterprise: " + pstmt.toString());
+			resultSet = pstmt.executeQuery();
+			resultSet.next();
+			
+			count = resultSet.getInt(1);
+		} catch (Exception e) {
+			log.log(Level.SEVERE,"Error in Authorisation", e);
+			sqlError = true;
+		} finally {
+			// Close the result set and prepared statement
+			try{
+				if(resultSet != null) {resultSet.close();};
+				if(pstmt != null) {pstmt.close();};
+			} catch (Exception ex) {
+				log.log(Level.SEVERE, "Unable to close resultSet or prepared statement");
+			}
+		}
+		
+ 		if(count == 0) {
+ 			log.info("Security: Enterprise validation failed for: " + user + " organisation was: " + oId);
+ 			
+ 			SDDataSource.closeConnection("isOrganisationInEnterprise", conn);
 			
 			if(sqlError) {
 				throw new ServerException();

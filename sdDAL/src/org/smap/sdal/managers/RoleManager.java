@@ -11,8 +11,10 @@ import java.util.ResourceBundle;
 import java.util.logging.Logger;
 
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
+import org.smap.sdal.model.KeyValueSimp;
 import org.smap.sdal.model.Role;
 import org.smap.sdal.model.RoleColumnFilter;
+import org.smap.sdal.model.RoleName;
 import org.smap.sdal.model.SqlFrag;
 import org.smap.sdal.model.SqlFragParam;
 
@@ -47,6 +49,11 @@ public class RoleManager {
 	private static Logger log =
 			 Logger.getLogger(RoleManager.class.getName());
 
+	ResourceBundle localisation = null;
+	
+	public RoleManager(ResourceBundle l) {
+		localisation = l;
+	}
 
 	/*
 	 * Get available roles
@@ -96,16 +103,52 @@ public class RoleManager {
 		
 		return roles;
 	}
+	
+	/*
+	 * Get the names and idents of roles
+	 */
+	public ArrayList<RoleName> getRoleNames(Connection sd, int o_id) throws SQLException {
+		PreparedStatement pstmt = null;
+		ArrayList<RoleName> roles = new ArrayList<> ();
+		
+		try {
+			String sql = null;
+			ResultSet resultSet = null;
+			
+			/*
+			 * Get the roles for this organisation
+			 */
+			sql = "SELECT id, "
+					+ "name "
+					+ "from role "
+					+ "where o_id = ? "
+					+ "order by name asc";
+			
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setInt(1, o_id);
+			resultSet = pstmt.executeQuery();
+							
+			while(resultSet.next()) {
+				roles.add(new RoleName(resultSet.getInt("id"), resultSet.getString("name")));
+			}
+						    
+		} finally {
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+		}
+		
+		return roles;
+	}
 
 	
 	/*
 	 * Create a new Role
 	 */
-	public void createRole(Connection sd, 
+	public int createRole(Connection sd, 
 			Role r, 
 			int o_id, 
 			String ident) throws Exception {
 		
+		int rId = 0;
 		String sql = "insert into role (o_id, name, description, changed_by, changed_ts) " +
 				" values (?, ?, ?, ?, now());";
 		
@@ -113,7 +156,7 @@ public class RoleManager {
 		
 		try {
 			
-			pstmt = sd.prepareStatement(sql);
+			pstmt = sd.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
 			pstmt.setInt(1, o_id);
 			pstmt.setString(2, r.name);
 			pstmt.setString(3, r.desc);
@@ -122,11 +165,17 @@ public class RoleManager {
 			log.info("SQL: " + pstmt.toString());
 			pstmt.executeUpdate();
 			
+			ResultSet rs = pstmt.getGeneratedKeys();
+			if(rs.next()) {
+				rId = rs.getInt(1);
+			}
 			
 		}  finally {		
 			try {if (pstmt != null) {pstmt.close();} } catch (SQLException e) {	}
 			
 		}
+		
+		return rId;
 
 	}
 	
@@ -202,15 +251,16 @@ public class RoleManager {
 	/*
 	 * Get roles associated with a survey
 	 */
-	public ArrayList<Role> getSurveyRoles(Connection sd, int s_id, int o_id, boolean enabledOnly) throws SQLException {
+	public ArrayList<Role> getSurveyRoles(Connection sd, int s_id, int o_id, boolean enabledOnly, 
+			String user, boolean isSuperUser) throws SQLException {
 		PreparedStatement pstmt = null;
 		ArrayList<Role> roles = new ArrayList<Role> ();
 		
 		try {
-			String sql = null;
 			ResultSet resultSet = null;
 			
-			sql = "SELECT r.id as id, "
+			String sql = null;
+			String sqlSuperUser = "SELECT r.id as id, "
 					+ "r.name as name, "
 					+ "sr.enabled, "
 					+ "sr.id as linkid,"
@@ -221,6 +271,30 @@ public class RoleManager {
 					+ "on r.id = sr.r_id "
 					+ "and sr.s_id = ? "
 					+ "where o_id = ? ";
+			
+			String sqlNormalUser = "SELECT r.id as id, "
+					+ "r.name as name, "
+					+ "sr.enabled, "
+					+ "sr.id as linkid,"
+					+ "sr.row_filter,"
+					+ "sr.column_filter "
+					+ "from role r "
+					+ "left outer join survey_role sr "
+					+ "on r.id = sr.r_id "
+					+ "and sr.s_id = ? "
+					+ "join user_role ur "
+					+ "on r.id = ur.r_id "
+					+ "join users u "
+					+ "on ur.u_id = u.id "
+					+ "where r.o_id = ? "
+					+ "and u.ident = ?";
+			
+			if(isSuperUser) {
+				sql = sqlSuperUser;
+			} else {
+				sql = sqlNormalUser;
+			}
+			
 			if(enabledOnly) {
 				sql += "and sr.enabled ";
 			}
@@ -229,6 +303,9 @@ public class RoleManager {
 			pstmt = sd.prepareStatement(sql);
 			pstmt.setInt(1, s_id);
 			pstmt.setInt(2, o_id);
+			if(!isSuperUser) {
+				pstmt.setString(3,  user);
+			}
 			log.info("Get survey roles: " + pstmt.toString());
 			resultSet = pstmt.executeQuery();
 							
@@ -241,14 +318,7 @@ public class RoleManager {
 				role.id = resultSet.getInt("id");
 				role.name = resultSet.getString("name");
 				role.enabled = resultSet.getBoolean("enabled");
-				
-				String sqlFragString = resultSet.getString("row_filter");
-				if(sqlFragString != null) {
-					SqlFrag sq = gson.fromJson(sqlFragString, SqlFrag.class);
-					if(sq.expression != null) {
-						role.row_filter = sq.expression.toString();
-					}
-				}
+				role.row_filter = resultSet.getString("row_filter");
 				
 				String colFilter = resultSet.getString("column_filter");
 				if(colFilter != null) {
@@ -320,10 +390,10 @@ public class RoleManager {
 		PreparedStatement pstmt = null;
 		
 		SqlFrag sq = new SqlFrag();
-		sq.addSqlFragment(role.row_filter, localisation, false);
+		sq.addSqlFragment(role.row_filter, false, localisation);
 		StringBuilder bad = new StringBuilder();
 		for(int i = 0; i < sq.columns.size(); i++) {
-			if(!GeneralUtilityMethods.surveyHasColumn(sd, sId, sq.columns.get(i))) {
+			if(GeneralUtilityMethods.getColumnName(sd, sId, sq.humanNames.get(i)) == null) {
 				if(bad.length() > 0) {
 					bad.append(", ");
 				}
@@ -334,9 +404,6 @@ public class RoleManager {
 			throw new Exception(localisation.getString("r_mc") + " " + bad);
 		}
 		
-		Gson gson=  new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
-		String configString = gson.toJson(sq);
-		
 		try {
 			String sql = "update survey_role "
 					+ "set row_filter = ? "
@@ -344,7 +411,7 @@ public class RoleManager {
 					+ "and s_id = ?";
 			
 			pstmt = sd.prepareStatement(sql);
-			pstmt.setString(1, configString);
+			pstmt.setString(1, role.row_filter);
 			pstmt.setInt(2, role.linkid);
 			pstmt.setInt(3, sId);
 			
@@ -394,7 +461,7 @@ public class RoleManager {
 	 * Get the sql for a survey role filter for a specific user and survey
 	 * A user can have multiple roles as can a survey hence an array of roles is returned
 	 */
-	public ArrayList<SqlFrag> getSurveyRowFilter(Connection sd, int sId, String user) throws SQLException {
+	public ArrayList<SqlFrag> getSurveyRowFilter(Connection sd, int sId, String user) throws Exception {
 		
 		PreparedStatement pstmt = null;
 		ArrayList<SqlFrag> rfArray = new ArrayList<SqlFrag> ();
@@ -421,11 +488,69 @@ public class RoleManager {
 			while(resultSet.next()) {		
 				String sqlFragString = resultSet.getString("row_filter");
 				if(sqlFragString != null) {
-					rfArray.add(gson.fromJson(sqlFragString, SqlFrag.class));
+					if(sqlFragString.trim().startsWith("{")) {
+						rfArray.add(gson.fromJson(sqlFragString, SqlFrag.class));		// legacy json
+					} else {
+						SqlFrag sf = new SqlFrag();									// New only the string is stored
+						sf.addSqlFragment(sqlFragString, false, localisation);
+						rfArray.add(sf);
+					}
 				}		
 			}
 		} finally {
 			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+		}
+		
+		return rfArray;
+	}
+	
+	/*
+	 * Get the sql for a survey role filter for a specific user and survey
+	 * A user can have multiple roles as can a survey hence an array of roles is returned
+	 */
+	public ArrayList<SqlFrag> getSurveyRowFilterRoleList(Connection sd, int sId, ArrayList<Role> roles) throws Exception {
+		
+		PreparedStatement pstmt = null;
+		ArrayList<SqlFrag> rfArray = new ArrayList<SqlFrag> ();
+		ArrayList<Integer> roleids = new ArrayList<> ();
+		
+		if(roles != null && roles.size() > 0) {
+			for(Role r : roles) {
+				roleids.add(r.id);
+			}
+			
+			try {
+				String sql = null;
+				ResultSet resultSet = null;
+				
+				sql = "SELECT sr.row_filter "
+						+ "from survey_role sr, user_role ur, users u "
+						+ "where sr.s_id = ? "
+						+ "and sr.enabled = true "
+						+ "and sr.r_id = any(?) ";
+								
+				pstmt = sd.prepareStatement(sql);
+				pstmt.setInt(1, sId);
+				pstmt.setArray(2, sd.createArrayOf("text", roleids.toArray(new Integer[roleids.size()])));
+				log.info("Get surveyRowFilter: " + pstmt.toString());
+				resultSet = pstmt.executeQuery();
+								
+				Gson gson=  new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
+				while(resultSet.next()) {		
+					String sqlFragString = resultSet.getString("row_filter");
+					if(sqlFragString != null) {
+						if(sqlFragString.trim().startsWith("{")) {
+							rfArray.add(gson.fromJson(sqlFragString, SqlFrag.class));		// legacy json
+						} else {
+							SqlFrag sf = new SqlFrag();									// New only the string is stored
+							sf.addSqlFragment(sqlFragString, false, localisation);
+							rfArray.add(sf);
+						}
+					}		
+				}
+			} finally {
+				try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+			}
 		}
 		
 		return rfArray;
@@ -453,26 +578,6 @@ public class RoleManager {
 			sqlFilter.append(")");
 		}
 		return sqlFilter.toString();
-	}
-	
-	/*
-	 * Set the parameters for an array of sql fragments
-	 */
-	public int setRbacParameters(PreparedStatement pstmt, ArrayList<SqlFrag> rfArray, int index) throws SQLException {
-		int attribIdx = index;
-		for(SqlFrag rf : rfArray) {
-			for(int i = 0; i < rf.params.size(); i++) {
-				SqlFragParam p = rf.params.get(i);
-				if(p.type.equals("text")) {
-					pstmt.setString(attribIdx++, p.sValue);
-				} else if(p.type.equals("integer")) {
-					pstmt.setInt(attribIdx++,  p.iValue);
-				} else if(p.type.equals("double")) {
-					pstmt.setDouble(attribIdx++,  p.dValue);
-				}
-			}
-		}
-		return attribIdx;
 	}
 	
 	/*
@@ -514,6 +619,57 @@ public class RoleManager {
 			}
 		} finally {
 			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+		}
+		
+		return cfArray;
+	}
+	
+	/*
+	 * Get the sql for a survey role column filter for an array of roles and a survey
+	 * This is used for immediate anonymous requests such as prepopulating a survey where there is no user
+	 *  but there is a set of roles
+	 */
+	public ArrayList<RoleColumnFilter> getSurveyColumnFilterRoleList(Connection sd, int sId, ArrayList<Role> roles) throws SQLException {
+		
+		ArrayList<RoleColumnFilter> cfArray = new ArrayList<RoleColumnFilter> ();
+		ArrayList<Integer> roleids = new ArrayList<> ();
+		
+		if(roles.size() > 0) {
+			PreparedStatement pstmt = null;
+			
+			for(Role r : roles) {
+				roleids.add(r.id);
+			}
+			
+			try {
+				String sql = null;
+				ResultSet resultSet = null;
+				
+				sql = "SELECT sr.column_filter "
+						+ "from survey_role sr "
+						+ "where sr.s_id = ? "
+						+ "and sr.enabled = true "
+						+ "and sr.r_id = any(?) ";
+								
+				pstmt = sd.prepareStatement(sql);
+				pstmt.setInt(1, sId);
+				pstmt.setArray(2, sd.createArrayOf("text", roleids.toArray(new Integer[roleids.size()])));
+				log.info("Get surveyColumnFilter From Role List: " + pstmt.toString());
+				resultSet = pstmt.executeQuery();
+								
+				Gson gson=  new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
+				Type cfArrayType = new TypeToken<ArrayList<RoleColumnFilter>>(){}.getType();
+				
+				while(resultSet.next()) {		
+					String sqlFragString = resultSet.getString("column_filter");
+					if(sqlFragString != null) {
+						ArrayList<RoleColumnFilter> cols = gson.fromJson(sqlFragString, cfArrayType);
+						cfArray.addAll(cols);
+					}		
+				}
+			} finally {
+				try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+			}
 		}
 		
 		return cfArray;

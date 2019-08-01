@@ -1,7 +1,7 @@
 package org.smap.sdal.model;
 
-import org.smap.sdal.model.Geometry;
+import org.smap.sdal.model.GeometryString;
 
 public class TaskLocation {
-	public Geometry geometry;
+	public GeometryString geometry;
 }

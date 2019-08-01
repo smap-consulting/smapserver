@@ -5,7 +5,9 @@ import java.util.ResourceBundle;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.smap.sdal.Utilities.ApplicationException;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
+import org.smap.sdal.constants.SmapServerMeta;
 
 /*
  * Form Class
@@ -20,9 +22,9 @@ public class SqlFrag {
 	public StringBuffer sql = new StringBuffer("");
 	public ArrayList<SqlFragParam> params = new ArrayList<SqlFragParam> ();
 	public ArrayList<String> columns = new ArrayList<String> ();
+	public ArrayList<String> humanNames = new ArrayList<String> ();
 
-	private static Logger log =
-			 Logger.getLogger(SqlFrag.class.getName());
+	private static Logger log = Logger.getLogger(SqlFrag.class.getName());
 	
 	// Set the original expression used to create this SQlFrag
 	public void setExpression(String in) {
@@ -51,7 +53,7 @@ public class SqlFrag {
 	/*
 	 * Add an SQL expression
 	 */
-	public void addSqlFragment(String in, ResourceBundle localisation, boolean isCondition) throws Exception {
+	public void addSqlFragment(String in, boolean isCondition, ResourceBundle localisation) throws Exception {
 		
 		ArrayList<SqlFragParam> tempParams = new ArrayList<SqlFragParam> ();
 		
@@ -64,6 +66,9 @@ public class SqlFrag {
 			}
 			conditions.add(in);
 		}
+		String charTokens = "=+-><*/()";
+		in = GeneralUtilityMethods.addSurroundingWhiteSpace(in, charTokens.toCharArray());
+		in = GeneralUtilityMethods.addSurroundingWhiteSpace(in, new String[] {"<=", ">=", "!="});
 		
 		/*
 		 * This SQL Fragment may actually be text without quotes
@@ -85,7 +90,7 @@ public class SqlFrag {
 			// Add the sql fragment
 			if(idx1 > 0) {
 				SqlFragParam p = new SqlFragParam();
-				p.type = "sql";
+				p.setType("sql");
 				p.sValue = in.substring(start, idx1);
 				tempParams.add(p);
 				addedChars = idx1;
@@ -95,7 +100,7 @@ public class SqlFrag {
 			idx2 = in.indexOf('\'', idx1 + 1);
 			if(idx2 > -1) {
 				SqlFragParam p = new SqlFragParam();
-				p.type = "text";
+				p.setType("text");
 				p.sValue = in.substring(idx1 + 1, idx2);	// Remove quotation marks
 				tempParams.add(p);
 				addedChars = idx2 + 1;							// Skip over quote
@@ -108,7 +113,7 @@ public class SqlFrag {
 		}
 		if(addedChars < in.length()) {
 			SqlFragParam p = new SqlFragParam();
-			p.type = "sql";
+			p.setType("sql");
 			p.sValue = in.substring(addedChars);
 			tempParams.add(p);
 		}
@@ -119,53 +124,53 @@ public class SqlFrag {
 		 */
 		for(int i = 0; i < tempParams.size(); i++) {
 			SqlFragParam p = tempParams.get(i);
-			if(p.type.equals("sql")) {
+			if(p.getType().equals("sql")) {
 				String [] token = p.sValue.split("[\\s]");  // Split on white space
 				for(int j = 0; j < token.length; j++) {
-					String s = sqlToken(token[j]);
+					String s = sqlToken(token[j], localisation);
 					
 					if(s.length() > 0) {
 						sql.append(" " + s + " ");
 					}
 				}
-			} else if(p.type.equals("text")) {
+			} else if(p.getType().equals("text") || p.getType().equals("date")) {
 				SqlFragParam px = new SqlFragParam();
 				px.addTextParam(p.sValue);
 				params.add(px);
 				sql.append(" ? ");
 			}
 		}
-		
-		
 	}
 	
 	/*
 	 * Process a single sql token
 	 */
-	public String sqlToken(String token) throws Exception {
+	public String sqlToken(String token, ResourceBundle localisation) throws Exception {
 		String out = "";
 		
-		token = token.trim().toLowerCase();
+		token = token.trim();
 		
 		// Check for a column name
 		if(token.startsWith("${") && token.endsWith("}")) {
 			String name = token.substring(2, token.length() - 1);
 			boolean columnNameCaptured = false;
-			out = GeneralUtilityMethods.cleanName(name, true, true, true);
+			out = GeneralUtilityMethods.cleanName(name, true, true, false);
 			for(int i = 0; i < columns.size(); i++) {
-				if(columns.get(i).equals(name)) {
+				if(columns.get(i).equals(out)) {
 					columnNameCaptured = true;
 					break;
 				}
 			}
 			if(!columnNameCaptured) {
-				columns.add(name);
+				columns.add(out);
+				humanNames.add(name);
 			}
 		} else if (token.equals(">") ||
 				token.equals("<") ||
 				token.equals("<=") ||
 				token.equals(">=") ||
 				token.equals("=") || 
+				token.equals("!=") || 
 				token.equals("-") ||
 				token.equals("+") ||
 				token.equals("*") ||
@@ -173,7 +178,12 @@ public class SqlFrag {
 				token.equals(")") ||
 				token.equals("(") ||
 				token.equals("or") ||
+				token.equals(SmapServerMeta.UPLOAD_TIME_NAME) ||
+				token.equals(SmapServerMeta.SCHEDULED_START_NAME) ||
 				token.equals("and") || 
+				token.equals("is") || 
+				token.equals("null") || 
+				token.equals("not") || 
 				token.equals("like") || 
 				token.equals("integer") || 
 				token.equals("current_date") ||
@@ -184,13 +194,59 @@ public class SqlFrag {
 		} else if (token.equals("all")) {
 			out = "";
 		} else if (token.startsWith("{") && token.endsWith("}")) {	// Preserve {xx} syntax if xx is integer
+			out = "";
 			String content = token.substring(1, token.length() - 1);
-			try {
-				Integer iValue = Integer.parseInt(content);
-				out = "{" + iValue.toString() + "}";
-			} catch (Exception e) {
-				log.log(Level.SEVERE,"Error", e);
-			}	
+			
+			if(content != null) {
+				String [] contentArray = content.split("_");
+				String [] contentArray2 = content.split(":");
+				if(contentArray.length == 1 && contentArray2.length == 1) {
+					// simple integer assumed to be days
+					try {
+						Integer iValue = Integer.parseInt(contentArray[0]);
+						out = "'" + iValue.toString() + "'";
+					} catch (Exception e) {
+						log.log(Level.SEVERE,"Error", e);
+					}	
+				} else if(contentArray.length == 2) {
+					// 2 elements first of which must be an integer				
+					try {
+						Integer iValue = Integer.parseInt(contentArray[0]);
+							
+						out = "interval '" + iValue.toString() + " ";
+						if(contentArray[1].equals("day")) {
+							out += contentArray[1] + "'";
+						} else if(contentArray[1].equals("days")) {
+							out += contentArray[1] + "'";
+						} else if(contentArray[1].equals("hour")) {
+							out += contentArray[1] + "'";
+						} else if(contentArray[1].equals("hours")) {
+							out += contentArray[1] + "'";
+						} else if(contentArray[1].equals("minute")) {
+							out += contentArray[1] + "'";
+						} else if(contentArray[1].equals("minutes")) {
+							out += contentArray[1] + "'";
+						} else if(contentArray[1].equals("second")) {
+							out += contentArray[1] + "'";
+						} else if(contentArray[1].equals("seconds")) {
+							out += contentArray[1] + "'";
+						} else {
+							out = "";
+						}
+					} catch (Exception e) {
+						log.log(Level.SEVERE,"Error", e);
+					}	
+				} else if(contentArray2.length == 3) {
+					try {
+						Integer hValue = Integer.parseInt(contentArray2[0]);
+						Integer mValue = Integer.parseInt(contentArray2[1]);
+						Integer sValue = Integer.parseInt(contentArray2[2]);
+						out = " interval '" + content +"'";		// all looks good
+					} catch (Exception e) {
+						log.log(Level.SEVERE,"Error", e);
+					}
+				}
+			}
 		} else if (token.length() > 0) {
 			// Non text parameter, accept decimal or integer
 			try {
@@ -202,10 +258,13 @@ public class SqlFrag {
 					out = iValue.toString();
 				}
 			} catch (Exception e) {
-				log.log(Level.SEVERE,"Error", e);
+				String msg = localisation.getString("inv_token");
+				msg = msg.replace("%s1", token);
+				throw new ApplicationException(msg);
 			}
 			
 		}
+		
 		return out;
 	}
 	
@@ -221,8 +280,10 @@ public class SqlFrag {
 				isText = false; // Contains a text fragment
 			} else if(in.contains("{")) {
 				isText = false; // Contains a column name
-			} else if(in.contains("()")) {
-				isText = false; // Contains a function without parameters such as now()
+			} else if(in.contains("(")) {
+				isText = false; // Contains a function possibly
+			} else if(in.contains("where") || in.contains("and")) {
+				isText = false; // Contains some sql reserved words
 			}
 		}
 		if(isText) {

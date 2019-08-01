@@ -48,10 +48,10 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
  * Manage the sending of emails
  */
 public class EmailManager {
-	
+
 	private static Logger log =
-			 Logger.getLogger(EmailManager.class.getName());
-	
+			Logger.getLogger(EmailManager.class.getName());
+
 	/*
 	 * Add an authenticator class
 	 */
@@ -66,7 +66,7 @@ public class EmailManager {
 			return authentication;
 		}
 	}
-	
+
 	// Send an email
 	public void sendEmail( 
 			String email, 
@@ -85,19 +85,21 @@ public class EmailManager {
 			EmailServer emailServer,
 			String scheme,
 			String serverName,
-			ResourceBundle localisation) throws Exception  {
-		
+			String emailKey,
+			ResourceBundle localisation,
+			String serverDescription) throws Exception  {
+
 		if(emailServer.smtpHost == null) {
 			throw new Exception("Cannot send email, smtp_host not available");
 		}
-		
+
 		RecipientType rt = null;
 		try {
 			Properties props = System.getProperties();
 			props.put("mail.smtp.host", emailServer.smtpHost);	
-			
+
 			Authenticator authenticator = null;
-			
+
 			// Create an authenticator if the user name and password is available
 			if(emailServer.emailUser != null && emailServer.emailPassword != null 
 					&& emailServer.emailUser.trim().length() > 0 
@@ -112,9 +114,9 @@ public class EmailManager {
 				} else {
 					props.setProperty("mail.smtp.port", "587");	
 				}
-				
+
 				sender = emailServer.emailUser;
-				
+
 				log.info("Trying to send email with authentication");
 			} else {
 				if(emailServer.emailPort > 0) {
@@ -124,7 +126,7 @@ public class EmailManager {
 				}
 				log.info("No authentication");
 			}
-		
+
 			props.setProperty("mail.smtp.connectiontimeout", "60000");
 			props.setProperty("mail.smtp.timeout", "60000");
 			props.setProperty("mail.smtp.writetimeout", "60000");
@@ -135,137 +137,174 @@ public class EmailManager {
 			} else {
 				rt = Message.RecipientType.TO;
 			}
-			
+
 			log.info("Sending to email addresses: " + email);
 			InternetAddress[] emailArray = InternetAddress.parse(email);
 			log.info("Number of email addresses: " + emailArray.length);
-		    msg.setRecipients(rt,	emailArray);
-		    msg.setSubject(subject);
-		    
-		    sender = sender + "@" + emailServer.emailDomain;
-		 
-		    log.info("Sending email from: " + sender);
-		    msg.setFrom(InternetAddress.parse(sender, false)[0]);
-	    
-		    StringBuffer identString = new StringBuffer();
-	    	int count = 0;
-	    	if(idents != null) {
-		    	for(String ident : idents) {
-		    		if(count++ > 0) {
-		    			identString.append(" or ");
-		    		} 
-		    		identString.append(ident);
-		    	}
-	    	}
-		    
-	    	log.info("Email type: " + type + " content: " + content);
-		    StringBuffer txtMessage = new StringBuffer("");
-		    if(content != null && content.trim().length() > 0) {
-		    	txtMessage.append(content);			// User has specified email content
-			    txtMessage.append("\n\n");
-			    
-			    // Add a link to the report if docURL is not null
-			    if(docURL != null) {
-			    	txtMessage.append(scheme + "://");
-				    txtMessage.append(serverName);
-				    txtMessage.append(docURL);
-			    }
-		    } else if(type.equals("reset")) {
-		    	txtMessage.append(localisation.getString("c_goto"));
-			    txtMessage.append(" " + scheme + "://");
-			    txtMessage.append(serverName);
-			    txtMessage.append("/resetPassword.html?token=");
-			    txtMessage.append(uuid);
-			    txtMessage.append(" ");
-			    txtMessage.append(localisation.getString("email_rp"));
-			    txtMessage.append("\n\n");
-			    txtMessage.append(localisation.getString("email_un"));
-			    txtMessage.append(": ");
-			    txtMessage.append(identString.toString());
-			    txtMessage.append("\n\n ");
-			    txtMessage.append(localisation.getString("email_vf"));
-			    txtMessage.append(" ");
-			    txtMessage.append(interval);
-			    txtMessage.append("\n ");
-			    //txtMessage.append("Do not reply to this email address it is not monitored. If you don't think you should be receiving these then send an email to");	
-			    txtMessage.append(localisation.getString("email_dnr"));
-			    txtMessage.append(" ");
-			    txtMessage.append(adminEmail);
-			    txtMessage.append(".");
-			
-		    } else if(type.equals("newuser")) {
-		    	
-			    txtMessage.append(adminName);
-			    txtMessage.append(" ");
-			    txtMessage.append(localisation.getString("email_hga"));
-			    txtMessage.append(" " + scheme + "://");
-			    txtMessage.append(serverName);
-			    txtMessage.append("\n");
-			    txtMessage.append(localisation.getString("email_sp"));
-			    txtMessage.append(" " + scheme + "://");
-			    txtMessage.append(serverName);
-			    txtMessage.append("/resetPassword.html?token=");
-			    txtMessage.append(uuid);
-			    txtMessage.append("\n\n");
-			    txtMessage.append(localisation.getString("email_un"));
-			    txtMessage.append(": ");
-			    txtMessage.append(identString.toString());
-			    txtMessage.append("\n\n");
-			    txtMessage.append(localisation.getString("email_vf"));
-			    txtMessage.append(" ");
-			    txtMessage.append(interval);
-			    txtMessage.append("\n");
-			    txtMessage.append(localisation.getString("email_dnr"));
-			    txtMessage.append(" ");
-			    txtMessage.append(adminEmail);
-			    txtMessage.append(".");			
+			msg.setRecipients(rt,	emailArray);
+			msg.setSubject(subject);
 
-		    } else if(type.equals("notify")) {
-		    	txtMessage.append(localisation.getString("email_ian"));
-		    	txtMessage.append(" " + scheme + "://");
-			    txtMessage.append(serverName);
-			    txtMessage.append(". ");
-			    
-			    txtMessage.append(localisation.getString("email_dnr"));
-			    txtMessage.append(" ");
-			    txtMessage.append(adminEmail);
-			    txtMessage.append(".");	
-			    txtMessage.append("\n\n");
-			    if(docURL != null) {
-			    	txtMessage.append(scheme + "://");
-				    txtMessage.append(serverName);
-				    txtMessage.append(docURL);
-			    }
+			sender = sender + "@" + emailServer.emailDomain;
 
-		    }
-		    
-		    BodyPart messageBodyPart = new MimeBodyPart();
-		    messageBodyPart.setText(txtMessage.toString());
-		    Multipart multipart = new MimeMultipart();
-		    multipart.addBodyPart(messageBodyPart);
-		    
-		    // Add file attachments if they exist
-		    if(filePath != null) {			 
-			    messageBodyPart = new MimeBodyPart();
-			    DataSource source = new FileDataSource(filePath);
-			    messageBodyPart.setDataHandler(new DataHandler(source));
-		        messageBodyPart.setFileName(filename);
-		        multipart.addBodyPart(messageBodyPart);
-		    }
-	        
+			log.info("Sending email from: " + sender);
+			msg.setFrom(InternetAddress.parse(sender, false)[0]);
 
-	        msg.setContent(multipart);
-		    
-		    msg.setHeader("X-Mailer", "msgsend");
-		    log.info("Sending email from: " + sender);
-		    Transport.send(msg);
-		    
+			StringBuffer identString = new StringBuffer();
+			int count = 0;
+			if(idents != null) {
+				for(String ident : idents) {
+					if(count++ > 0) {
+						identString.append(" or ");
+					} 
+					identString.append(ident);
+				}
+			}
+
+
+			StringBuffer txtMessage = new StringBuffer("");
+			if(content != null && content.trim().length() > 0) {
+				txtMessage.append(content);			// User has specified email content
+				txtMessage.append("\n\n");
+
+				// Add a link to the report if docURL is not null
+				if(docURL != null) {
+					txtMessage.append(scheme + "://");
+					txtMessage.append(serverName);
+					txtMessage.append(docURL);
+				}
+			} else if(type.equals("reset")) {
+				txtMessage.append(localisation.getString("c_goto"));
+				txtMessage.append(" " + scheme + "://");
+				txtMessage.append(serverName);
+				txtMessage.append("/resetPassword.html?token=");
+				txtMessage.append(uuid);
+				txtMessage.append(" ");
+				txtMessage.append(localisation.getString("email_rp"));
+				txtMessage.append("\n\n");
+				txtMessage.append(localisation.getString("email_un"));
+				txtMessage.append(": ");
+				txtMessage.append(identString.toString());
+				txtMessage.append("\n\n ");
+				txtMessage.append(localisation.getString("email_vf"));
+				txtMessage.append(" ");
+				txtMessage.append(interval);
+				txtMessage.append("\n ");
+				txtMessage.append(localisation.getString("email_dnr"));
+				txtMessage.append(" ");
+				txtMessage.append(adminEmail);
+				txtMessage.append(".");
+
+			} else if(type.equals("newuser")) {
+
+				txtMessage.append(adminName).append(" ");
+				txtMessage.append(localisation.getString("email_hga1")).append(" ");
+				if(serverDescription == null) {
+					txtMessage.append(localisation.getString("email_hga2")).append(" ");
+				} else {
+					txtMessage.append(serverDescription).append(" ");
+				}
+				txtMessage.append(localisation.getString("email_hga3")).append(" ");
+				txtMessage.append(scheme).append("://");
+				txtMessage.append(serverName);
+				txtMessage.append("\n");
+				txtMessage.append(localisation.getString("email_sp"));
+				txtMessage.append(" " + scheme + "://");
+				txtMessage.append(serverName);
+				txtMessage.append("/resetPassword.html?token=");
+				txtMessage.append(uuid);
+				txtMessage.append("\n\n");
+				txtMessage.append(localisation.getString("email_un"));
+				txtMessage.append(": ");
+				txtMessage.append(identString.toString());
+				txtMessage.append("\n\n");
+				txtMessage.append(localisation.getString("email_vf"));
+				txtMessage.append(" ");
+				txtMessage.append(interval);
+				txtMessage.append("\n");
+				txtMessage.append(localisation.getString("email_dnr"));
+				txtMessage.append(" ");
+				txtMessage.append(adminEmail);
+				txtMessage.append(".");	
+
+			} else if(type.equals("notify")) {
+				txtMessage.append(localisation.getString("email_ian"));
+				txtMessage.append(" " + scheme + "://");
+				txtMessage.append(serverName);
+				txtMessage.append(". ");
+
+				txtMessage.append(localisation.getString("email_dnr"));
+				txtMessage.append(" ");
+				txtMessage.append(adminEmail);
+				txtMessage.append(".");	
+				txtMessage.append("\n\n");
+				if(docURL != null) {
+					txtMessage.append(scheme + "://");
+					txtMessage.append(serverName);
+					txtMessage.append(docURL);
+				}
+
+			} else if(type.equals("subscribe")) {
+				txtMessage.append(localisation.getString("c_goto"));
+				txtMessage.append(" " + scheme + "://");
+				txtMessage.append(serverName);
+				txtMessage.append("/subscriptions.html?subscribe=yes&token=");
+				txtMessage.append(uuid);
+				txtMessage.append(" ");
+				txtMessage.append(localisation.getString("email_s"));
+				txtMessage.append("\n\n");
+				txtMessage.append(localisation.getString("email_dnr"));
+				txtMessage.append(" ");
+				txtMessage.append(adminEmail);
+				txtMessage.append(".");
+
+			} else if(type.equals("informational")) {
+				
+				txtMessage.append(content);
+				txtMessage.append("\n\n");
+				txtMessage.append(localisation.getString("email_dnr"));
+				txtMessage.append(" ");
+				txtMessage.append(adminEmail);
+				txtMessage.append(".");
+
+			}
+			// Add unsubscribe
+			if(emailKey != null) {
+				
+				txtMessage.append("\n\n\n\n");
+				txtMessage.append(localisation.getString("c_unsubscribe"));
+				txtMessage.append(": ");
+				txtMessage.append(scheme + "://");
+				txtMessage.append(serverName);
+				txtMessage.append("/subscriptions.html?token=");
+				txtMessage.append(emailKey);
+			}
+
+			BodyPart messageBodyPart = new MimeBodyPart();
+			messageBodyPart.setText(txtMessage.toString());
+			Multipart multipart = new MimeMultipart();
+			multipart.addBodyPart(messageBodyPart);
+
+			// Add file attachments if they exist
+			if(filePath != null) {			 
+				messageBodyPart = new MimeBodyPart();
+				DataSource source = new FileDataSource(filePath);
+				messageBodyPart.setDataHandler(new DataHandler(source));
+				messageBodyPart.setFileName(filename);
+				multipart.addBodyPart(messageBodyPart);
+			}
+
+			msg.setContent(multipart);
+
+			msg.setHeader("X-Mailer", "msgsend");
+			log.info("Sending email from: " + sender);
+			Transport.send(msg);
+
 		} catch(MessagingException me) {
-			log.log(Level.SEVERE, "Messaging Exception");
+			log.log(Level.SEVERE, "Messaging Exception", me);
 			throw new Exception(localisation.getString("email_cs") + "  " + me.getMessage());
 		}
-		
-		
+
+
 	}
 }
 

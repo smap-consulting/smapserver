@@ -36,6 +36,7 @@ public class ChangeElement {
 		
 		source = ci.source;
 		fileName = ci.fileName;
+		origSId = ci.origSId;
 		if(ci.property != null) {
 			property = new PropertyChangeElement(ci.property);
 		}
@@ -60,6 +61,7 @@ public class ChangeElement {
 	// Miscelaneous data
 	public String fileName;			// External file name used to load changes to choices
 	public String msg;
+	public int origSId;
 	
 	// Properties for logging
 	//public int cId;					// The database key for this change (only used when reading a change item from the log)

@@ -8,6 +8,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.math.BigInteger;
+import java.net.URL;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.sql.Connection;
@@ -17,11 +18,15 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
+import java.time.Instant;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.GregorianCalendar;
 import java.util.HashMap;
-import java.util.List;
+import java.util.Locale;
 import java.util.ResourceBundle;
+import java.util.TimeZone;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -33,46 +38,73 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
+import org.smap.sdal.constants.SmapQuestionTypes;
+import org.smap.sdal.constants.SmapServerMeta;
+import org.smap.sdal.managers.CsvTableManager;
 import org.smap.sdal.managers.LogManager;
+import org.smap.sdal.managers.OrganisationManager;
 import org.smap.sdal.managers.RoleManager;
-import org.smap.sdal.managers.SurveyManager;
+import org.smap.sdal.managers.SurveyTableManager;
+import org.smap.sdal.managers.UserManager;
+import org.smap.sdal.model.AssignmentDetails;
+import org.smap.sdal.model.AuditData;
+import org.smap.sdal.model.AuditItem;
 import org.smap.sdal.model.AutoUpdate;
-import org.smap.sdal.model.ChangeItem;
 import org.smap.sdal.model.ChoiceList;
+import org.smap.sdal.model.ColDesc;
+import org.smap.sdal.model.ColValues;
 import org.smap.sdal.model.FileDescription;
 import org.smap.sdal.model.Form;
+import org.smap.sdal.model.FormLength;
+import org.smap.sdal.model.GeoPoint;
 import org.smap.sdal.model.KeyValue;
 import org.smap.sdal.model.KeyValueSimp;
 import org.smap.sdal.model.Language;
+import org.smap.sdal.model.LanguageItem;
+import org.smap.sdal.model.Line;
 import org.smap.sdal.model.LinkedTarget;
 import org.smap.sdal.model.ManifestInfo;
+import org.smap.sdal.model.MetaItem;
+import org.smap.sdal.model.MySensitiveData;
 import org.smap.sdal.model.Option;
+import org.smap.sdal.model.Organisation;
+import org.smap.sdal.model.Point;
+import org.smap.sdal.model.Polygon;
+import org.smap.sdal.model.Project;
+import org.smap.sdal.model.Question;
+import org.smap.sdal.model.Role;
 import org.smap.sdal.model.RoleColumnFilter;
 import org.smap.sdal.model.SqlFrag;
 import org.smap.sdal.model.SqlFragParam;
+import org.smap.sdal.model.SqlParam;
 import org.smap.sdal.model.Survey;
 import org.smap.sdal.model.SurveyLinkDetails;
 import org.smap.sdal.model.TableColumn;
+import org.smap.sdal.model.TableUpdateStatus;
+import org.smap.sdal.model.TaskFeature;
+import org.smap.sdal.model.User;
+import org.smap.sdal.model.UserGroup;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
-import com.sun.org.apache.bcel.internal.generic.LMUL;
 
 public class GeneralUtilityMethods {
 
 	private static Logger log = Logger.getLogger(GeneralUtilityMethods.class.getName());
-	
+
 	private static LogManager lm = new LogManager();		// Application log
 
-	private static int LENGTH_QUESTION_NAME = 45; // 63 max size of postgresql column names. Allow 10 chars for options
-													// + 2 chars for option separator
-	private static int LENGTH_QUESTION_RAND = 3;
-	private static int LENGTH_OPTION_NAME = 16;
-	private static int LENGTH_OPTION_RAND = 3;
+	private static int LENGTH_QUESTION_NAME = 57; // 63 max size of postgresql column names.
+	private static int LENGTH_QUESTION_RAND = 5;
+
 
 	private static String[] smapMeta = new String[] { "_hrk", "instanceid", "_instanceid", "_start", "_end", "_device",
-			"prikey", "parkey", "_bad", "_bad_reason", "_user", "_survey_notes", "_upload_time", "_s_id", "_version",
+			"prikey", "parkey", "_bad", "_bad_reason", "_user", "_survey_notes", 
+			SmapServerMeta.UPLOAD_TIME_NAME,
+			SmapServerMeta.SCHEDULED_START_NAME,
+			SmapServerMeta.SURVEY_ID_NAME, 
+			"_version",
 			"_complete", "_location_trigger", "_modified", "_task_key", "_task_replace" };
 
 	private static String[] reservedSQL = new String[] { "all", "analyse", "analyze", "and", "any", "array", "as",
@@ -85,6 +117,8 @@ public class GeneralUtilityMethods {
 			"only", "or", "order", "outer", "overlaps", "placing", "primary", "references", "right", "select",
 			"session_user", "similar", "some", "symmetric", "table", "then", "to", "trailing", "true", "union",
 			"unique", "user", "using", "verbose", "when", "where" };
+	
+	 private static final String UTF8_BOM = "\uFEFF";
 
 	/*
 	 * Remove any characters from the name that will prevent it being used as a
@@ -99,7 +133,7 @@ public class GeneralUtilityMethods {
 
 			out = out.replace(" ", ""); // Remove spaces
 			out = out.replaceAll("[\\.\\[\\\\^\\$\\|\\?\\*\\+\\(\\)\\]\"\';,:!@#&%/{}<>-]", "x"); // Remove special
-																									// characters ;
+			// characters ;
 
 			/*
 			 * Rename fields that are the same as postgres / sql reserved words
@@ -127,17 +161,45 @@ public class GeneralUtilityMethods {
 
 			// If the name exceeds the max length then truncate to max size and add random
 			// characters to the end of the name
-			int maxlength = isQuestion ? (LENGTH_QUESTION_NAME - LENGTH_QUESTION_RAND)
-					: (LENGTH_OPTION_NAME - LENGTH_OPTION_RAND);
-			int randLength = isQuestion ? LENGTH_QUESTION_RAND : LENGTH_OPTION_RAND;
+			if(isQuestion) {
+				int maxlength = LENGTH_QUESTION_NAME - LENGTH_QUESTION_RAND;
+				if (out.length() >= maxlength) {
+					out = out.substring(0, maxlength);
+	
+					String rand = String.valueOf(UUID.randomUUID());
+					rand = rand.substring(0, LENGTH_QUESTION_RAND);
+	
+					out += rand;
+				}
+			}
+		}
 
-			if (out.length() >= maxlength) {
-				out = out.substring(0, maxlength);
+		return out;
+	}
+	
+	/*
+	 * Remove any characters from the name that will prevent it being used as a
+	 * database column name
+	 */
+	static public String cleanNameNoRand(String in) {
 
-				String rand = String.valueOf(UUID.randomUUID());
-				rand = rand.substring(0, randLength);
+		String out = null;
 
-				out += rand;
+		if (in != null) {
+			out = in.trim().toLowerCase();
+
+			out = out.replace(" ", ""); // Remove spaces
+			out = out.replaceAll("[\\.\\[\\\\^\\$\\|\\?\\*\\+\\(\\)\\]\"\';,:!@#&%/{}<>-]", "x"); // Remove special
+			// characters ;
+
+			/*
+			 * Rename fields that are the same as postgres / sql reserved words
+			 */
+			for (int i = 0; i < reservedSQL.length; i++) {
+				if (out.equals(reservedSQL[i])) {
+					out = "__" + out;
+					break;
+				}
 			}
 		}
 
@@ -206,15 +268,12 @@ public class GeneralUtilityMethods {
 	static public boolean isBusinessServer(String host) {
 
 		boolean businessServer = true;
-
-		if (!host.endsWith("zarkman.com") && !host.equals("localhost") && !host.startsWith("10.0")
-				&& !host.endsWith("reachnettechnologies.com") && !host.endsWith("blueoakenergy.com")
-				&& !host.endsWith(".icanreach.com") && !host.endsWith("encontactone.com")
-				&& !host.endsWith(".kontrolid.com") && !host.endsWith(".ezpilot.me")
-				&& !host.endsWith(".smap.com.au")) {
+		if(host.endsWith("smap.com.au") 
+				&& !host.equals("sg.smap.com.au")
+				&& !host.equals("dev.smap.com.au")) {
 			businessServer = false;
-			;
 		}
+		
 		return businessServer;
 	}
 
@@ -224,8 +283,11 @@ public class GeneralUtilityMethods {
 	static public void assertSelfRegistrationServer(String host) {
 		log.info("Self registration check: " + host);
 
-		if (!host.equals("sg.smap.com.au") && !host.equals("localhost") && !host.endsWith("reachnettechnologies.com")
-				&& !host.endsWith("datacollect.icanreach.com") && !host.endsWith("encontactone.com")
+		if (!host.equals("sg.smap.com.au") 
+				&& !host.equals("localhost") 
+				&& !host.endsWith("reachnettechnologies.com")
+				&& !host.endsWith("datacollect.icanreach.com") 
+				&& !host.endsWith("encontactone.com")
 				&& !host.equals("app.kontrolid.com")) {
 
 			log.info("Self registration check failed: " + host);
@@ -340,7 +402,7 @@ public class GeneralUtilityMethods {
 	static public File getPdfTemplate(String basePath, String displayName, int pId) {
 
 		String templateName = basePath + "/templates/" + pId + "/" + convertDisplayNameToFileName(displayName)
-				+ "_template.pdf";
+		+ "_template.pdf";
 
 		log.info("Attempt to get a pdf template with name: " + templateName);
 		File templateFile = new File(templateName);
@@ -379,7 +441,7 @@ public class GeneralUtilityMethods {
 	/*
 	 * Add an attachment to a survey
 	 */
-	static public String createAttachments(String srcName, File srcPathFile, String basePath, String surveyName) {
+	static public String createAttachments(String srcName, File srcPathFile, String basePath, String surveyName, String srcUrl) {
 
 		log.info("Create attachments");
 
@@ -403,11 +465,17 @@ public class GeneralUtilityMethods {
 		String contentType = org.smap.sdal.Utilities.UtilityMethodsEmail.getContentType(srcName);
 
 		try {
-			log.info("Processing attachment: " + srcPathFile.getAbsolutePath() + " as " + dstPathFile);
+			
 			FileUtils.forceMkdir(dstDirFile);
 			FileUtils.forceMkdir(dstThumbsFile);
 			FileUtils.forceMkdir(dstFlvFile);
-			FileUtils.copyFile(srcPathFile, dstPathFile);
+			if(srcPathFile != null) {
+				log.info("Processing attachment: " + srcPathFile.getAbsolutePath() + " as " + dstPathFile);
+				FileUtils.copyFile(srcPathFile, dstPathFile);
+			} else if(srcUrl != null) {
+				log.info("Processing attachment: " + srcUrl + " as " + dstPathFile);
+				FileUtils.copyURLToFile(new URL(srcUrl), dstPathFile);
+			}
 			processAttachment(dstName, dstDir, contentType, srcExt);
 
 		} catch (IOException e) {
@@ -447,11 +515,85 @@ public class GeneralUtilityMethods {
 	/*
 	 * Return the users language
 	 */
-	static public String getUserLanguage(Connection sd, String user) throws SQLException {
+	static public String getUserLanguage(Connection sd, HttpServletRequest request, String user) throws SQLException {
 
 		String language = null;
 
 		String sql = "select language " + "from users u " + "where u.ident = ?";
+
+		PreparedStatement pstmt = null;
+
+		if(user != null) {
+			try {
+	
+				pstmt = sd.prepareStatement(sql);
+				pstmt.setString(1, user);
+				ResultSet rs = pstmt.executeQuery();
+				if (rs.next()) {
+					language = rs.getString(1);
+				}
+	
+			} catch (SQLException e) {
+				log.log(Level.SEVERE, "Error", e);
+				throw e;
+			} finally {
+				try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+			}
+		}
+
+		if (language == null || language.trim().length() == 0) {
+			Locale locale = request.getLocale();
+			if(locale == null) {
+				language = "en"; // Default to English
+			} else {
+				language = locale.getLanguage();
+			}
+		}
+		return language;
+	}
+
+	/*
+	 * Return true if the user has the specified role
+	 */
+	static public boolean hasSecurityRole(Connection sd, String user, int rId) throws SQLException {
+		boolean value = false;
+
+		String sql = "select count(*) " 
+				+ "from users u, user_role ur " 
+				+ "where u.ident = ? "
+				+ "and u.id = ur.u_id " 
+				+ "and ur.r_id = ?";
+
+		PreparedStatement pstmt = null;
+
+		try {
+
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setString(1, user);
+			pstmt.setInt(2, rId);
+			ResultSet rs = pstmt.executeQuery();
+			if (rs.next()) {
+				value = (rs.getInt(1) > 0);
+			}
+
+		} finally {
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+		}
+
+		return value;
+	}
+	
+	/*
+	 * Return true if the user has the security group
+	 */
+	static public boolean hasSecurityRole(Connection sd, String user) throws SQLException {
+		boolean securityRole = false;
+
+		String sql = "select count(*) " 
+				+ "from users u, user_group ug " 
+				+ "where u.ident = ? "
+				+ "and u.id = ug.u_id " 
+				+ "and ug.g_id = 6";
 
 		PreparedStatement pstmt = null;
 
@@ -461,71 +603,28 @@ public class GeneralUtilityMethods {
 			pstmt.setString(1, user);
 			ResultSet rs = pstmt.executeQuery();
 			if (rs.next()) {
-				language = rs.getString(1);
-			}
-
-		} catch (SQLException e) {
-			log.log(Level.SEVERE, "Error", e);
-			throw e;
-		} finally {
-			try {
-				if (pstmt != null) {
-					pstmt.close();
-				}
-			} catch (SQLException e) {
-			}
-		}
-
-		if (language == null || language.trim().length() == 0) {
-			language = "en"; // Default to english
-		}
-		return language;
-	}
-
-	/*
-	 * Return true if the user has the security role
-	 */
-	static public boolean hasSecurityRole(Connection sd, String user) throws SQLException {
-		boolean securityRole = false;
-
-		String sqlGetOrgId = "select count(*) " + "from users u, user_group ug " + "where u.ident = ? "
-				+ "and u.id = ug.u_id " + "and ug.g_id = 6";
-
-		PreparedStatement pstmt = null;
-
-		try {
-
-			pstmt = sd.prepareStatement(sqlGetOrgId);
-			pstmt.setString(1, user);
-			ResultSet rs = pstmt.executeQuery();
-			if (rs.next()) {
 				securityRole = (rs.getInt(1) > 0);
 			}
 
-		} catch (SQLException e) {
-			log.log(Level.SEVERE, "Error", e);
-			throw e;
 		} finally {
-			try {
-				if (pstmt != null) {
-					pstmt.close();
-				}
-			} catch (SQLException e) {
-			}
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 		}
 
 		return securityRole;
 	}
 
 	/*
-	 * Return true if the user has the organisational administrator role
+	 * Return true if the user has the enterprise administrator group
 	 */
-	static public boolean isOrgUser(Connection con, String ident) {
+	static public boolean isEntUser(Connection con, String ident) throws SQLException {
 
-		String sql = "SELECT count(*) " + " FROM users u, user_group ug " + " WHERE u.id = ug.u_id "
-				+ " AND ug.g_id = 4 " + " AND u.ident = ?; ";
+		String sql = "select count(*) " 
+				+ "from users u, user_group ug " 
+				+ "where u.id = ug.u_id "
+				+ "and ug.g_id = " + Authorise.ENTERPRISE_ID + " "
+				+ "and u.ident = ? ";
 
-		boolean isOrg = false;
+		boolean isEnt = false;
 		PreparedStatement pstmt = null;
 		try {
 			pstmt = con.prepareStatement(sql);
@@ -533,21 +632,110 @@ public class GeneralUtilityMethods {
 			ResultSet resultSet = pstmt.executeQuery();
 
 			if (resultSet.next()) {
+				isEnt = (resultSet.getInt(1) > 0);
+			}
+		} finally {
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+		}
+
+		return isEnt;
+	}
+	
+	/*
+	 * Return true if the user has the organisational administrator role
+	 */
+	static public boolean isOrgUser(Connection sd, String ident) throws SQLException {
+
+		String sql = "select count(*) " 
+				+ "from users u, user_group ug " 
+				+ "where u.id = ug.u_id "
+				+ "and ug.g_id = " + Authorise.ORG_ID + " "
+				+ "and u.ident = ? ";
+
+		boolean isOrg = false;
+		PreparedStatement pstmt = null;
+		try {
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setString(1, ident);
+			ResultSet resultSet = pstmt.executeQuery();
+
+			if (resultSet.next()) {
 				isOrg = (resultSet.getInt(1) > 0);
+			}
+		} finally {
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+		}
+
+		return isOrg;
+	}
+	
+	/*
+	 * Return true if the user identified by their id has the organisational administrator role
+	 * Also check in the archive as they may not be logged in to this organisation
+	 */
+	static public boolean isOrgUserById(Connection sd, int id, int o_id) throws SQLException {
+
+		String sql = "select count(*) " 
+				+ "from users u, user_group ug " 
+				+ "where u.id = ug.u_id "
+				+ "and ug.g_id = " + Authorise.ORG_ID + " "
+				+ "and u.id = ?"
+				+ "and u.o_id =?";
+
+		boolean isOrg = false;
+		PreparedStatement pstmt = null;
+		try {
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setInt(1, id);
+			pstmt.setInt(2, o_id);
+			ResultSet resultSet = pstmt.executeQuery();
+
+			if (resultSet.next()) {
+				isOrg = (resultSet.getInt(1) > 0);
+			} else {
+				// User is presumably in a different organisation at the moment
+				User u = getArchivedUser(sd, o_id, id);
+				for(UserGroup ug : u.groups) {
+					if(ug.id == Authorise.ORG_ID) {
+						isOrg = true;
+						break;
+					}
+				}
+			}
+		} finally {
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+		}
+
+		return isOrg;
+	}
+	
+	/*
+	 * Return true if the user is an administrator
+	 */
+	static public boolean isAdminUser(Connection con, String ident) {
+
+		String sql = "select count(*) " 
+				+ "from users u, user_group ug " 
+				+ "where u.id = ug.u_id "
+				+ "and ug.g_id = 1 " 
+				+ "and u.ident = ? ";
+
+		boolean isAdmin = false;
+		PreparedStatement pstmt = null;
+		try {
+			pstmt = con.prepareStatement(sql);
+			pstmt.setString(1, ident);
+			ResultSet resultSet = pstmt.executeQuery();
+
+			if (resultSet.next()) {
+				isAdmin = (resultSet.getInt(1) > 0);
 			}
 		} catch (Exception e) {
 			log.log(Level.SEVERE, "Error", e);
 		} finally {
-			try {
-				if (pstmt != null) {
-					pstmt.close();
-				}
-			} catch (SQLException e) {
-			}
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 		}
-
-		return isOrg;
-
+		return isAdmin;
 	}
 
 	/*
@@ -556,8 +744,11 @@ public class GeneralUtilityMethods {
 	static public boolean isSuperUser(Connection sd, String user) throws SQLException {
 		boolean superUser = false;
 
-		String sqlGetOrgId = "select count(*) " + "from users u, user_group ug " + "where u.ident = ? "
-				+ "and u.id = ug.u_id " + "and (ug.g_id = 6 or ug.g_id = 4)";
+		String sqlGetOrgId = "select count(*) " 
+				+ "from users u, user_group ug " 
+				+ "where u.ident = ? "
+				+ "and u.id = ug.u_id " 
+				+ "and (ug.g_id = 6 or ug.g_id = 4)";
 
 		PreparedStatement pstmt = null;
 
@@ -570,76 +761,237 @@ public class GeneralUtilityMethods {
 				superUser = (rs.getInt(1) > 0);
 			}
 
-		} catch (SQLException e) {
-			log.log(Level.SEVERE, "Error", e);
-			throw e;
 		} finally {
-			try {
-				if (pstmt != null) {
-					pstmt.close();
-				}
-			} catch (SQLException e) {
-			}
+			try {if (pstmt != null) {pstmt.close();}} catch (Exception e) {}
 		}
 
 		return superUser;
 	}
-
+	
 	/*
-	 * Get the organisation id for the user If there is no organisation for that
-	 * user then use the survey id, this is used when getting the organisation for a
-	 * subscriber log
+	 * Return true if the user has view data but not admin and not analysis
 	 */
-	static public int getOrganisationId(Connection sd, String user, int sId) throws SQLException {
+	static public boolean isOnlyViewData(Connection sd, String user) throws SQLException {
+		boolean onlyView = false;
 
-		int o_id = -1;
+		String sqlGetAccessIds = "select ug.g_id " 
+				+ "from users u, user_group ug " 
+				+ "where u.ident = ? "
+				+ "and u.id = ug.u_id " 
+				+ "and (ug.g_id = " + Authorise.VIEW_DATA_ID 
+				+ " or ug.g_id = " + Authorise.ADMIN_ID 
+				+ " or ug.g_id = " + Authorise.ANALYST_ID 
+				+ " or ug.g_id = " + Authorise.ORG_ID
+				+ ")";
 
-		String sql1 = "select o_id " + " from users u " + " where u.ident = ?;";
-		PreparedStatement pstmt1 = null;
-
-		String sql2 = "select p.o_id " + "from survey s, project p " + "where s.p_id = p.id " + "and s.s_id = ?";
-		PreparedStatement pstmt2 = null;
+		PreparedStatement pstmt = null;
 
 		try {
 
-			pstmt1 = sd.prepareStatement(sql1);
-			pstmt1.setString(1, user);
+			pstmt = sd.prepareStatement(sqlGetAccessIds);
+			pstmt.setString(1, user);
+			ResultSet rs = pstmt.executeQuery();
+			while (rs.next()) {
+				int gId = rs.getInt(1);
+				if(gId == Authorise.VIEW_DATA_ID) {
+					onlyView = true;
+				} else {
+					onlyView = false;
+					break;
+				}
+			}
 
-			ResultSet rs = pstmt1.executeQuery();
+		} finally {
+			try {if (pstmt != null) {pstmt.close();}} catch (Exception e) {}
+		}
+
+		return onlyView;
+	}
+
+	/*
+	 * Get the current enterprise id for the user 
+	 */
+	static public int getEnterpriseId(Connection sd, String user) throws SQLException {
+
+		int e_id = -1;
+
+		String sql = "select o.e_id " 
+				+ "from users u, organisation o " 
+				+ "where u.ident = ? "
+				+ "and u.o_id = o.id";
+		PreparedStatement pstmt = null;
+
+		try {
+
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setString(1, user);
+
+			ResultSet rs = pstmt.executeQuery();
+			if (rs.next()) {
+				e_id = rs.getInt(1);
+			} 
+
+		} finally {
+			try {if (pstmt != null) {pstmt.close();}} catch (Exception e) {	}
+		}
+
+		return e_id;
+	}
+
+	/*
+	 * Return true if the api is enabled for the users organisation
+	 */
+	static public boolean isApiEnabled(Connection sd, String user) throws SQLException {
+		boolean enabled = false;
+		
+		String sql = "Select o.can_use_api "
+				+ "from users u, organisation o "
+				+ "where u.o_id = o.id "
+				+ "and u.ident = ?";
+		PreparedStatement pstmt = null;
+
+		try {
+
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setString(1, user);
+
+			ResultSet rs = pstmt.executeQuery();
+			if (rs.next()) {
+				enabled = rs.getBoolean(1);
+			} 
+
+		} finally {
+			try {if (pstmt != null) {pstmt.close();}} catch (Exception e) {	}
+		}
+
+		return enabled;
+	}
+	
+	/*
+	 * Get the organisation object for this organisation id
+	 */
+	static public Organisation getOrganisation(Connection sd, int oId) throws SQLException {
+
+		Organisation org = null;
+
+		/*
+		 * Get the organisation
+		 */
+		String sql = "select id, "
+				+ "name, "
+				+ "company_name, "
+				+ "company_address, "
+				+ "company_phone, "
+				+ "company_email, "
+				+ "can_edit, "
+				+ "can_notify, "
+				+ "can_use_api, "
+				+ "can_submit, "
+				+ "can_sms, "
+				+ "set_as_theme, "
+				+ "navbar_color, "
+				+ "email_task, "
+				+ "changed_by, "
+				+ "changed_ts," 
+				+ "admin_email, "
+				+ "smtp_host, "
+				+ "email_domain, "
+				+ "email_user, "
+				+ "email_password, "
+				+ "email_port, "
+				+ "default_email_content, "
+				+ "website, "
+				+ "locale,"
+				+ "timezone,"
+				+ "server_description,"
+				+ "e_id "
+				+ "from organisation "
+				+ "where organisation.id = ? "
+				+ "order by name asc;";			
+		
+		PreparedStatement pstmt = null;
+		
+		try {
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setInt(1, oId);
+
+			ResultSet resultSet = pstmt.executeQuery();
+			
+			if(resultSet.next()) {
+				org = new Organisation();
+				org.id = resultSet.getInt("id");
+				org.name = resultSet.getString("name");
+				org.company_name = resultSet.getString("company_name");
+				org.company_address = resultSet.getString("company_address");
+				org.company_phone = resultSet.getString("company_phone");
+				org.company_email = resultSet.getString("company_email");
+				org.can_edit = resultSet.getBoolean("can_edit");
+				org.can_notify = resultSet.getBoolean("can_notify");
+				org.can_use_api = resultSet.getBoolean("can_use_api");
+				org.can_submit = resultSet.getBoolean("can_submit");
+				org.can_sms = resultSet.getBoolean("can_sms");
+				org.appearance.set_as_theme = resultSet.getBoolean("set_as_theme");
+				org.appearance.navbar_color = resultSet.getString("navbar_color");
+				org.email_task = resultSet.getBoolean("email_task");
+				org.changed_by = resultSet.getString("changed_by");
+				org.changed_ts = resultSet.getString("changed_ts");
+				org.admin_email = resultSet.getString("admin_email");
+				org.smtp_host = resultSet.getString("smtp_host");
+				org.email_domain = resultSet.getString("email_domain");
+				org.email_user = resultSet.getString("email_user");
+				org.email_password = resultSet.getString("email_password");
+				org.email_port = resultSet.getInt("email_port");
+				org.default_email_content = resultSet.getString("default_email_content");
+				org.website = resultSet.getString("website");
+				org.locale = resultSet.getString("locale");
+				if(org.locale == null) {
+					org.locale = "en";	// Default english
+				}
+				org.timeZone = resultSet.getString("timeZone");
+				if(org.timeZone == null) {
+					org.timeZone = "UTC";
+				}
+				org.server_description = resultSet.getString("server_description");
+			}
+
+	
+
+		} finally {
+			try {if (pstmt != null) {pstmt.close();}} catch (Exception e) {	}
+		}
+
+		return org;
+	}
+	
+	/*
+	 * Get the current organisation id for the user 
+	 */
+	static public int getOrganisationId(Connection sd, String user) throws SQLException {
+
+		int o_id = -1;
+
+		String sql1 = "select o_id " 
+				+ " from users u " 
+				+ " where u.ident = ?;";
+		PreparedStatement pstmt = null;
+
+		try {
+
+			pstmt = sd.prepareStatement(sql1);
+			pstmt.setString(1, user);
+
+			ResultSet rs = pstmt.executeQuery();
 			if (rs.next()) {
 				o_id = rs.getInt(1);
-			} else if (sId > 0) {
-				pstmt2 = sd.prepareStatement(sql2);
-				pstmt2.setInt(1, sId);
+			} 
 
-				ResultSet rs2 = pstmt2.executeQuery();
-
-				if (rs2.next()) {
-					o_id = rs2.getInt(1);
-				}
-			}
-
-		} catch (SQLException e) {
-			log.log(Level.SEVERE, "Error", e);
-			throw e;
 		} finally {
-			try {
-				if (pstmt1 != null) {
-					pstmt1.close();
-				}
-			} catch (SQLException e) {
-			}
-			try {
-				if (pstmt2 != null) {
-					pstmt2.close();
-				}
-			} catch (SQLException e) {
-			}
+			try {if (pstmt != null) {pstmt.close();}} catch (Exception e) {	}
 		}
 
 		return o_id;
 	}
-
+	
 	/*
 	 * Get the organisation id for the survey
 	 */
@@ -647,7 +999,10 @@ public class GeneralUtilityMethods {
 
 		int o_id = -1;
 
-		String sql = "select p.o_id " + " from survey s, project p " + "where s.p_id = p.id " + "and s.s_id = ?";
+		String sql = "select p.o_id " + 
+				" from survey s, project p " + 
+				"where s.p_id = p.id " + 
+				"and s.s_id = ?";
 
 		PreparedStatement pstmt = null;
 
@@ -660,16 +1015,38 @@ public class GeneralUtilityMethods {
 				o_id = rs.getInt(1);
 			}
 
-		} catch (SQLException e) {
-			log.log(Level.SEVERE, "Error", e);
-			throw e;
 		} finally {
-			try {
-				if (pstmt != null) {
-					pstmt.close();
-				}
-			} catch (SQLException e) {
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+		}
+
+		return o_id;
+	}
+	
+	/*
+	 * Get the organisation id for the survey ident
+	 */
+	static public int getOrganisationIdForSurveyIdent(Connection sd, String ident) throws SQLException {
+
+		int o_id = -1;
+
+		String sql = "select p.o_id " + 
+				" from survey s, project p " + 
+				"where s.p_id = p.id " + 
+				"and s.ident = ?";
+
+		PreparedStatement pstmt = null;
+
+		try {
+
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setString(1, ident);
+			ResultSet rs = pstmt.executeQuery();
+			if (rs.next()) {
+				o_id = rs.getInt(1);
 			}
+
+		} finally {
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 		}
 
 		return o_id;
@@ -682,7 +1059,9 @@ public class GeneralUtilityMethods {
 
 		int o_id = -1;
 
-		String sql = "select p.o_id " + " from project p " + "where p.id = ?";
+		String sql = "select p.o_id " 
+				+ " from project p " 
+				+ "where p.id = ?";
 
 		PreparedStatement pstmt = null;
 
@@ -695,16 +1074,9 @@ public class GeneralUtilityMethods {
 				o_id = rs.getInt(1);
 			}
 
-		} catch (SQLException e) {
-			log.log(Level.SEVERE, "Error", e);
-			throw e;
 		} finally {
 			try {
-				if (pstmt != null) {
-					pstmt.close();
-				}
-			} catch (SQLException e) {
-			}
+				if (pstmt != null) {	pstmt.close();}} catch (SQLException e) {}
 		}
 
 		return o_id;
@@ -717,8 +1089,11 @@ public class GeneralUtilityMethods {
 
 		int o_id = -1;
 
-		String sql = "select p.o_id " + " from tasks t, task_group tg, project p " + "where tg.p_id = p.id "
-				+ "and t.tg_id = tg.tg_id " + "and t.id = ?";
+		String sql = "select p.o_id " 
+				+ " from tasks t, task_group tg, project p " 
+				+ "where tg.p_id = p.id "
+				+ "and t.tg_id = tg.tg_id " 
+				+ "and t.id = ?";
 
 		PreparedStatement pstmt = null;
 
@@ -731,27 +1106,202 @@ public class GeneralUtilityMethods {
 				o_id = rs.getInt(1);
 			}
 
-		} catch (SQLException e) {
-			log.log(Level.SEVERE, "Error", e);
-			throw e;
 		} finally {
-			try {
-				if (pstmt != null) {
-					pstmt.close();
-				}
-			} catch (SQLException e) {
-			}
+			try {if (pstmt != null) {pstmt.close();}	} catch (Exception e) {}
 		}
 
 		return o_id;
 	}
+	
+	/*
+	 * Get the organisation id for the notification
+	 */
+	static public int getOrganisationIdForNotification(Connection sd, int id) throws SQLException {
 
+		int o_id = -1;
+
+		String sql = "select p.o_id "
+				+ "from survey s, project p, forward f "
+				+ "where s.p_id = p.id "
+				+ "and s.s_id = f.s_id "
+				+ "and f.id = ?";
+
+		PreparedStatement pstmt = null;
+
+		try {
+
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setInt(1, id);
+			ResultSet rs = pstmt.executeQuery();
+			if (rs.next()) {
+				o_id = rs.getInt(1);
+			}
+
+		} finally {
+			try {if (pstmt != null) {pstmt.close();}	} catch (Exception e) {}
+		}
+
+		return o_id;
+	}
+	
+	/*
+	 * Get the task group name
+	 */
+	static public String getTaskGroupName(Connection sd, int tgId) throws SQLException {
+
+		String name = null;
+
+		String sql = "select name " 
+				+ " from task_group " 
+				+ "where tg_id = ?";
+
+		PreparedStatement pstmt = null;
+
+		try {
+
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setInt(1, tgId);
+			ResultSet rs = pstmt.executeQuery();
+			if (rs.next()) {
+				name = rs.getString(1);
+			}
+
+		} finally {
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+		}
+
+		return name;
+	}
+	
+	/*
+	 * Get the task id for an assignment
+	 */
+	static public int getTaskId(Connection sd, int aId) throws SQLException {
+
+		int taskId = 0;
+
+		String sql = "select task_id " 
+				+ " from assignments " 
+				+ "where id = ?";
+
+		PreparedStatement pstmt = null;
+
+		try {
+
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setInt(1, aId);
+			ResultSet rs = pstmt.executeQuery();
+			if (rs.next()) {
+				taskId = rs.getInt(1);
+			}
+
+		} finally {
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+		}
+
+		return taskId;
+	}
+	
+	/*
+	 * Get the notification name
+	 */
+	static public String getNotificationName(Connection sd, int id) throws SQLException {
+
+		String name = null;
+
+		String sql = "select name " 
+				+ " from forward " 
+				+ "where id = ?";
+
+		PreparedStatement pstmt = null;
+
+		try {
+
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setInt(1, id);
+			ResultSet rs = pstmt.executeQuery();
+			if (rs.next()) {
+				name = rs.getString(1);
+			}
+
+		} finally {
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+		}
+
+		return name;
+	}
+
+	/*
+	 * Get the assignment status of a temporary user
+	 */
+	static public AssignmentDetails getAssignmentStatusForTempUser(Connection sd, String userIdent) throws SQLException {
+
+		AssignmentDetails a = new AssignmentDetails();
+		String actionLink = "/action/" + userIdent;
+
+		String sql = "select status, completed_date, cancelled_date, deleted_date " 
+				+ " from assignments " 
+				+ "where action_link = ?";
+
+		PreparedStatement pstmt = null;
+
+		try {
+
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setString(1, actionLink);
+			ResultSet rs = pstmt.executeQuery();
+			log.info("Getting assignment status: " + pstmt.toString());
+			if (rs.next()) {
+				a.status = rs.getString(1);
+				a.completed_date = rs.getTimestamp(2);
+				a.cancelled_date = rs.getTimestamp(3);
+				a.deleted_date = rs.getTimestamp(4);
+			}
+
+		} finally {
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+		}
+
+		return a;
+	}
+	
+	/*
+	 * Get the task project name from its id
+	 */
+	static public String getProjectName(Connection sd, int id) throws SQLException {
+
+		String name = null;
+
+		String sql = "select name " 
+				+ " from project " 
+				+ "where id = ?";
+
+		PreparedStatement pstmt = null;
+
+		try {
+
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setInt(1, id);
+			ResultSet rs = pstmt.executeQuery();
+			if (rs.next()) {
+				name = rs.getString(1);
+			}
+
+		} finally {
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+		}
+
+		return name;
+	}
+	
 	/*
 	 * Get the organisation name for the organisation id
 	 */
 	static public String getOrganisationName(Connection sd, int o_id) throws SQLException {
 
-		String sqlGetOrgName = "select o.name, o.company_name " + " from organisation o " + " where o.id = ?;";
+		String sqlGetOrgName = "select o.name, o.company_name "
+				+ " from organisation o " 
+				+ " where o.id = ?;";
 
 		PreparedStatement pstmt = null;
 		String name = null;
@@ -763,24 +1313,47 @@ public class GeneralUtilityMethods {
 			ResultSet rs = pstmt.executeQuery();
 			if (rs.next()) {
 				name = rs.getString(2);
-				if (name == null) {
+				if (name == null || name.trim().length() == 0) {
 					name = rs.getString(1);
 				}
 			}
 
-		} catch (SQLException e) {
-			log.log(Level.SEVERE, "Error", e);
-			throw e;
 		} finally {
-			try {
-				if (pstmt != null) {
-					pstmt.close();
-				}
-			} catch (SQLException e) {
-			}
+			try {if (pstmt != null) {pstmt.close();}} catch (Exception e) {}
 		}
 
 		return name;
+	}
+	
+	/*
+	 * Get the organisation time zone for the organisation id
+	 */
+	static public String getOrganisationTZ(Connection sd, int o_id) throws SQLException {
+
+		String sqlGetOrgName = "select o.timezone "
+				+ " from organisation o " 
+				+ " where o.id = ?;";
+
+		PreparedStatement pstmt = null;
+		String tz = null;
+
+		try {
+
+			pstmt = sd.prepareStatement(sqlGetOrgName);
+			pstmt.setInt(1, o_id);
+			ResultSet rs = pstmt.executeQuery();
+			if (rs.next()) {
+				tz = rs.getString(1);
+				if (tz == null || tz.trim().length() == 0) {
+					tz = "UTC";
+				}
+			}
+
+		} finally {
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+		}
+
+		return tz;
 	}
 
 	/*
@@ -788,34 +1361,85 @@ public class GeneralUtilityMethods {
 	 */
 	static public int getUserId(Connection sd, String user) throws SQLException {
 
-		int u_id = -1;
+		int id = -1;
 
-		String sqlGetUserId = "select id " + " from users u " + " where u.ident = ?;";
+		String sql = "select id " + " from users u " + " where u.ident = ?";
 
 		PreparedStatement pstmt = null;
 
 		try {
 
-			pstmt = sd.prepareStatement(sqlGetUserId);
+			pstmt = sd.prepareStatement(sql);
 			pstmt.setString(1, user);
+			log.info("Get user id: " + pstmt.toString());
 			ResultSet rs = pstmt.executeQuery();
 			if (rs.next()) {
-				u_id = rs.getInt(1);
+				id = rs.getInt(1);
 			}
 
-		} catch (SQLException e) {
-			log.log(Level.SEVERE, "Error", e);
-			throw e;
 		} finally {
-			try {
-				if (pstmt != null) {
-					pstmt.close();
-				}
-			} catch (SQLException e) {
-			}
+			try {if (pstmt != null) {pstmt.close();}	} catch (SQLException e) {}
 		}
 
-		return u_id;
+		return id;
+	}
+	
+	/*
+	 * Get the user id from the user ident
+	 */
+	static public int getUserIdOrgCheck(Connection sd, String user, int oId) throws SQLException {
+
+		int id = -1;
+
+		String sql = "select id " + " from users u " + " where u.ident = ? and u.o_id = ?;";
+
+		PreparedStatement pstmt = null;
+
+		try {
+
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setString(1, user);
+			pstmt.setInt(2, oId);
+			log.info("Get user id: " + pstmt.toString());
+			ResultSet rs = pstmt.executeQuery();
+			if (rs.next()) {
+				id = rs.getInt(1);
+			}
+
+		} finally {
+			try {if (pstmt != null) {pstmt.close();}	} catch (SQLException e) {}
+		}
+
+		return id;
+	}
+
+	/*
+	 * Get the role id from the role name
+	 */
+	static public int getRoleId(Connection sd, String name, int oId) throws SQLException {
+
+		int id = -1;
+
+		String sql = "select id from role where name = ? and o_id = ?";
+
+		PreparedStatement pstmt = null;
+
+		try {
+
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setString(1, name);
+			pstmt.setInt(2, oId);
+			log.info("Get role id: " + pstmt.toString());
+			ResultSet rs = pstmt.executeQuery();
+			if (rs.next()) {
+				id = rs.getInt(1);
+			}
+
+		} finally {
+			try {if (pstmt != null) {pstmt.close();}	} catch (SQLException e) {}
+		}
+
+		return id;
 	}
 
 	/*
@@ -825,7 +1449,9 @@ public class GeneralUtilityMethods {
 
 		String u_ident = null;
 
-		String sql = "select ident " + " from users u " + " where u.id = ?;";
+		String sql = "select ident " 
+				+ " from users u " 
+				+ " where u.id = ?;";
 
 		PreparedStatement pstmt = null;
 
@@ -838,19 +1464,40 @@ public class GeneralUtilityMethods {
 				u_ident = rs.getString(1);
 			}
 
-		} catch (SQLException e) {
-			log.log(Level.SEVERE, "Error", e);
-			throw e;
 		} finally {
-			try {
-				if (pstmt != null) {
-					pstmt.close();
-				}
-			} catch (SQLException e) {
-			}
+			try {if (pstmt != null) {pstmt.close();}} catch (Exception e) {}
 		}
 
 		return u_ident;
+	}
+	
+	/*
+	 * Get the user name from the user id
+	 */
+	static public String getUserName(Connection sd, int id) throws SQLException {
+
+		String name = null;
+
+		String sql = "select name " 
+				+ " from users u " 
+				+ " where u.id = ?;";
+
+		PreparedStatement pstmt = null;
+
+		try {
+
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setInt(1, id);
+			ResultSet rs = pstmt.executeQuery();
+			if (rs.next()) {
+				name = rs.getString(1);
+			}
+
+		} finally {
+			try {if (pstmt != null) {pstmt.close();}} catch (Exception e) {}
+		}
+
+		return name;
 	}
 
 	/*
@@ -873,16 +1520,8 @@ public class GeneralUtilityMethods {
 				email = rs.getString(1);
 			}
 
-		} catch (SQLException e) {
-			log.log(Level.SEVERE, "Error", e);
-			throw e;
 		} finally {
-			try {
-				if (pstmt != null) {
-					pstmt.close();
-				}
-			} catch (SQLException e) {
-			}
+			try {if (pstmt != null) {pstmt.close();}} catch (Exception e) {}
 		}
 
 		return email;
@@ -904,16 +1543,8 @@ public class GeneralUtilityMethods {
 			pstmt.setInt(2, sId);
 			pstmt.executeUpdate();
 
-		} catch (SQLException e) {
-			log.log(Level.SEVERE, "Error", e);
-			throw e;
 		} finally {
-			try {
-				if (pstmt != null) {
-					pstmt.close();
-				}
-			} catch (SQLException e) {
-			}
+			try {if (pstmt != null) {pstmt.close();}} catch (Exception e) {}
 		}
 
 	}
@@ -937,16 +1568,8 @@ public class GeneralUtilityMethods {
 				serverName = rs.getString(1);
 			}
 
-		} catch (SQLException e) {
-			log.log(Level.SEVERE, "Error", e);
-			throw e;
 		} finally {
-			try {
-				if (pstmt != null) {
-					pstmt.close();
-				}
-			} catch (SQLException e) {
-			}
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 		}
 
 		return serverName;
@@ -975,29 +1598,22 @@ public class GeneralUtilityMethods {
 
 		String surveyIdent = null;
 
-		String sqlGetSurveyIdent = "select ident " + " from survey " + " where s_id = ?;";
-
+		String sql = "select ident " 
+				+ " from survey " 
+				+ " where s_id = ?";
 		PreparedStatement pstmt = null;
 
 		try {
 
-			pstmt = sd.prepareStatement(sqlGetSurveyIdent);
+			pstmt = sd.prepareStatement(sql);
 			pstmt.setInt(1, surveyId);
 			ResultSet rs = pstmt.executeQuery();
 			if (rs.next()) {
 				surveyIdent = rs.getString(1);
 			}
 
-		} catch (SQLException e) {
-			log.log(Level.SEVERE, "Error", e);
-			throw e;
 		} finally {
-			try {
-				if (pstmt != null) {
-					pstmt.close();
-				}
-			} catch (SQLException e) {
-			}
+			try {if (pstmt != null) {pstmt.close();}} catch (Exception e) {}
 		}
 
 		return surveyIdent;
@@ -1010,8 +1626,9 @@ public class GeneralUtilityMethods {
 
 		int sId = 0;
 
-		String sql = "select s_id " + " from survey " + " where ident = ?;";
-
+		String sql = "select s_id " 
+				+ "from survey " 
+				+ "where ident = ?";
 		PreparedStatement pstmt = null;
 
 		try {
@@ -1023,20 +1640,57 @@ public class GeneralUtilityMethods {
 				sId = rs.getInt(1);
 			}
 
-		} catch (SQLException e) {
-			log.log(Level.SEVERE, "Error", e);
-			throw e;
 		} finally {
-			try {
-				if (pstmt != null) {
-					pstmt.close();
-				}
-			} catch (SQLException e) {
-			}
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 		}
 
 		return sId;
 	}
+	
+	/*
+	 * Get the latest survey id from the past in surveyId
+	 * HACK
+	 * This results from the difficulty of moving away from using surveyId on the client while the 
+	 *  survey ident now should be the correct identifier of a unique survey
+	 */
+	static public int getLatestSurveyId(Connection sd, int sId) throws SQLException {
+
+		int latestSurveyId = sId;
+
+		String sql = "select ident, deleted " 
+				+ "from survey " 
+				+ "where s_id = ?";
+		PreparedStatement pstmt = null;
+
+		try {
+
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setInt(1, sId);
+			ResultSet rs = pstmt.executeQuery();
+			if (rs.next()) {
+				String ident = rs.getString(1);
+				boolean deleted = rs.getBoolean(2);
+				
+				if(deleted) {
+					// Get index of second underscore
+					int idx = ident.indexOf('_');
+					if(idx > 0 && idx < ident.length() - 1) {
+						idx = ident.indexOf('_', idx+1);
+						if(idx > 0) {
+							ident = ident.substring(0, idx);		// The unique ident for the current survey
+							latestSurveyId = getSurveyId(sd, ident);
+						}
+					}
+				}
+			}
+
+		} finally {
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+		}
+
+		return latestSurveyId;
+	}
+
 
 	/*
 	 * Get the survey id from the form id
@@ -1045,7 +1699,8 @@ public class GeneralUtilityMethods {
 
 		int sId = 0;
 
-		String sql = "select f.s_id from form f " + " where f.f_id = ?;";
+		String sql = "select f.s_id from form f " 
+				+ "where f.f_id = ?";
 
 		PreparedStatement pstmt = null;
 
@@ -1058,16 +1713,8 @@ public class GeneralUtilityMethods {
 				sId = rs.getInt(1);
 			}
 
-		} catch (SQLException e) {
-			log.log(Level.SEVERE, "Error", e);
-			throw e;
 		} finally {
-			try {
-				if (pstmt != null) {
-					pstmt.close();
-				}
-			} catch (SQLException e) {
-			}
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 		}
 
 		return sId;
@@ -1080,7 +1727,9 @@ public class GeneralUtilityMethods {
 
 		String surveyName = null;
 
-		String sqlGetSurveyName = "select display_name " + " from survey " + " where s_id = ?;";
+		String sqlGetSurveyName = "select display_name " 
+				+ " from survey " 
+				+ " where s_id = ?";
 
 		PreparedStatement pstmt = null;
 
@@ -1093,24 +1742,77 @@ public class GeneralUtilityMethods {
 				surveyName = rs.getString(1);
 			}
 
-		} catch (SQLException e) {
-			log.log(Level.SEVERE, "Error", e);
-			throw e;
 		} finally {
-			try {
-				if (pstmt != null) {
-					pstmt.close();
-				}
-			} catch (SQLException e) {
-			}
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 		}
 
 		return surveyName;
 	}
+	
+	/*
+	 * Get the survey name from the surveyident
+	 */
+	static public String getSurveyNameFromIdent(Connection sd, String sIdent) throws SQLException {
+
+		String surveyName = null;
+
+		String sqlGetSurveyName = "select display_name " 
+				+ "from survey " 
+				+ "where ident = ? "
+				+ "and not hidden";		// Get the latest
+
+		PreparedStatement pstmt = null;
+
+		try {
+
+			pstmt = sd.prepareStatement(sqlGetSurveyName);
+			pstmt.setString(1, sIdent);
+			ResultSet rs = pstmt.executeQuery();
+			if (rs.next()) {
+				surveyName = rs.getString(1);
+			}
+
+		} finally {
+			try {if (pstmt != null) {pstmt.close();}} catch (Exception e) {}
+		}
+
+		return surveyName;
+	}
+	
+	/*
+	 * Get the form id from the form name
+	 */
+	static public int getFormId(Connection sd, int sId, String name) throws SQLException {
+
+		int fId = 0;
+
+		String sql = "select f_id " 
+				+ "from form " 
+				+ "where s_id = ? "
+				+ "and name = ?";
+
+		PreparedStatement pstmt = null;
+
+		try {
+
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setInt(1, sId);
+			pstmt.setString(2, name);
+			ResultSet rs = pstmt.executeQuery();
+			if (rs.next()) {
+				fId = rs.getInt(1);
+			}
+
+		} finally {
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+		}
+
+		return fId;
+	}
 
 	/*
 	 * Return true if the upload error has already been reported This function is
-	 * used to prevent large numbers of duplicate errors beign recorded when
+	 * used to prevent large numbers of duplicate errors being recorded when
 	 * submission of bad results is automatically retried
 	 */
 	public static boolean hasUploadErrorBeenReported(Connection sd, String user, String device, String ident,
@@ -1136,16 +1838,8 @@ public class GeneralUtilityMethods {
 				reported = (rs.getInt(1) > 0) ? true : false;
 			}
 
-		} catch (SQLException e) {
-			log.log(Level.SEVERE, "Error", e);
-			throw e;
 		} finally {
-			try {
-				if (pstmt != null) {
-					pstmt.close();
-				}
-			} catch (SQLException e) {
-			}
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 		}
 
 		return reported;
@@ -1158,29 +1852,81 @@ public class GeneralUtilityMethods {
 
 		int p_id = 0;
 
-		String sqlGetSurveyIdent = "select p_id " + " from survey " + " where s_id = ?;";
+		String sql = "select p_id "
+				+ " from survey " 
+				+ " where s_id = ?";
 
 		PreparedStatement pstmt = null;
 
 		try {
 
-			pstmt = sd.prepareStatement(sqlGetSurveyIdent);
+			pstmt = sd.prepareStatement(sql);
 			pstmt.setInt(1, surveyId);
 			ResultSet rs = pstmt.executeQuery();
 			if (rs.next()) {
 				p_id = rs.getInt(1);
 			}
 
-		} catch (SQLException e) {
-			log.log(Level.SEVERE, "Error", e);
-			throw e;
 		} finally {
-			try {
-				if (pstmt != null) {
-					pstmt.close();
-				}
-			} catch (SQLException e) {
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+		}
+
+		return p_id;
+	}
+	
+	/*
+	 * Get the survey project id from the survey ident
+	 */
+	static public int getProjectIdFromSurveyIdent(Connection sd, String sIdent) throws SQLException {
+
+		int p_id = 0;
+
+		String sql = "select p_id "
+				+ " from survey " 
+				+ " where ident = ?";
+
+		PreparedStatement pstmt = null;
+
+		try {
+
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setString(1, sIdent);
+			ResultSet rs = pstmt.executeQuery();
+			if (rs.next()) {
+				p_id = rs.getInt(1);
 			}
+
+		} finally {
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+		}
+
+		return p_id;
+	}
+	
+	/*
+	 * Get the survey project id from the task group id
+	 */
+	static public int getProjectIdFromTaskGroup(Connection sd, int tgId) throws SQLException {
+
+		int p_id = 0;
+
+		String sql = "select p_id " 
+				+ " from task_group " 
+				+ " where tg_id = ?";
+
+		PreparedStatement pstmt = null;
+
+		try {
+
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setInt(1, tgId);
+			ResultSet rs = pstmt.executeQuery();
+			if (rs.next()) {
+				p_id = rs.getInt(1);
+			}
+
+		} finally {
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 		}
 
 		return p_id;
@@ -1206,18 +1952,13 @@ public class GeneralUtilityMethods {
 				hrk = rs.getString(1);
 			}
 
-		} catch (SQLException e) {
-			log.log(Level.SEVERE, "Error", e);
-			throw e;
 		} finally {
-			try {
-				if (pstmt != null) {
-					pstmt.close();
-				}
-			} catch (SQLException e) {
-			}
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 		}
 
+		if(hrk != null && hrk.trim().length() == 0) {
+			hrk = null;
+		}
 		return hrk;
 	}
 
@@ -1229,10 +1970,12 @@ public class GeneralUtilityMethods {
 
 		int qId = 0;
 
-		String sqlGetQuestionId = "select q_id " + " from question " + " where f_id = ? " + " and qname = ?;";
+		String sqlGetQuestionId = "select q_id from question where f_id = ? and qname = ?";
 
-		String sqlGetQuestionIdFromSurvey = "select q_id " + " from question " + " where qname = ? "
-				+ "and f_id in (select f_id from form where s_id = ?); ";
+		String sqlGetQuestionIdFromSurvey = "select q_id " 
+				+ " from question " 
+				+ " where qname = ? "
+				+ "and f_id in (select f_id from form where s_id = ?)";
 
 		PreparedStatement pstmt = null;
 
@@ -1257,8 +2000,6 @@ public class GeneralUtilityMethods {
 					qId = rs.getInt(1);
 					log.info("Found qId: " + qId);
 				} else {
-					// throw new Exception("Question not found: " + sId + " : " + formId + " : " +
-					// qName);
 					// Question has been deleted or renamed. Not to worry
 					log.info("Question not found: " + sId + " : " + formId + " : " + qName);
 				}
@@ -1273,16 +2014,8 @@ public class GeneralUtilityMethods {
 				}
 			}
 
-		} catch (Exception e) {
-			log.log(Level.SEVERE, "Error", e);
-			throw e;
 		} finally {
-			try {
-				if (pstmt != null) {
-					pstmt.close();
-				}
-			} catch (SQLException e) {
-			}
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 		}
 
 		return qId;
@@ -1296,31 +2029,47 @@ public class GeneralUtilityMethods {
 
 		String column_name = null;
 
-		String sql = "select q.column_name " + " from question q, form f" + " where q.f_id = f.f_id "
-				+ " and f.s_id = ? " + " and q.qname = ?;";
+		String sql = "select q.column_name " 
+				+ " from question q, form f" 
+				+ " where q.f_id = f.f_id "
+				+ " and f.s_id = ? " 
+				+ " and q.qname = ?";
 
 		PreparedStatement pstmt = null;
 
 		try {
-
-			pstmt = sd.prepareStatement(sql);
-			pstmt.setInt(1, sId);
-			pstmt.setString(2, qName);
-			ResultSet rs = pstmt.executeQuery();
-			if (rs.next()) {
-				column_name = rs.getString(1);
-			}
-
-		} catch (SQLException e) {
-			log.log(Level.SEVERE, "Error", e);
-			throw e;
-		} finally {
-			try {
-				if (pstmt != null) {
-					pstmt.close();
+			
+			if(qName != null) {
+				if(qName.equals("_hrk")) {
+					column_name = "_hrk";
+				} else if(qName.equals("prikey")) {
+					column_name = "prikey";
+				} else if(qName.equals("_user")) {
+					column_name = "_user";
+				} else {
+					pstmt = sd.prepareStatement(sql);
+					pstmt.setInt(1, sId);
+					pstmt.setString(2, qName);
+					ResultSet rs = pstmt.executeQuery();
+					if (rs.next()) {
+						column_name = rs.getString(1);
+					}
 				}
-			} catch (SQLException e) {
+				
+				if(column_name == null) {
+					// Try preloads
+					ArrayList<MetaItem> preloads = getPreloads(sd, sId);
+					for(MetaItem item : preloads) {
+						if(item.name.equals(qName)) {							
+							column_name = item.columnName;
+							break;
+						}
+					}
+				}
 			}
+
+		} finally {
+			try {if (pstmt != null) {	pstmt.close();}} catch (SQLException e) {}
 		}
 
 		return column_name;
@@ -1339,9 +2088,11 @@ public class GeneralUtilityMethods {
 
 		PreparedStatement pstmt = null;
 
-		if (qId == SurveyManager.UPLOAD_TIME_ID) {
-			column_name = "_upload_time";
-		} else {
+		if (qId == SmapServerMeta.SCHEDULED_START_ID) {
+			column_name = SmapServerMeta.SCHEDULED_START_NAME;
+		} else if (qId == SmapServerMeta.UPLOAD_TIME_ID) {
+			column_name = SmapServerMeta.UPLOAD_TIME_NAME;
+		} else if(qId > 0) {
 			try {
 
 				pstmt = sd.prepareStatement(sql);
@@ -1352,20 +2103,46 @@ public class GeneralUtilityMethods {
 					column_name = rs.getString(1);
 				}
 
-			} catch (SQLException e) {
-				log.log(Level.SEVERE, "Error", e);
-				throw e;
 			} finally {
-				try {
-					if (pstmt != null) {
-						pstmt.close();
-					}
-				} catch (SQLException e) {
-				}
+				try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 			}
+		} else {
+			column_name = getPreloadColumnName(sd, sId, qId);		
 		}
 
 		return column_name;
+	}
+
+	/*
+	 * Get a question details
+	 */
+	static public Question getQuestion(Connection sd, int qId) throws SQLException {
+
+		Question question = new Question();
+
+		String sql = "select appearance, qname, column_name, qtype " 
+				+ "from question "
+				+ "where q_id = ?;";
+
+		PreparedStatement pstmt = null;
+
+		try {
+
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setInt(1, qId);
+			ResultSet rs = pstmt.executeQuery();
+			if (rs.next()) {
+				question.appearance = rs.getString(1);
+				question.name = rs.getString(2);
+				question.columnName = rs.getString(3);
+				question.type = rs.getString(4);
+			}
+
+		} finally {
+			try {if (pstmt != null) {pstmt.close();}	} catch (SQLException e) {}
+		} 
+	
+		return question;
 	}
 
 	/*
@@ -1514,8 +2291,10 @@ public class GeneralUtilityMethods {
 
 		String userIdent = null;
 
-		String sqlGetUserDetails = "select u.ident from users u, dynamic_users d " + " where u.id = d.u_id "
-				+ " and d.access_key = ? " + " and d.expiry > now();";
+		String sqlGetUserDetails = "select u.ident from users u, dynamic_users d " 
+				+ " where u.id = d.u_id "
+				+ " and d.access_key = ? " 
+				+ " and d.expiry > now();";
 		PreparedStatement pstmtGetUserDetails = null;
 
 		log.info("GetDynamicUser");
@@ -1552,31 +2331,59 @@ public class GeneralUtilityMethods {
 	 * external file
 	 */
 	public static boolean isAppearanceExternalFile(String appearance) {
-		if (appearance != null && appearance.toLowerCase().trim().contains("search(")) {
+		if (appearance != null && (appearance.toLowerCase().trim().contains("search(") ||
+				appearance.toLowerCase().trim().contains("lookup_choices("))) {
 			return true;
 		} else {
 			return false;
 		}
 	}
+	
+	/*
+	 * Add nodeset functions to a nodeset
+	 */
+	public static String addNodesetFunctions(String nodeset, String randomize) {
+		if (parameterIsSet(randomize)) {
+			return "randomize(" + nodeset + ")";
+		} else {
+			return nodeset;
+		}
+	}
 
 	/*
 	 * Get a list of options from an external file
-	 */
-	public static void getOptionsFromFile(Connection sd, ArrayList<ChangeItem> ciList, File csvFile, File oldCsvFile,
-			String csvFileName, String qName, int l_id, int qId, String qType, String qAppearance) throws Exception {
+	 *
+	public static void getOptionsFromFile(
+			Connection sd, 
+			ResourceBundle localisation, 
+			String user,
+			int sId,
+			ArrayList<ChangeItem> ciList, 
+			File csvFile, 
+			File oldCsvFile,
+			String csvFileName, 
+			String qName, 
+			int l_id, 
+			int qId, String qType, String qAppearance) throws ApplicationWarning, Exception {
 
 		// Store the value and label data for each row in here
 		class OptionItem {
 			public String value;
-			public String label;
+			public ArrayList<LanguageItem> label = new ArrayList<LanguageItem> ();
 			private String filterString;
 			public HashMap<String, String> filter;
 
-			public OptionItem(String v, String l, HashMap<String, String> f) {
-				value = v;
-				label = l;
-				filter = f;
+			public OptionItem(String[] data, ArrayList<ValueLabelCols> vlcA, HashMap<String, String> f) {
 
+				for(int i = 0; i < vlcA.size(); i++) {
+					ValueLabelCols vlc = vlcA.get(i);
+					if(i == 0) {
+						value = data[vlc.value];
+					}
+					label.add(new LanguageItem(vlc.language, data[vlc.label]));
+				}
+
+				filter = f;
 				filterString = "";
 				if (f != null) {
 					String fv = f.get("_smap_cascade");
@@ -1590,15 +2397,71 @@ public class GeneralUtilityMethods {
 
 				if ((o instanceof OptionItem) 
 						&& value.equals(((OptionItem) o).value) 
-						&& label.equals(((OptionItem) o).label) 
+						&& labelsUnchanged((OptionItem) o) 
 						&& filterString.equals(((OptionItem) o).filterString)) {
 					return true;
 				}
 				return false;
 			}
-		}
-		;
 
+			private boolean labelsUnchanged(OptionItem oi) {
+				boolean unchanged = true;
+
+				if(oi.label.size() != label.size()) {
+					unchanged = false;
+				} else {
+					for(int i = 0; i < label.size(); i++) {
+						LanguageItem thisLabel = label.get(i);
+						LanguageItem otherLabel = oi.label.get(i);
+						if(!thisLabel.language.equals(otherLabel.language) ||
+								!thisLabel.text.equals(otherLabel.text)) {
+							unchanged = false;
+							break;
+						}
+					}
+				}
+				return unchanged;
+			}
+		}
+
+		/*
+		 * Start code_migration compressed
+		 * Important! loading options from a CSV file into choices for a question has been deprecated
+		 * As an interim implementation and select multiple questions that uses a CSV file will be marked as compressed
+		 * This will mean it will not depend on these options to store results
+		 * 
+		 * deprecate this!
+		 *
+		if(qType.equals("select")) {
+			String sqlHasExternal = "select count(*) from option where l_id = ? and externalfile;";
+			PreparedStatement pstmtHasExternal = null;
+			String sqlSetCompressed = "update question set compressed = 'true' where q_id = ?";
+			PreparedStatement pstmtSetCompressed = null;
+			try {
+				pstmtHasExternal = sd.prepareStatement(sqlHasExternal);
+				pstmtHasExternal.setInt(1, l_id);
+				ResultSet rs = pstmtHasExternal.executeQuery();
+				
+				boolean hasExternals = false;
+				if(rs.next()) {
+					if(rs.getInt(1) > 0) {
+						hasExternals = true;
+					}
+				}
+				if(hasExternals) {
+					pstmtSetCompressed = sd.prepareStatement(sqlSetCompressed);
+					pstmtSetCompressed.setInt(1, qId);
+					pstmtSetCompressed.executeUpdate();
+				}
+			} finally {
+				if(pstmtHasExternal != null) try {pstmtHasExternal.close();} catch(Exception e) {}
+				if(pstmtSetCompressed != null) try {pstmtSetCompressed.close();} catch(Exception e) {}
+			}
+		}
+		/*
+		 * End code Migration
+		 *
+		HashMap<String, String> optionValues = new HashMap<String, String> ();	// Ensure uniqueness of values
 		List<OptionItem> listNew = new ArrayList<OptionItem>();
 		List<OptionItem> listOld = new ArrayList<OptionItem>();
 
@@ -1621,87 +2484,134 @@ public class GeneralUtilityMethods {
 			String cols[] = parser.parseLine(newLine);
 
 			CSVFilter filter = new CSVFilter(cols, qAppearance); // Get a filter
-			ValueLabelCols vlc = getValueLabelCols(sd, qId, qName, cols); // Identify the columns in the CSV file that
-																			// have the value and label
-
+			ValueLabelColsResp vlcA = getValueLabelCols(sd, qId, qName, cols); // Identify the columns in the CSV file that
+			if(vlcA.values.size() == 0) {
+				String msg = localisation.getString("ex_csv_nc");
+				msg = msg.replace("%s1", qName);
+				lm.writeLog(sd, sId, user, "csv file", msg);
+				throw new ApplicationWarning(msg);
+			}
+		
 			/*
 			 * Read the old and new data rows Only get the columns that are to be applied as
 			 * if a new unrelated column is added it should not change existing data Based
 			 * on:
 			 * https://stackoverflow.com/questions/31426187/want-to-find-content-difference-
 			 * between-two-text-files-with-java
-			 */
+			 *
 			while (newLine != null) {
 				newLine = brNew.readLine();
 				if(newLine != null) {
 					String[] data = parser.parseLine(newLine);
 					if (filter.isIncluded(data)) {
-						listNew.add(new OptionItem(data[vlc.value], data[vlc.label], filter.GetCascadeFilter(data)));
+						OptionItem item = new OptionItem(data, vlcA.values, filter.GetCascadeFilter(data));
+						// This this option if we do not already have it, csv files can have many duplicates
+						String test = optionValues.get(item.value);
+						if(test == null) {
+							listNew.add(item);
+							optionValues.put(item.value, item.value);
+						}
+						
 					}
 				}
 			}
-			if (brOld != null) {
-				newLine = brOld.readLine(); // Jump past the header
-				while (newLine != null) {
+
+			// Compare with old values as long as there was not an error in reading the columns from the csv file
+			if(vlcA.error) {
+				// Force delete of existing choices
+				if (brOld != null) {
 					newLine = brOld.readLine(); // Jump past the header
-					if(newLine != null) {
-						String[] data = parser.parseLine(newLine);
-						if (filter.isIncluded(data)) {
-							listOld.add(new OptionItem(data[vlc.value], data[vlc.label], filter.GetCascadeFilter(data)));
+					while (newLine != null) {
+						newLine = brOld.readLine(); // Jump past the header
+						if(newLine != null) {
+							String[] data = parser.parseLine(newLine);
+							if (filter.isIncluded(data)) {
+								ChangeItem c = new ChangeItem();
+								c.option = new Option();
+								c.option.l_id = l_id;
+								c.qName = qName; // Add for logging
+								c.fileName = csvFileName; // Add for logging
+								c.qType = qType;
+								c.option.value = data[vlcA.values.get(0).value];
+								c.action = "delete";
+
+								ciList.add(c);
+							}
+						}
+					}
+				}
+			} else {
+				// Get the old values so we can look for changes
+				if (brOld != null) {
+					newLine = brOld.readLine(); // Jump past the header
+					while (newLine != null) {
+						newLine = brOld.readLine(); // Jump past the header
+						if(newLine != null) {
+							String[] data = parser.parseLine(newLine);
+							if (filter.isIncluded(data)) {
+								listOld.add(new OptionItem(data, vlcA.values, filter.GetCascadeFilter(data)));
+							}
 						}
 					}
 				}
 			}
 
+			// debug
+			log.info(" ======== New list: " + listNew.size());
+			log.info(" ======== Old list" + listOld.size());
+
 			/*
 			 * Create a list of items to add that are in the new list but not in the old
 			 * Create a list of items to remove that are in the old list but not in the new
-			 */
+			 *
 			ArrayList<OptionItem> listAdd = new ArrayList<OptionItem>(listNew);
 			listAdd.removeAll(listOld);
 			ArrayList<OptionItem> listDel = new ArrayList<OptionItem>(listOld);
 			listDel.removeAll(listNew);
 
-			/*
-			 * Add new items
-			 */
-			log.info("Adding " + listAdd.size() + " items");
-			for (OptionItem item : listAdd) {
-
-				ChangeItem c = new ChangeItem();
-				c.option = new Option();
-				c.option.l_id = l_id;
-				c.qName = qName; // Add for logging
-				c.fileName = csvFileName; // Add for logging
-				c.qType = qType;
-				c.option.externalLabel = item.label;
-				c.option.value = item.value;
-				c.option.cascade_filters = item.filter;
-				c.action = "add";
-
-				ciList.add(c);
-
-			}
-
-			/*
-			 * Delete Items TODO
-			 */
-			log.info("There are " + listDel.size() + " items to delete");
-			for (OptionItem item : listDel) {
-
-				ChangeItem c = new ChangeItem();
-				c.option = new Option();
-				c.option.l_id = l_id;
-				c.qName = qName; // Add for logging
-				c.fileName = csvFileName; // Add for logging
-				c.qType = qType;
-				c.option.externalLabel = item.label;
-				c.option.value = item.value;
-				c.option.cascade_filters = item.filter;
-				c.action = "delete";
-
-				ciList.add(c);
-
+			// Add a limit of 100 changes to be applied
+			if(listAdd.size() < 100 && listDel.size() < 100) {
+				/*
+				 * Delete Items 
+				 * Do this first as presumably its possible that the new option could have identical identifiers to an 
+				 * option its replacing but with a different label
+				 *
+				log.info("There are " + listDel.size() + " items to delete");
+				for (OptionItem item : listDel) {
+	
+					ChangeItem c = new ChangeItem();
+					c.option = new Option();
+					c.option.l_id = l_id;
+					c.qName = qName; // Add for logging
+					c.fileName = csvFileName; // Add for logging
+					c.qType = qType;
+					c.option.value = item.value;
+					c.action = "delete";
+	
+					ciList.add(c);
+	
+				}
+	
+				/*
+				 * Add new items
+				 *
+				log.info("Adding " + listAdd.size() + " items");
+				for (OptionItem item : listAdd) {
+	
+					ChangeItem c = new ChangeItem();
+					c.option = new Option();
+					c.option.l_id = l_id;
+					c.qName = qName; // Add for logging
+					c.fileName = csvFileName; // Add for logging
+					c.qType = qType;
+					c.option.externalLabel = item.label;
+					c.option.value = item.value;
+					c.option.cascade_filters = item.filter;
+					c.action = "add";
+	
+					ciList.add(c);
+	
+				}
 			}
 
 		} finally {
@@ -1709,9 +2619,10 @@ public class GeneralUtilityMethods {
 			if (brOld != null) {	try {brNew.close();} catch (Exception e) {}};
 		}
 	}
-
+	*/
+	
 	/*
-	 * Check for existence of an opton
+	 * Check for existence of an option
 	 */
 	public static boolean optionExists(Connection sd, int l_id, String value, String cascade_filters) {
 		boolean exists = false;
@@ -1744,39 +2655,60 @@ public class GeneralUtilityMethods {
 	}
 
 	/*
-	 * Convert and audit file into a Hashmap
+	 * Convert an audit file into a Hashmap
 	 */
-	public static HashMap<String, Integer> getAudit(File csvFile, ArrayList<String> columns, String auditPath) {
+	public static  AuditData getAuditHashMap(File csvFile, String auditPath, ResourceBundle localisation) {
 
+		AuditData data = new AuditData();
+		
 		BufferedReader br = null;
-		HashMap<String, Integer> audit = new HashMap<>();
-		HashMap<String, Integer> initAudit = new HashMap<>();
 
 		try {
 			FileReader reader = new FileReader(csvFile);
 			br = new BufferedReader(reader);
-			CSVParser parser = new CSVParser();
+			CSVParser parser = new CSVParser(localisation);
 
 			// Get Header
 			String line = br.readLine();
 
-			// Get audit values that match the current audit path that is: auditPath/qname
+			log.info(" Start Get Audit =======================================================");
 			while (line != null) {
+				
+				data.rawAudit.append(line).append("\n");		// Save the raw data
+				
 				String[] auditCols = parser.parseLine(line);
 				int time = 0;
-				if (auditCols.length > 2 && auditCols[0] != null && auditCols[0].equals("question")) {
+				if (auditCols.length >= 4 && auditCols[0] != null && auditCols[0].equals("question")) {
 					String id = auditCols[1];
 					if (id != null) {
 						id = id.trim();
 						if (id.startsWith(auditPath)) {
-							String name = id.substring(auditPath.length() + 1);
-							if (name.indexOf('/') < 0) {
+							int idx = id.lastIndexOf('/');
+							if(idx >= 0) {
+								String name = id.substring(idx + 1);
+							
+								log.info("Name: " + name);
 								try {
 									BigInteger from = new BigInteger(auditCols[2]);
 									BigInteger to = new BigInteger(auditCols[3]);
 									BigInteger diff = to.subtract(from);
 									time = diff.intValue();
-									initAudit.put(name, time);
+									
+									// Timer audit value based on total time in the question
+									AuditItem currentItem = data.firstPassAudit.get(name);
+									if(currentItem == null) {
+										currentItem = new AuditItem();
+									}	
+									currentItem.time += time;
+									
+									// Location audit value based on location of last entry into the question
+									if(auditCols.length >= 6) {
+										Double lat = new Double(auditCols[4]);
+										Double lon = new Double(auditCols[5]);
+										currentItem.location = new GeoPoint(lat, lon);
+									}
+									data.firstPassAudit .put(name, currentItem);
+									
 								} catch (Exception e) {
 									log.info("Error: invalid audit line: " + e.getMessage() + " : " + line);
 								}
@@ -1788,96 +2720,52 @@ public class GeneralUtilityMethods {
 				line = br.readLine();
 			}
 
-			/*
-			 * Only add audit values that are in this form Also make sure we had a timing
-			 * value for very column in this form
-			 */
-			for (String col : columns) {
-				if (!col.startsWith("_") && !col.equals("meta")) {
-					int t = 0;
-					try {
-						t = initAudit.get(col);
-					} catch (Exception e) {
-						// ignore errors time will be set to 0
-					}
-					audit.put(col, t);
-				}
-			}
+		
+			
+			log.info(" End Get Audit xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
 
 		} catch (Exception e) {
 			log.log(Level.SEVERE, "Error", e);
 		} finally {
-			try {
-				br.close();
-			} catch (Exception e) {
-			}
-			;
+			try {br.close();} catch (Exception e) {};
 		}
+		
+		return data;
 
-		return audit;
 	}
-
+	
 	/*
-	 * Return the columns in a CSV file that have the value and label for the given
-	 * question
+	 * Convert an audit file into a Hashmap
 	 */
-	public static ValueLabelCols getValueLabelCols(Connection sd, int qId, String qDisplayName, String[] cols)
-			throws Exception {
+	public static  HashMap<String, AuditItem> getAuditValues(AuditData data, ArrayList<String> columns, ResourceBundle localisation) {
 
-		ValueLabelCols vlc = new ValueLabelCols();
+			/*
+			 * Only add audit values that are in this form Also make sure we had a timing
+			 * value for very column in this form
+			 */
+		HashMap<String, AuditItem> auditItems = new HashMap();
 
-		if (cols == null) {
-			// No column in this CSV file so there are not going to be any matches
-			log.info("No columns found in CSV file");
-			return vlc;
-		}
-		/*
-		 * Ignore language in the query, these values are codes and are (currently)
-		 * independent of language
-		 */
-		PreparedStatement pstmt = null;
-		String sql = "SELECT o.ovalue, t.value " + "from option o, translation t, question q "
-				+ "where o.label_id = t.text_id " + "and o.l_id = q.l_id " + "and q.q_id = ? "
-				+ "and externalfile ='false';";
+		for (String col : columns) {
+			if (!col.startsWith("_") && !col.equals("meta") && 
+					!col.equals("instanceID") && !col.equals("instanceName")) {				
 
-		try {
-			pstmt = sd.prepareStatement(sql);
-			pstmt.setInt(1, qId);
-			log.info("Get value/label combos: " + pstmt.toString());
-			ResultSet rs = pstmt.executeQuery();
-			if (rs.next()) {
-				String valueName = rs.getString(1);
-				String labelName = rs.getString(2);
-
-				vlc.value = -1;
-				vlc.label = -1;
-				for (int i = 0; i < cols.length; i++) {
-					if (cols[i].toLowerCase().trim().equals(valueName.toLowerCase().trim())) {
-						vlc.value = i;
-					}
-					if (cols[i].toLowerCase().trim().equals(labelName.toLowerCase().trim())) {
-						vlc.label = i;
-					}
+				AuditItem ai = data.firstPassAudit.get(col);
+				log.info("Getting audit item for: " + col);
+				if(ai == null) {
+					log.info("audit item not found");
+					ai = new AuditItem();
 				}
-				if (vlc.value == -1) {
-					String msg = "Column " + valueName + " not found in csv file for question " + qDisplayName;
-					lm.writeLog(sd, 0, "", "csv file", msg);
-					throw new Exception(msg);
+				auditItems.put(col, ai);
 
-				} else if (vlc.label == -1) {
-					String msg = "Column " + labelName + " not found in csv file for question " + qDisplayName;
-					lm.writeLog(sd, 0, "", "csv file", msg);
-					throw new Exception(msg);
-				}
-			} else {
-				String msg = "The names of the columns to use in this csv file have not been set in question " + qDisplayName;
-				lm.writeLog(sd, 0, "", "csv file", msg);
-				throw new Exception(msg);
 			}
-		} finally {
-			if (pstmt != null) try {	pstmt.close();} catch (Exception e) {};
 		}
-		return vlc;
+			
+		log.info(" End Get Audit xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+
+		
+		
+		return auditItems;
+
 	}
 
 	/*
@@ -1887,30 +2775,22 @@ public class GeneralUtilityMethods {
 	 * languages, some of which may not have any translation entries, are stored in
 	 * the languages table
 	 */
-	public static ArrayList<String> getLanguagesUsedInSurvey(Connection connectionSD, int sId) throws SQLException {
+	public static ArrayList<String> getLanguagesUsedInSurvey(Connection sd, int sId) throws SQLException {
 
-		PreparedStatement pstmtLanguages = null;
+		PreparedStatement pstmt = null;
 
 		ArrayList<String> languages = new ArrayList<String>();
 		try {
 			String sqlLanguages = "select distinct t.language from translation t where s_id = ? order by t.language asc";
-			pstmtLanguages = connectionSD.prepareStatement(sqlLanguages);
+			pstmt = sd.prepareStatement(sqlLanguages);
 
-			pstmtLanguages.setInt(1, sId);
-			ResultSet rs = pstmtLanguages.executeQuery();
+			pstmt.setInt(1, sId);
+			ResultSet rs = pstmt.executeQuery();
 			while (rs.next()) {
 				languages.add(rs.getString(1));
 			}
-		} catch (SQLException e) {
-			log.log(Level.SEVERE, "Error", e);
-			throw e;
 		} finally {
-			try {
-				if (pstmtLanguages != null) {
-					pstmtLanguages.close();
-				}
-			} catch (SQLException e) {
-			}
+			try {if (pstmt != null) {pstmt.close();	}} catch (SQLException e) {}
 		}
 		return languages;
 	}
@@ -1920,15 +2800,15 @@ public class GeneralUtilityMethods {
 	 */
 	public static ArrayList<Language> getLanguages(Connection sd, int sId) throws SQLException {
 
-		PreparedStatement pstmtLanguages = null;
+		PreparedStatement pstmt = null;
 		ArrayList<Language> languages = new ArrayList<Language>();
 
 		try {
 			String sqlLanguages = "select id, language, seq from language where s_id = ? order by seq asc";
-			pstmtLanguages = sd.prepareStatement(sqlLanguages);
+			pstmt = sd.prepareStatement(sqlLanguages);
 
-			pstmtLanguages.setInt(1, sId);
-			ResultSet rs = pstmtLanguages.executeQuery();
+			pstmt.setInt(1, sId);
+			ResultSet rs = pstmt.executeQuery();
 			while (rs.next()) {
 				languages.add(new Language(rs.getInt(1), rs.getString(2)));
 			}
@@ -1943,16 +2823,8 @@ public class GeneralUtilityMethods {
 				GeneralUtilityMethods.setLanguages(sd, sId, languages);
 			}
 
-		} catch (SQLException e) {
-			log.log(Level.SEVERE, "Error", e);
-			throw e;
 		} finally {
-			try {
-				if (pstmtLanguages != null) {
-					pstmtLanguages.close();
-				}
-			} catch (SQLException e) {
-			}
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 		}
 
 		return languages;
@@ -2258,29 +3130,31 @@ public class GeneralUtilityMethods {
 	/*
 	 * Get the answer for a specific question and a specific instance
 	 */
-	public static ArrayList<String> getResponseForQuestion(Connection sd, Connection results, int sId, int qId,
+	public static ArrayList<String> getResponseForEmailQuestion(Connection sd, Connection results, int sId, String qName,
 			String instanceId) throws SQLException {
 
 		PreparedStatement pstmtQuestion = null;
 		PreparedStatement pstmtOption = null;
 		PreparedStatement pstmtResults = null;
 
-		String sqlQuestion = "select qType, qName, f_id from question where q_id = ?";
+		String sqlQuestion = "select qType, q_id, f_id from question where qname = ? and f_id in "
+				+ "(select f_id from form where s_id = ?)";
 		String sqlOption = "select o.ovalue, o.column_name from option o, question q where q.q_id = ? and q.l_id = o.l_id";
 
 		String qType = null;
-		String qName = null;
 		int fId = 0;
+		int qId = 0;
 
 		ArrayList<String> responses = new ArrayList<String>();
 		try {
 			pstmtQuestion = sd.prepareStatement(sqlQuestion);
-			pstmtQuestion.setInt(1, qId);
+			pstmtQuestion.setString(1, qName);
+			pstmtQuestion.setInt(2, sId);
 			log.info("GetResponseForQuestion: " + pstmtQuestion.toString());
 			ResultSet rs = pstmtQuestion.executeQuery();
 			if (rs.next()) {
 				qType = rs.getString(1);
-				qName = rs.getString(2);
+				qId = rs.getInt(2);
 				fId = rs.getInt(3);
 
 				ArrayList<String> tableStack = getTableStack(sd, fId);
@@ -2412,6 +3286,46 @@ public class GeneralUtilityMethods {
 		}
 		return responses;
 	}
+	
+	/*
+	 * Get the answer for a specific question and a specific instance
+	 */
+	public static String getResponseMetaValue(Connection sd, Connection results, int sId, String metaName,
+			String instanceId) throws SQLException {
+
+		PreparedStatement pstmtResults = null;
+
+		String value = null;
+		try {
+			ArrayList<MetaItem> preloads = getPreloads(sd, sId);
+			for(MetaItem item : preloads) {
+				if(item.name.equals(metaName)) {
+					Form f = getTopLevelForm(sd, sId);
+					StringBuffer query = new StringBuffer("select ");
+					query.append(item.columnName);
+					query.append(" from ");
+					query.append(f.tableName);
+					query.append(" where instanceid = ?");
+					
+					pstmtResults = results.prepareStatement(query.toString());
+					pstmtResults.setString(1, instanceId);
+					log.info("Get results for a question: " + pstmtResults.toString());
+					ResultSet rs = pstmtResults.executeQuery();
+					if (rs.next()) {
+						value = rs.getString(1);
+					}
+					break;
+				}
+			}
+			
+		} catch (SQLException e) {
+			log.log(Level.SEVERE, "Error", e);
+			throw e;
+		} finally {
+			try {if (pstmtResults != null) {	pstmtResults.close();}} catch (SQLException e) {}
+		}
+		return value;
+	}
 
 	/*
 	 * Starting from the past in question get all the tables up to the highest
@@ -2437,16 +3351,9 @@ public class GeneralUtilityMethods {
 				}
 			}
 
-		} catch (SQLException e) {
-			log.log(Level.SEVERE, "Error", e);
-			throw e;
 		} finally {
 			try {
-				if (pstmtTable != null) {
-					pstmtTable.close();
-				}
-			} catch (SQLException e) {
-			}
+				if (pstmtTable != null) {pstmtTable.close();}} catch (SQLException e) {}
 		}
 
 		return tables;
@@ -2493,24 +3400,58 @@ public class GeneralUtilityMethods {
 	/*
 	 * Return a list of results columns for a form
 	 */
-	public static ArrayList<TableColumn> getColumnsInForm(Connection sd, Connection cResults, int sId, String user,
-			int formParent, int f_id, String table_name, boolean includeRO, boolean includeParentKey,
-			boolean includeBad, boolean includeInstanceId, boolean includeOtherMeta, boolean includePreloads,
-			boolean includeInstanceName, boolean includeSurveyDuration, boolean superUser, boolean hxl, boolean audit)
-			throws SQLException {
+	public static ArrayList<TableColumn> getColumnsInForm(
+			Connection sd, 
+			Connection cResults, 
+			ResourceBundle localisation,
+			String language,
+			int sId, 
+			String surveyIdent,
+			String user,
+			ArrayList<Role> roles,
+			int formParent, 
+			int f_id, 
+			String table_name, 
+			boolean includeRO, 
+			boolean includeParentKey,
+			boolean includeBad, 
+			boolean includeInstanceId, 
+			boolean includePrikey,
+			boolean includeOtherMeta, 
+			boolean includePreloads,
+			boolean includeInstanceName, 
+			boolean includeSurveyDuration, 
+			boolean superUser,
+			boolean hxl,
+			boolean audit,
+			String tz,
+			boolean mgmt)	// If set substitute display name for the question name if it is not null, also publish un published
+					throws Exception {
 
+		int oId = GeneralUtilityMethods.getOrganisationId(sd, user);
 		ArrayList<TableColumn> columnList = new ArrayList<TableColumn>();
 		ArrayList<TableColumn> realQuestions = new ArrayList<TableColumn>(); // Temporary array so that all property
-																				// questions can be added first
+		// questions can be added first
 		boolean uptodateTable = false; // Set true if the results table has the latest meta data columns
 		TableColumn durationColumn = null;
 
+		// Get sensitive data restrictions
+		OrganisationManager om = new OrganisationManager(localisation);
+		MySensitiveData msd = om.getMySensitiveData(sd, user);
+		
 		// Get column restrictions for RBAC
 		StringBuffer colList = new StringBuffer("");
 		if (!superUser) {
 			if (sId > 0) {
-				RoleManager rm = new RoleManager();
-				ArrayList<RoleColumnFilter> rcfArray = rm.getSurveyColumnFilter(sd, sId, user);
+				RoleManager rm = new RoleManager(localisation);
+				
+				ArrayList<RoleColumnFilter> rcfArray = new ArrayList<> ();
+				if(user != null) {
+					rcfArray = rm.getSurveyColumnFilter(sd, sId, user);
+				} else if(roles != null) {
+					rcfArray = rm.getSurveyColumnFilterRoleList(sd, sId, roles);
+				}
+				
 				if (rcfArray.size() > 0) {
 					colList.append(" and q_id in (");
 					for (int i = 0; i < rcfArray.size(); i++) {
@@ -2526,64 +3467,105 @@ public class GeneralUtilityMethods {
 		}
 
 		// SQL to get the questions
-		String sqlQuestion1 = "select " + "qname, " + "qtype, " + "column_name, " + "q_id, " + "readonly, "
-				+ "source_param, " + "appearance, " + "display_name, " + "l_id " + "from question where f_id = ? "
-				+ "and source is not null " + "and published = 'true' " + "and soft_deleted = 'false' ";
-
+		String sqlQuestion1 = "select qname, qtype, column_name, q_id, readonly, "
+				+ "source_param, appearance, display_name, l_id, compressed " 
+				+ "from question "
+				+ "where f_id = ? "
+				+ "and source is not null "
+				+ "and published = 'true' "
+				+ "and soft_deleted = 'false' ";
+		
 		String sqlQuestion2 = colList.toString();
 		String sqlQuestion3 = "order by seq";
 		PreparedStatement pstmtQuestions = sd.prepareStatement(sqlQuestion1 + sqlQuestion2 + sqlQuestion3);
 
-		// Get column names for select multiple questions
-		String sqlSelectMultiple = "select distinct o.column_name, o.ovalue, o.seq " + "from option o, question q "
-				+ "where o.l_id = q.l_id " + "and q.q_id = ? " + "and o.externalfile = ? " + "and o.published = 'true' "
+		// Get column names for select multiple questions in an uncompressed legacy select multiple
+		String sqlSelectMultipleNotCompressed = "select distinct o.column_name, o.ovalue, o.seq, o.display_name " 
+				+ "from option o, question q "
+				+ "where o.l_id = q.l_id " 
+				+ "and q.q_id = ? " 
+				+ "and o.externalfile = ? " 
+				+ "and o.published = 'true' "
 				+ "order by o.seq;";
-		PreparedStatement pstmtSelectMultiple = sd.prepareStatement(sqlSelectMultiple);
+		PreparedStatement pstmtSelectMultipleNotCompressed = sd.prepareStatement(sqlSelectMultipleNotCompressed);
+				
+		// Get column names for select multiple questions for compressed select multiples (ignore published)
+		String sqlSelectMultiple = "select distinct o.column_name, o.ovalue, o.seq, o.display_name " 
+				+ "from option o, question q "
+				+ "where o.l_id = q.l_id " 
+				+ "and q.q_id = ? " 
+				+ "and o.externalfile = ? " 
+				+ "order by o.seq;";
+		PreparedStatement pstmtSelectChoices = sd.prepareStatement(sqlSelectMultiple);
 
+		updateUnPublished(sd, cResults, table_name, f_id, true);		// Ensure that all columns marked not published really are
+		
 		TableColumn c = new TableColumn();
-		c.name = "prikey";
-		c.humanName = "prikey";
-		c.type = "";
-		if (includeOtherMeta) {
+		c.column_name = "prikey";
+		c.displayName = "prikey";
+		c.type = SmapQuestionTypes.INT;
+		c.question_name = c.column_name;
+		if (includePrikey) {
+			columnList.add(c);
+		}
+		
+		// Add assigned if this is a management request
+		if(mgmt) {
+			if(!GeneralUtilityMethods.hasColumn(cResults, table_name, "_assigned")) {
+				GeneralUtilityMethods.addColumn(cResults, table_name, "_assigned", "text");
+			}
+			c = new TableColumn();
+			c.column_name = "_assigned";
+			c.displayName = "_assigned";
+			c.type = SmapQuestionTypes.STRING;
+			c.question_name = c.column_name;
 			columnList.add(c);
 		}
 
 		// Add HRK if it has been specified
 		if (includeOtherMeta && GeneralUtilityMethods.columnType(cResults, table_name, "_hrk") != null) {
 			c = new TableColumn();
-			c.name = "_hrk";
-			c.humanName = "Key";
-			c.type = "";
+			c.column_name = "_hrk";
+			c.displayName = "Key";
+			c.type = SmapQuestionTypes.STRING;
+			c.question_name = c.column_name;
 			columnList.add(c);
 		}
 
 		if (includeParentKey) {
 			c = new TableColumn();
-			c.name = "parkey";
-			c.humanName = "parkey";
-			c.type = "";
+			c.column_name = "parkey";
+			c.displayName = "parkey";
+			c.type = SmapQuestionTypes.INT;
+			c.question_name = c.column_name;
 			columnList.add(c);
 		}
 
+		ArrayList<MetaItem> preloads = getPreloads(sd, sId);
 		if (includeSurveyDuration && formParent == 0) {
 			durationColumn = new TableColumn();
-			durationColumn.name = "_duration";
-			durationColumn.humanName = "Survey Duration";
-			durationColumn.type = "duration";
+			durationColumn.column_name = "_duration";
+			durationColumn.displayName = localisation.getString("a_sd");
+			durationColumn.type = SmapQuestionTypes.DURATION;
+			durationColumn.isMeta = true;
+			getStartEndName(preloads, durationColumn);
+			durationColumn.question_name = durationColumn.column_name;
 			columnList.add(durationColumn);
 		}
 
 		if (includeBad) {
 			c = new TableColumn();
-			c.name = "_bad";
-			c.humanName = "_bad";
-			c.type = "";
+			c.column_name = "_bad";
+			c.displayName = "_bad";
+			c.type = SmapQuestionTypes.BOOLEAN;
+			c.question_name = c.column_name;
 			columnList.add(c);
 
 			c = new TableColumn();
-			c.name = "_bad_reason";
-			c.humanName = "_bad_reason";
-			c.type = "";
+			c.column_name = "_bad_reason";
+			c.displayName = "_bad_reason";
+			c.type = SmapQuestionTypes.STRING;
+			c.question_name = c.column_name;
 			columnList.add(c);
 		}
 
@@ -2591,80 +3573,127 @@ public class GeneralUtilityMethods {
 		if (includeOtherMeta && formParent == 0) {
 
 			c = new TableColumn();
-			c.name = "_user";
-			c.humanName = "User";
-			c.type = "";
+			c.column_name = "_user";
+			c.displayName = localisation.getString("a_user");
+			c.type = SmapQuestionTypes.STRING;
+			c.isMeta = true;
+			c.question_name = c.column_name;
 			columnList.add(c);
 
-			if (GeneralUtilityMethods.columnType(cResults, table_name, "_survey_notes") != null) {
+			if (GeneralUtilityMethods.columnType(cResults, table_name, SmapServerMeta.SCHEDULED_START_NAME) != null) {
 				uptodateTable = true; // This is the latest meta column that was added
 			}
 
-			if (uptodateTable || GeneralUtilityMethods.columnType(cResults, table_name, "_upload_time") != null) {
+			if (uptodateTable || GeneralUtilityMethods.columnType(cResults, table_name, SmapServerMeta.UPLOAD_TIME_NAME) != null) {
 
 				c = new TableColumn();
-				c.name = "_upload_time";
-				c.humanName = "Upload Time";
-				c.type = "dateTime";
+				c.column_name = SmapServerMeta.UPLOAD_TIME_NAME;
+				c.displayName = localisation.getString("a_ut");
+				c.type = SmapQuestionTypes.DATETIME;
+				c.isMeta = true;
+				c.question_name = c.column_name;
 				columnList.add(c);
 
 				c = new TableColumn();
-				c.name = "_s_id";
-				c.humanName = "Survey Name";
+				c.column_name = SmapServerMeta.SURVEY_ID_NAME;
+				c.displayName = localisation.getString("a_name");
 				c.type = "";
+				c.isMeta = true;
+				c.question_name = c.column_name;
 				columnList.add(c);
 			}
 
+			if (uptodateTable || GeneralUtilityMethods.columnType(cResults, table_name, SmapServerMeta.SCHEDULED_START_NAME) != null) {
+				c = new TableColumn();
+				c.column_name = SmapServerMeta.SCHEDULED_START_NAME;
+				c.displayName = SmapServerMeta.SCHEDULED_START_NAME;
+				c.type = SmapQuestionTypes.DATETIME;
+				c.isMeta = true;
+				columnList.add(c);
+			}
+			
 			if (uptodateTable || GeneralUtilityMethods.columnType(cResults, table_name, "_version") != null) {
 				c = new TableColumn();
-				c.name = "_version";
-				c.humanName = "Version";
-				c.type = "";
+				c.column_name = "_version";
+				c.displayName = localisation.getString("a_v");
+				c.type = SmapQuestionTypes.STRING;
+				c.isMeta = true;
 				columnList.add(c);
 			}
 
 			if (uptodateTable || GeneralUtilityMethods.columnType(cResults, table_name, "_complete") != null) {
 				c = new TableColumn();
-				c.name = "_complete";
-				c.humanName = "Complete";
-				c.type = "";
+				c.column_name = "_complete";
+				c.displayName = localisation.getString("a_comp");
+				c.type = SmapQuestionTypes.BOOLEAN;
+				c.isMeta = true;
 				columnList.add(c);
 			}
 
 			if (includeInstanceId && (uptodateTable
 					|| GeneralUtilityMethods.columnType(cResults, table_name, "instanceid") != null)) {
 				c = new TableColumn();
-				c.name = "instanceid";
-				c.humanName = "instanceid";
+				c.column_name = "instanceid";
+				c.displayName = "instanceid";
 				c.type = "";
+				c.isMeta = true;
 				columnList.add(c);
 			}
 
 			if (uptodateTable) {
 				c = new TableColumn();
-				c.name = "_survey_notes";
-				c.humanName = "Survey Notes";
-				c.type = "";
+				c.column_name = "_survey_notes";
+				c.displayName = localisation.getString("a_sn");
+				c.type = SmapQuestionTypes.STRING;
+				c.isMeta = true;
 				columnList.add(c);
 
 				c = new TableColumn();
-				c.name = "_location_trigger";
-				c.humanName = "Location Trigger";
-				c.type = "";
+				c.column_name = "_location_trigger";
+				c.displayName = localisation.getString("a_lt");
+				c.type = SmapQuestionTypes.STRING;
+				c.isMeta = true;
 				columnList.add(c);
+
+				c = new TableColumn();
+				c.column_name = "instancename";
+				c.displayName = localisation.getString("a_inst");
+				c.type = SmapQuestionTypes.STRING;
+				c.isMeta = true;
+				columnList.add(c);
+			}
+
+			// Add preloads that have been specified in the survey definition
+			if (includePreloads) {
+				for(MetaItem mi : preloads) {
+					if(mi.isPreload) {
+						c = new TableColumn();
+						c.column_name = mi.columnName;
+						c.displayName = mi.name;
+						c.question_name = mi.name;
+						c.type = mi.dataType;
+						if(c.type != null && c.type.equals("timestamp")) {
+							c.type = "dateTime";
+						}
+						columnList.add(c);
+					}
+				}
 			}
 
 		}
 
 		if (audit && GeneralUtilityMethods.columnType(cResults, table_name, "_audit") != null) {
 			c = new TableColumn();
-			c.name = "_audit";
-			c.humanName = "Audit";
-			c.type = "";
+			c.column_name = "_audit";
+			c.displayName = "Audit";
+			c.type = SmapQuestionTypes.AUDIT;
+			c.question_name = c.column_name;
 			columnList.add(c);
 		}
 
+
 		try {
+			
 			pstmtQuestions.setInt(1, f_id);
 
 			log.info("SQL: Get columns:" + pstmtQuestions.toString());
@@ -2675,7 +3704,7 @@ public class GeneralUtilityMethods {
 			 */
 			while (rsQuestions.next()) {
 
-				String question_human_name = rsQuestions.getString(1);
+				String question_name = rsQuestions.getString(1);
 				String qType = rsQuestions.getString(2);
 				String question_column_name = rsQuestions.getString(3);
 				int qId = rsQuestions.getInt(4);
@@ -2684,10 +3713,9 @@ public class GeneralUtilityMethods {
 				String appearance = rsQuestions.getString(7);
 				String display_name = rsQuestions.getString(8);
 				int l_id = rsQuestions.getInt(9);
-				if (display_name != null && display_name.trim().length() > 0) {
-					question_human_name = display_name;
-				}
-				String hxlCode = getHxlCode(appearance, question_human_name);
+				boolean compressed = rsQuestions.getBoolean(10);
+				
+				String hxlCode = getHxlCode(appearance, question_name);
 
 				if (durationColumn != null && source_param != null) {
 					if (source_param.equals("start")) {
@@ -2712,51 +3740,72 @@ public class GeneralUtilityMethods {
 					continue; // Drop read only columns if they are not selected to be exported
 				}
 
-				if (qType.equals("select")) {
-
-					// Check if there are any choices from an external csv file in this select
-					// multiple
-					boolean external = GeneralUtilityMethods.hasExternalChoices(sd, qId);
+				if (qType.equals("select") && !compressed) {		// deprecated
 
 					// Get the choices, either all from an external file or all from an internal
 					// file but not both
-					pstmtSelectMultiple.setInt(1, qId);
-					pstmtSelectMultiple.setBoolean(2, external);
-					ResultSet rsMultiples = pstmtSelectMultiple.executeQuery();
+					pstmtSelectMultipleNotCompressed.setInt(1, qId);
+					pstmtSelectMultipleNotCompressed.setBoolean(2, false);	// no external
+					log.info("Get choices for select multiple question: " + pstmtSelectMultipleNotCompressed.toString());
+					ResultSet rsMultiples = pstmtSelectMultipleNotCompressed.executeQuery();
 
 					HashMap<String, String> uniqueColumns = new HashMap<String, String>();
+					int multIdx = 0;
+					TableColumn firstOption = null;
 					while (rsMultiples.next()) {
 						String uk = question_column_name + "xx" + rsMultiples.getString(2); // Column name can be
-																							// randomised so don't use
-																							// it for uniqueness
+						// randomised so don't use
+						// it for uniqueness
 
 						if (uniqueColumns.get(uk) == null) {
 							uniqueColumns.put(uk, uk);
 
 							c = new TableColumn();
-							c.name = question_column_name + "__" + rsMultiples.getString(1);
-							c.humanName = question_human_name + " - " + rsMultiples.getString(2);
+							
+							String optionName = rsMultiples.getString(1);
+							String optionLabel = rsMultiples.getString(2);
+							c.column_name = question_column_name + "__" + optionName;
+							c.displayName = question_name + " - " + optionLabel;
 							c.option_name = rsMultiples.getString(2);
-							c.question_name = question_human_name;
+							c.question_name = question_name;
 							c.l_id = l_id;
 							c.qId = qId;
 							c.type = qType;
+							c.compressed = false;
 							c.readonly = ro;
 							if (hxlCode != null) {
 								c.hxlCode = hxlCode + "+label";
 							}
+
+							// Add options to first column of select multiple
+							if(multIdx == 0) {
+								firstOption = c;
+								firstOption.choices = new ArrayList<KeyValue> ();
+							}
+							multIdx++;
+							firstOption.choices.add(new KeyValue(optionName, optionLabel));
+
 							realQuestions.add(c);
 						}
 					}
 				} else {
 					c = new TableColumn();
-					c.name = question_column_name;
-					c.humanName = question_human_name;
+					c.column_name = question_column_name;
+					c.displayName = (display_name == null || display_name.trim().length() == 0) ? question_name : display_name;
+					c.question_name = question_name;
 					c.qId = qId;
 					c.type = qType;
 					c.readonly = ro;
 					c.hxlCode = hxlCode;
 					c.l_id = l_id;
+					c.compressed = compressed;
+					
+					// Check for sensitive data
+					if(msd.signature) {
+						if(qType.equals("image") && appearance != null && appearance.contains("signature")) {
+							continue;
+						}
+					}
 					if (GeneralUtilityMethods.isPropertyType(source_param, question_column_name)) {
 						if (includePreloads) {
 							columnList.add(c);
@@ -2764,27 +3813,80 @@ public class GeneralUtilityMethods {
 					} else {
 						realQuestions.add(c);
 					}
+					
+					if (qType.equals("select1") || qType.equals("select") || qType.equals("rank")) {
+		
+						c.choices = new ArrayList<KeyValue> ();	
+						// Don't get external select 1 choices it is not necessary
+						if(!qType.equals("select1") && GeneralUtilityMethods.hasExternalChoices(sd, qId)) {
+							ArrayList<Option> options = GeneralUtilityMethods.getExternalChoices(sd, 
+									cResults, localisation, user, oId, sId, qId, null, surveyIdent, tz);
+							if(options != null) {
+								for(Option o : options) {
+									String label ="";
+									if(o.externalLabel != null) {
+										for(LanguageItem el : o.externalLabel) {
+											if(el.language.equals(language)) {
+												label = el.text;
+											}
+										}
+									}
+									c.choices.add(new KeyValue(o.value, label));
+								}
+							}
+						} else {
+							// Compressed select multiple or internal select1 add the options
+							pstmtSelectChoices.setInt(1, qId);
+							pstmtSelectChoices.setBoolean(2, false);	// No external
+							ResultSet rsMultiples = pstmtSelectChoices.executeQuery();
+						
+							while (rsMultiples.next()) {
+								// Get the choices
+								String displayName = rsMultiples.getString(4);
+								String choiceValue = rsMultiples.getString(2);
+								if(displayName == null || displayName.trim().length() == 0) {
+									displayName =choiceValue; 
+								} else {
+									// Record that we are using display names
+									c.selectDisplayNames = true;
+								}
+								String optionName = choiceValue;		// Set to choice value
+								String optionLabel = displayName;	// Set to choice value / display name
+	
+								c.choices.add(new KeyValue(optionName, optionLabel));
+								
+							}
+						}
+					} 
 				}
 
 			}
 		} finally {
-			try {
-				if (pstmtQuestions != null) {
-					pstmtQuestions.close();
-				}
-			} catch (SQLException e) {
-			}
-			try {
-				if (pstmtSelectMultiple != null) {
-					pstmtSelectMultiple.close();
-				}
-			} catch (SQLException e) {
-			}
+			try {if (pstmtQuestions != null) {pstmtQuestions.close();	}} catch (Exception e) {}
+			try {if (pstmtSelectMultipleNotCompressed != null) {pstmtSelectMultipleNotCompressed.close();}} catch (Exception e) {}
+			try {if (pstmtSelectChoices != null) {pstmtSelectChoices.close();}} catch (Exception e) {}
 		}
 
 		columnList.addAll(realQuestions); // Add the real questions after the property questions
 
 		return columnList;
+	}
+	
+	/*
+	 * Get the start duration and end duration names from the preloads
+	 */
+	public static void getStartEndName(ArrayList<MetaItem> preloads, TableColumn durn) {
+		for(MetaItem mi : preloads) {
+			if(mi.isPreload) {
+				if(mi.sourceParam != null) {
+					if(mi.sourceParam.equals("start")) {
+						durn.startName = mi.columnName;
+					} else if(mi.sourceParam.equals("end")) {
+						durn.endName = mi.columnName;
+					}
+				}
+			}
+		}
 	}
 
 	/*
@@ -2798,7 +3900,7 @@ public class GeneralUtilityMethods {
 		String sqlGetDefLang = "select def_lang from survey where s_id = ?";
 		PreparedStatement pstmtDefLang = sd.prepareStatement(sqlGetDefLang);
 
-		// SQL to get the choices for a survey TODO query
+		// SQL to get the choices for a survey
 		String sqlGetChoices = "select o.l_id, " + "o.ovalue as value, " + "t.value, " + "t.language "
 				+ "from option o, translation t, survey s " + "where s.s_id = ? " + "and s.s_id = t.s_id "
 				+ "and o.l_id in (select l_id from listname where s_id = ?) " + "and o.label_id = t.text_id ";
@@ -2903,7 +4005,7 @@ public class GeneralUtilityMethods {
 	 */
 	public static boolean isPropertyType(String source_param, String name) {
 
-		boolean isProperty;
+		boolean isProperty = false;
 
 		if (source_param != null && (source_param.equals("deviceid") || source_param.equals("phonenumber")
 				|| source_param.equals("simserial") || source_param.equals("subscriberid")
@@ -2911,14 +4013,15 @@ public class GeneralUtilityMethods {
 
 			isProperty = true;
 
-		} else if (name != null && (name.equals("_instanceid") || name.equals("meta") || name.equals("instanceID")
-				|| name.equals("instanceName") || name.equals("meta_groupEnd") || name.equals("_task_key"))) {
+		} else if (name != null) {
+			name = name.toLowerCase();
+			if(name.equals("_instanceid") || name.equals("meta") || name.equals("instanceid")
+					|| name.equals("instancename") || name.equals("meta_groupend") || name.equals("_task_key")) {
 
-			isProperty = true;
+				isProperty = true;
+			}
 
-		} else {
-			isProperty = false;
-		}
+		} 
 
 		return isProperty;
 	}
@@ -3090,7 +4193,6 @@ public class GeneralUtilityMethods {
 	 */
 	public static String convertAllXpathLabels(String input, boolean xlsName) {
 		StringBuffer output = new StringBuffer("");
-		String[] parts = null;
 
 		if (input != null) {
 
@@ -3119,17 +4221,6 @@ public class GeneralUtilityMethods {
 			}
 
 			output.append(input);
-
-			/*
-			 * parts = input.trim().split("\\s+"); boolean inOutput = false; for(int i = 0;
-			 * i < parts.length; i++) { String elem = parts[i].trim();
-			 * if(elem.equals("<output") && i + 1 < parts.length &&
-			 * parts[i+1].trim().equals("value=\"")) { i++; inOutput = true; // discard
-			 * start of wrapper } else if(elem.equals("\"/>")) { inOutput = false; //
-			 * discard end of wrapper } else if(inOutput && parts[i].startsWith("/") &&
-			 * notInQuotes(output)) { output.append(xpathNameToName(parts[i],
-			 * xlsName).trim() + " "); } else { output.append(parts[i].trim() + " "); } }
-			 */
 		}
 
 		return output.toString().trim();
@@ -3183,11 +4274,57 @@ public class GeneralUtilityMethods {
 				output.append(" || ");
 			}
 			String columnName = getColumnName(sd, sId, qname);
-			if (columnName == null && (qname.equals("prikey") || qname.equals("_start") || qname.equals("_upload_time")
+			if (columnName == null && (qname.equals("prikey") || qname.equals("_start")
+					|| qname.equals(SmapServerMeta.UPLOAD_TIME_NAME)
+					|| qname.equals(SmapServerMeta.SCHEDULED_START_NAME)
 					|| qname.equals("_end") || qname.equals("device") || qname.equals("instancename"))) {
 				columnName = qname;
 			}
 			output.append(columnName);
+
+			// Reset the start
+			start = matcher.end();
+		}
+
+		// Get the remainder of the string
+		if (start < input.length()) {
+			item = input.substring(start).trim();
+			convertSqlFragToHrkElement(item, output);
+		}
+
+		return output.toString().trim();
+
+	}
+
+	/*
+	 * Where an expression is validated as a good xpath expression then the xls names need to be converted
+	 * to xpaths.  However it is not necessary to create the full xpath which may not be available hence a
+	 * pseudo xpath of /name is created
+	 */
+	public static String convertAllxlsNamesToPseudoXPath(String input)  {
+
+		if (input == null) {
+			return null;
+		} else if (input.trim().length() == 0) {
+			return null;
+		}
+
+		StringBuffer output = new StringBuffer("");
+
+		Pattern pattern = Pattern.compile("\\$\\{.+?\\}");
+		java.util.regex.Matcher matcher = pattern.matcher(input);
+		int start = 0;
+		while (matcher.find()) {
+
+			String matched = matcher.group();
+			String qname = matched.substring(2, matched.length() - 1);
+
+			// Add any text before the match
+			int startOfGroup = matcher.start();
+			output.append(input.substring(start, startOfGroup));				
+
+			// Add the question name
+			output.append("/").append(qname);
 
 			// Reset the start
 			start = matcher.end();
@@ -3196,8 +4333,7 @@ public class GeneralUtilityMethods {
 
 		// Get the remainder of the string
 		if (start < input.length()) {
-			item = input.substring(start).trim();
-			convertSqlFragToHrkElement(item, output);
+			output.append(input.substring(start));	
 		}
 
 		return output.toString().trim();
@@ -3271,9 +4407,7 @@ public class GeneralUtilityMethods {
 
 		if (in.equals("string") && !visible) {
 			out = "calculate";
-		} else if (in.equals("string") && readonly) {
-			out = "note";
-		}
+		} 
 
 		return out;
 
@@ -3287,9 +4421,7 @@ public class GeneralUtilityMethods {
 
 		String out = in;
 
-		if (in.equals("note")) {
-			out = "string";
-		} else if (in.equals("begin repeat") && name.startsWith("geopolygon")) {
+		if (in.equals("begin repeat") && name.startsWith("geopolygon")) {
 			out = "geopolygon";
 		} else if (in.equals("begin repeat") && name.startsWith("geolinestring")) {
 			out = "geolinestring";
@@ -3339,31 +4471,27 @@ public class GeneralUtilityMethods {
 	 * Check to see if there are any choices from an external file for a question
 	 */
 	public static boolean hasExternalChoices(Connection sd, int qId) throws SQLException {
-
+		
 		boolean external = false;
-		String sql = "select count(*) from option o, question q where o.l_id = q.l_id and q.q_id = ? and o.externalfile = 'true';";
 		PreparedStatement pstmt = null;
+		String sql = "select q.appearance from question q "
+				+ "where q.q_id = ? "
+				+ "and q.appearance like '%search(%'";
 
 		try {
 			pstmt = sd.prepareStatement(sql);
+				
 			pstmt.setInt(1, qId);
 			ResultSet rs = pstmt.executeQuery();
-			if (rs.next()) {
-				if (rs.getInt(1) > 0) {
-					external = true;
-				}
-			}
+			if (rs.next()) {			
+				external = true;
+			}	
 
 		} catch (SQLException e) {
 			log.log(Level.SEVERE, "Error", e);
 			throw e;
 		} finally {
-			try {
-				if (pstmt != null) {
-					pstmt.close();
-				}
-			} catch (SQLException e) {
-			}
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 		}
 
 		return external;
@@ -3374,7 +4502,9 @@ public class GeneralUtilityMethods {
 	 */
 	public static int getQuestionIdFromName(Connection sd, int sId, String name) throws SQLException {
 
-		String sql = "select q_id " + "from question q " + "where q.qname = ? "
+		String sql = "select q_id " 
+				+ "from question q " 
+				+ "where q.qname = ? "
 				+ "and q.f_id in (select f_id from form where s_id = ?)";
 
 		int qId = 0;
@@ -3389,53 +4519,235 @@ public class GeneralUtilityMethods {
 				qId = rs.getInt(1);
 			}
 
-		} catch (SQLException e) {
-			log.log(Level.SEVERE, "Error", e);
-			throw e;
 		} finally {
-			try {
-				if (pstmt != null) {
-					pstmt.close();
-				}
-			} catch (SQLException e) {
-			}
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 		}
 
 		return qId;
+	}
+	
+	/*
+	 * Convert a question name to a display name
+	 */
+	public static String getDisplayName(Connection sd, int sId, String name) throws SQLException {
+
+		String sql = "select display_name " 
+				+ "from question q " 
+				+ "where q.qname = ? "
+				+ "and q.f_id in (select f_id from form where s_id = ?)";
+
+		String display_name = null;
+		PreparedStatement pstmt = null;
+
+		try {
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setString(1, name);
+			pstmt.setInt(2, sId);
+			ResultSet rs = pstmt.executeQuery();
+			if (rs.next()) {
+				display_name = rs.getString(1);
+			} 
+
+		} finally {
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+		}
+
+		if(display_name == null) {
+			display_name = name;
+		}
+		
+		return display_name;
+	}
+	
+	/*
+	 * Convert a question id to a question name
+	 */
+	public static String getQuestionNameFromId(Connection sd, int sId, int id) throws SQLException {
+
+		String sql = "select q.qname " 
+				+ "from question q " 
+				+ "where q.q_id = ? "
+				+ "and q.f_id in (select f_id from form where s_id = ?)";
+
+		String qName = null;
+		PreparedStatement pstmt = null;
+
+		try {
+			if(id >= 0) {
+				pstmt = sd.prepareStatement(sql);
+				pstmt.setInt(1, id);
+				pstmt.setInt(2, sId);
+				ResultSet rs = pstmt.executeQuery();
+				if (rs.next()) {
+					qName = rs.getString(1);
+				}
+			} else {
+				if(id == SmapServerMeta.UPLOAD_TIME_ID) {
+					qName = SmapServerMeta.UPLOAD_TIME_NAME;
+				} else if(id == SmapServerMeta.SCHEDULED_START_ID) {
+					qName = SmapServerMeta.SCHEDULED_START_NAME;
+				} else {
+					ArrayList<MetaItem> preloads = getPreloads(sd, sId);
+					for(MetaItem mi : preloads) {
+						if(mi.id == id) {
+							qName = mi.name;
+							break;
+						}
+					}
+					
+				}
+			}
+
+		} finally {
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+		}
+
+		return qName;
 	}
 
 	/*
 	 * Check to see if there are any choices from an external file for a question
 	 */
-	public static boolean listHasExternalChoices(Connection sd, int listId) throws SQLException {
+	public static boolean listHasExternalChoices(Connection sd, int sId, int listId) throws SQLException {
 
-		boolean external = false;
-		String sql = "select count(*) from option o where o.l_id = ? and o.externalfile = 'true';";
+		boolean hasExternal = false;
+		// String sql = "select count(*) from option o where o.l_id = ? and o.externalfile = 'true';";
 		PreparedStatement pstmt = null;
-
+		String sql = "select q.appearance from question q, form f "
+				+ "where f.s_id = ? "
+				+ "and f.f_id = q.f_id "
+				+ "and q.l_id = ? "
+				+ "and q.appearance like '%search(%'";
 		try {
 			pstmt = sd.prepareStatement(sql);
-			pstmt.setInt(1, listId);
+			
+			pstmt.setInt(1, sId);
+			pstmt.setInt(2, listId);
 			ResultSet rs = pstmt.executeQuery();
-			if (rs.next()) {
-				if (rs.getInt(1) > 0) {
-					external = true;
-				}
+			if (rs.next()) {			
+				hasExternal = true;
 			}
 
 		} catch (SQLException e) {
 			log.log(Level.SEVERE, "Error", e);
 			throw e;
 		} finally {
-			try {
-				if (pstmt != null) {
-					pstmt.close();
-				}
-			} catch (SQLException e) {
-			}
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 		}
 
-		return external;
+		return hasExternal;
+	}
+	
+	/*
+	 * Get choices from an external file
+	 */
+	public static ArrayList<Option> getExternalChoices(
+			Connection sd, 
+			Connection cResults,
+			ResourceBundle localisation, 
+			String remoteUser,
+			int oId, 
+			int sId, 
+			int qId, 
+			ArrayList<String> matches,
+			String surveyIdent,
+			String tz) throws Exception {
+
+		ArrayList<Option> choices = new ArrayList<Option> ();		
+		String sql = "select q.external_table, q.l_id from question q where q.q_id = ?";
+		PreparedStatement pstmt = null;
+		
+		String sqlChoices = "select ovalue, label_id, column_name "
+				+ "from option "
+				+ "where l_id = ? "
+				+ "and not externalfile "
+				+ "and ovalue !~ '^[0-9]+$'";
+		PreparedStatement pstmtChoices = null;
+			
+		String sqlLabels = "select t.value, t.language " 
+						+ "from translation t "
+						+ "where t.text_id = ? "
+						+ "and t.type = 'none' "
+						+ "and t.s_id = ? "
+						+ "order by t.language asc";
+		PreparedStatement pstmtLabels = null;
+		
+		try {
+			String filename = null;
+			
+			pstmt = sd.prepareStatement(sql);			
+			pstmt.setInt(1, qId);
+			ResultSet rs = pstmt.executeQuery();
+			if (rs.next()) {		
+				
+				filename = rs.getString(1);
+				int l_id = rs.getInt(2);
+				
+				if(filename != null) {
+					
+					pstmtChoices = sd.prepareStatement(sqlChoices);
+					pstmtChoices.setInt(1, l_id);
+					log.info("Get choices: " + pstmtChoices.toString());
+					ResultSet rsChoices = pstmtChoices.executeQuery();
+					if(rsChoices.next()) {
+						String ovalue = rsChoices.getString(1);
+						String oLabelId = rsChoices.getString(2);
+						String oColumn = rsChoices.getString(3);
+						
+						pstmtLabels = sd.prepareCall(sqlLabels);
+						pstmtLabels.setString(1, oLabelId);
+						pstmtLabels.setInt(2,  sId);
+						log.info(pstmtLabels.toString());
+						ResultSet rsLabels = pstmtLabels.executeQuery();
+						ArrayList<LanguageItem> languageItems = new ArrayList<LanguageItem> ();
+						while(rsLabels.next()) {
+							String label = rsLabels.getString(1);
+							String language = rsLabels.getString(2);
+							languageItems.add(new LanguageItem(language, label));
+						}
+						
+						if(languageItems.size() > 0) {
+							if(filename.startsWith("linked_s")) {
+								if(filename.equals("linked_self")) {
+									filename = "linked_" + surveyIdent;
+								}
+								
+								ArrayList<String> matchCols = null; 
+								String selection = null;
+								if(matches != null && matches.size() == 1) {
+									// Match on ovalue
+									matchCols = new ArrayList<> ();
+									matchCols.add(ovalue);
+									
+									selection = oColumn + " = ?";
+								}
+								// Get data from another form
+								SurveyTableManager stm = new SurveyTableManager(sd, cResults, localisation, oId, sId, filename, remoteUser);
+								stm.initData(pstmt, "choices", null, null, selection, matches, matchCols, tz);
+								
+								Option o = null;
+								while((o = stm.getLineAsOption(ovalue, languageItems)) != null) {
+									choices.add(o);
+								}
+								
+							} else {
+								// Get data from a csv table
+								CsvTableManager csvMgr = new CsvTableManager(sd, localisation);
+								choices = csvMgr.getChoices(oId, sId, filename, ovalue, languageItems, matches);
+							}
+						}
+					}
+					
+				} 
+			}
+
+		} finally {
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+			try {if (pstmtChoices != null) {pstmtChoices.close();}} catch (SQLException e) {}
+			try {if (pstmtLabels != null) {pstmtLabels.close();}} catch (SQLException e) {}
+		}
+
+		return choices;
 	}
 
 	/*
@@ -3509,7 +4821,6 @@ public class GeneralUtilityMethods {
 
 			ResultSet rs = pstmt.executeQuery();
 			int newSeq = 0;
-			boolean inMeta = false;
 			while (rs.next()) {
 				int qId = rs.getInt(1);
 				int seq = rs.getInt(2);
@@ -3625,7 +4936,9 @@ public class GeneralUtilityMethods {
 	public static String getNameForQuestion(Connection sd, int qId) throws SQLException {
 
 		String name = null;
-		String sql = "select qname " + "from question " + "where q_id = ?";
+		String sql = "select qname "
+				+ "from question " 
+				+ "where q_id = ?";
 
 		PreparedStatement pstmt = null;
 
@@ -3637,16 +4950,8 @@ public class GeneralUtilityMethods {
 				name = rs.getString(1);
 			}
 
-		} catch (SQLException e) {
-			log.log(Level.SEVERE, "Error", e);
-			throw e;
-		} finally {
-			try {
-				if (pstmt != null) {
-					pstmt.close();
-				}
-			} catch (SQLException e) {
-			}
+		}  finally {
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 		}
 
 		return name;
@@ -3692,22 +4997,9 @@ public class GeneralUtilityMethods {
 				listId = rs.getInt(1);
 
 			}
-		} catch (SQLException e) {
-			log.log(Level.SEVERE, "Error", e);
-			throw e;
 		} finally {
-			try {
-				if (pstmtGetListId != null) {
-					pstmtGetListId.close();
-				}
-			} catch (SQLException e) {
-			}
-			try {
-				if (pstmtListName != null) {
-					pstmtListName.close();
-				}
-			} catch (SQLException e) {
-			}
+			try {if (pstmtGetListId != null) {pstmtGetListId.close();}} catch (SQLException e) {}
+			try {if (pstmtListName != null) {pstmtListName.close();}} catch (SQLException e) {}
 		}
 
 		return listId;
@@ -3715,21 +5007,26 @@ public class GeneralUtilityMethods {
 
 	/*
 	 * Get manifest parameters from appearance or calculations
+	 *  replaceSelf is set to True for embedding itemsets in webforms
 	 */
 	public static ArrayList<String> getManifestParams(Connection sd, int qId, String property, String filename,
 			boolean isAppearance, String sIdent) throws SQLException {
 		ArrayList<String> params = null;
 
 		PreparedStatement pstmt = null;
-		String sql = "SELECT o.ovalue, t.value " + "from option o, translation t, question q "
-				+ "where o.label_id = t.text_id " + "and o.l_id = q.l_id " + "and q.q_id = ? "
+		String sql = "SELECT o.ovalue, t.value " 
+				+ "from option o, translation t, question q "
+				+ "where o.label_id = t.text_id " 
+				+ "and o.l_id = q.l_id " 
+				+ "and q.q_id = ? "
 				+ "and externalfile ='false';";
 
 		try {
 			pstmt = sd.prepareStatement(sql);
 
 			// Check to see if this appearance references a manifest file
-			if (property != null && (property.contains("search(") || property.contains("pulldata("))) {
+			if (property != null && (property.contains("search(") || property.contains("pulldata(") 
+					|| property.contains("lookup(") || property.contains("lookup_choices("))) {
 				// Yes it references a manifest
 
 				int idx1 = property.indexOf('(');
@@ -3747,8 +5044,13 @@ public class GeneralUtilityMethods {
 							if (appFilename.endsWith("self")) {
 								appFilename = appFilename.replace("self", sIdent);
 							}
+							if(appFilename.startsWith("chart_s")) {
+								// Add key
+								appFilename += "_";
+								appFilename += GeneralUtilityMethods.getKeyQuestionPulldata(criteria);
+							}
 							if (filename.equals(appFilename)) { // We want this one
-								log.info("We have found a manifest link to " + filename);
+								//log.info("We have found a manifest link to " + filename);
 
 								if (isAppearance) {
 
@@ -3763,7 +5065,13 @@ public class GeneralUtilityMethods {
 											params = new ArrayList<String>();
 										}
 										params.add(rs.getString(1));
-										params.add(rs.getString(2));
+										String label = rs.getString(2);
+										if(label != null) {
+											String [] multLabels = label.split(",");
+											for(String v : multLabels) {
+												params.add(v.trim());
+											}
+										}
 									}
 								} else {
 									params = getRefQuestionsPulldata(criteria);
@@ -3776,11 +5084,7 @@ public class GeneralUtilityMethods {
 				}
 			}
 		} finally {
-			if (pstmt != null)
-				try {
-					pstmt.close();
-				} catch (Exception e) {
-				}
+			if (pstmt != null) try {pstmt.close();	} catch (Exception e) {}
 		}
 
 		return params;
@@ -3793,7 +5097,6 @@ public class GeneralUtilityMethods {
 	public static ManifestInfo addManifestFromAppearance(String appearance, String inputManifest) {
 
 		ManifestInfo mi = new ManifestInfo();
-		ArrayList<String> refQuestions = null;
 		String manifestType = null;
 
 		mi.manifest = inputManifest;
@@ -3815,15 +5118,14 @@ public class GeneralUtilityMethods {
 						String filename = criteria[0].trim();
 						filename = filename.substring(1, filename.length() - 1);
 
-						if (filename.startsWith("linked_s") || filename.startsWith("linked_s_pd_s")) { // Linked survey
-							refQuestions = getRefQuestionsSearch(criteria);
+						if (filename.startsWith("linked_s")) { // Linked survey
 							manifestType = "linked";
 						} else {
 							filename += ".csv";
 							manifestType = "csv";
 						}
 
-						updateManifest(mi, filename, refQuestions, manifestType);
+						updateManifest(mi, filename, manifestType);
 
 					}
 				}
@@ -3839,7 +5141,6 @@ public class GeneralUtilityMethods {
 	public static ManifestInfo addManifestFromCalculate(String calculate, String inputManifest) {
 
 		ManifestInfo mi = new ManifestInfo();
-		ArrayList<String> refQuestions = null;
 		String manifestType = null;
 
 		mi.manifest = inputManifest;
@@ -3866,19 +5167,18 @@ public class GeneralUtilityMethods {
 							String filename = criteria[0].trim();
 							filename = filename.substring(1, filename.length() - 1);
 
-							if (filename.startsWith("linked_s") || filename.startsWith("linked_s_pd_s")) { // Linked
-																											// survey
-								log.info(
-										"We have found a manifest link to " + filename + " calculate is: " + calculate);
-								refQuestions = getRefQuestionsSearch(criteria);
+							if (filename.startsWith("linked_s")) { // Linked
 								manifestType = "linked";
+							} else if (filename.startsWith("chart_s")) { // Linked chart type data
+								
+								manifestType = "linked";
+								filename += "_" + getKeyQuestionPulldata(criteria);		// Each key needs its own file
 							} else {
 								filename += ".csv";
 								manifestType = "csv";
-								log.info("We have found a manifest file " + filename);
 							}
 
-							updateManifest(mi, filename, refQuestions, manifestType);
+							updateManifest(mi, filename, manifestType);
 						}
 					}
 					idx1 = calculate.indexOf("pulldata(", idx2);
@@ -3893,8 +5193,7 @@ public class GeneralUtilityMethods {
 	/*
 	 * Update the manifest
 	 */
-	private static void updateManifest(ManifestInfo mi, String filename, ArrayList<String> refQuestions,
-			String manifestType) {
+	private static void updateManifest(ManifestInfo mi, String filename, String manifestType) {
 
 		String inputManifest = mi.manifest;
 		Gson gson = new GsonBuilder().disableHtmlEscaping().create();
@@ -3903,8 +5202,7 @@ public class GeneralUtilityMethods {
 		if (inputManifest == null) {
 			mArray = new ArrayList<String>();
 		} else {
-			Type type = new TypeToken<ArrayList<String>>() {
-			}.getType();
+			Type type = new TypeToken<ArrayList<String>>() {}.getType();
 			mArray = gson.fromJson(inputManifest, type);
 		}
 		if (!mArray.contains(filename)) {
@@ -3964,9 +5262,15 @@ public class GeneralUtilityMethods {
 						linked_sId = sId;
 					} else if (fileName.equals("linked_s_pd_self")) {
 						linked_sId = sId;
+					} else if (fileName.startsWith("chart_self")) {
+						linked_sId = sId;
 					} else if (fileName.startsWith("linked_s")) {
 						String ident = fileName.substring(fileName.indexOf("s"));
-						log.info("Survey Ident: " + ident);
+						log.info("Linked Survey Ident: " + ident);
+						linked_sId = getSurveyId(sd, ident);
+					} else if (fileName.startsWith("chart_s")) {
+						String ident = fileName.substring(fileName.indexOf("s"), fileName.lastIndexOf('_'));
+						log.info("Chart Survey Ident: " + ident);
 						linked_sId = getSurveyId(sd, ident);
 					}
 
@@ -4038,6 +5342,67 @@ public class GeneralUtilityMethods {
 		}
 		return refQuestions;
 	}
+	
+	/*
+	 * Get the question that is used as a key in a pulldata chart function embedded in a calculate
+	 */
+	private static String getKeyQuestionCalculate(String calculate) {
+		
+		String key = null;
+		
+		if (calculate != null && calculate.toLowerCase().trim().contains("pulldata(")) {
+
+			// Yes it references a manifest
+			// Get first pulldata functions from this calculate - Assume only one pulldata containing time series
+
+			int idx1 = calculate.indexOf("pulldata");
+			while (idx1 >= 0) {
+				idx1 = calculate.indexOf('(', idx1);
+				int idx2 = calculate.indexOf(')', idx1);
+				if (idx1 >= 0 && idx2 > idx1) {
+					String criteriaString = calculate.substring(idx1 + 1, idx2);
+
+					String criteria[] = criteriaString.split(",");
+
+					if (criteria.length > 0) {
+
+						if (criteria[0] != null && criteria[0].length() > 2) { // allow for quotes
+							String filename = criteria[0].trim();
+							filename = filename.substring(1, filename.length() - 1);
+
+							if (filename.startsWith("chart_s")) { // Linked chart type data
+								
+								key = getKeyQuestionPulldata(criteria);		// Each key needs its own file
+								break;
+							}
+						}
+					}
+					idx1 = calculate.indexOf("pulldata(", idx2);
+				}
+			}
+		}
+		return key;
+	}
+	
+	/*
+	 * Get the question that is used as a key when retrieving data for charts
+	 */
+	private static String getKeyQuestionPulldata(String[] params) {
+		String param = null;
+
+		/*
+		 * pulldata('chart_self', 'data_column', 'key_column', keyvalue)
+		 * The key column is the thid one
+		 * 
+		 */
+		if (params.length > 2) {
+			param = params[2].trim();
+			param = param.substring(1, param.length() - 1); // Remove quotes
+		}
+	
+		return param;
+	}
+
 
 	/*
 	 * Get the questions referenced by a pulldata function in a linked survey
@@ -4216,19 +5581,75 @@ public class GeneralUtilityMethods {
 		} catch (Exception e) {
 			log.log(Level.SEVERE, "Exception", e);
 		} finally {
+			try {	if (pstmt != null) {	pstmt.close();}} catch (Exception e) {}
+		}
 
+		return table;
+	}
+	
+	/*
+	 * Get the main results table for a survey using the survey ident as a key if it exists
+	 */
+	public static String getMainResultsTableSurveyIdent(Connection sd, Connection conn, String sIdent) {
+		String table = null;
+
+		String sql = "select table_name from form "
+				+ "where s_id  = (select s_id from survey where ident = ?) "
+				+ "and parentform = 0";
+		PreparedStatement pstmt = null;
+
+		try {
+
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setString(1, sIdent);
+
+			log.info("Get main table: " + pstmt.toString());
+			ResultSet rs = pstmt.executeQuery();
+			if (rs.next()) {
+				String table_name = rs.getString(1);
+				if (tableExists(conn, table_name)) {
+					table = table_name;
+				}
+			}
+
+		} catch (Exception e) {
+			log.log(Level.SEVERE, "Exception", e);
+		} finally {
+			try {	if (pstmt != null) {	pstmt.close();}} catch (Exception e) {}
+		}
+
+		return table;
+	}
+
+	/*
+	 * Check for the existence of a table for a subform identified by its parent question
+	 */
+	public static boolean subFormTableExists(Connection sd, Connection cResults, int qId) throws SQLException {
+
+		String sql = "select table_name from form where parentquestion = ?";
+		PreparedStatement pstmt = null;
+		boolean tableExists = false;
+
+		try {
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setInt(1, qId);
+
+			ResultSet rs = pstmt.executeQuery();
+			log.info(pstmt.toString());
+			if (rs.next()) {
+				tableExists = tableExists(cResults, rs.getString(1));
+			}
+		} finally {
 			try {
 				if (pstmt != null) {
 					pstmt.close();
 				}
 			} catch (SQLException e) {
 			}
-
 		}
-
-		return table;
+		return tableExists;
 	}
-
+	
 	/*
 	 * Check for the existence of a table
 	 */
@@ -4240,7 +5661,36 @@ public class GeneralUtilityMethods {
 
 		try {
 			pstmt = conn.prepareStatement(sqlTableExists);
+			pstmt.setString(1, tableName.toLowerCase());
+
+			ResultSet rs = pstmt.executeQuery();
+			if (rs.next()) {
+				count = rs.getInt(1);
+			}
+		} finally {
+			try {
+				if (pstmt != null) {
+					pstmt.close();
+				}
+			} catch (SQLException e) {
+			}
+		}
+		return (count > 0);
+	}
+	
+	/*
+	 * Check for the existence of a table in a specific schema
+	 */
+	public static boolean tableExistsInSchema(Connection conn, String tableName, String schema) throws SQLException {
+
+		String sqlTableExists = "select count(*) from information_schema.tables where table_name = ? and table_schema = ?";
+		PreparedStatement pstmt = null;
+		int count = 0;
+
+		try {
+			pstmt = conn.prepareStatement(sqlTableExists);
 			pstmt.setString(1, tableName);
+			pstmt.setString(2, schema);
 
 			ResultSet rs = pstmt.executeQuery();
 			if (rs.next()) {
@@ -4273,7 +5723,133 @@ public class GeneralUtilityMethods {
 			pstmt = cRel.prepareStatement(sql);
 			pstmt.setString(1, tablename);
 			pstmt.setString(2, columnName);
-			log.info("SQL: " + pstmt.toString());
+
+			ResultSet rs = pstmt.executeQuery();
+			if (rs.next()) {
+				hasColumn = true;
+			}
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			try {if (pstmt != null) {pstmt.close();}} catch (Exception e) {}
+		}
+
+		return hasColumn;
+	}
+	
+	/*
+	 * Method to add a column to a table
+	 */
+	public static void addColumn(Connection conn, String tablename, String columnName, String type) throws SQLException {
+
+		String sql = "alter table " + tablename + " add column " + columnName + " " + type;
+
+		PreparedStatement pstmt = conn.prepareStatement(sql);
+		log.info("Adding column: " + pstmt.toString());
+		try {
+			pstmt.executeUpdate();
+		} catch (Exception e) {
+			String msg = e.getMessage();
+			if(msg.contains("already exists")) {
+				log.info("Column already exists");
+			} else {
+				throw e;
+			}
+		} finally {
+			try {if (pstmt != null) {pstmt.close();}} catch (Exception e) {}
+		}
+	}
+	
+	/*
+	 * Method to lock a record out to a user
+	 */
+	public static int lockRecord(Connection conn, String tablename, String instanceId, String user) throws SQLException {
+
+		int count = 0;
+		
+		String sql = "update " + tablename + " set _assigned = ? "
+				+ "where instanceid = ? "
+				+ "and _assigned is null";
+
+		PreparedStatement pstmt = conn.prepareStatement(sql);
+		pstmt.setString(1, user);
+		pstmt.setString(2,instanceId);
+		log.info("locking record: " + pstmt.toString());
+		try {
+			count = pstmt.executeUpdate();
+		} finally {
+			try {if (pstmt != null) {pstmt.close();}} catch (Exception e) {}
+		}
+		
+		return count;
+	}
+	
+	/*
+	 * Method to assign a record to a user
+	 */
+	public static int assignRecord(Connection conn, String tablename, String instanceId, String user) throws SQLException {
+
+		int count = 0;
+		
+		String sql = "update " + tablename + " set _assigned = ? "
+				+ "where instanceid = ? ";
+
+		PreparedStatement pstmt = conn.prepareStatement(sql);
+		pstmt.setString(1, user);
+		pstmt.setString(2,instanceId);
+		log.info("locking record: " + pstmt.toString());
+		try {
+			count = pstmt.executeUpdate();
+		} finally {
+			try {if (pstmt != null) {pstmt.close();}} catch (Exception e) {}
+		}
+		
+		return count;
+	}
+	
+	/*
+	 * Method to release a record 
+	 */
+	public static int releaseRecord(Connection conn, String tablename, String instanceId, String user) throws SQLException {
+
+		int count = 0;
+		String sql = "update " + tablename + " set _assigned = null "
+				+ "where instanceid = ? "
+				+ "and _assigned = ?";
+
+		PreparedStatement pstmt = conn.prepareStatement(sql);
+		pstmt.setString(1, instanceId);
+		pstmt.setString(2,user);
+		log.info("locking record: " + pstmt.toString());
+		try {
+			count = pstmt.executeUpdate();
+		} finally {
+			try {if (pstmt != null) {pstmt.close();}} catch (Exception e) {}
+		}
+		
+		return count;
+		
+	}
+	
+	/*
+	 * Method to check for presence of the specified column in a specific schema
+	 */
+	public static boolean hasColumnInSchema(Connection cRel, String tablename, String columnName, String schema) {
+
+		boolean hasColumn = false;
+
+		String sql = "select column_name " + "from information_schema.columns "
+				+ "where table_name = ? and table_schema = ? and column_name = ?;";
+
+		PreparedStatement pstmt = null;
+
+		try {
+			pstmt = cRel.prepareStatement(sql);
+			pstmt.setString(1, tablename);
+			pstmt.setString(2, schema);
+			pstmt.setString(3, columnName);
+			//log.info("SQL: " + pstmt.toString());
 
 			ResultSet rs = pstmt.executeQuery();
 			if (rs.next()) {
@@ -4293,6 +5869,43 @@ public class GeneralUtilityMethods {
 
 		return hasColumn;
 	}
+	
+	/*
+	 * Get the columns from a table in a specific schema
+	 */
+	public static ArrayList<String> getColumnsInSchema(Connection cRel, String tablename, String schema) {
+
+		ArrayList<String> cols = new ArrayList<String> ();
+		
+		String sql = "select column_name from information_schema.columns "
+				+ "where table_name = ? and table_schema = ?;";
+		PreparedStatement pstmt = null;
+
+		try {
+			pstmt = cRel.prepareStatement(sql);
+			pstmt.setString(1, tablename);
+			pstmt.setString(2, schema);
+			//log.info("SQL: " + pstmt.toString());
+
+			ResultSet rs = pstmt.executeQuery();
+			while (rs.next()) {
+				cols.add(rs.getString(1));
+			}
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			try {
+				if (pstmt != null) {
+					pstmt.close();
+				}
+			} catch (Exception e) {
+			}
+		}
+
+		return cols;
+	}
+
 
 	/*
 	 * Get the table that contains a question name If there is a duplicate question
@@ -4344,7 +5957,12 @@ public class GeneralUtilityMethods {
 
 		Form f = new Form();
 
-		String sql = "select  " + "f_id," + "table_name " + "from form " + "where s_id = ? " + "and parentform = 0;";
+		String sql = "select  " 
+				+ "f_id," 
+				+ "table_name "
+				+ "from form "
+				+ "where s_id = ? "
+				+ "and parentform = 0;";
 		PreparedStatement pstmt = null;
 
 		try {
@@ -4521,12 +6139,14 @@ public class GeneralUtilityMethods {
 	public static boolean isLanguage(String s, int start, int end) {
 
 		// Check a maximum of 10 characters
-		int len = (s.length() > 10) ? 10 : s.length();
-		for (int i = 0; i < len;) {
-			int c = s.codePointAt(i);
-			if (c >= start && c <= end)
-				return true;
-			i += Character.charCount(c);
+		if(s != null) {
+			int len = (s.length() > 10) ? 10 : s.length();
+			for (int i = 0; i < len;) {
+				int c = s.codePointAt(i);
+				if (c >= start && c <= end)
+					return true;
+				i += Character.charCount(c);
+			}
 		}
 		return false;
 
@@ -4575,48 +6195,17 @@ public class GeneralUtilityMethods {
 	 */
 	public static String getSurveyRBAC() {
 		return "and ((s.s_id not in (select s_id from survey_role where enabled = true)) or " // No roles on survey
-				+ "(s.s_id in (select s_id from users u, user_role ur, survey_role sr where u.ident = ? and sr.enabled = true and u.id = ur.u_id and ur.r_id = sr.r_id)) " // User
-																																											// also
-																																											// has
-																																											// role
+				+ "(s.s_id in (select s_id from users u, user_role ur, survey_role sr where u.ident = ? and sr.enabled = true and u.id = ur.u_id and ur.r_id = sr.r_id)) " // User also has role
 				+ ") ";
 	}
-
+	
 	/*
-	 * Return true if the question column name is in the survey
+	 * Return the SQL that does survey level Role Based Access Control (modified for use with upload event)
 	 */
-	public static boolean surveyHasColumn(Connection sd, int sId, String columnName) throws SQLException {
-
-		boolean hasQuestion = false;
-
-		String sql = "select count(*) from question q " + "where q.f_id in (select f_id from form where s_id = ?) "
-				+ "and q.column_name = ? ";
-
-		PreparedStatement pstmt = null;
-
-		try {
-			pstmt = sd.prepareStatement(sql);
-			pstmt.setInt(1, sId);
-			pstmt.setString(2, columnName);
-
-			ResultSet rs = pstmt.executeQuery();
-			if (rs.next()) {
-				hasQuestion = (rs.getInt(1) > 0);
-			}
-
-		} catch (SQLException e) {
-			log.log(Level.SEVERE, "Error", e);
-			throw e;
-		} finally {
-			try {
-				if (pstmt != null) {
-					pstmt.close();
-				}
-			} catch (SQLException e) {
-			}
-		}
-
-		return hasQuestion;
+	public static String getSurveyRBACUploadEvent() {
+		return "((ue.s_id not in (select s_id from survey_role where enabled = true)) or " // No roles on survey
+				+ "(ue.s_id in (select s_id from users u, user_role ur, survey_role sr where u.ident = ? and sr.enabled = true and u.id = ur.u_id and ur.r_id = sr.r_id)) " // User also has role
+				+ ") ";
 	}
 
 	/*
@@ -4639,17 +6228,43 @@ public class GeneralUtilityMethods {
 
 	/*
 	 * Set the time on a java date to 23:59 and convert to a Timestamp
+	 * Use the passed in timezone as the basis for determining hour
 	 */
-	// Set the time on a date to 23:59
-	public static Timestamp endOfDay(Date d) {
-
-		Calendar cal = Calendar.getInstance();
+	public static Timestamp endOfDay(Date d, String tz) {
+		
+		Calendar cal = new GregorianCalendar();
 		cal.setTime(d);
 		cal.set(Calendar.HOUR_OF_DAY, 23);
 		cal.set(Calendar.MINUTE, 59);
+		
+		TimeZone timeZone = TimeZone.getTimeZone(tz);
+		int offsetFromUTC = timeZone.getOffset(d.getTime());
+		cal.add(Calendar.MILLISECOND, -offsetFromUTC);
+		
 		Timestamp endOfDay = new Timestamp(cal.getTime().getTime());
 
 		return endOfDay;
+	}
+	
+	/*
+	 * Set the time on a java date to 00:00 and convert to a Timestamp
+	 * Use the passed in timezone as the basis for determining hour
+	 */
+	public static Timestamp startOfDay(Date d, String tz) {
+
+		Calendar cal = new GregorianCalendar();
+		cal.setTime(d);
+		cal.set(Calendar.HOUR_OF_DAY, 0);
+		cal.set(Calendar.MINUTE, 0);
+		
+		TimeZone timeZone = TimeZone.getTimeZone(tz);
+		int offsetFromUTC = timeZone.getOffset(d.getTime());
+		
+		// Subtract the offset between the tz and UTC in order to get the UTC time of the calendar value assuming it is in the specified timezone
+		cal.add(Calendar.MILLISECOND, -offsetFromUTC);
+		Timestamp startOfDay = new Timestamp(cal.getTime().getTime());
+
+		return startOfDay;
 	}
 
 	/*
@@ -4777,20 +6392,6 @@ public class GeneralUtilityMethods {
 	}
 
 	/*
-	 * Return true if the appearance value indicates that there are external choices
-	 * in this question
-	 */
-	public static boolean isExternalChoices(String appearance) {
-		boolean external = false;
-
-		if (appearance != null && appearance.toLowerCase().trim().contains("search(")) {
-			external = true;
-		}
-
-		return external;
-	}
-
-	/*
 	 * Get the search question from appearance Used when converting searches into
 	 * cascading selects
 	 */
@@ -4815,6 +6416,42 @@ public class GeneralUtilityMethods {
 
 		return filterQuestion;
 	}
+	
+	/*
+	 * Get the first question that uses the specified list and that is in the specified survey
+	 */
+	public static int getQuestionFromList(Connection sd, int sId, int listId) throws SQLException {
+
+		int qId = 0;
+
+		String sql = "select q.q_id from question q, form f "
+				+ "where q.f_id = f.f_id "
+				+ "and f.s_id = ? "
+				+ "and q.l_id = ? ";
+
+		PreparedStatement pstmt = null;
+
+		try {
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setInt(1, sId);
+			pstmt.setInt(2, listId);
+
+			ResultSet rs = pstmt.executeQuery();
+			if (rs.next()) {
+				qId = rs.getInt(1);
+			}
+
+		} catch (SQLException e) {
+			log.log(Level.SEVERE, "Error", e);
+			throw e;
+		} finally {
+			try {if (pstmt != null) {pstmt.close();}	} catch (SQLException e) {
+			}
+		}
+
+		return qId;
+	}
+
 
 	/*
 	 * Get centroid of geoJson Used when converting searches into cascading selects
@@ -4855,6 +6492,11 @@ public class GeneralUtilityMethods {
 		String resp = in;
 		resp = resp.replaceAll("linked_self", "linked_" + sIdent);
 		resp = resp.replaceAll("linked_s_pd_self", "linked_s_pd_" + sIdent);
+		resp = resp.replaceAll("chart_self", "chart_" + sIdent);
+		String key = getKeyQuestionCalculate(in);
+		if(key != null) {
+			resp = resp.replaceAll("chart_" + sIdent, "chart_" + sIdent + "_" + key);
+		}
 
 		return resp;
 	}
@@ -4880,9 +6522,9 @@ public class GeneralUtilityMethods {
 	/*
 	 * Get zip output stream
 	 */
-	public static void writeFilesToZipOutputStream(HttpServletResponse response, ArrayList<FileDescription> files)
+	public static void writeFilesToZipOutputStream(ZipOutputStream zos, ArrayList<FileDescription> files)
 			throws IOException {
-		ZipOutputStream zos = new ZipOutputStream(response.getOutputStream());
+		
 		byte[] buffer = new byte[1024];
 		for (int i = 0; i < files.size(); i++) {
 			FileDescription file = files.get(i);
@@ -4900,42 +6542,59 @@ public class GeneralUtilityMethods {
 		}
 		zos.close();
 	}
+	
+	/*
+	 * Write a directory to a Zip output stream
+	 */
+	public static void writeDirToZipOutputStream(ZipOutputStream zos, File dir)
+			throws IOException {
+		
+		byte[] buffer = new byte[1024];
+		
+		for (File file : dir.listFiles()) {
+			ZipEntry ze = new ZipEntry(file.getName());
+			zos.putNextEntry(ze);
+			FileInputStream in = new FileInputStream(file);
 
-	public static boolean testFilter(Connection cResults, ResourceBundle localisation, Survey survey, String filter, String instanceId) throws Exception {
-		
+			int len;
+			while ((len = in.read(buffer)) > 0) {
+				zos.write(buffer, 0, len);
+			}
+
+			in.close();
+			zos.closeEntry();
+		}
+		zos.close();
+	}
+
+	/*
+	 * Check to see if the passed in survey response, identified by an instance id, is within the filtered set of responses
+	 */
+	public static boolean testFilter(Connection cResults, ResourceBundle localisation, Survey survey, String filter, String instanceId, String tz) throws Exception {
+
 		boolean testResult = false;
-		
+
 		StringBuffer filterQuery = new StringBuffer("select count(*) from ");
 		filterQuery.append(getTableOuterJoin(survey.forms, 0, null));
 		filterQuery.append(" where ");
 		filterQuery.append(getMainTable(survey.forms));
 		filterQuery.append(".instanceid = ?");
-		
+
 		// Add the filter
 		filterQuery.append(" and (");
 		SqlFrag frag = new SqlFrag();
-		frag.addSqlFragment(filter, localisation, false);
+		frag.addSqlFragment(filter, false, localisation);
 		filterQuery.append(frag.sql);
 		filterQuery.append(")");
-		
+
 		PreparedStatement pstmt = null;
 		try {
 			pstmt = cResults.prepareStatement(filterQuery.toString());
 			pstmt.setString(1, instanceId);
-			
+
 			int idx = 2;
-			for(SqlFragParam p : frag.params) {
-				if(p.type.equals("text")) {
-					pstmt.setString(idx++,  p.sValue);
-				} else if(p.type.equals("integer")) {
-					pstmt.setInt(idx++,  p.iValue);
-				} else if(p.type.equals("double")) {
-					pstmt.setDouble(idx++,  p.dValue);
-				} else {
-					throw new Exception("Unknown parameter type: " + p.type);
-				}
-			}
-			
+			idx = GeneralUtilityMethods.setFragParams(pstmt, frag, idx, tz);
+
 			log.info("Evaluate Filter: " + pstmt.toString());
 			ResultSet rs = pstmt.executeQuery();
 			if(rs.next()) {
@@ -4943,15 +6602,50 @@ public class GeneralUtilityMethods {
 					testResult = true;
 				}
 			}
-	
+
 		} catch(Exception e) { 
 			throw new Exception(e);
 		} finally {
 			if(pstmt != null) try {pstmt.close();} catch(Exception e) {}
 		}
-		
-		System.out.println(" Test Result:  " + testResult);
+
 		return testResult;
+	}
+
+	/*
+	 * Return SQL that can be used to filter out records not matching a filter
+	 */
+	public static String getFilterCheck(Connection cResults, ResourceBundle localisation, Survey survey, String filter, String tz) throws Exception {
+
+		String resp = null;
+
+		StringBuffer filterQuery = new StringBuffer("(select ");
+		filterQuery.append(getMainTable(survey.forms));
+		filterQuery.append(".instanceid from ");		
+		filterQuery.append(getTableOuterJoin(survey.forms, 0, null));
+		filterQuery.append(" where (");		
+
+		// Add the filter
+		SqlFrag frag = new SqlFrag();
+		frag.addSqlFragment(filter, false, localisation);
+		filterQuery.append(frag.sql);
+		filterQuery.append("))");
+
+		PreparedStatement pstmt = null;
+		try {
+			pstmt = cResults.prepareStatement(filterQuery.toString());
+			int idx = 1;
+			idx = GeneralUtilityMethods.setFragParams(pstmt, frag, idx, tz);
+
+			resp = pstmt.toString();
+
+		} finally {
+			if(pstmt != null) try {pstmt.close();} catch(Exception e) {}
+		}
+
+		log.info("Filter check sql: " + resp);
+
+		return resp;
 	}
 
 	/*
@@ -4970,9 +6664,9 @@ public class GeneralUtilityMethods {
 	 */
 	private static String getTableOuterJoin(ArrayList<Form> forms, int parent, String parentTableName) {
 		StringBuffer out = new StringBuffer("");
-		
+
 		for (Form f : forms) {
-			if(f.parentform == parent) {
+			if(f.parentform == parent && !f.reference) {
 				if(parent != 0) {
 					out.append(" left outer join ");
 				}
@@ -4988,7 +6682,1711 @@ public class GeneralUtilityMethods {
 				out.append(getTableOuterJoin(forms, f.id, f.tableName));
 			}
 		}
-	
+
 		return out.toString();
 	}
+
+	/*
+	 * Set the parameters for an array of sql fragments
+	 */
+	public static int setArrayFragParams(PreparedStatement pstmt, ArrayList<SqlFrag> rfArray, int index, String tz) throws Exception {
+		for(SqlFrag rf : rfArray) {
+			index = setFragParams(pstmt, rf, index, tz);
+		}
+		return index;
+	}
+
+	/*
+	 * Set the parameters for an array of sql fragments
+	 */
+	public static int setFragParams(PreparedStatement pstmt, SqlFrag frag, int index, String tz) throws Exception {
+		int attribIdx = index;
+		for(int i = 0; i < frag.params.size(); i++) {
+			SqlFragParam p = frag.params.get(i);
+			if(p.getType().equals("text")) {
+				pstmt.setString(attribIdx++, p.sValue);
+			} else if(p.getType().equals("integer")) {
+				pstmt.setInt(attribIdx++,  p.iValue);
+			} else if(p.getType().equals("double")) {
+				pstmt.setDouble(attribIdx++,  p.dValue);
+			} else if(p.getType().equals("date")) {
+				pstmt.setTimestamp(attribIdx++,  startOfDay(java.sql.Date.valueOf(p.sValue), tz));
+			} else {
+				throw new Exception("Unknown parameter type: " + p.getType());
+			}
+		}
+		return attribIdx;
+	}
+
+	/*
+	 * Return true if document synchronisation is enabled on this server
+	 */
+	public static boolean documentSyncEnabled(Connection sd) throws SQLException {
+
+		boolean enabled = false;
+		String sql = "select document_sync from server;";
+		PreparedStatement pstmt = null;
+
+		try {
+			pstmt = sd.prepareStatement(sql);
+			ResultSet rs = pstmt.executeQuery();
+			if(rs.next())  {
+				enabled = rs.getBoolean(1);
+			}
+
+		} finally {
+			if(pstmt != null) try {pstmt.close();} catch(Exception e) {}
+		}
+
+		return enabled;
+	}
+
+	/*
+	 * Get document server configuration
+	 */
+	public static HashMap<String, String> docServerConfig(Connection sd) throws SQLException {
+
+		HashMap<String, String> config = new HashMap<> ();
+		String sql = "select doc_server, doc_server_user, doc_server_password from server;";
+		PreparedStatement pstmt = null;
+
+		try {
+			pstmt = sd.prepareStatement(sql);
+			ResultSet rs = pstmt.executeQuery();
+			if(rs.next())  {
+				config.put("server", rs.getString(1));
+				config.put("user", rs.getString(2));
+				config.put("password", rs.getString(3));
+			}
+
+		} finally {
+			if(pstmt != null) try {pstmt.close();} catch(Exception e) {}
+		}
+
+		return config;
+	}
+
+	/*
+	 * Record the fact that a user has downloaded a form
+	 */
+	public static void recordFormDownload(Connection sd, String user, String formIdent, int version, String deviceId) throws SQLException {
+
+		String sqlDel = "delete from form_downloads where u_id = ? and form_ident = ? and device_id = ?";
+		PreparedStatement pstmtDel = null;
+
+		String sql = "insert into form_downloads(u_id, form_ident, form_version, device_id, updated_time) "
+				+ "values(?, ?, ?, ?, now())";
+		PreparedStatement pstmt = null;
+
+		try {
+			int uId = getUserId(sd, user);
+
+			pstmtDel = sd.prepareStatement(sqlDel);
+			pstmtDel.setInt(1, uId);
+			pstmtDel.setString(2, formIdent);
+			pstmtDel.setString(3, deviceId);
+			pstmtDel.executeUpdate();
+
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setInt(1, uId);
+			pstmt.setString(2, formIdent);
+			pstmt.setInt(3, version);
+			pstmt.setString(4, deviceId);
+			pstmt.executeUpdate();	
+
+		} finally {
+			if(pstmt != null) try {pstmt.close();} catch(Exception e) {}
+		}
+
+	}
+
+	/*
+	 * Convert Parameters to Key Value array
+	 */
+	public static ArrayList<KeyValueSimp> convertParametersToArray(String in) {
+		ArrayList<KeyValueSimp> out = new ArrayList<> ();
+
+		if(in != null) {
+			String params = removeSurroundingWhiteSpace(in, '=');
+			params = params.replace('\n', ' ');	// replace new lines with spaces
+			params = params.replace('\r', ' ');	// replace carriage returns with spaces
+
+			String[] pArray = params.split(";");
+			if(pArray.length == 1) {
+				pArray = params.split(" ");		// Temporary fallback to splitting on white space
+			}
+			for(int i = 0; i < pArray.length; i++) {
+				String[] px = pArray[i].split("=");
+				if(px.length == 2) {
+					out.add(new KeyValueSimp(px[0].trim(), px[1].trim()));
+				}
+			}
+		}
+		
+		return out;
+	}
+	
+	/*
+	 * Convert Parameters to a String
+	 */
+	public static String convertParametersToString(ArrayList<KeyValueSimp> in) {
+		
+		String params = null;
+		StringBuffer out = new StringBuffer();;
+		if(in != null && in.size() > 0) {
+			
+			int idx = 0;
+			for(KeyValueSimp kv : in) {
+				if(idx++ > 0) {
+					out.append(";");
+				}
+				out.append(kv.k).append("=").append(kv.v);
+			}
+			params = out.toString();
+		}
+		
+		return params;
+	}
+	
+	/*
+	 * Remove any white space surrounding a character
+	 */
+	public static String removeSurroundingWhiteSpace(String in, char c) {
+		StringBuffer out = new StringBuffer("");
+
+		if(in != null) {
+			boolean validLocn = false;
+			boolean foundChar = false;
+			for(int i = 0; i < in.length(); i++) {
+
+				if(in.charAt(i) != ' ') {
+					out.append(in.charAt(i));
+				}
+
+				// Determine if the location is valid for a space
+				// a. After the character has been found and after some text
+				if(in.charAt(i) == '=') {
+					foundChar = true;
+				}
+				if(foundChar && in.charAt(i) != c && in.charAt(i) != ' ') {
+					validLocn = true;
+					foundChar = false;
+				}
+
+				// only add a space when the location is valid for a space
+				if(in.charAt(i) == ' ' && validLocn) {
+					out.append(' ');
+					validLocn = false;
+				}
+
+			}
+		}
+
+		return out.toString();
+	}
+
+	/*
+	 * Make sure there is white space around a character
+	 * Don't make a change if the character is within single quotes
+	 */
+	public static String addSurroundingWhiteSpace(String in, char [] cArray) {
+		StringBuffer out = new StringBuffer("");
+
+		if(in != null) {
+			int quoteCount = 0;
+
+			for(int i = 0; i < in.length(); i++) {
+
+				if(in.charAt(i) == '\'') {
+					quoteCount++;
+				}
+
+				boolean charInList = false;
+				for(int j = 0; j < cArray.length; j++) {
+					if(in.charAt(i) == cArray[j]) {
+						if((i < in.length() - 1) && in.charAt(i+1) == '=' && (in.charAt(i) == '<' || in.charAt(i) == '>')) {
+							charInList = false;
+						} else if(i > 0 && in.charAt(i) == '=' && (in.charAt(i-1) == '<' || in.charAt(i-1) == '>')) {
+							charInList = false;
+						} else if(i > 0 && in.charAt(i) == '=' && in.charAt(i-1) == '!' ) {
+							charInList = false;
+						} else if(i < in.length() - 1 && in.charAt(i) == '(' && in.charAt(i+1) == ')') {
+							charInList = false;
+						} else if(i > 0 && in.charAt(i) == ')' && in.charAt(i-1) == '(' ) {
+							charInList = false;
+						} else {
+							charInList = true;
+						}
+						break;
+					}
+				}
+				if(charInList && quoteCount%2 == 0) {
+					if(i > 0 && in.charAt(i-1) != ' ') {
+						out.append(' ');
+					}
+					out.append(in.charAt(i));
+					if(i < in.length() - 1 && in.charAt(i+1) != ' ') {
+						out.append(' ');
+					}
+				} else {
+					out.append(in.charAt(i));
+				}
+			}
+		}
+
+		return out.toString();
+	}
+
+	/*
+	 * Make sure there is white space around a String of characters
+	 * Don't make a change if the character is within single quotes
+	 */
+	public static String addSurroundingWhiteSpace(String in, String [] token) {
+		StringBuffer out = new StringBuffer("");
+
+		if(in != null) {
+			int quoteCount = 0;
+
+			for(int i = 0; i < in.length(); i++) {
+
+				if(in.charAt(i) == '\'') {
+					quoteCount++;
+				}
+
+				int tokenIndex = -1;
+				for(int j = 0; j < token.length; j++) {
+					if(in.substring(i).startsWith(token[j])) {				
+						tokenIndex = j;
+						break;
+					}
+				}
+
+				if(tokenIndex >= 0 && quoteCount%2 == 0) {
+					if(i > 0 && in.charAt(i-1) != ' ') {
+						out.append(' ');
+					}
+					out.append(token[tokenIndex]);
+					i += token[tokenIndex].length() - 1;		// i will be incremented again next time round the loop
+					if(i + 1 < in.length() && in.charAt(i+2) != ' ') {
+						out.append(' ');
+					}
+				} else {
+					out.append(in.charAt(i));
+				}
+			}
+		}
+
+		return out.toString();
+	}
+
+	/*
+	 * Get an array of question names from a string that contains xls names
+	 */
+	public static ArrayList<String> getXlsNames(
+			String input) throws Exception {
+
+		ArrayList<String> output = new ArrayList<> (); 
+
+		if(input != null) {
+			Pattern pattern = Pattern.compile("\\$\\{.+?\\}");
+			java.util.regex.Matcher matcher = pattern.matcher(input);
+
+			while (matcher.find()) {
+
+				String matched = matcher.group();
+				String qname = matched.substring(2, matched.length() - 1);
+				output.add(qname);
+			}
+		}
+
+		return output;
+	}
+
+	/*
+	 * Remove leading or trailing whitespace around question names
+	 */
+	public static String cleanXlsNames(
+			String input)  {
+
+		StringBuffer output = new StringBuffer(""); 
+
+		if(input != null) {
+			Pattern pattern = Pattern.compile("\\$\\{.+?\\}");
+			java.util.regex.Matcher matcher = pattern.matcher(input);
+
+			int start = 0;
+			while (matcher.find()) {
+
+				// Add any text before the match
+				int startOfGroup = matcher.start();
+				output.append(input.substring(start, startOfGroup));
+				
+				String matched = matcher.group();
+				String qname = matched.substring(2, matched.length() - 1).trim();
+				output.append("${").append(qname).append("}");
+				
+				// Reset the start
+				start = matcher.end();
+			}
+			
+			// Get the remainder of the string
+			if (start < input.length()) {
+				output.append(input.substring(start));
+			}
+		}
+
+		if(output.length() > 0) {
+			return output.toString().trim();
+		} else {
+			return null;
+		}
+	}
+
+	/*
+	 * Return true if this is a meta question
+	 */
+	public static boolean isMetaQuestion(String name) {
+		boolean meta = false;
+
+		name = name.toLowerCase();
+
+		if(name.equals("instanceid")) {
+			meta = true;
+		} else if(name.equals("instancename")) {
+			meta = true;
+		} else if(name.equals("meta")) {
+			meta = true;
+		} else if(name.equals("meta_groupend")) {
+			meta = true;
+		}
+
+		return meta;
+
+	}
+
+	/*
+	 * Get a preload item from the type
+	 * If this is not a preload return null
+	 */
+	public static MetaItem getPreloadItem(String type, String name, String display_name, int metaItem, String settings) throws Exception {
+
+		MetaItem item = null;
+
+		if(type.equals("start")) {
+			item = new MetaItem(metaItem, "dateTime", name, type, cleanName(name, true, true, false), "timestamp", true, display_name, settings);
+		} else if(type.equals("end")) {
+			item = new MetaItem(metaItem, "dateTime", name, type, cleanName(name, true, true, false), "timestamp", true, display_name, settings);
+		} else if(type.equals("today")) {
+			item = new MetaItem(metaItem, "date", name, type, cleanName(name, true, true, false), "date", true, display_name, settings);
+		} else if(type.equals("deviceid")) {
+			item = new MetaItem(metaItem, "string", name, type, cleanName(name, true, true, false), "property", true, display_name, settings);
+		} else if(type.equals("subscriberid")) {
+			item = new MetaItem(metaItem, "string", name, type, cleanName(name, true, true, false), "property", true, display_name, settings);
+		} else if(type.equals("simserial")) {
+			item = new MetaItem(metaItem, "string", name, type, cleanName(name, true, true, false), "property", true, display_name, settings);
+		} else if(type.equals("phonenumber")) {
+			item = new MetaItem(metaItem, "string", name, type, cleanName(name, true, true, false), "property", true, display_name, settings);
+		} else if(type.equals("username")) {
+			item = new MetaItem(metaItem, "string", name, type, cleanName(name, true, true, false), "property", true, display_name, settings);
+		} else if(type.equals("email")) {
+			item = new MetaItem(metaItem, "string", name, type, cleanName(name, true, true, false), "property", true, display_name, settings);
+		} 
+
+		return item;
+
+	}
+	
+	public static String getPreloadColumnName(Connection sd, int sId, int preloadId) throws SQLException {
+		String colname = null;
+		ArrayList<MetaItem> preloads = getPreloads(sd, sId);
+		for(MetaItem item : preloads) {
+			if(item.id == preloadId) {
+				colname = item.columnName;
+				break;
+			}
+		}
+		return colname;
+	}
+
+	/*
+	 * Get preloads in a survey
+	 */
+	public static void setPreloads(Connection sd, int sId, ArrayList<MetaItem> preloads) throws SQLException {
+
+		String sql = "update survey "
+				+ "set meta = ? "
+				+ "where s_id = ?";
+		PreparedStatement pstmt = null;
+
+		Gson gson = new GsonBuilder().disableHtmlEscaping().create();
+		String metaString = gson.toJson(preloads);
+		try {
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setString(1, metaString);
+			pstmt.setInt(2, sId);
+			log.info("Update meta item data: " + pstmt.toString());
+			pstmt.executeUpdate();
+
+		} finally {
+			if(pstmt != null) try {pstmt.close();} catch(Exception e) {}
+		}
+
+		return;
+	}
+	
+	/*
+	 * Get preloads in a survey
+	 */
+	public static ArrayList<MetaItem> getPreloads(Connection sd, int sId) throws SQLException {
+		ArrayList<MetaItem> preloads = null;
+
+		String sql = "select meta from survey where s_id = ?;";
+		PreparedStatement pstmt = null;
+
+		String metaString = null;
+		try {
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setInt(1, sId);
+			ResultSet rs = pstmt.executeQuery();
+			if(rs.next())  {
+				metaString = rs.getString(1);
+			}
+
+		} finally {
+			if(pstmt != null) try {pstmt.close();} catch(Exception e) {}
+		}
+
+		if(metaString != null) {
+			Gson gson = new GsonBuilder().disableHtmlEscaping().create();
+			preloads = gson.fromJson(metaString, new TypeToken<ArrayList<MetaItem>>() {}.getType());
+		} else {
+			preloads = new ArrayList <>();
+		}
+
+		return preloads;
+	}
+	
+	/*
+	 * Get details for a preload
+	 */
+	public static MetaItem getPreloadDetails(Connection sd, int sId, int metaId) throws SQLException {
+		MetaItem item = null;
+		ArrayList<MetaItem> preloads = null;
+
+		String sql = "select meta from survey where s_id = ?;";
+		PreparedStatement pstmt = null;
+
+		String metaString = null;
+		try {
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setInt(1, sId);
+			ResultSet rs = pstmt.executeQuery();
+			if(rs.next())  {
+				metaString = rs.getString(1);
+			}
+
+		} finally {
+			if(pstmt != null) try {pstmt.close();} catch(Exception e) {}
+		}
+
+		if(metaString != null) {
+			Gson gson = new GsonBuilder().disableHtmlEscaping().create();
+			preloads = gson.fromJson(metaString, new TypeToken<ArrayList<MetaItem>>() {}.getType());
+			for(MetaItem mi : preloads) {
+				if(mi.id == metaId) {
+					item = mi;
+					break;
+				}
+			}
+		}
+
+		return item;
+	}
+	
+	public static Question getPreloadAsQuestion(Connection sd, int sId, int metaId) throws SQLException {
+		Question q = null;
+		MetaItem item = getPreloadDetails(sd, sId, metaId); 
+		if(item != null) {
+			q = new Question();
+			q.columnName = item.columnName;
+			q.type = item.dataType;
+			q.display_name = item.display_name;
+			q.name = item.name;
+			q.appearance = item.settings;
+		}
+		
+		return q;
+	}
+
+	/*
+	 * Get Column Values from a result set created using ColDesc
+	 */
+	public static int getColValues(ResultSet rs, ColValues values, int dataColumn, 
+			ArrayList<ColDesc> columns, boolean merge_select_multiple,
+			String surveyName) throws SQLException {
+
+		ColDesc item = columns.get(dataColumn);
+		StringBuffer selMulValue = new StringBuffer("");
+
+		if(merge_select_multiple && item.qType != null && item.qType.equals("select") && item.choices != null && !item.compressed) {
+			if(rs != null) {
+				for(KeyValue choice : item.choices) {
+					int smv = rs.getInt(dataColumn + 1);
+					if(smv == 1) {
+						if(selMulValue.length() > 0) {
+							selMulValue.append(" ");
+						}
+						selMulValue.append(choice.k);
+					}
+					dataColumn++;
+				}
+			} else {
+				// Jump over data columns 
+				dataColumn += item.choices.size();
+			}
+
+			values.name = item.displayName;
+			values.label = item.label;
+			values.value = selMulValue.toString();
+
+		} else {
+			if(item.displayName != null) {
+				values.name = item.displayName;
+			} else {
+				values.name = item.column_name;
+			}
+			values.label = item.label;
+			if(rs != null) {
+				values.value = rs.getString(dataColumn + 1);
+			}
+			dataColumn++;
+		}
+		values.type = item.qType;
+		
+		if(item.column_name != null && item.column_name.equals(SmapServerMeta.SURVEY_ID_NAME)) {
+			values.value = surveyName;
+		}
+
+		return dataColumn;
+	}
+
+	/*
+	 * Set questions as published if the results column is available
+	 */
+	public static void setPublished(Connection sd, Connection cRel, int sId) throws SQLException {
+
+		String sql = "select f.table_name, q.column_name, q.q_id, q.qtype, q.compressed, q.l_id "
+				+ "from question q, form f "
+				+ "where q.f_id = f.f_id "
+				+ "and f.s_id = ? "
+				+ "and q.source is not null "
+				+ "and q.published = 'false' "
+				+ "and q.soft_deleted = 'false' ";		
+		PreparedStatement pstmt = null;
+
+		String sqlUpdate = "update question set published = true where q_id = ?";
+		PreparedStatement pstmtUpdate = null;
+		
+		String sqlGetChoices = "select o_id, column_name from option where l_id = ?";
+		PreparedStatement pstmtGetChoices = null;
+		
+		String sqlUpdateChoices = "update option set published = true where o_id = ?";
+		PreparedStatement pstmtUpdateChoices = null;
+		try {
+			pstmtUpdate = sd.prepareStatement(sqlUpdate);
+
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setInt(1, sId);
+			ResultSet rs = pstmt.executeQuery();
+			while(rs.next())  {
+				String qType = rs.getString(4);
+				boolean compressed = rs.getBoolean(5);
+				if(qType.equals("select") && !compressed) {
+					// Automatically set published the publish status of options determine if data is actually available 
+					pstmtUpdateChoices = sd.prepareStatement(sqlUpdateChoices);
+					pstmtGetChoices = sd.prepareStatement(sqlGetChoices);
+					pstmtGetChoices.setInt(1, rs.getInt(6));
+					ResultSet rsChoices = pstmtGetChoices.executeQuery();
+					while(rsChoices.next()) {
+						if(hasColumn(cRel, rs.getString(1), rs.getString(2) + "__" + rsChoices.getString(2))) {
+							pstmtUpdateChoices.setInt(1, rsChoices.getInt(1));
+							pstmtUpdateChoices.executeUpdate();
+						}
+					}
+				} 
+				if(hasColumn(cRel, rs.getString(1), rs.getString(2))) {
+					pstmtUpdate.setInt(1, rs.getInt(3));
+					pstmtUpdate.executeUpdate();
+				}
+			}
+
+		} finally {
+			if(pstmt != null) try {pstmt.close();} catch(Exception e) {}
+			if(pstmtUpdate != null) try {pstmtUpdate.close();} catch(Exception e) {}
+			if(pstmtGetChoices != null) try {pstmtGetChoices.close();} catch(Exception e) {}
+			if(pstmtUpdateChoices != null) try {pstmtUpdateChoices.close();} catch(Exception e) {}
+		}
+
+	}
+
+	/*
+	 * Get survey group
+	 */
+	public static int getSurveyGroup(Connection sd, int sId) throws SQLException {
+
+		int group = 0;
+		String sql = "select group_survey_id from survey where s_id = ?";
+		PreparedStatement pstmt = null;
+		
+		String sql2 = "select count(*) from survey where group_survey_id = ?";
+		PreparedStatement pstmt2 = null;
+
+		try {
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setInt(1,  sId);
+			log.info("Check if this survey is in a group: " + pstmt.toString());
+			ResultSet rs = pstmt.executeQuery();
+			if(rs.next())  {
+				group = rs.getInt(1);
+			}
+			
+			if(group == 0) {
+				// Perhaps this survey is the main survey in the group
+				pstmt2 = sd.prepareStatement(sql2);
+				pstmt2.setInt(1,  sId);
+				log.info("Check if this survey is the main survey: " + pstmt2.toString());
+				rs = pstmt2.executeQuery();			
+				if(rs.next())  {
+					if(rs.getInt(1) > 0) {
+						// Its the parent form
+						group = sId;
+					}
+				}
+			}
+
+		} finally {
+			if(pstmt != null) try {pstmt.close();} catch(Exception e) {}
+			if(pstmt2 != null) try {pstmt2.close();} catch(Exception e) {}
+		}
+
+		return group;
+	}
+
+	public static String getSurveyParameter(String param, ArrayList<KeyValueSimp> params) {
+		
+		String value = null;
+		if (params != null) {
+			for(KeyValueSimp kv : params) {
+				if(kv.k.equals(param)) {
+					value = kv.v;
+					break;
+				}	
+			}
+		}
+		return value;
+	}
+	
+	/*
+	 * Get the longitude and latitude from a WKT POINT
+	 */
+	public static String [] getLonLat(String point) {
+		String [] coords = null;
+		int idx1 = point.indexOf("(");
+		int idx2 = point.indexOf(")");
+		if(idx2 > idx1) {
+			String lonLat = point.substring(idx1 + 1, idx2);
+			coords = lonLat.split(" ");
+		}
+		return coords;
+	}
+	
+	/*
+	 * Convert a geojson string into a WKT string
+	 * Assume Point TODO update to cater for other types
+	 */
+	public static String getWKTfromGeoJson(String json) {
+		
+		String wkt = null;
+		if(json != null) {
+			int idx1 = json.indexOf("[");
+			int idx2 = json.indexOf("]");
+			
+			if(idx2 > idx1) {
+				String c = json.substring(idx1 + 1, idx2);
+				String [] coords = c.split(",");
+				if(coords.length >= 2) {
+					wkt = "POINT(" + coords[0].trim() + " " + coords[1].trim() + ")"; 
+				}
+				
+			}
+		}
+			
+		return wkt;
+	}
+	
+	public static String getOdkPolygon(Polygon p) {
+		StringBuffer coordsString = new StringBuffer("");
+		ArrayList<ArrayList<Double>> coords = p.coordinates.get(0);
+		if(coords != null && coords.size() > 0) {
+
+			for(int i = 0; i < coords.size(); i++) {
+				ArrayList<Double> points = coords.get(i);
+				if(points.size() > 1) {
+					if(i > 0) {
+						coordsString.append(";");
+					}
+					coordsString.append(points.get(1)).append(" ").append(points.get(0));
+				}
+			}	
+		}
+		return coordsString.toString();
+	}
+	
+	public static String getOdkLine(Line l) {
+		StringBuffer coordsString = new StringBuffer("");
+		ArrayList<ArrayList<Double>> coords = l.coordinates;
+		if(coords != null && coords.size() > 0) {
+
+			for(int i = 0; i < coords.size(); i++) {
+				ArrayList<Double> points = coords.get(i);
+				if(points.size() > 1) {
+					if(i > 0) {
+						coordsString.append(";");
+					}
+					coordsString.append(points.get(1)).append(" ").append(points.get(0));
+				}
+			}	
+		}
+		return coordsString.toString();
+	}
+
+	/*
+	 * Update settings in question that identify if choices are in an external file
+	 */
+	public static void setExternalFileValues(Connection sd, Question q) throws SQLException {
+		
+		if((q.type.startsWith("select") || q.type.equals("rank")) && isAppearanceExternalFile(q.appearance)) {
+			ManifestInfo mi = addManifestFromAppearance(q.appearance, null);
+			q.external_choices = true;
+			q.external_table = mi.filename;
+		} else {
+			q.external_choices = false;
+			q.external_table = null;
+		}
+		
+		String sql = "update question "
+				+ "set external_choices = ?,"
+				+ "external_table = ? "
+				+ "where q_id = ?";
+		PreparedStatement pstmt = null;
+
+		try {
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setString(1,  q.external_choices ? "yes" : "no");
+			pstmt.setString(2, q.external_table);
+			pstmt.setInt(3,  q.id);
+			pstmt.executeUpdate();
+		} finally {
+			if(pstmt != null) try {pstmt.close();} catch(Exception e) {}
+		}
+		
+	}
+	
+	/*
+	 * Create a temporary user
+	 */
+	public static String createTempUser(Connection sd, ResourceBundle localisation, int oId, String email, 
+			String assignee_name, int pId, TaskFeature tf) throws Exception {
+		UserManager um = new UserManager(localisation);
+		String tempUserId = "u" + String.valueOf(UUID.randomUUID());
+		User u = new User();
+		u.ident = tempUserId;
+		u.email = email;
+		u.name = assignee_name;
+
+		// Only allow access to the project used by this task
+		u.projects = new ArrayList<Project> ();
+		Project p = new Project();
+		p.id = pId;
+		u.projects.add(p);
+
+		// Only allow enum access
+		u.groups = new ArrayList<UserGroup> ();
+		u.groups.add(new UserGroup(Authorise.ENUM_ID, Authorise.ENUM));
+		int assignee = um.createTemporaryUser(sd, u, oId);
+		if(tf != null) {
+			tf.properties.assignee = assignee;
+		}
+		
+		return tempUserId;
+	}
+	
+	/*
+	 * Delete a temporary user
+	 */
+	public static void deleteTempUser(Connection sd, ResourceBundle localisation, int oId, String uIdent) throws Exception {
+		
+		String sql = "delete from users " 
+				+ "where ident = ? "
+				+ "and temporary = 'true' "
+				+ "and o_id = ?";	
+		PreparedStatement pstmt = null;
+
+		if(uIdent != null) {
+
+			try {
+			
+				pstmt = sd.prepareStatement(sql);
+				pstmt.setString(1, uIdent);
+				pstmt.setInt(2,  oId);
+				log.info("Delete temporary user: " + pstmt.toString());
+				int count = pstmt.executeUpdate();
+				if(count == 0) {
+					log.info("error: failed to delete temporay user: " + uIdent);
+				}
+				// Delete any csv table definitions that they have
+				SurveyTableManager stm = new SurveyTableManager(sd, localisation);
+				stm.deleteForUsers(uIdent);			// Delete references to this survey in the csv table 
+				
+			} finally {
+				try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+			}
+
+		} else {
+			throw new Exception("Null User Ident");
+		}
+	}
+	
+	public static boolean isAttachmentType(String type) {
+		boolean attachment = false;
+		if(type.equals("image") || type.equals("audio") || type.equals("video") || type.equals("file")) {
+			attachment = true;
+		}
+		return attachment;
+	}
+	
+	/*
+	 * Return true if email tasks are blocked.  That is the email_task value is false
+	 */
+	public static boolean emailTaskBlocked(Connection sd, int oId) throws Exception {
+		
+		boolean emailTask = true;
+		String sql = "select email_task from organisation " 
+				+ "where id = ? ";	
+		PreparedStatement pstmt = null;
+
+		try {
+			
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setInt(1, oId);
+		
+			ResultSet rs = pstmt.executeQuery();
+			if(rs.next()) {
+				emailTask = !rs.getBoolean(1);
+			}
+				
+		} finally {
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+		}
+		
+		return emailTask;
+
+	}
+	
+	/*
+	 * Return true if timezone is valid
+	 */
+	public static boolean isValidTimezone(Connection sd, String tz) throws Exception {
+		
+		boolean isValid = false;
+		String sql = "select count(*) from pg_timezone_names where name = ?"; 
+		PreparedStatement pstmt = null;
+
+		try {
+			
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setString(1, tz);
+		
+			ResultSet rs = pstmt.executeQuery();
+			if(rs.next()) {
+				isValid = rs.getInt(1)> 0;
+			}
+				
+		} finally {
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+		}
+		
+		return isValid;
+
+	}
+	
+	/*
+	 * Add the thread value that links replaced records
+	 */
+	public static void continueThread(Connection cResults, String table, int prikey, int sourceKey) throws SQLException {
+		
+		String sqlCopyThreadCol = "update " + table 
+						+ " set _thread = (select _thread from " + table + " where prikey = ?),"
+						+ " _assigned = (select _assigned from " + table + " where prikey = ?) "
+						+ "where prikey = ?";
+		PreparedStatement pstmtCopyThreadCol = null;
+			
+		try {
+			initialiseThread(cResults, table, sourceKey, null);
+			
+			// At this point the thread col must exist and the _thread value for the source must exist
+			pstmtCopyThreadCol = cResults.prepareStatement(sqlCopyThreadCol);
+			pstmtCopyThreadCol.setInt(1, sourceKey);
+			pstmtCopyThreadCol.setInt(2, sourceKey);
+			pstmtCopyThreadCol.setInt(3, prikey);
+			log.info("continue thread: " + pstmtCopyThreadCol.toString());
+			pstmtCopyThreadCol.executeUpdate();
+			
+			
+		} finally {
+			if(pstmtCopyThreadCol != null) try{pstmtCopyThreadCol.close();}catch(Exception e) {}
+		}
+
+	}
+	
+	/*
+	 * Add the thread value that links replaced records
+	 * Either get the thread key using the sourceKey or if that is not set use the passed in instanceId directly
+	 */
+	public static void initialiseThread(Connection cResults, String table, int sourceKey, String instanceId) throws SQLException {
+		
+		String sqlInitThreadCol = "update " + table + " set _thread = instanceid where prikey = ?";
+		PreparedStatement pstmtInitThreadCol = null;
+		
+		String sqlInitThreadCol2 = "update " + table + " set _thread = instanceid where instanceid = ?";
+		PreparedStatement pstmtInitThreadCol2 = null;
+			
+		try {
+			if(!GeneralUtilityMethods.hasColumn(cResults, table, "_thread")) {
+				// Add the thread column
+				GeneralUtilityMethods.addColumn(cResults, table, "_thread", "text");
+				
+				// Initialise the thread column
+				if(sourceKey > 0) {
+					pstmtInitThreadCol = cResults.prepareStatement(sqlInitThreadCol);
+					pstmtInitThreadCol.setInt(1, sourceKey);
+					pstmtInitThreadCol.executeUpdate();
+				} else {
+					pstmtInitThreadCol2 = cResults.prepareStatement(sqlInitThreadCol2);
+					pstmtInitThreadCol2.setString(1, instanceId);
+					pstmtInitThreadCol2.executeUpdate();
+				}
+			}
+			if(!GeneralUtilityMethods.hasColumn(cResults, table, "_assigned")) {
+				GeneralUtilityMethods.addColumn(cResults, table, "_assigned", "text");
+			}
+			
+		} finally {
+			if(pstmtInitThreadCol != null) try{pstmtInitThreadCol.close();}catch(Exception e) {}
+			if(pstmtInitThreadCol2 != null) try{pstmtInitThreadCol2.close();}catch(Exception e) {}
+		}
+
+	}
+	
+	/*
+	 * Get the thread for a record
+	 * This is a UUID which identifies a series of changes to a record.
+	 * Ie if you start with Record A and then Update it then the two records will have the same thread id.
+	 */
+	public static String getThread(Connection cResults, String table, String instanceId) throws SQLException {
+		
+		String thread = null;
+		String sql = "select _thread from " + table + " where instanceid = ?";
+		PreparedStatement pstmt = null;
+		
+		String sqlUpdate = "update table " + table + " set_thread = ? where instanceid = ?";
+			
+		try {
+			
+			initialiseThread(cResults, table, 0, instanceId);
+			
+			pstmt = cResults.prepareStatement(sql);
+			pstmt.setString(1, instanceId);
+			ResultSet rs = pstmt.executeQuery();
+			if(rs.next()) {
+				thread = rs.getString(1);
+			}	
+			
+			// If there is no thread then we should start one (Should only be required for legacy records)
+			if (thread == null) {
+				if(pstmt != null) try{pstmt.close();}catch(Exception e) {}
+				pstmt = cResults.prepareStatement(sqlUpdate);
+				pstmt.setString(1,  instanceId);
+				pstmt.setString(2,  instanceId);
+				
+				thread = instanceId;
+			}
+			
+		} finally {
+			if(pstmt != null) try{pstmt.close();}catch(Exception e) {}
+		}
+		
+		return thread;
+
+	}
+	
+	/*
+	 * Set columns which have actually been published but are still marked as un-published to published
+	 * This function has been added due to the difficulty of keeping the published indicator always up to date
+	 *  in the situation where you have shared tables
+	 */
+	public static void updateUnPublished(Connection sd, Connection cResults, String tableName, 
+			int fId, boolean publish) throws SQLException {
+		
+		String sql = "select q_id, column_name, qtype, compressed " 
+				+ "from question where f_id = ? "
+				+ "and source is not null "
+				+ "and published = 'false' "
+				+ "and soft_deleted = 'false' ";
+		PreparedStatement pstmt = null;
+		
+		String sqlPublished = "select count(*) from information_schema.columns where table_name = ? " 
+				+ "and column_name = ?";
+		PreparedStatement pstmtPub = null;
+		
+		String sqlUpdate = "update question set published = 'true' where q_id = ?";
+		PreparedStatement pstmtUpdate = null;
+		
+		ResultSet rs = null;
+		ResultSet rsPub = null;
+		try {
+			pstmtPub = cResults.prepareStatement(sqlPublished);
+			pstmtPub.setString(1, tableName);
+			
+			pstmtUpdate = sd.prepareStatement(sqlUpdate);
+			
+			// Get unpublished
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setInt(1, fId);
+		
+			log.info(pstmt.toString());
+			rs = pstmt.executeQuery();
+			while(rs.next()) {
+				int qId = rs.getInt(1);
+				String columnName = rs.getString(2);
+				String type = rs.getString(3);
+				boolean compressed = rs.getBoolean(4);
+				
+				pstmtPub.setString(2, columnName);	
+				rsPub = pstmtPub.executeQuery();
+				int count = 0;
+				if(rsPub.next()) {
+					count = rsPub.getInt(1);
+				}
+				if(count > 0) {
+					// Column has been published update the schema to reflect this
+					pstmtUpdate.setInt(1, qId);
+					pstmtUpdate.executeUpdate();
+				} else if(publish) {
+					if(!GeneralUtilityMethods.hasColumn(cResults, tableName, columnName)) {
+						GeneralUtilityMethods.alterColumn(cResults, tableName, type, columnName, compressed);
+					}
+					pstmtUpdate.setInt(1, qId);
+					pstmtUpdate.executeUpdate();
+				}
+			}
+			
+		} finally {
+			if(rs != null) {try{rs.close();} catch(Exception e) {}}
+			if(rsPub != null) {try{rsPub.close();} catch(Exception e) {}}
+			if(pstmt != null) {try{pstmt.close();} catch(Exception e) {}}
+			if(pstmtPub != null) {try{pstmtPub.close();} catch(Exception e) {}}
+			if(pstmtUpdate != null) {try{pstmtUpdate.close();} catch(Exception e) {}}
+		}
+	}
+
+	/*
+	 * Return the number of questions in each form of the survey
+	 */
+	public static ArrayList<FormLength> getFormLengths(Connection sd, int sId) throws Exception {
+		
+		ArrayList<FormLength> formList = new ArrayList<FormLength> ();
+		
+		String sql = "select f.f_id, f.name, count(*) "
+				+ "from question q, form f "
+				+ "where f.s_id = ? "
+				+ "and f.f_id = q.f_id "
+				+ "and qtype != 'begin group' "
+				+ "and qtype != 'end group' "
+				+ "and qtype != 'begin repeat' "
+				+ "group by f.f_id, f.name";	
+		PreparedStatement pstmt = null;
+
+		String sqlLq = "select qname from question "
+				+ "where f_id = ? "
+				+ "and qtype != 'begin group' "
+				+ "and qtype != 'end group' "
+				+ "and qtype != 'begin repeat' "
+				+ "order by seq asc";
+		PreparedStatement pstmtLq = null;
+		
+		try {
+			
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setInt(1, sId);
+		
+			log.info("Get question count: " + pstmt.toString());
+			
+			ResultSet rs = pstmt.executeQuery();
+			while(rs.next()) {
+				FormLength fl = new FormLength(rs.getInt(1), rs.getString(2), rs.getInt(3));
+				formList.add(fl);
+				
+				if(fl.isTooLong()) {
+					// Find last acceptable question name
+					pstmtLq = sd.prepareStatement(sqlLq);
+					pstmtLq.setInt(1, fl.f_id);
+					
+					ResultSet rsLq = pstmtLq.executeQuery();
+					for(int i = 0; i < FormLength.MAX_FORM_LENGTH; i++) {
+						rsLq.next();
+					}
+					fl.lastQuestionName = rsLq.getString(1);
+				}
+			}
+				
+		} finally {
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+			try {if (pstmtLq != null) {pstmtLq.close();}} catch (SQLException e) {}
+		}
+		
+		return formList;
+
+	}
+	
+	public static boolean parameterIsSet(String parameter) {
+		boolean isSet = false;
+		if(parameter != null) {
+			if(parameter.equals("yes") || parameter.equals("true")) {
+				isSet = true;
+			}
+		}
+		return isSet;
+	}
+	
+	public static String removeBOM(String in) {
+		
+		if (in.startsWith(UTF8_BOM)) {
+            in = in.substring(1);
+        }
+		return in;
+	}
+	
+	public static int addSqlParams(PreparedStatement pstmt, int idx, ArrayList<SqlParam> params) throws SQLException {
+		if(params != null && params.size() > 0) {
+			for(SqlParam p : params) {
+				if(p.type.equals("string")) {
+					pstmt.setString(idx++, p.vString);
+				} 
+			}
+		}
+		return idx;
+	}
+	
+	public static User getArchivedUser(Connection sd, int oId, int uId) throws SQLException {
+		
+		String sql = "select settings "
+				+ "from user_organisation uo "
+				+ "where o_id = ? "
+				+ "and u_id = ?";
+		PreparedStatement pstmt = null;
+		
+		Gson gson = new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
+		
+		User u = null;
+		try {
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setInt(1, oId);
+			pstmt.setInt(2, uId);			
+			ResultSet rs = pstmt.executeQuery();
+			if(rs.next()) {
+				u = gson.fromJson(rs.getString(1), User.class);
+			}
+		} finally {
+			if(pstmt != null) {try{pstmt.close();} catch(Exception e) {}}
+		}
+		return u;
+	}
+	
+	public static Timestamp getTimestamp(String timeString) {
+			
+		Timestamp t = null;
+		
+		if(timeString != null) {
+			
+			/*
+			 * work around java 8 bug
+			 * https://stackoverflow.com/questions/39033525/error-java-time-format-datetimeparseexception-could-not-be-parsed-unparsed-tex
+			 */
+			timeString = workAroundJava8bug00(timeString);
+			timeString = timeString.trim().replace(' ', 'T');
+			
+			log.info("timestring to test: " + timeString);
+
+			try {
+				OffsetDateTime odt = OffsetDateTime.parse( timeString );
+				Instant instant = odt.toInstant();
+				java.util.Date date = Date.from( instant );				
+				t =  new Timestamp(date.getTime());
+			} catch (Exception e) {
+				log.info("Failed to parse string into Timestamp: "  + timeString + " : " + e.getMessage());			
+			}
+		}
+		return t;
+	}
+	
+	public static String workAroundJava8bug00(String timeString) {
+		if ( timeString.indexOf ( "+" ) == ( timeString.length () - 3 ) ) {
+		    // If third character from end is a PLUS SIGN, append ':00'.
+		    timeString += ":00";
+		} else if ( timeString.lastIndexOf ( "-" ) == ( timeString.length () - 3 ) ) {
+		    // If third character from end is a PLUS SIGN, append ':00'.
+		    timeString += ":00";
+		}
+		
+		return timeString;
+	}
+	
+	/*
+	 * Apply any changes to assignment status
+	 */
+	public static Timestamp getScheduledStart(Connection sd, int assignmentId) {
+
+		PreparedStatement pstmt = null;
+		
+		String sql = "select schedule_at from tasks where id = (select task_id from assignments where id = ?) ";
+		Timestamp scheduledDate = null;
+		
+		try {
+
+			if(assignmentId > 0) {
+				pstmt = sd.prepareStatement(sql);
+				pstmt.setInt(1, assignmentId);
+				log.info("Get scheduled date: " + pstmt.toString());
+				ResultSet rs = pstmt.executeQuery();
+				if(rs.next()) {
+					scheduledDate = rs.getTimestamp(1);
+				}
+			}
+
+
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} finally {
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+		}
+		return scheduledDate;
+	}
+	
+	/*
+	 * Restore files from s3
+	 * type can be:
+	 *  attachments: restore attachments
+	 *  uploadedSurveys: restore the raw upload data
+	 */
+	public static void restoreUploadedFiles(String ident, String type) throws InterruptedException, IOException {
+		Process proc = Runtime.getRuntime().exec(new String [] {"/bin/sh", "-c", "/smap_bin/restoreFiles.sh " + 
+				ident + 	" " + type + " >> /var/log/tomcat7/survey.log 2>&1"});
+		int code = proc.waitFor();
+
+		if(code != 0) {
+			log.info("Error:  Failed to restore files from s3 for ident " + ident + " error code: " + code);
+		}
+
+	}
+	
+	/*
+	 * Log a refresh
+	 */
+	static public void recordRefresh(Connection sd, int oId, String user, Double lat, Double lon) throws SQLException {
+
+
+		String sql = "update last_refresh "
+				+ "set refresh_time = now(), "
+				+ "geo_point =  ST_GeomFromText('POINT(' || ? || ' ' || ? ||')', 4326) "
+				+ "where o_id = ? "
+				+ "and user_ident = ?";
+
+		String sqlInsert = "insert into last_refresh "
+				+ "(o_id, user_ident, refresh_time, geo_point) "
+				+ "values(?, ?, now(),  ST_GeomFromText('POINT(' || ? || ' ' || ? ||')', 4326))";
+		
+		PreparedStatement pstmt = null;
+
+		if(user != null) {
+			try {
+				
+				pstmt = sd.prepareStatement(sql);
+				pstmt.setDouble(1, lon);
+				pstmt.setDouble(2, lat);
+				pstmt.setInt(3, oId);
+				pstmt.setString(4,  user);
+				int count = pstmt.executeUpdate();
+				if (count == 0) {
+					try {pstmt.close();} catch (Exception e) {};
+					pstmt = sd.prepareStatement(sqlInsert);
+					pstmt.setInt(1, oId);
+					pstmt.setString(2, user);
+					pstmt.setDouble(3, lon);
+					pstmt.setDouble(4, lat);
+					pstmt.executeUpdate();
+				}
+	
+			} finally {
+				try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+			}
+		}
+
+	}
+	
+	public static String getWebformLink(String urlprefix, 
+			String surveyIdent, 
+			String initial_data_source, 
+			int assignmentId,
+			int taskId,
+			String updateId) {
+		
+		boolean hasParam = false;
+		StringBuffer url = new StringBuffer(urlprefix);
+		
+		url.append("/webForm/").append(surveyIdent);
+		
+		if(initial_data_source != null && initial_data_source.equals("survey")) {
+			url.append(hasParam ? "&" : "?").append("datakey=instanceid&datakeyvalue=").append(updateId);
+			hasParam = true;
+		} else if(initial_data_source != null && initial_data_source.equals("task")) {
+			url.append(hasParam ? "&" : "?").append("taskkey=").append(taskId);
+			hasParam = true;
+		} else {
+			
+		}
+		url.append(hasParam ? "&" : "?").append("assignment_id=").append(assignmentId);
+		return url.toString();
+	}
+	
+	public static String getInitialXmlDataLink(String urlprefix, 
+			String surveyIdent, 
+			String initial_data_source, 
+			int taskId,
+			String updateId) {
+		
+		StringBuffer url = new StringBuffer(urlprefix);		
+		url.append("/webForm/instance/").append(surveyIdent);
+		
+		if(initial_data_source != null && initial_data_source.equals("survey")) {
+			url.append("/").append(updateId); 
+		} else if(initial_data_source != null && initial_data_source.equals("task")) {
+			url.append("/task/").append(taskId);	
+		} else {
+			return null;
+		}
+		
+		return url.toString();
+	}
+	
+	public static String getInitialDataLink(String urlprefix, 
+			String surveyIdent, 
+			String initial_data_source, 
+			int taskId,
+			String updateId) {
+		
+		StringBuffer url = new StringBuffer(urlprefix);		
+		url.append("api/v1/data/").append(surveyIdent);
+		
+		if(initial_data_source != null && initial_data_source.equals("survey")) {
+			url.append("/").append(updateId); 
+		} else if(initial_data_source != null && initial_data_source.equals("task")) {
+			url.append("/task/").append(taskId);	
+		} else {
+			return null;
+		}
+		
+		return url.toString();
+	}
+	
+	public static String getPdfLink(String urlprefix, 
+			String surveyIdent, 
+			String updateId,
+			String tz) {
+		
+		StringBuffer url = new StringBuffer(urlprefix);		
+		url.append("surveyKPI/pdf/").append(surveyIdent);
+		url.append("?instance=").append(updateId);
+		url.append("&tz=").append(tz);
+			
+		return url.toString();
+	}
+	
+	public static String getWebformLink(String urlprefix, 
+			String surveyIdent, 
+			String updateId) {
+		
+		StringBuffer url = new StringBuffer(urlprefix);		
+		url.append("webForm/").append(surveyIdent);
+		url.append("?datakey=instanceid");
+		url.append("&datakeyvalue=").append(updateId);
+			
+		return url.toString();
+	}
+	
+	public static String getAuditLogLink(String urlprefix, 
+			String surveyIdent, 
+			String updateId) {
+		
+		StringBuffer url = new StringBuffer(urlprefix);		
+		url.append("api/v1/audit/log/").append(surveyIdent).append("/").append(updateId);
+			
+		return url.toString();
+	}
+	
+	/*
+	 * Starting from the past in question get all the tables up to the highest
+	 * parent that are part of this survey
+	 */
+	public static void createLocation(Connection sd, int oId, 
+			String group, String uid, String name, double lon, double lat) throws SQLException {
+
+		PreparedStatement pstmt = null;
+		String sql = "insert into locations (o_id, locn_group, locn_type, uid, name, the_geom) "
+				+ "values (?, ?, 'nfc', ?, ?, ST_GeomFromText(?, 4326))";
+
+		try {
+			pstmt = sd.prepareStatement(sql);
+
+			pstmt.setInt(1, oId);
+			pstmt.setString(2,  group);
+			pstmt.setString(3,  uid);
+			pstmt.setString(4,  name);
+			
+			Point newPoint = new Point(lon, lat);
+			pstmt.setString(5, newPoint.getAsText());
+			
+			log.info("Create new location (" + name + "): " + pstmt.toString());
+			pstmt.executeUpdate();
+
+		} finally {
+			try {
+				if (pstmt != null) {	pstmt.close();}} catch (SQLException e) {}
+		}
+
+	}
+
+	/*
+	 * Starting from the past in question get all the tables up to the highest
+	 * parent that are part of this survey
+	 */
+	public static void updateLocation(Connection sd, 
+			int oId, 
+			String group, 
+			String uid, 
+			String name,
+			double lon,
+			double lat) throws SQLException {
+
+		PreparedStatement pstmt = null;
+		String sql = "update locations "
+				+ "set uid = ?,"
+				+ "the_geom = ST_GeomFromText(?, 4326) "
+				+ "where o_id = ? "
+				+ "and locn_group = ? "
+				+ "and name = ?";
+
+		try {
+			pstmt = sd.prepareStatement(sql);
+
+			pstmt.setString(1, uid);
+			
+			Point newPoint = new Point(lon, lat);
+			pstmt.setString(2, newPoint.getAsText());
+			
+			pstmt.setInt(3,  oId);
+			pstmt.setString(4,  group);
+			pstmt.setString(5,  name);
+
+			log.info("Update location: " + pstmt.toString());
+			pstmt.executeUpdate();
+
+		} finally {
+			try {if (pstmt != null) {	pstmt.close();}} catch (SQLException e) {}
+		}
+
+	}
+	
+	public static String getInstanceId(Connection cResults, String tableName, int prikey) throws SQLException {
+
+		String instanceId = null;
+		
+		PreparedStatement pstmt = null;
+		String sql = "select instanceid "
+				+ "from " + tableName + " "
+				+ "where prikey = ? ";
+
+		try {
+			pstmt = cResults.prepareStatement(sql);
+
+			pstmt.setInt(1, prikey);
+			ResultSet rs = pstmt.executeQuery();
+			if(rs.next()) {
+				instanceId = rs.getString(1);
+			}
+
+		} finally {
+			try {if (pstmt != null) {	pstmt.close();}} catch (SQLException e) {}
+		}
+		return instanceId;
+	}
+	
+	public static String getLatestInstanceId(Connection cResults, String tableName, String instanceId) throws SQLException {
+
+		String latestInstanceId = null;
+		
+		PreparedStatement pstmt = null;
+		String sql = "select instanceid "
+				+ "from " + tableName + " "
+				+ "where _thread = (select _thread from " + tableName + " where instanceid = ?) "
+				+ "order by prikey desc limit 1";
+
+		try {
+			pstmt = cResults.prepareStatement(sql);
+
+			pstmt.setString(1, instanceId);
+			ResultSet rs = pstmt.executeQuery();
+			if(rs.next()) {
+				latestInstanceId = rs.getString(1);
+			}
+
+		} finally {
+			try {if (pstmt != null) {	pstmt.close();}} catch (SQLException e) {}
+		}
+		return latestInstanceId;
+	}
+	
+	/*
+	 * Alter the table
+	 */
+	public static TableUpdateStatus alterColumn(Connection cResults, String table, String type, String column, boolean compressed) {
+
+		PreparedStatement pstmtAlterTable = null;
+		PreparedStatement pstmtApplyGeometryChange = null;
+
+		TableUpdateStatus status = new TableUpdateStatus();
+		status.tableAltered = true;
+		status.msg = "";
+
+		try {
+			if(type.equals("geopoint") || type.equals("geotrace") || type.equals("geoshape")) {
+
+				String geoType = null;
+
+				if(type.equals("geopoint")) {
+					geoType = "POINT";
+				} else if (type.equals("geotrace")) {
+					geoType = "LINESTRING";
+				} else if (type.equals("geoshape")) {
+					geoType = "POLYGON";
+				}
+				String gSql = "SELECT AddGeometryColumn('" + table + 
+						"', 'the_geom', 4326, '" + geoType + "', 2);";
+				log.info("Add geometry column: " + gSql);
+
+				pstmtApplyGeometryChange = cResults.prepareStatement(gSql);
+				try { 
+					pstmtApplyGeometryChange.executeQuery();
+				} catch (Exception e) {
+					// Allow this to fail where an older version added a geometry, which was then deleted, then a new 
+					//  geometry with altitude was added we need to go on and add the altitude and accuracy
+					log.info("Error altering table -- continuing: " + e.getMessage());
+					try {cResults.rollback();} catch(Exception ex) {}
+				}
+
+				// Add altitude and accuracy
+				if(type.equals("geopoint")) {
+					String sqlAlterTable = "alter table " + table + " add column the_geom_alt double precision";
+					pstmtAlterTable = cResults.prepareStatement(sqlAlterTable);
+					log.info("Alter table: " + pstmtAlterTable.toString());					
+					pstmtAlterTable.executeUpdate();
+
+					try {if (pstmtAlterTable != null) {pstmtAlterTable.close();}} catch (Exception e) {}
+					sqlAlterTable = "alter table " + table + " add column the_geom_acc double precision";
+					pstmtAlterTable = cResults.prepareStatement(sqlAlterTable);
+					log.info("Alter table: " + pstmtAlterTable.toString());					
+					pstmtAlterTable.executeUpdate();
+				}
+
+				// Commit this change to the database
+				try { cResults.commit();	} catch(Exception ex) {}
+			} else {
+
+				type = getPostgresColType(type, compressed);
+				String sqlAlterTable = "alter table " + table + " add column " + column + " " + type + ";";
+				pstmtAlterTable = cResults.prepareStatement(sqlAlterTable);
+				log.info("Alter table: " + pstmtAlterTable.toString());
+
+				pstmtAlterTable.executeUpdate();
+
+				// Commit this change to the database
+				try {cResults.commit();} catch(Exception ex) {}
+			} 
+		} catch (Exception e) {
+			// Report but otherwise ignore any errors
+			log.info("Error altering table -- continuing: " + e.getMessage());
+
+			// Rollback this change
+			try {cResults.rollback();} catch(Exception ex) {}
+
+			// Only record the update as failed if the problem was not due to the column already existing
+			status.msg = e.getMessage();
+			if(status.msg == null || !status.msg.contains("already exists")) {
+				status.tableAltered = false;
+			}
+		} finally {
+			try {if (pstmtAlterTable != null) {pstmtAlterTable.close();}} catch (Exception e) {}
+			try {if (pstmtApplyGeometryChange != null) {pstmtApplyGeometryChange.close();}} catch (Exception e) {}
+		}
+		return status;
+	}
+
+	public static String getPostgresColType(String colType, boolean compressed) {
+		if(colType.equals("string")) {
+			colType = "text";
+		} else if(colType.equals("decimal")) {
+			colType = "double precision";
+		} else if(colType.equals("select1")) {
+			colType = "text";
+		} else if(colType.equals("barcode")) {
+			colType = "text";
+		} else if(colType.equals("note")) {
+			colType = "text";
+		} else if(colType.equals("calculate")) {
+			colType = "text";
+		} else if(colType.equals("chart")) {
+			colType = "text";
+		} else if(colType.equals("parent_form")) {
+			colType = "text";
+		} else if(colType.equals(SmapQuestionTypes.CHILD_FORM)) {
+			colType = "text";
+		} else if(colType.equals("acknowledge") || colType.equals("trigger")) {
+			colType = "text";
+		} else if(colType.equals("range")) {
+			colType = "double precision";
+		} else if(colType.equals("dateTime")) {
+			colType = "timestamp with time zone";					
+		} else if(colType.equals("time")) {
+			colType = "time with time zone";					
+		} else if(GeneralUtilityMethods.isAttachmentType(colType)) {
+			colType = "text";					
+		} else if(colType.equals("select") && compressed) {
+			colType = "text";					
+		} else if(colType.equals("rank")) {
+			colType = "text";					
+		}
+		return colType;
+	}
+	
 }
+

@@ -18,7 +18,9 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 
  */
 
-public class Organisation {
+public class Organisation {	
+	public static String DEFAULT_NAVBAR_COLOR = "#2c3c28";
+	
 	public int id;
 	public String name;
 	public String company_name;
@@ -28,14 +30,12 @@ public class Organisation {
 	public boolean allow_email;
 	public boolean allow_facebook;
 	public boolean allow_twitter;
-	public boolean can_edit;
-	public boolean ft_delete_submitted;
-	public boolean ft_send_trail;
-	public boolean ft_sync_incomplete;
-	public boolean ft_odk_style_menus;
-	public boolean ft_review_final;
-	public boolean ft_send_wifi;
-	public boolean ft_send_wifi_cell;
+	public boolean can_edit = true;
+	public boolean can_notify = true;
+	public boolean can_use_api = true;
+	public boolean can_submit = true;
+	public boolean email_task = false;
+	public boolean can_sms = false;
 	public String changed_by;
 	public String changed_ts;
 	public String admin_email;
@@ -48,6 +48,10 @@ public class Organisation {
 	public String website;
 	public String locale;
 	public String timeZone;
+	public String server_description;
+	public int e_id;		// Enterprise id
+	public WebformOptions webform;
+	public AppearanceOptions appearance = new AppearanceOptions();
 
 	public String getAdminEmail() {
 
@@ -61,5 +65,32 @@ public class Organisation {
 		}
 
 		return email;
+	}
+	
+	// Support old versions of FT that use a boolean value for ft_send_wifi
+	static public boolean get_ft_send_wifi_cell(String send) {
+		boolean v = false;
+		if(send != null && send.equals("cell")) {
+			v = true;
+		}
+		return v;	
+	}
+	
+	// Support old versions of FT  that use a boolean value for ft_send_wifi
+	static public boolean get_ft_send_wifi(String send) {
+		boolean v = false;
+		if(send != null && send.equals("wifi")) {
+			v = true;
+		}
+		return v;
+	}
+	
+	// Support old versions of FT  that use a boolean value for ft_delete_submitted
+	static public boolean get_ft_delete_submitted(String del) {
+		boolean v = false;
+		if(del != null && del.equals("on")) {
+			v = true;
+		}
+		return v;
 	}
 }

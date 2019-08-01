@@ -55,10 +55,26 @@ public class LogManager {
 	private static Logger log =
 			 Logger.getLogger(LogManager.class.getName());
 	
+	// Event types
+	public static String CREATE = "create";
+	public static String DELETE = "delete";
+	public static String EMAIL = "email";
+	public static String ERASE = "erase";
+	public static String ERROR = "error";
+	public static String NOTIFICATION = "notification";
+	public static String ORGANISATION_UPDATE = "organisation update";
+	public static String REKOGNITION = "Rekognition Request";
+	public static String REMINDER = "reminder";
+	public static String VIEW = "view";
+	public static String MOVE_ORGANISATION = "move organisation";
+	public static String MOVE_PROJECT = "move project";
+	public static String TASK_REJECT = "reject task";
+	
 	/*
 	 * Write a log entry that includes the survey id
 	 */
-	public void writeLog(Connection sd, 
+	public void writeLog(
+			Connection sd, 
 			int sId,
 			String uIdent,
 			String event,
@@ -68,21 +84,26 @@ public class LogManager {
 				+ "log_time,"
 				+ "s_id,"
 				+ "o_id,"
+				+ "e_id,"
 				+ "user_ident,"
 				+ "event,"
-				+ "note) values (now(), ?, ?, ?, ?, ?);";
+				+ "note) values (now(), ?, ?, (select e_id from organisation where id = ?), ?, ?, ?);";
 
 		PreparedStatement pstmt = null;
 		
 		try {
 			
-			int oId = GeneralUtilityMethods.getOrganisationId(sd, uIdent, sId);
+			int oId = GeneralUtilityMethods.getOrganisationId(sd, uIdent);
+			if(oId <= 0) {
+				 oId = GeneralUtilityMethods.getOrganisationIdForSurvey(sd, sId);
+			}
 			pstmt = sd.prepareStatement(sql);	
 			pstmt.setInt(1, sId);
 			pstmt.setInt(2, oId);
-			pstmt.setString(3, uIdent);
-			pstmt.setString(4,  event);
-			pstmt.setString(5,  note);
+			pstmt.setInt(3, oId);
+			pstmt.setString(4, uIdent);
+			pstmt.setString(5,  event);
+			pstmt.setString(6,  note);
 			
 			pstmt.executeUpdate();
 
@@ -96,9 +117,10 @@ public class LogManager {
 	}
 	
 	/*
-	 * Write a log entry that at the organisation level
+	 * Write a log entry at the organisation level
 	 */
-	public void writeLogOrganisation(Connection sd, 
+	public void writeLogOrganisation(
+			Connection sd, 
 			int oId,
 			String uIdent,
 			String event,

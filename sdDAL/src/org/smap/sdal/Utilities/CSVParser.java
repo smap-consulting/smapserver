@@ -19,6 +19,7 @@ package org.smap.sdal.Utilities;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.ResourceBundle;
 
 /**
  * A very simple CSV parser released under a commercial-friendly license.
@@ -79,12 +80,14 @@ public class CSVParser {
      * I.E. if the quote character is set to null then there is no quote character.
      */
     public static final char NULL_CHARACTER = '\0';
+    
+    private ResourceBundle localisation = null;
 
     /**
      * Constructs CSVParser using a comma for the separator.
      */
-    public CSVParser() {
-        this(DEFAULT_SEPARATOR, DEFAULT_QUOTE_CHARACTER, DEFAULT_ESCAPE_CHARACTER);
+    public CSVParser(ResourceBundle l) {
+        this(DEFAULT_SEPARATOR, DEFAULT_QUOTE_CHARACTER, DEFAULT_ESCAPE_CHARACTER, l);
     }
 
     /**
@@ -92,8 +95,8 @@ public class CSVParser {
      *
      * @param separator the delimiter to use for separating entries.
      */
-    public CSVParser(char separator) {
-        this(separator, DEFAULT_QUOTE_CHARACTER, DEFAULT_ESCAPE_CHARACTER);
+    public CSVParser(char separator, ResourceBundle l) {
+        this(separator, DEFAULT_QUOTE_CHARACTER, DEFAULT_ESCAPE_CHARACTER, l);
     }
 
 
@@ -103,8 +106,8 @@ public class CSVParser {
      * @param separator the delimiter to use for separating entries
      * @param quotechar the character to use for quoted elements
      */
-    public CSVParser(char separator, char quotechar) {
-        this(separator, quotechar, DEFAULT_ESCAPE_CHARACTER);
+    public CSVParser(char separator, char quotechar, ResourceBundle l) {
+        this(separator, quotechar, DEFAULT_ESCAPE_CHARACTER, l);
     }
 
     /**
@@ -114,8 +117,8 @@ public class CSVParser {
      * @param quotechar the character to use for quoted elements
      * @param escape    the character to use for escaping a separator or quote
      */
-    public CSVParser(char separator, char quotechar, char escape) {
-        this(separator, quotechar, escape, DEFAULT_STRICT_QUOTES);
+    public CSVParser(char separator, char quotechar, char escape, ResourceBundle l) {
+        this(separator, quotechar, escape, DEFAULT_STRICT_QUOTES, l);
     }
 
     /**
@@ -127,8 +130,8 @@ public class CSVParser {
      * @param escape       the character to use for escaping a separator or quote
      * @param strictQuotes if true, characters outside the quotes are ignored
      */
-    public CSVParser(char separator, char quotechar, char escape, boolean strictQuotes) {
-        this(separator, quotechar, escape, strictQuotes, DEFAULT_IGNORE_LEADING_WHITESPACE);
+    public CSVParser(char separator, char quotechar, char escape, boolean strictQuotes, ResourceBundle l) {
+        this(separator, quotechar, escape, strictQuotes, DEFAULT_IGNORE_LEADING_WHITESPACE, l);
     }
 
     /**
@@ -141,13 +144,14 @@ public class CSVParser {
      * @param strictQuotes            if true, characters outside the quotes are ignored
      * @param ignoreLeadingWhiteSpace if true, white space in front of a quote in a field is ignored
      */
-    public CSVParser(char separator, char quotechar, char escape, boolean strictQuotes, boolean ignoreLeadingWhiteSpace) {
+    public CSVParser(char separator, char quotechar, char escape, boolean strictQuotes, boolean ignoreLeadingWhiteSpace, ResourceBundle l) {
         if (anyCharactersAreTheSame(separator, quotechar, escape)) {
             throw new UnsupportedOperationException("The separator, quote, and escape characters must be different!");
         }
         if (separator == NULL_CHARACTER) {
             throw new UnsupportedOperationException("The separator character must be defined!");
         }
+        this.localisation = l;
         this.separator = separator;
         this.quotechar = quotechar;
         this.escape = escape;
@@ -265,7 +269,7 @@ public class CSVParser {
                 pending = sb.toString();
                 sb = null; // this partial content is not to be added to field list yet
             } else {
-                throw new IOException("Un-terminated quoted field at end of CSV line");
+                throw new IOException(localisation.getString("msg_no_term"));
             }
         }
         if (sb != null) {

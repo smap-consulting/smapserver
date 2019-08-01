@@ -1,7 +1,5 @@
 package org.smap.sdal.model;
 
-import java.util.ArrayList;
-
 import com.itextpdf.text.BaseColor;
 
 
@@ -18,17 +16,19 @@ public class DisplayItem {
 	public String type;
 	public boolean isSet = false;
 	public boolean isNewPage = false;
-	public ArrayList<DisplayItem> choices = null;
 	public BaseColor labelbg;
 	public BaseColor valuebg;
+	public String markerColor;
 	public boolean labelcaps = false;
 	public boolean labelbold = false;
 	public int fIdx = 0;
+	public int qIdx = 0;
 	public int rec_number = 0;
 	public String map;
 	public String location;
 	public String zoom;					// Map zoom
 	public boolean isBarcode = false;
+	public boolean isSignature = false;
 	public boolean isHyperlink = false;
 	
 	public void debug() {

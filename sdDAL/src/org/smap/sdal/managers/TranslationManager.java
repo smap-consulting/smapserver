@@ -43,10 +43,9 @@ public class TranslationManager {
 			 Logger.getLogger(TranslationManager.class.getName());
 
 	private String manifestQuerySql = 
-			" from translation t, survey s, users u " +
+			" from translation t, survey s " +
 					" where s.s_id = t.s_id " +
 					" and (t.type = 'image' or t.type = 'video' or t.type = 'audio') " +
-					" and u.ident = ? " +
 					" and t.s_id = ?; ";
 	
 	public List<ManifestValue> getManifestBySurvey(Connection sd, 
@@ -58,14 +57,11 @@ public class TranslationManager {
 		
 		HashMap<String, String> files = new HashMap<String, String> ();
 		ArrayList<ManifestValue> manifests = new ArrayList<ManifestValue>();	// Results of request
-		int oId = GeneralUtilityMethods.getOrganisationId(sd, user, 0);
+		int oId = GeneralUtilityMethods.getOrganisationId(sd, user);
 		
 		String sqlQuestionLevel = "select t.text_id, t.type, t.value " +
 				manifestQuerySql;
 		PreparedStatement pstmtQuestionLevel = null;
-		
-		String sqlSurveyLevel = "select manifest from survey where s_id = ? and manifest is not null; ";
-		PreparedStatement pstmtSurveyLevel = null;
 		
 		try {
 			
@@ -73,8 +69,7 @@ public class TranslationManager {
 			 * Get Question and Option level manifests from the translation table
 			 */
 			pstmtQuestionLevel = sd.prepareStatement(sqlQuestionLevel);	 			
-			pstmtQuestionLevel.setString(1, user);
-			pstmtQuestionLevel.setInt(2, surveyId);
+			pstmtQuestionLevel.setInt(1, surveyId);
 
 			ResultSet rs = pstmtQuestionLevel.executeQuery();
 			
@@ -100,40 +95,8 @@ public class TranslationManager {
 				}
 			} 
 			
-			/*
-			 * Get Survey Level manifests from survey table
-			 */
-			pstmtSurveyLevel = sd.prepareStatement(sqlSurveyLevel);	 			
-			pstmtSurveyLevel.setInt(1, surveyId);
-			
-			rs = pstmtSurveyLevel.executeQuery();
-			if(rs.next()) {
-				String manifestString = rs.getString(1);
-				Type type = new TypeToken<ArrayList<String>>(){}.getType();
-				ArrayList<String> manifestList = new Gson().fromJson(manifestString, type);
-				
-				for(int i = 0; i < manifestList.size(); i++) {
-					
-					ManifestValue m = new ManifestValue();
-					m.fileName = manifestList.get(i);
-					m.sId = surveyId;
-					
-					if(m.fileName.equals("linked_self")) {
-						m.fileName = "linked_" + surveyIdent;
-					} else if(m.fileName.equals("linked_s_pd_self")) {
-						m.fileName = "linked_s_pd_" + surveyIdent;
-					}
-					if(m.fileName.endsWith(".csv") || m.fileName.endsWith(".zip")) {
-						m.type = "csv";
-						UtilityMethodsEmail.getFileUrl(m, surveyIdent, m.fileName, basePath, oId, surveyId);
-					} else {
-						m.type = "linked";
-						m.url = "/surveyKPI/file/" + m.fileName + ".csv/survey/" + surveyId + "?linked=true";
-					}
-					
-					manifests.add(m);
-				}
-			}
+			List<ManifestValue> surveyManifests = getSurveyManifests(sd, surveyId, surveyIdent, basePath, oId, false);
+			manifests.addAll(surveyManifests);
 			
 			
 		} catch (SQLException e) {
@@ -141,7 +104,6 @@ public class TranslationManager {
 			throw e;
 		} finally {
 			if (pstmtQuestionLevel != null) { try {pstmtQuestionLevel.close();} catch (SQLException e) {}}
-			if (pstmtSurveyLevel != null) { try {pstmtSurveyLevel.close();} catch (SQLException e) {}}
 		}
 		
 		return manifests;
@@ -151,9 +113,12 @@ public class TranslationManager {
 	/*
 	 * Get the manifest items to linked forms
 	 */
-	public List<ManifestValue> getLinkedManifests(Connection sd,  
+	public List<ManifestValue> getSurveyManifests(Connection sd,  
 			int surveyId,
-			String surveyIdent
+			String surveyIdent,
+			String basePath,
+			int oId,
+			boolean linkedOnly
 			)	throws SQLException {
 		
 		ArrayList<ManifestValue> manifests = new ArrayList<ManifestValue>();	// Results of request
@@ -187,16 +152,24 @@ public class TranslationManager {
 						m.fileName = "linked_" + surveyIdent;
 					} else if(m.fileName.equals("linked_s_pd_self")) {
 						m.fileName = "linked_s_pd_" + surveyIdent;
+					} else if(m.fileName.startsWith("chart_self")) {
+						m.fileName = m.fileName.replace("chart_self", "chart_" + surveyIdent);
 					}
 					
-					if(!m.fileName.endsWith(".csv") && !m.fileName.endsWith(".zip")) {
+					if(m.fileName.endsWith(".csv") || m.fileName.endsWith(".zip")) {
+						if(!linkedOnly) {
+							m.type = "csv";
+							UtilityMethodsEmail.getFileUrl(m, surveyIdent, m.fileName, basePath, oId, surveyId);
+							manifests.add(m);
+						}
+					} else {
 						m.type = "linked";
+						m.url = "/surveyKPI/file/" + m.fileName + ".csv/survey/" + surveyId + "?linked=true";
 						manifests.add(m);
-					}
+					}				
 				}
 			}
-			
-			
+					
 		} catch (SQLException e) {
 			log.log(Level.SEVERE,"Error", e);
 			throw e;
@@ -208,7 +181,7 @@ public class TranslationManager {
 	}
 	
 	/*
-	 * Get the manifest csv entries for csv files used by pulldata functions (required by enketo)
+	 * Get the manifest entries for csv files used by pulldata functions (required by enketo)
 	 */
 	public List<ManifestValue> getPulldataManifests(Connection sd, 
 			int surveyId
@@ -263,13 +236,19 @@ public class TranslationManager {
 					//log.info("Looking for pulldata manifests: " + pstmtPull.toString());
 					rs = pstmtPull.executeQuery();
 					if(rs.next() && rs.getInt(1) > 0) {
+						String surveyIdent = GeneralUtilityMethods.getSurveyIdent(sd, surveyId);
 						if(m.type.equals("csv")) {
-							String surveyIdent = GeneralUtilityMethods.getSurveyIdent(sd, surveyId);
 							int oId = GeneralUtilityMethods.getOrganisationIdForSurvey(sd, surveyId);
 							UtilityMethodsEmail.getFileUrl(m, surveyIdent, m.fileName, "/smap", oId, surveyId);
 						} else {
 							// TODO location depends on user
 							//m.url = "/surveyKPI/file/" + m.fileName + ".csv/survey/" + surveyId + "?linked=true";
+						}
+						
+						if(m.fileName.equals("linked_self")) {
+							m.fileName = "linked_" + surveyIdent;
+						} else if(m.fileName.equals("linked_s_pd_self")) {
+							m.fileName = "linked_s_pd_" + surveyIdent;
 						}
 						
 						manifests.add(m);
@@ -290,7 +269,7 @@ public class TranslationManager {
 	}
 	
 	/*
-	 * Returns true if the user can access the survey and that survey has a survey level manifest
+	 * Returns true if the survey has a manifest at either the survey or question level
 	 */
 	public boolean hasManifest(Connection sd, 
 			String user, 
@@ -304,7 +283,7 @@ public class TranslationManager {
 				manifestQuerySql;
 		
 		// Test for a survey level manifest
-		String sqlSurveyLevel = "select count(*) from survey where s_id = ? and manifest is not null";
+		String sqlSurveyLevel = "select manifest from survey where s_id = ? and manifest is not null";
 		
 		PreparedStatement pstmtQuestionLevel = null;
 		PreparedStatement pstmtSurveyLevel = null;
@@ -312,8 +291,7 @@ public class TranslationManager {
 		try {
 			ResultSet resultSet = null;
 			pstmtQuestionLevel = sd.prepareStatement(sqlQuestionLevel);	 			
-			pstmtQuestionLevel.setString(1, user);
-			pstmtQuestionLevel.setInt(2, surveyId);
+			pstmtQuestionLevel.setInt(1, surveyId);
 			
 			resultSet = pstmtQuestionLevel.executeQuery();
 			
@@ -332,8 +310,9 @@ public class TranslationManager {
 				resultSet = pstmtSurveyLevel.executeQuery();
 				
 				if(resultSet.next()) {
-					if(resultSet.getInt(1) > 0) {
-						hasManifest = true;
+					String manifest = resultSet.getString(1);	
+					if(manifest.trim().length() > 0) {
+						hasManifest = true;			
 					}
 				}
 			}

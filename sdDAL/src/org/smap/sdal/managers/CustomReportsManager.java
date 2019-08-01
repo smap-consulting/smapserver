@@ -184,14 +184,26 @@ public class CustomReportsManager {
 
 				Type type = null;
 				if (reportType.equals("oversight")) { // Legacy report structure containing only columns
-					type = new TypeToken<ArrayList<TableColumn>>() {
-					}.getType();
+					type = new TypeToken<ArrayList<TableColumn>>() {}.getType();
 					config = new ReportConfig();
 					config.columns = gson.fromJson(configString, type);
+					
 				} else if (reportType.equals("oversight1")) {
 					config = gson.fromJson(configString, ReportConfig.class);
 				} else {
 					throw new Exception("Invalid report type: " + reportType);
+				}
+				
+				// Temporary fix to deal with old reports that refer to humanName and name instead of column name
+				for(TableColumn tc : config.columns) {	// Rename any stored human name values to displayName
+					if(tc.displayName == null) {
+						tc.displayName = tc.humanName;
+						tc.humanName = null;
+					}
+					if(tc.column_name == null) {
+						tc.column_name = tc.name;
+						tc.name = null;
+					}
 				}
 
 			}

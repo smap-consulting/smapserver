@@ -95,15 +95,13 @@ public class MediaInfo {
 	 */
 	public boolean setFolder(String basePath, 
 			String user, 
-			String organisationId, 
+			int organisationId, 
 			Connection sd, 
 			boolean settings) {
 		boolean status = false;
 		
 		try {
-			if(organisationId == null) {
-				organisationId = String.valueOf(GeneralUtilityMethods.getOrganisationId(sd, user, 0));
-			}
+			
 			folderUrl = "media/organisation/" + organisationId;
 			if(settings) {
 				folderUrl += "/settings";
@@ -138,7 +136,7 @@ public class MediaInfo {
 	/*
 	 * Getters
 	 */
-	public ArrayList<MediaItem> get() {
+	public ArrayList<MediaItem> get(int sId) {
 		ArrayList<MediaItem> media = new ArrayList<MediaItem> ();
 		
 		if(folder != null) {
@@ -169,7 +167,12 @@ public class MediaInfo {
 				mi.size = f.length();
 				mi.modified = df.format(new Date(f.lastModified()));
 				if(server != null) {
-					mi.url = server + folderUrl + "/" + mi.name;
+					if(sId > 0) {
+						mi.url = "/surveyKPI/file/" + fileName + "/survey/" + sId;
+					} else {
+						mi.url = "/surveyKPI/file/" + fileName + "/organisation";
+					}
+					//mi.url = server + folderUrl + "/" + mi.name;
 					
 					String contentType = UtilityMethodsEmail.getContentType(mi.name);
 					String thumbName = mi.name;
@@ -203,12 +206,13 @@ public class MediaInfo {
 						}
 					}
 					
-					if(contentType.startsWith("text")) {
+					if(contentType.startsWith("text") || mi.type.startsWith("xls")) {
 						mi.thumbnailUrl = "/images/csv.png";
 					} else if(contentType.startsWith("audio")) {
 						mi.thumbnailUrl = "/images/audio.png";
 					} else {
-						mi.thumbnailUrl = server + folderUrl + "/thumbs/" + thumbName;
+						mi.thumbnailUrl = mi.url + "?thumbs=true";
+						//mi.thumbnailUrl = server + folderUrl + "/thumbs/" + thumbName;
 					}
 					mi.deleteUrl = server + "surveyKPI/upload" + "/" + folderUrl + "/" + mi.name; 
 				} else {

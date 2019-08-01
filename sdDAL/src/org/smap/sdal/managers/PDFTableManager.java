@@ -100,14 +100,14 @@ public class PDFTableManager {
 	}
 	
 	private class PdfColumn {
-		String human_name;
+		String displayName;
 		int dataIndex;
 		boolean barcode = false;
 		String type;
 		
 		public PdfColumn(ResourceBundle localisation, int dataIndex, String n, boolean barcode, String type) {
 			this.dataIndex = dataIndex;
-			this.human_name = n;		
+			this.displayName = n;		
 			this.barcode = barcode;	
 			this.type = type;
 		}
@@ -156,7 +156,7 @@ public class PDFTableManager {
 			) {
 
 		User user = null;
-		UserManager um = new UserManager();
+		UserManager um = new UserManager(localisation);
 		
 		try {
 			
@@ -188,7 +188,7 @@ public class PDFTableManager {
 			ArrayList<PdfColumn> cols = getPdfColumnList(mfc, dArray, localisation);
 			ArrayList<String> tableHeader = new ArrayList<String> ();
 			for(PdfColumn col : cols) {
-				tableHeader.add(col.human_name);
+				tableHeader.add(col.displayName);
 			}
 			/*
 			 * Create a PDF without the stationary
@@ -249,12 +249,16 @@ public class PDFTableManager {
 		
         // CSS
 		 CSSResolver cssResolver = new StyleAttrCSSResolver();
+		 FileInputStream fis = null;
 		 try {
-			 CssFile cssFile = XMLWorkerHelper.getCSS( new FileInputStream(DEFAULT_CSS));
+			 fis = new FileInputStream(DEFAULT_CSS);
+			 CssFile cssFile = XMLWorkerHelper.getCSS(fis);
 		     cssResolver.addCss(cssFile);
 		 } catch(Exception e) {
 			 log.log(Level.SEVERE, "Failed to get CSS file", e);
 			 cssResolver = XMLWorkerHelper.getInstance().getDefaultCssResolver(true);
+		 } finally {
+			 try {fis.close();} catch(Exception e) {}
 		 }
  
         // HTML
@@ -344,9 +348,9 @@ public class PDFTableManager {
 			if(!tc.hide && tc.include) {
 				int dataIndex = -1;
 				if(record != null) {
-					dataIndex = getDataIndex(record, tc.humanName);
+					dataIndex = getDataIndex(record, tc.question_name);
 				}
-				cols.add(new PdfColumn(localisation, dataIndex, tc.humanName, tc.barcode, tc.type));
+				cols.add(new PdfColumn(localisation, dataIndex, tc.question_name, tc.barcode, tc.type));
 			}
 		}
 	
@@ -427,7 +431,6 @@ public class PDFTableManager {
 	 */
 	void setColor(String aValue, DisplayItem di, boolean isLabel) {
 		
-		di.labelbg = null;
 		BaseColor color = null;
 		
 		String [] parts = aValue.split("_");
@@ -496,33 +499,6 @@ public class PDFTableManager {
 	}
 	
 	/*
-	 * Convert the results  and survey definition arrays to display items
-	 */
-	ArrayList<DisplayItem> convertChoiceListToDisplayItems(
-			org.smap.sdal.model.Survey survey, 
-			org.smap.sdal.model.Question question,
-			ArrayList<Result> choiceResults,
-			int languageIdx) {
-		
-		ArrayList<DisplayItem> diList = null;
-		if(choiceResults != null) {
-			diList = new ArrayList<DisplayItem>();
-			for(Result r : choiceResults) {
-
-				Option option = survey.optionLists.get(r.listName).options.get(r.cIdx);
-				Label label = option.labels.get(languageIdx);
-				DisplayItem di = new DisplayItem();
-				di.text = label.text == null ? "" : label.text;
-				di.name = r.name;
-				di.type = "choice";
-				di.isSet = r.isSet;
-				diList.add(di);
-			}
-		}
-		return diList;
-	}
-	
-	/*
 	 * Add the question label, hint, and any media
 	 */
 	private PdfPCell addDisplayItem(Parser parser, 
@@ -540,7 +516,7 @@ public class PDFTableManager {
 			if(type != null && type.equals("image")) {
 				Image img = Image.getInstance(kv.v);
 				valueCell.addElement(img);
-			} else if(barcode) {
+			} else if(barcode && kv.v.trim().length() > 0) {
 				BarcodeQRCode qrcode = new BarcodeQRCode(kv.v.trim(), 1, 1, null);
 		         Image qrcodeImage = qrcode.getImage();
 		         qrcodeImage.setAbsolutePosition(10,500);
@@ -559,7 +535,7 @@ public class PDFTableManager {
 	
 	/*
 	 * Set the contents of the value cell
-	 */
+	 *
 	private void updateValueCell(PdfPCell valueCell, 
 			String value,
 			String basePath
@@ -567,10 +543,8 @@ public class PDFTableManager {
 	
 			
 		valueCell.addElement(getPara(value));
-
-		
-
 	}
+	*/
 	
 	private Paragraph getPara(String value) {
 		
@@ -583,6 +557,7 @@ public class PDFTableManager {
 		return para;
 	}
 	
+	/*
 	private void processSelect(PdfPCell cell, DisplayItem di,
 			boolean generateBlank,
 			GlobalVariables gv) {
@@ -599,11 +574,7 @@ public class PDFTableManager {
 		// Questions that append their values to this question
 		ArrayList<String> deps = gv.addToList.get(di.fIdx + "_" + di.rec_number + "_" + di.name);
 		
-		/*
-		 * Add the value of this question unless
-		 *   The form is not blank and the value is "other" and their are 1 or more dependent questions
-		 *   In this case we assume that its only the values of the dependent questions that are needed
-		 */
+		
 		if(generateBlank) {
 			for(DisplayItem aChoice : di.choices) {
 				ListItem item = new ListItem(GeneralUtilityMethods.unesc(aChoice.text), font);
@@ -639,10 +610,11 @@ public class PDFTableManager {
 		}
 
 	}
+	*/
 	
 	/*
 	 * Get the value of a select question
-	 */
+	 *
 	String getSelectValue(boolean isSelectMultiple, DisplayItem di, ArrayList<String> deps) {
 		StringBuffer sb = new StringBuffer("");
 		
@@ -679,6 +651,7 @@ public class PDFTableManager {
 		return sb.toString();
 		
 	}
+	*/
 	
 	/*
 	 * Fill in user details for the output when their is no template

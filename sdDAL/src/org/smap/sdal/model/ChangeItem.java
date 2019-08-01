@@ -28,4 +28,5 @@ public class ChangeItem {
 	public String msg;				// Error messages
 	public String action;			// Add / delete / change
 	public String type;				// question or option
+	public int origSId;				// The survey id when this CI was created, this suvey id will change if a survey is replaced
 }

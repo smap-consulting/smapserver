@@ -34,4 +34,5 @@ public class SqlWhereClause {
 	public int qInteger;
 	public long qStartDate;
 	public long qEndDate;
+	public String advanced;		// Advanced filter specification takes precedence
 }

@@ -7,10 +7,12 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.ResourceBundle;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
+import org.smap.sdal.constants.SmapServerMeta;
 import org.smap.sdal.model.ChartDefn;
 import org.smap.sdal.model.Form;
 import org.smap.sdal.model.KeyValue;
@@ -18,8 +20,10 @@ import org.smap.sdal.model.SurveyViewDefn;
 import org.smap.sdal.model.ManagedFormItem;
 import org.smap.sdal.model.MapLayer;
 import org.smap.sdal.model.ReportConfig;
+import org.smap.sdal.model.SurveySettingsDefn;
 import org.smap.sdal.model.TableColumn;
 import org.smap.sdal.model.TableColumnConfig;
+import org.smap.sdal.model.TableColumnMarkup;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -52,6 +56,19 @@ public class SurveyViewManager {
 	private static Logger log =
 			 Logger.getLogger(SurveyViewManager.class.getName());
 	
+	private ResourceBundle localisation = null;
+	String tz;
+	
+	public static String ASSIGNED_COLUMN = "_assigned";
+	
+	public SurveyViewManager(ResourceBundle l, String tz) {
+		localisation = l;
+		if(tz == null) {
+			tz = "UTC";
+		}
+		this.tz = tz;
+	}
+	
 	/*
 	 * Get the Managed Form Configuration
 	 */
@@ -59,16 +76,18 @@ public class SurveyViewManager {
 			Connection sd, 
 			Connection cResults,
 			int uId,
-			int viewId,
+			SurveySettingsDefn ssd,
 			int sId,
 			int managedId,
 			String uIdent,
 			int oId,
-			boolean superUser) throws SQLException, Exception  {
+			boolean superUser,
+			String groupSurvey) throws SQLException, Exception  {
 		
-		SurveyViewDefn svd = new SurveyViewDefn(viewId, sId, managedId, 0);		// Todo Query id
+		SurveyViewDefn svd = new SurveyViewDefn(ssd, sId, managedId, 0);
 		
 		ArrayList<TableColumnConfig> configColumns = new ArrayList<TableColumnConfig> ();
+		String language = "none";
 		
 		// SQL to get view details
 		String sql = "select view, map_view, chart_view "
@@ -83,6 +102,7 @@ public class SurveyViewManager {
 		try {
 
 			// Get the survey view
+			/*
 			pstmt = sd.prepareStatement(sql);
 			pstmt.setInt(1, viewId);
 			pstmt.setInt(2, uId);
@@ -129,75 +149,42 @@ public class SurveyViewManager {
 				}
 				
 			}
+			*/
 			
-			Form f = GeneralUtilityMethods.getTopLevelForm(sd, sId); // Get formId of top level form and its table name
-			ArrayList<TableColumn> columnList = GeneralUtilityMethods.getColumnsInForm(
-					sd,
-					cResults,
+			// Add the main form columns to the Survey View Definition
+			String surveyIdent = GeneralUtilityMethods.getSurveyIdent(sd, sId);
+			populateSvd(sd, 
+					cResults, 
+					svd,
+					configColumns,
+					true,			// Is main survey
+					language,
 					sId,
+					surveyIdent,
 					uIdent,
-					0,
-					f.id,
-					f.tableName,
-					false,	// Don't include Read only
-					true,	// Include parent key
-					true,	// Include "bad"
-					true,	// Include instanceId
-					true,	// Include other meta data
-					true,		// include preloads
-					true,		// include instancename
-					true,		// Survey duration
-					superUser,
-					false,		// HXL only include with XLS exports
-					false		// Don't include audit data
-					);		
-			
+					superUser);
 			
 			/*
-			 * Add any configuration settings
-			 * Order the config according to the current survey definition and
-			 * Add any new columns that may have been added to the survey since the configuration was created
-			 */			
-			for(int i = 0; i < columnList.size(); i++) {
-				TableColumn c = columnList.get(i);
-				if(keepThis(c.name)) {
-					TableColumn tc = new TableColumn(c.name, c.humanName);
-					tc.hide = hideDefault(c.humanName);
-					tc.filter = c.filter;
-					tc.type = c.type;
-					tc.l_id = c.l_id;
-					for(int j = 0; j < configColumns.size(); j++) {
-						TableColumnConfig tcConfig = configColumns.get(j);
-						if(tcConfig.name.equals(tc.name)) {
-							tc.hide = tcConfig.hide;
-							tc.barcode = tcConfig.barcode;
-							tc.filterValue = tcConfig.filterValue;
-							tc.chart_type = tcConfig.chart_type;
-							tc.width = tcConfig.width;
-							break;
-						}
-					}
-					
-					if(tc.name.equals("the_geom")) {
-						tc.name = "_geolocation";
-					}
-					if(tc.include) {
-						svd.columns.add(tc);
-					}
-				}
-			}
-			
-			/*
-			 * Add the managed form columns and configuration
+			 * Add the managed form columns and configuration - Deprecate
 			 */
 			if(managedId > 0) {
 				getDataProcessingConfig(sd, managedId, svd, configColumns, oId);
 			}
 			
-			/*
-			 * Add the choice lists
-			 */
-			svd.choiceLists = GeneralUtilityMethods.getChoicesInForm(sd, sId, f.id);
+			// Add the managed form columns from the group survey
+			if(groupSurvey != null) {
+				int groupSurveyId = GeneralUtilityMethods.getSurveyId(sd, groupSurvey);
+				populateSvd(sd, 
+						cResults, 
+						svd,
+						configColumns,
+						false,			// Is main survey
+						language,
+						groupSurveyId,
+						groupSurvey,
+						uIdent,
+						superUser);
+			}
 		
 				
 		} catch (SQLException e) {
@@ -210,6 +197,132 @@ public class SurveyViewManager {
 		
 		return svd;
 
+	}
+	
+	/*
+	 * 
+	 */
+	public void populateSvd(
+			Connection sd, 
+			Connection cResults, 
+			SurveyViewDefn svd,
+			ArrayList<TableColumnConfig> configColumns,
+			boolean isMain,
+			String language,
+			int sId,
+			String surveyIdent,
+			String uIdent,
+			boolean superUser) throws Exception {
+		
+		Form f = GeneralUtilityMethods.getTopLevelForm(sd, sId); // Get formId of top level form and its table name
+		if(isMain) {
+			svd.tableName = f.tableName;
+		}
+		ArrayList<TableColumn> columnList = GeneralUtilityMethods.getColumnsInForm(
+				sd,
+				cResults,
+				localisation,
+				language,
+				sId,
+				surveyIdent,
+				uIdent,
+				null,	// roles to apply
+				0,
+				f.id,
+				f.tableName,
+				false,	// Don't include Read only
+				isMain,	// Include parent key
+				isMain,	// Include "bad"
+				isMain,	// Include instanceId
+				isMain,	// include prikey
+				isMain,	// Include other meta data
+				isMain,		// include preloads
+				isMain,		// include instancename
+				isMain,		// Survey duration
+				superUser,
+				false,		// HXL only include with XLS exports
+				false,		// Don't include audit data
+				tz,
+				isMain		// mgmt - Only the main survey request should result in the addition of the mgmt columns
+				);		
+		
+		
+		/*
+		 * Add any configuration settings
+		 * Order the config according to the current survey definition and
+		 * Add any new columns that may have been added to the survey since the configuration was created
+		 */			
+		for(int i = 0; i < columnList.size(); i++) {
+			TableColumn c = columnList.get(i);
+			if(keepThis(c.column_name, isMain)) {
+				TableColumn tc = new TableColumn(c.column_name, c.question_name, c.displayName);
+				if(configColumns.size() == 0) {	// If a view was not passed then there are no config columns so get everything
+					tc.hide = hideDefault(c.displayName);
+				}
+				tc.mgmt = !isMain;
+				tc.filter = c.filter;
+				tc.type = convertToTableColumnType(c.type);
+				tc.l_id = c.l_id;
+				if(!isMain) {
+					tc.readonly = false;
+				}
+				
+				for(int j = 0; j < configColumns.size(); j++) {
+					TableColumnConfig tcConfig = configColumns.get(j);
+					if(tcConfig.name.equals(tc.column_name)) {
+						tc.hide = tcConfig.hide;
+						tc.barcode = tcConfig.barcode;
+						tc.filterValue = tcConfig.filterValue;
+						tc.chart_type = tcConfig.chart_type;
+						tc.width = tcConfig.width;
+						break;
+					}
+				}
+				
+				if(tc.column_name.equals("the_geom")) {
+					tc.displayName = "_geolocation";
+				}
+
+				// Add markup for assigned column
+				if(tc.column_name.equals(ASSIGNED_COLUMN)) {
+					tc.markup = new ArrayList<> ();
+					tc.markup.add(new TableColumnMarkup(uIdent, "bg-info"));		// Blue
+					tc.markup.add(new TableColumnMarkup("", "bg-warning"));		// Yellow
+				}
+				
+				if(tc.include) {					
+					svd.columns.add(tc);
+					
+					if(isMain) {
+						svd.mainColumnNames.put(tc.column_name, svd.columns.size() - 1);
+					} else {
+						// remove columns from the data form that are in the group survey form
+						Integer idx = svd.mainColumnNames.get(tc.column_name);
+						if(idx != null) {
+							svd.columns.remove(idx.intValue());
+						}
+					}
+					
+				}
+			}
+		}
+		
+		/*
+		 * Add the choice lists TODO - What is this used for?  Are choice lists also required for the group survey?
+		 */
+		svd.choiceLists = GeneralUtilityMethods.getChoicesInForm(sd, sId, f.id);
+	}
+	
+	/*
+	 * Convet types from Survey Definition to Table Column Tyoe
+	 */
+	private String convertToTableColumnType(String type) {
+		if(type != null) {
+			if(type.equals("string")) {
+				return "text";
+			}
+		}
+		return type;
 	}
 	
 	/*
@@ -300,6 +413,7 @@ public class SurveyViewManager {
 			
 			if(viewId == 0 || count == 0) {
 				
+				log.info("Set autocommit false");
 				sd.setAutoCommit(false);
 				
 				pstmtInsert = sd.prepareStatement(sqlInsert, Statement.RETURN_GENERATED_KEYS);
@@ -353,6 +467,7 @@ public class SurveyViewManager {
 			log.log(Level.SEVERE,"Error", e);
 			throw new Exception(e.getMessage());
 		} finally {
+			log.info("Set autocommit true");
 			try {sd.setAutoCommit(true);} catch (Exception e) {}
 			try {if (pstmtUpdateView != null) {pstmtUpdateView.close();}} catch (Exception e) {}
 			try {if (pstmtInsert != null) {pstmtInsert.close();}} catch (Exception e) {}
@@ -362,6 +477,7 @@ public class SurveyViewManager {
 		}
 		return viewId;
 	}
+	
 	/*
 	 * Get the managed columns
 	 */
@@ -383,7 +499,7 @@ public class SurveyViewManager {
 			if(configColumns != null) {
 				for(int j = 0; j < configColumns.size(); j++) {
 					TableColumnConfig tcConfig = configColumns.get(j);
-					if(tcConfig.name.equals(tc.name)) {
+					if(tcConfig.name.equals(tc.column_name)) {
 						tc.hide = tcConfig.hide;
 						tc.barcode = tcConfig.barcode;
 						tc.filterValue = tcConfig.filterValue;
@@ -395,7 +511,7 @@ public class SurveyViewManager {
 			// remove columns from the data form that are in the configuration form
 			for(int j = 0; j < svd.columns.size(); j++) {
 				TableColumn fc = svd.columns.get(j);
-				if(fc.name.equals(tc.name)) {
+				if(fc.column_name != null && fc.column_name.equals(tc.column_name)) {
 					svd.columns.remove(j);
 					break;
 				}
@@ -418,6 +534,7 @@ public class SurveyViewManager {
 		}
 		
 	}
+	
 	
 	/*
 	 * Get a list of the surveys in a project and their management status
@@ -463,56 +580,26 @@ public class SurveyViewManager {
 	}
 	
 	/*
-	 * Get default view id
-	 */
-	public int getDefaultView(Connection sd, int uId, int sId, int managedId, int queryId) throws SQLException {
-		int viewId = 0;
-		
-		String sqlGetDefault = "select v_id from default_user_view "
-				+ "where u_id = ? "
-				+ "and s_id = ? "
-				+ "and query_id = ? "
-				+ "and m_id = ?";
-		PreparedStatement pstmtGetDefault = null;
-		
-		try {
-			
-			pstmtGetDefault = sd.prepareStatement(sqlGetDefault);
-			
-			pstmtGetDefault.setInt(1, uId);
-			pstmtGetDefault.setInt(2, sId);
-			pstmtGetDefault.setInt(3, queryId);
-			pstmtGetDefault.setInt(4, managedId);
-			
-			log.info("Get default view: " + pstmtGetDefault.toString());
-			ResultSet rs = pstmtGetDefault.executeQuery();
-			if(rs.next()) {
-				viewId = rs.getInt(1);
-			}
-		} finally {
-			if(pstmtGetDefault != null) { try{pstmtGetDefault.close();}catch(Exception e) {}}
-		}
-		
-		return viewId;
-	}
-	
-	/*
 	 * Identify any columns that should be dropped
 	 */
-	private boolean keepThis(String name) {
+	private boolean keepThis(String name, boolean isMain) {
 		boolean keep = true;
 		
-		if(name.equals("_s_id") ||
+		if(name.equals(SmapServerMeta.SURVEY_ID_NAME) ||
 				name.equals("parkey") ||
 				name.equals("_version") ||
 				name.equals("_complete") ||
 				name.equals("_location_trigger") ||
 				name.equals("_device") ||
 				name.equals("_bad") ||
-				name.equals("_bad_reason") ||
-				name.equals("instanceid")
+				name.equals("_bad_reason")
 				) {
 			keep = false;
+			
+			// Instance id only returned once
+			if(keep && !isMain && name.equals("instanceid")) {
+				keep = false;
+			}
 		}
 		return keep;
 	}
@@ -523,15 +610,18 @@ public class SurveyViewManager {
 	private boolean hideDefault(String name) {
 		boolean hide = false;
 		
-		if(name.equals("_s_id") ||
+		if(name.equals(SmapServerMeta.SURVEY_ID_NAME) ||
 				name.equals("User") ||
-				name.equals("Upload Time") ||
+				name.equals("_scheduled_start") ||
 				name.equals("Survey Notes") ||
+				name.equals("Survey Duration") ||
 				name.equals("_start") ||
 				name.equals("decision_date") ||
 				name.equals("programme") ||
 				name.equals("project") ||
-				name.equals("instanceName") ||
+				name.equals("Instance Name") ||
+				name.equals("instanceid") ||
+				name.equals("the_geom") ||
 				name.equals("_end") 
 				) {
 			hide = true;

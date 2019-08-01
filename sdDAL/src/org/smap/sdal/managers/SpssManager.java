@@ -3,6 +3,7 @@ package org.smap.sdal.managers;
 import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.ResourceBundle;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -45,6 +46,11 @@ public class SpssManager {
 	private static Logger log =
 			 Logger.getLogger(SpssManager.class.getName());
 	
+	private ResourceBundle localisation;
+	
+	public SpssManager(ResourceBundle l) {
+		localisation = l;
+	}
 	/*
 	 * Call this function to create am SPSS variables file
 	 * Return a suggested name for the PDF file derived from the results
@@ -62,7 +68,7 @@ public class SpssManager {
 		}
 		
 		org.smap.sdal.model.Survey survey = null;
-		SurveyManager sm = new SurveyManager();
+		SurveyManager sm = new SurveyManager(localisation, "UTC");
 		StringBuffer sps = new StringBuffer();
 		
 		try {
@@ -73,7 +79,11 @@ public class SpssManager {
 			 * Get the results and details of the user that submitted the survey
 			 */
 			boolean superUser = GeneralUtilityMethods.isSuperUser(connectionSD, remoteUser);
-			survey = sm.getById(connectionSD, null, remoteUser, sId, true, null, null, false, false, true, false, false, "real", false, superUser, 0, null);
+			survey = sm.getById(connectionSD, null, remoteUser, sId, true, null, null, 
+					false, false, true, false, false, "real", false, false, superUser, null,
+					false,		// Do not follow links to child surveys
+					false		// launched only
+					);
 			int languageIdx = GeneralUtilityMethods.getLanguageIdx(survey, language);
 			
 			/*

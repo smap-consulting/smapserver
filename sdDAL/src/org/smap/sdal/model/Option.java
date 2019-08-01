@@ -13,11 +13,12 @@ public class Option {
 	public int sourceSeq;
 	public String value;
 	public String columnName;
+	public String display_name;
 	public String defLabel;
 	public boolean externalFile;
 	public boolean published;
 	public ArrayList<Label> labels = new ArrayList<Label> ();
-	public String externalLabel;								// Only one label used for external files (TODO)
+	public ArrayList<LanguageItem> externalLabel = new ArrayList<LanguageItem> ();
 	public String text_id;
 	public String path;
 	public HashMap<String, String> cascade_filters = null;

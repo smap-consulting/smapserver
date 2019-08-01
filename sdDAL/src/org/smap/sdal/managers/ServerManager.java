@@ -7,33 +7,15 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.TimeZone;
+import java.util.HashMap;
+import java.util.ResourceBundle;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import javax.ws.rs.core.Response;
-
 import org.apache.commons.io.FileUtils;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
-import org.smap.sdal.Utilities.SDDataSource;
-import org.smap.sdal.model.AssignFromSurvey;
-import org.smap.sdal.model.Assignment;
-import org.smap.sdal.model.Location;
 import org.smap.sdal.model.ServerData;
-import org.smap.sdal.model.Task;
-import org.smap.sdal.model.TaskAssignment;
-import org.smap.sdal.model.TaskBulkAction;
-import org.smap.sdal.model.TaskFeature;
-import org.smap.sdal.model.TaskGroup;
-import org.smap.sdal.model.TaskListGeoJson;
-import org.smap.sdal.model.TaskProperties;
-
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonParser;
 
 /*****************************************************************************
 
@@ -58,13 +40,17 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
  * Manage the server table
  */
 public class ServerManager {
-	
+
 	private static Logger log =
-			 Logger.getLogger(ServerManager.class.getName());
-	
+			Logger.getLogger(ServerManager.class.getName());
+
 	LogManager lm = new LogManager();		// Application log
 	
-	public ServerData getServer(Connection sd) {
+	ResourceBundle localisation;
+
+	public ServerData getServer(Connection sd, ResourceBundle l) {
+
+		localisation = l;
 		
 		String sql = "select smtp_host,"
 				+ "email_domain,"
@@ -74,7 +60,8 @@ public class ServerManager {
 				+ "version,"
 				+ "mapbox_default,"
 				+ "google_key,"
-				+ "sms_url "
+				+ "sms_url,"
+				+ "keep_erased_days "
 				+ "from server;";
 		PreparedStatement pstmt = null;
 		ServerData data = new ServerData();
@@ -92,19 +79,20 @@ public class ServerManager {
 				data.mapbox_default = rs.getString("mapbox_default");
 				data.google_key = rs.getString("google_key");
 				data.sms_url = rs.getString("sms_url");
+				data.keep_erased_days = rs.getInt("keep_erased_days");
 			}
-	
+
 		}  catch (Exception e) {
 			log.log(Level.SEVERE, "Exception", e);
 		} finally {
-			
+
 			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
-				
+
 		}
-		
+
 		return data;
 	}
-	
+
 	/*
 	 * Hard delete a survey
 	 */
@@ -118,8 +106,8 @@ public class ServerManager {
 			String surveyDisplayName,
 			String basePath,
 			boolean delData,
-			String delTables) throws SQLException {
-		
+			String delTables) throws Exception {
+
 		/*
 		 * Get the tables associated with this survey
 		 */
@@ -127,105 +115,120 @@ public class ServerManager {
 		PreparedStatement pstmt = null;
 		ResultSet resultSet = null;
 		
+		SurveyManager surveyManager = new SurveyManager(localisation, "UTC");
+
 		try {
-			
-			
-			
+
 			boolean nonEmptyDataTables = false;
-			
+
 			if(delTables != null && delTables.equals("yes")) {
-				
-				lm.writeLog(sd, sId, user, "erase", "Delete survey " + surveyDisplayName + " and its results");
+
+				lm.writeLog(sd, sId, user, LogManager.ERASE, "Delete survey " + surveyDisplayName + " and its results");
 				log.info("userevent: " + user + " : hard delete survey : " + surveyDisplayName);
+
+				// Get any tables that are shared with other surveys
+				HashMap<String, ArrayList<String>> sharedTables = surveyManager.getSharedTables(sd, sId);
 				
 				sql = "SELECT DISTINCT f.table_name FROM form f " +
 						"WHERE f.s_id = ? " +
 						"ORDER BY f.table_name;";						
-			
+
 				pstmt = sd.prepareStatement(sql);	
 				pstmt.setInt(1, sId);
 				log.info("Get tables for deletion: " + pstmt.toString());
 				resultSet = pstmt.executeQuery();
-			
+
 				while (resultSet.next() && (delData || !nonEmptyDataTables)) {		
-				
+
 					String tableName = resultSet.getString(1);
-					int rowCount = 0;
 					
-					// Ensure the table is empty
-					if(!delData) {
+					ArrayList<String> surveys = sharedTables.get(tableName);
+					if(surveys != null && surveys.size() > 0) {
+						log.info("Table " + tableName + " not erased as it is used by " + surveys.toString());
+						lm.writeLog(sd, sId, user, LogManager.ERASE, "Table " + tableName + " not erased as it is used by " + surveys.toString());
+					} else {				
+					
+						int rowCount = 0;
+	
+						// Ensure the table is empty
+						if(!delData) {
+							try {
+								sql = "select count(*) from " + tableName + ";";
+								if(pstmt != null) try {pstmt.close();}catch(Exception e) {}
+								pstmt = rel.prepareStatement(sql);
+								ResultSet resultSetCount = pstmt.executeQuery();
+								resultSetCount.next();							
+								rowCount = resultSetCount.getInt(1);
+							} catch (Exception e) {
+								log.severe("failed to get count from table");
+							}
+						}
+	
+						Statement stmtRel = null;
 						try {
-							sql = "select count(*) from " + tableName + ";";
-							if(pstmt != null) try {pstmt.close();}catch(Exception e) {}
-							pstmt = rel.prepareStatement(sql);
-							ResultSet resultSetCount = pstmt.executeQuery();
-							resultSetCount.next();							
-							rowCount = resultSetCount.getInt(1);
+							if(delData || (rowCount == 0)) {
+								sql = "drop table " + tableName + ";";
+								log.info(sql + " : " + tableName);
+								stmtRel = rel.createStatement();
+								stmtRel.executeUpdate(sql);	
+							} else {
+								nonEmptyDataTables = true;
+							}
 						} catch (Exception e) {
 							log.severe("failed to get count from table");
+						} finally {
+							stmtRel.close();
 						}
 					}
-				
-					Statement stmtRel = null;
-					try {
-						if(delData || (rowCount == 0)) {
-							sql = "drop table " + tableName + ";";
-							log.info(sql + " : " + tableName);
-							stmtRel = rel.createStatement();
-							stmtRel.executeUpdate(sql);	
-						} else {
-							nonEmptyDataTables = true;
-						}
-					} catch (Exception e) {
-						log.severe("failed to get count from table");
-					} finally {
-						stmtRel.close();
-					}
-				
+
 				}		
 			} 
 
-		    if(delData || !nonEmptyDataTables) {
-				
-		    	/*
+			if(delData || !nonEmptyDataTables) {
+
+				/*
 				 * Delete any attachments
 				 */
 				String fileFolder = basePath + "/attachments/" + surveyIdent;
-			    File folder = new File(fileFolder);
-			    try {
-			    	log.info("Deleting attachments folder: " + fileFolder);
+				File folder = new File(fileFolder);
+				try {
+					log.info("Deleting attachments folder: " + fileFolder);
 					FileUtils.deleteDirectory(folder);
 				} catch (IOException e) {
 					log.info("Error deleting attachments directory:" + fileFolder + " : " + e.getMessage());
 				}
-	    
 
 				/*
 				 * Delete any raw upload data
 				 */
 				fileFolder = basePath + "/uploadedSurveys/" + surveyIdent;
-			    folder = new File(fileFolder);
-			    try {
-			    	log.info("Deleting uploaded files for survey: " + surveyDisplayName + " in folder: " + fileFolder);
+				folder = new File(fileFolder);
+				try {
+					log.info("Deleting uploaded files for survey: " + surveyDisplayName + " in folder: " + fileFolder);
 					FileUtils.deleteDirectory(folder);
 				} catch (IOException e) {
 					log.info("Error deleting uploaded instances: " + fileFolder + " : " + e.getMessage());
 				}
-			    
+
 				/*
 				 * Delete any media files
 				 */
 				fileFolder = basePath + "/media/" + surveyIdent;
-			    folder = new File(fileFolder);
-			    try {
-			    	log.info("Deleting media files for survey: " + surveyDisplayName + " in folder: " + fileFolder);
+				folder = new File(fileFolder);
+				try {
+					log.info("Deleting media files for survey: " + surveyDisplayName + " in folder: " + fileFolder);
 					FileUtils.deleteDirectory(folder);
 				} catch (IOException e) {
 					log.info("Error deleting media files: " + fileFolder + " : " + e.getMessage());
 				}
-	    
 
-			    // Delete the templates
+
+				// Delete the survey  resources 
+				int oId = GeneralUtilityMethods.getOrganisationIdForSurvey(sd, sId);
+			    CsvTableManager tm = new CsvTableManager(sd, localisation);
+			    tm.delete(oId, sId, null);		
+			    
+				// Delete the templates
 				try {
 					GeneralUtilityMethods.deleteTemplateFiles(surveyDisplayName, basePath, projectId );
 				} catch (Exception e) {
@@ -239,7 +242,7 @@ public class ServerManager {
 				pstmt.setInt(1, sId);
 				log.info("Delete survey definition: " + pstmt.toString());
 				pstmt.execute();
-			
+
 				// Delete changeset data, this is an audit trail of modifications to the data
 				sql = "delete from changeset where s_id = ?;";	
 				if(pstmt != null) try {pstmt.close();}catch(Exception e) {}
@@ -247,14 +250,13 @@ public class ServerManager {
 				pstmt.setInt(1, sId);
 				log.info("Delete changeset data: " + pstmt.toString());
 				pstmt.execute();
-		    }
-			
-			
+				
+			}
+
+
 		} finally {
 			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 		}
 	}
-	
+
 }
-
-

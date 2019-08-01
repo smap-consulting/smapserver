@@ -28,6 +28,7 @@ public class Role {
 	public boolean enabled;
 	public int linkid;
 	public ArrayList<RoleColumnFilter> column_filter;	// Columns that are allowed to be seen by people with this role
+	public ArrayList<RoleColumnFilterRef> column_filter_ref;	// Columns that are allowed to be seen by people with this role
 	public String row_filter;							// String row filter sent to client
 	public String changed_by;
 	public String changed_ts;
@@ -38,5 +39,10 @@ public class Role {
 	public Role(int id, String name) {
 		this.id = id;
 		this.name = name;
+	}
+	
+	public Role(String name) {
+		this.name = name;
+		column_filter = new ArrayList<RoleColumnFilter> ();
 	}
 }

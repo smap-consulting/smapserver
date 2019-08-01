@@ -24,5 +24,5 @@ public class Report2 {
 	public int id;
 	public String name;
 	public int sId;
-	
+	public String url;
 }

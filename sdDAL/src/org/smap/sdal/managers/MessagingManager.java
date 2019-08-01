@@ -6,6 +6,7 @@ import java.sql.SQLException;
 import java.util.logging.Logger;
 
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
+import org.smap.sdal.model.OrgResourceMessage;
 import org.smap.sdal.model.ProjectMessage;
 import org.smap.sdal.model.SurveyMessage;
 import org.smap.sdal.model.TaskMessage;
@@ -59,7 +60,7 @@ public class MessagingManager {
 	public void userChange(Connection sd, String userIdent) throws SQLException {
 		Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
 		String data = gson.toJson(new UserMessage(userIdent));		
-		int oId = GeneralUtilityMethods.getOrganisationId(sd, userIdent, 0);	
+		int oId = GeneralUtilityMethods.getOrganisationId(sd, userIdent);	
 		if(oId >= 0) {
 			createMessage(sd, oId, "user", null, data);
 		}
@@ -76,6 +77,19 @@ public class MessagingManager {
 		int oId = GeneralUtilityMethods.getOrganisationIdForSurvey(sd, sId);	
 		if(oId >= 0) {
 			createMessage(sd, oId, "survey", null, data);
+		}
+	}
+	
+	/*
+	 * Create a message resulting from a change to a shared resource
+	 */
+	public void resourceChange(Connection sd, int oId, String fileName) throws SQLException {
+		Gson gson = new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
+
+		OrgResourceMessage sm = new OrgResourceMessage(oId, fileName);
+		String data = gson.toJson(sm);		
+		if(oId >= 0) {
+			createMessage(sd, oId, "resource", null, data);
 		}
 	}
 	

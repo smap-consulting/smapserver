@@ -151,7 +151,7 @@ public class QueryManager {
 					qf.table = rs.getString(1);
 					qf.parent = rs.getInt(2);
 				} else {
-					String msg = "Exporting survey, Form not found:" + qf.survey + ":" + qf.form;
+					String msg = "Exporting survey, Form not found:" + sId + ":" + fId;
 					log.info(msg);
 					throw new Exception(msg);
 				}

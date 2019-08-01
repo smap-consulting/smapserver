@@ -1,25 +1,27 @@
 package org.smap.sdal.Utilities;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URLEncoder;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.smap.sdal.managers.LogManager;
 import org.smap.sdal.managers.PDFTableManager;
 
 import com.itextpdf.text.Anchor;
 import com.itextpdf.text.BadElementException;
-import com.itextpdf.text.BaseColor;
 import com.itextpdf.text.DocumentException;
+import com.itextpdf.text.Element;
 import com.itextpdf.text.Font;
-import com.itextpdf.text.FontFactory;
 import com.itextpdf.text.Image;
+import com.itextpdf.text.Phrase;
 import com.itextpdf.text.Rectangle;
 import com.itextpdf.text.pdf.AcroFields;
+import com.itextpdf.text.pdf.AcroFields.FieldPosition;
 import com.itextpdf.text.pdf.ColumnText;
 import com.itextpdf.text.pdf.PdfStamper;
 import com.itextpdf.text.pdf.PushbuttonField;
@@ -29,8 +31,10 @@ public class PdfUtilities {
 	private static Logger log =
 			 Logger.getLogger(PDFTableManager.class.getName());
 	
+	private static LogManager lm = new LogManager();		// Application log
+	
 	public static void addImageTemplate(AcroFields pdfForm, String fieldName, String basePath, 
-			String value, String serverRoot, PdfStamper stamper, Font Symbols) throws IOException, DocumentException {
+			String value, String serverRoot, PdfStamper stamper, Font symbols_font) throws IOException, DocumentException {
 		PushbuttonField ad = pdfForm.getNewPushbuttonFromField(fieldName);
 		if(ad != null) {
 			ad.setLayout(PushbuttonField.LAYOUT_ICON_ONLY);
@@ -44,31 +48,28 @@ public class PdfUtilities {
 			
 			log.info("Adding image to: " + fieldName);
 		} else {
-			
+	
 			String imageUrl = serverRoot + value;
-			try {
-				Rectangle targetPosition = pdfForm.getFieldPositions(fieldName).get(0).position;
-			    Font fontNormal = FontFactory.getFont("Courier", 8, Font.UNDERLINE, BaseColor.BLUE);
-			    Anchor url = new Anchor("\uf08e", Symbols);
-			    url.setReference(imageUrl);
-			    ColumnText data = new ColumnText(stamper.getOverContent(1));
-			    data.setSimpleColumn(url, targetPosition.getLeft(), targetPosition.getBottom(), targetPosition.getRight(), targetPosition.getTop(), 0,0);
-			    data.go();
-			} catch (Exception e) {
+
+			List<FieldPosition> posList = pdfForm.getFieldPositions(fieldName);
+			if(posList == null) {
 				log.info("Field not found for: " + fieldName);
+			} else {
+				Rectangle targetPosition = posList.get(0).position;
+				int page = pdfForm.getFieldPositions(fieldName).get(0).page;
+			    Anchor url = new Anchor("\uf08e", symbols_font);
+			    url.setReference(imageUrl);
+			    ColumnText data = new ColumnText(stamper.getOverContent(page));
+			
+			    data.setSimpleColumn(url, targetPosition.getLeft(), targetPosition.getBottom(), targetPosition.getRight(), targetPosition.getTop(), 
+			    		(targetPosition.getHeight() + symbols_font.getSize()) / 2, Element.ALIGN_CENTER);
+			    data.go();
 			}
-		    
-		    /*
-			Anchor anchor = new Anchor(serverRoot + value);
-			anchor.setReference(serverRoot + value);
-			pdfForm.setField(fieldName, anchor.toString());  // set as hyper link
-			*/
 		}
 	}
 	
-	public static void addMapImageTemplate(AcroFields pdfForm, String fieldName, Image img) throws IOException, DocumentException {
+	public static void addMapImageTemplate(AcroFields pdfForm, PushbuttonField ad, String fieldName, Image img) throws IOException, DocumentException {
 		
-		PushbuttonField ad = pdfForm.getNewPushbuttonFromField(fieldName);
 		if(ad != null) {
 			ad.setLayout(PushbuttonField.LAYOUT_ICON_ONLY);
 			ad.setProportionalIcon(true);
@@ -79,9 +80,7 @@ public class PdfUtilities {
 			}
 			pdfForm.replacePushbuttonField(fieldName, ad.getField());
 			log.info("Adding image to: " + fieldName);
-		} else {
-			//log.info("Picture field: " + fieldName + " not found");
-		}
+		} 
 	}
 	
 	public static Image getMapImage(Connection sd, 
@@ -89,7 +88,10 @@ public class PdfUtilities {
 			String value, 
 			String location, 
 			String zoom,
-			String mapbox_key) throws BadElementException, MalformedURLException, IOException, SQLException {
+			String mapbox_key,
+			int sId,
+			String user,
+			String markerColor) throws BadElementException, MalformedURLException, IOException, SQLException {
 		
 		Image img = null;
 		
@@ -104,7 +106,21 @@ public class PdfUtilities {
 		url.append("/");
 		
 		if(value != null && value.trim().length() > 0) {
-			// GeoJson data
+			
+			// GeoJson data - add styling
+			value = "{\"type\":\"FeatureCollection\",\"features\":[{\"type\":\"Feature\",\"geometry\":" + 
+					value + 
+					",\"properties\":{";
+			
+			// properties
+			if(markerColor == null) {
+				markerColor = "f00";
+			}
+			value += "\"marker-color\":\"#" + markerColor + "\"";		// Add marker color
+			
+			value += "}}]}";
+			// End add styling
+			
 			url.append("geojson(");
 
 			String jsonValue = value;
@@ -130,13 +146,13 @@ public class PdfUtilities {
 		
 		if(getMap && mapbox_key == null) {
 			log.info("Mapbox key not specified.  PDF Map not created");
-		}
-		
-		if(getMap) {
+		} else if(getMap) {
 			url.append("500x300.png?access_token=");
 			url.append(mapbox_key);
 			try {
+				log.info("Mapbox API call: " + url);
 				img = Image.getInstance(url.toString());
+				lm.writeLog(sd, sId, user, "Mapbox Request", url.toString());
 			} catch (Exception e) {
 				log.log(Level.SEVERE, "Exception", e);
 			}
