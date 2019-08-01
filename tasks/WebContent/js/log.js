@@ -34,110 +34,73 @@ requirejs.config({
      	i18n: '../../../../js/libs/i18n',
      	async: '../../../../js/libs/async',
      	localise: '../../../../js/app/localise',
-    	jquery: '../../../../js/libs/jquery-2.1.1',
+	    globals: '../../../../js/app/globals',
     	modernizr: '../../../../js/libs/modernizr',
-    	moment: '../../../../js/libs/moment-with-locales.min',
-    	datetimepicker: '../../../../js/libs/bootstrap-datetimepicker.min',
-    	datatables: '../../../../js/libs/DataTables/datatables',
-    	'datatables.net': '../../../../js/libs/DataTables/DataTables/js/datatables.net',
-    	'datatables.net-bs': '../../../../js/libs/DataTables/DataTables/js/datatables.bootstrap',
+	    moment: '../../../../js/libs/moment-with-locales.2.24.0',
     	common: '../../../../js/app/common',
-    	globals: '../../../../js/app/globals',
-    	bootstrap: '../../../../js/libs/bootstrap.min',
-    	bootbox: '../../../../js/libs/bootbox.min',
-    	crf: '../../../../js/libs/commonReportFunctions',
     	lang_location: '../../../../js',
-    	file_input: '../../../../js/libs/bootstrap.file-input',
-    	mapbox_app: '../../../../js/app/mapbox_app',
-    	
-    	mapbox: '../../../../js/libs/mapbox/js/mapbox',
-    	inspinia: '../../../../js/libs/wb/inspinia',
     	metismenu: '../../../../js/libs/wb/metisMenu/jquery.metisMenu',
-    	slimscroll: '../../../../js/libs/wb/slimscroll/jquery.slimscroll.min',
-    	pace: '../../../../js/libs/wb/pace/pace.min',
-    	peity: '../../../../js/libs/wb/peity/jquery.peity.min',
-    	icheck: '../../../../js/libs/wb/plugins/iCheck/icheck.min',
-    	calendar: '../../../../js/libs/wb/plugins/fullcalendar/fullcalendar.min',
-    	jquery_ui: '../../../../js/libs/wb/jquery-ui.custom.min'
+    	pace: '../../../../js/libs/wb/pace/pace.min'
     },
     shim: {
 
     	'common': ['jquery'],
-    	'datetimepicker': ['moment'],
     	'bootstrap': ['jquery'],
-    	'bootbox': ['bootstrap'],
-    	'crf': ['jquery'],
-    	'file_input': ['jquery'],
-    	'datatables': ['jquery', 'bootstrap'],
-    	'inspinia': ['jquery'],
-    	'metismenu': ['jquery'],
-    	'slimscroll': ['jquery'],
-    	'peity': ['jquery'],
-    	'icheck': ['jquery']
-
-	
+    	'metismenu': ['jquery']
     	}
     });
 
 require([
          'jquery',
-         'bootstrap',
-         'common', 
-         'localise', 
-         'globals',
-         'bootbox',
-         'crf',
-         'moment',
-         'datetimepicker',
-         'datatables.net-bs',
-         'file_input',     
-         'inspinia',
+         'common',
+         'localise',
+		 'globals',
+		 'moment',
          'metismenu',
-         'slimscroll',
-         'pace',
-         'peity',
-         'icheck'
-         
-         ], function($, 
-        		 bootstrap, 
-        		 common, 
-        		 localise, 
-        		 globals, 
-        		 bootbox, 
-        		 crf, 
-        		 moment,
-        		 datetimepicker,
-        		 datatables) {
-	
-	window.moment = moment;
+         'pace'
+
+         ], function($,
+        		 common,
+        		 localise,
+        		 globals,
+		         moment) {
+
 	var table;
 	
 	$(document).ready(function() {
-		
+
+		window.moment = moment;		// Make moment global for use by common.js
+        setCustomLogs();
+		setupUserProfile(true);
 		localise.setlang();		// Localise HTML
-		
+
+		$("#side-menu").metisMenu()
+
 		getLoggedInUser(undefined, false, true, undefined);
 		
 		table = $('#log_table').DataTable({
 			 processing: true,
+			 deferRender: true,
 		     ajax: "/api/v1/log/dt",
 		     columns: [
 		                 { "data": "id" },
 		                 { "data": "log_time" },
-		                 { "data": "sName" },
+		                 { "data": "sName", "width": "200px"  },
 		                 { "data": "userIdent" },
 		                 { "data": "event" },
 		                 { "data": "note" }
 		             ],
 		      order: [[ 0, "desc" ]],
-		      columnDefs: [ {
-		    	 	targets: [1],
-		    	 	render: function ( data, type, full, meta ) {
-		    	 		return localTime(data);
-		    	 	}	 	
-		      	}
+		      columnDefs: [{
+                  targets: [1],
+                  render: function (data, type, full, meta) {
+                      return localTime(data);
+                  }
+              }
 		     ],
 		});
+
+        $('#log_table').find('td').css('white-space','initial').css('word-wrap', 'break-word');
 		
 		$('#m_refresh').click(function(e) {	// Add refresh action
 			table.ajax.reload();

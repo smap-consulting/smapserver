@@ -19,15 +19,14 @@
     <link href="/css/dataTables.fontAwesome.css" rel="stylesheet" >
     <link href="/css/smap-wb.css" rel="stylesheet">
 
-<script> if (!window.console) console = {log: function() {}}; </script>
+	<script> if (!window.console) console = {log: function() {}}; </script>
 
-<script src="/js/libs/modernizr.js"></script>
-<script src="/js/app/custom.js"></script>  <!-- Override this in custom code to apply changes at run time -->
-<script>
-	var isBrowseResults = false,
-		isManagedForms = false,
-		isDuplicates = true;
-</script>
+	<script src="/js/libs/modernizr.js"></script>
+	<script src="/js/app/theme.js"></script>
+	<script src="/js/app/custom.js"></script>  <!-- Override this in custom code to apply changes at run time -->
+	<script>
+	var isDuplicates = true;
+	</script>
 <script data-main="js/managed_forms" src="/js/libs/require.js"></script>
 
 </head>
@@ -45,25 +44,19 @@
 		            
 		            <li><a class="lang" data-lang="m_home" href="/?loggedin=yes">home</a></li>
 		            <li class="restrict_role admin_role analyst_role"><a href="/edit.html"><i class="glyphicon glyphicon-edit"></i> <span class="lang" data-lang="c_edit">Edit</span></a></li>
-		            <li class="restrict_role admin_role analyst_role"><a href="/fieldManager/templateManagement.html"><i class="glyphicon glyphicon-wrench"></i> <span class="lang" data-lang="m_admin">Admin</span></a></li>
-		            <li class="restrict_role enum_role"><a href="/webForm.html"><i class="glyphicon glyphicon-globe"></i> <span class="nav-label lang" data-lang="m_data_mod">web forms</span></span></a></li>
+		            <li class="restrict_role admin_role analyst_role"><a href="/fieldManager/surveyManagement.html"><i class="glyphicon glyphicon-wrench"></i> <span class="lang" data-lang="m_admin">Admin</span></a></li>
+		            <li class="restrict_role enum_role"><a href="/webForm.html"><i class="glyphicon glyphicon-globe"></i> <span class="nav-label lang" data-lang="m_console"></span></span></a></li>
 		            <li class="restrict_role analyst_role"><a href="/fieldAnalysis/index.html"><i class="glyphicon glyphicon-stats"></i> <span class="nav-label lang" data-lang="m_analysis">Analysis</span></a></li>
 		            <li class="restrict_role admin_role analyst_role"><a href="/tasks/taskManagement.html"><i class="fa fa-tasks"></i> <span class="nav-label lang" data-lang="m_assign">assign</span></a></li>
-		          
-		          </ul>
+					  <li class="restrict_role billing_role" style="display:none;"><a href="/fieldManager/billing.html"><i
+							  class="fa fa-usd"></i> <span class="nav-label lang" data-lang="m_billing"></span></a>
+					  </li>
+				  </ul>
 		        </li> 
 
-			<li id="m_mf" class="restrict_role admin_role manage_role"><a href="/tasks/managed_forms.html"><i class="fa fa-wpforms"></i> <span class="lang" data-lang="m_mf">manage</span></a></li>
-			<li id="m_web_forms" class="restrict_role enum_role"><a href="/webForm.html"><i class="fa fa-globe" aria-hidden="true"></i> <span class="lang" data-lang="m_web_forms">web forms</span></a></li>
-			<li id="m_br" class="restrict_role admin_role analyst_role manage_role"><a href="/tasks/browse_results.html"><i class="fa fa-table"></i> <span class="lang" data-lang="m_br">browse</span></a></li>  
-			<li id="m_help"><a href="https://docs.google.com/folderview?id=0B5_SmpWlQYxvNExwSFV5X051Yjg&usp=docslist_api#" target="_blank"><i class="fa fa-info-circle"></i> <span class="lang" data-lang="m_help">help</span></a></li>
-	        <!--  
-	        <li>
-	         	<a id="username" type="button" class="btn btn-default" data-toggle="modal" data-target="#modify_me_popup" aria-label="User">
-				<span class="glyphicon glyphicon-user" aria-hidden="true"></span>
-				</a>
-			</li>
-			-->
+			<li id="m_mf" class="restrict_role admin_role manage_role"><a href="/tasks/managed_forms.html"><i class="fa fa-wpforms"></i> <span class="lang" data-lang="c_records">r</span></a></li>
+			<li id="m_web_forms" class="restrict_role enum_role"><a href="/webForm.html"><i class="fa fa-globe" aria-hidden="true"></i> <span class="lang" data-lang="m_web_forms">wf</span></a></li>
+			<li id="m_help"><a href="https://docs.google.com/folderview?id=0B5_SmpWlQYxvNExwSFV5X051Yjg&usp=docslist_api#" target="_blank"><i class="fa fa-info-circle"></i> <span class="lang" data-lang="m_help">h</span></a></li>
 			
 	      </ul>
 		</div>
@@ -278,7 +271,7 @@
 	</div>
 </div>
 
-<!-- Modal to allow the user to edit their own details -->
+<!-- Modal to allow the user to edit their own details
 <div id="modify_me_popup" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="modifyMeLabel" aria-hidden="true">
 	<div class="modal-dialog">
    		<div class="modal-content">
@@ -306,6 +299,18 @@
 							<input type="email" class="form-control" id="me_email" 
 									placeholder="Enter email" 
 									pattern="^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$">
+						</div>
+					</div>
+					<div class="form-group">
+						<label for="me_organisation" data-lang="c_org" class="lang col-sm-2 control-label">organisation</label>
+						<div class="col-sm-10">
+							<select id="me_organisation" class="organisation_select form-control"></select>
+						</div>
+					</div>
+					<div class="form-group">
+						<label for="u_tz" class="col-sm-2 control-label lang" data-lang="c_tz">timezone</label>
+						<div class="col-sm-10">
+							<select class="form-control timezone_select" id="u_tz"></select>
 						</div>
 					</div>
 					<div id="reset_me_password_fields" style="display:none;">
@@ -344,12 +349,7 @@
 		</div>
 	</div>
 </div>
-
-<script>
-	setCustomManage();
-</script>
-
-
+-->
 
 </body>
 </html>

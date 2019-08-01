@@ -7,28 +7,28 @@
 
 	<title class="lang" data-lang="m_logs">Logs</title>
 
-    <link href="/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/css/bootstrap.v4.min.css" rel="stylesheet">
     <link href="/font-awesome/css/font-awesome.css" rel="stylesheet">
-    <link href="/css/wb/plugins/iCheck/custom.css" rel="stylesheet">
 
-	<link href="/css/wb/plugins/fullcalendar/fullcalendar.css" rel="stylesheet">
-    <link href="/css/wb/plugins/fullcalendar/fullcalendar.print.css" rel='stylesheet' media='print'>
-	
-	
+
     <link href="/css/wb/animate.css" rel="stylesheet">
-    <link href="/css/wb/style.css" rel="stylesheet">
-    
-    <link rel="stylesheet" type="text/css" href="/js/libs/DataTables/datatables.min.css"/>
-    <link href="/css/dataTables.fontAwesome.css" rel="stylesheet" >
-    
-    <link rel="stylesheet" href="/css/smap-wb.css" type="text/css">
-    <link href="/js/libs/mapbox/css/mapbox.css" rel="stylesheet">
+    <link href="/css/wb/style.v2.9.1.css" rel="stylesheet">
 
-<script> if (!window.console) console = {log: function() {}}; </script>
+
+	<link href="/css/smap-wb.css" rel="stylesheet">
+
+    <link href="/css/dataTables.b4.min.css" rel="stylesheet" >
+	<link href="/css/dataTables.fontAwesome.css" rel="stylesheet" >
+
+	<script> if (!window.console) console = {log: function() {}}; </script>
  
-<script src="/js/libs/modernizr.js"></script>
-<script src="/js/app/custom.js"></script>  <!-- Override this in custom code to apply changes at run time -->
-<script data-main="js/log" src="/js/libs/require.js"></script>
+	<script src="/js/libs/modernizr.js"></script>
+	<script src="/js/app/theme.js"></script>
+	<script src="/js/libs/jquery-2.1.1.js"></script>
+	<script src="/js/libs/bootstrap.bundle.v4.min.js"></script>
+	<script src="/js/libs/datatables.b4.min.js"></script>
+	<script src="/js/app/custom.js"></script>  <!-- Override this in custom code to apply changes at run time -->
+	<script data-main="js/log" src="/js/libs/require.js"></script>
 
 </head>
 <body>
@@ -48,19 +48,18 @@
 		            
 		            <li><a class="lang" data-lang="m_home" href="/?loggedin=yes">home</a></li>
 		            <li class="restrict_role admin_role analyst_role"><a href="/edit.html"><i class="glyphicon glyphicon-edit"></i> <span class="lang" data-lang="c_edit">Edit</span></a></li>
-		            <li class="restrict_role admin_role analyst_role"><a href="/fieldManager/templateManagement.html"><i class="glyphicon glyphicon-wrench"></i> <span class="lang" data-lang="m_admin">Admin</span></a></li>
-		            <li class="restrict_role enum_role"><a href="/webForm.html"><i class="glyphicon glyphicon-globe"></i> <span class="nav-label lang" data-lang="m_data_mod">web forms</span></a></li>
+		            <li class="restrict_role admin_role analyst_role"><a href="/fieldManager/surveyManagement.html"><i class="glyphicon glyphicon-wrench"></i> <span class="lang" data-lang="m_admin">Admin</span></a></li>
+		            <li class="restrict_role enum_role"><a href="/webForm.html"><i class="glyphicon glyphicon-globe"></i> <span class="nav-label lang" data-lang="m_console"></span></a></li>
 		            <li class="restrict_role analyst_role"><a href="/fieldAnalysis/index.html"><i class="glyphicon glyphicon-stats"></i> <span class="nav-label lang" data-lang="m_analysis">Analysis</span></a></li>
 			        <li class="restrict_role admin_role analyst_role"><a href="/tasks/taskManagement.html"><i class="fa fa-tasks"></i> <span class="nav-label lang" data-lang="m_assign">assign</span></a></li>
-		          
-		          </ul>
+					  <li class="restrict_role billing_role" style="display:none;"><a href="/fieldManager/billing.html"><i
+							  class="fa fa-usd"></i> <span class="nav-label lang" data-lang="m_billing">billing</span></a>
+					  </li>
+				  </ul>
 		        </li> 
 
 	        <li id="m_monitor" class="restrict_role admin_role analyst_role"><a class="lang" data-lang="m_monitor" href="/fieldManager/monitor.html">Monitoring</a></li>
 			<li id="m_user" class="restrict_role admin_role"><a class="lang" data-lang="m_user" href="/fieldManager/userManagement.html">Users</a></li>
-			<li id="m_notify" class="restrict_role admin_role analyst_role public_only"><a class="lang" data-lang="m_notify" href="notifications.html">Notifications</a></li>	
-			<li id="m_locations" class="restrict_role admin_role analyst_role public_only"><a class="lang" data-lang="m_locations" href="/userTrail.html">Locations</a></li>			
-			<li id="m_assign_pub" class="restrict_role analyst_role public_only"><a class="lang" data-lang="m_assign" href="/fieldManager/assignments.html">Tasks</a></li>
 			<li id="m_resources" class="restrict_role admin_role analyst_role"><a class="lang" data-lang="m_resources" href="/resources.html">Resources</a></li>	
 			<li id="m_os"><a href="/tasks/oversight.html"><span class="lang" data-lang="m_os">oversight</span></a></li>
 		
@@ -108,12 +107,12 @@
 							<div id="table-view" class="tab-pane active">
 		                		<div class="panel-body">
 		                    		<div class="table-responsive">
-		                                <table id="log_table" class="table table-striped">
+		                                <table id="log_table" class="table table-striped" width="100%" cellspacing="0">
 		                                    <thead>
 		                                    <tr>
 		                                    	<th></th>	<!-- id -->
 		                                        <th class="lang" data-lang="c_date">date</th>
-		                                        <th class="lang" data-lang="c_survey">survey</th>
+		                                        <th class="lang" data-lang="c_survey" style="width:200px;">survey</th>
 		                                        <th class="lang" data-lang="c_user">user</th>
 		                                        <th class="lang" data-lang="c_event">event</th>
 		                                      	<th class="lang" data-lang="c_note">note</th>
@@ -149,7 +148,7 @@
 -->
 
 
-<!-- Modal to allow the user to edit their own details -->
+<!-- Modal to allow the user to edit their own details
 <div id="modify_me_popup" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="modifyMeLabel" aria-hidden="true">
 	<div class="modal-dialog">
    		<div class="modal-content">
@@ -177,6 +176,18 @@
 							<input type="email" class="form-control" id="me_email" 
 									placeholder="Enter email" 
 									pattern="^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$">
+						</div>
+					</div>
+					<div class="form-group">
+						<label for="me_organisation" data-lang="c_org" class="lang col-sm-2 control-label">organisation</label>
+						<div class="col-sm-10">
+							<select id="me_organisation" class="organisation_select form-control"></select>
+						</div>
+					</div>
+					<div class="form-group">
+						<label for="u_tz" class="col-sm-2 control-label lang" data-lang="c_tz">timezone</label>
+						<div class="col-sm-10">
+							<select class="form-control timezone_select" id="u_tz"></select>
 						</div>
 					</div>
 					<div id="reset_me_password_fields" style="display:none;">
@@ -215,6 +226,7 @@
 		</div>
 	</div>
 </div>
+-->
 
 <!-- Modal to import data from a file -->
 <div id="import_taskgroup" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="importLabel" aria-hidden="true">
@@ -233,7 +245,8 @@
 					<div class="form-group">
      					<div class="input-group">
      						<span class="input-group-btn">
-       							<input name="files" title="Add" class="file-inputs" type="file" accept="application/vnd.ms-excel, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">
+       							<input name="files" title="Add" class="file-inputs" type="file"
+									   accept="application/vnd.ms-excel, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel.sheet.macroEnabled.12">
      						</span>
     					 	<input type="text" class="upload_file_msg form-control">
    						</div>
@@ -258,12 +271,6 @@
         </div>
 	</div>
 </div>
-
-<script>
-
-</script>
-
-
 
 </body>
 </html>

@@ -4,23 +4,25 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<meta charset="utf-8">
 
-	<title>Managed Forms</title>
+	<title class="lang" data-lang="mf_mf"></title>
 
-    <link href="/css/bootstrap.min.css" rel="stylesheet">
+	<link href="/css/bootstrap.v4.min.css" rel="stylesheet">
     <link href="/font-awesome/css/font-awesome.css" rel="stylesheet">
 
     <link href="/css/wb/plugins/footable/footable.core.css" rel="stylesheet">
 	
-	
     <link href="/css/wb/animate.css" rel="stylesheet">
-    <link href="/css/wb/style.css" rel="stylesheet">
+    <link href="/css/wb/style.v2.9.1.css" rel="stylesheet">
     <link href="/css/smap-wb.css" rel="stylesheet">
 
-<script> if (!window.console) console = {log: function() {}}; </script>
+	<script> if (!window.console) console = {log: function() {}}; </script>
 
-<script src="/js/libs/modernizr.js"></script>
-<script src="/js/app/custom.js"></script>  <!-- Override this in custom code to apply changes at run time -->
-<script data-main="js/manage" src="/js/libs/require.js"></script>
+	<script src="/js/libs/modernizr.js"></script>
+	<script src="/js/app/theme.js"></script>
+	<script src="/js/libs/jquery-2.1.1.js"></script>
+	<script src="/js/libs/bootstrap.bundle.v4.min.js"></script>
+	<script src="/js/app/custom.js"></script>  <!-- Override this in custom code to apply changes at run time -->
+	<script data-main="js/manage" src="/js/libs/require.js"></script>
 
 </head>
 <body>
@@ -41,16 +43,18 @@
 		            
 		            <li><a class="lang" data-lang="m_home" href="/?loggedin=yes">home</a></li>
 		            <li class="restrict_role admin_role analyst_role"><a href="/edit.html"><i class="glyphicon glyphicon-edit"></i> <span class="lang" data-lang="c_edit">Edit</span></a></li>
-		            <li class="restrict_role admin_role analyst_role"><a href="/fieldManager/templateManagement.html"><i class="glyphicon glyphicon-wrench"></i> <span class="lang" data-lang="m_admin">Admin</span></a></li>
-		            <li class="restrict_role enum_role"><a href="/webForm.html"><i class="glyphicon glyphicon-globe"></i> <span class="nav-label lang" data-lang="m_data_mod">web forms</span></span></a></li>
-		            <li class="restrict_role analyst_role"><a href="/fieldAnalysis/index.html"><i class="glyphicon glyphicon-stats"></i> <span class="nav-label lang" data-lang="m_analysis">Analysis</span></a></li>
+		            <li class="restrict_role admin_role analyst_role"><a href="/fieldManager/surveyManagement.html"><i class="glyphicon glyphicon-wrench"></i> <span class="lang" data-lang="m_admin">Admin</span></a></li>
+		            <li class="restrict_role enum_role"><a href="/webForm.html"><i class="glyphicon glyphicon-globe"></i> <span class="nav-label lang" data-lang="m_console"></span></span></a></li>
+		            <li class="restrict_role analyst_role data_role"><a href="/fieldAnalysis/index.html"><i class="glyphicon glyphicon-stats"></i> <span class="nav-label lang" data-lang="m_analysis">Analysis</span></a></li>
 		            <li class="restrict_role admin_role analyst_role"><a href="/tasks/taskManagement.html"><i class="fa fa-tasks"></i> <span class="nav-label lang" data-lang="m_assign">assign</span></a></li>
-		          
-		          </ul>
+					  <li class="restrict_role billing_role" style="display:none;"><a href="/fieldManager/billing.html"><i
+							  class="fa fa-usd"></i> <span class="nav-label lang" data-lang="m_billing">billing</span></a>
+					  </li>
+				  </ul>
 		        </li> 
 
- 			<li class="restrict_role admin_role analyst_role"><a href="/fieldManager/templateManagement.html"><i class="glyphicon glyphicon-wrench"></i> <span class="lang" data-lang="m_tm">Admin</span></a></li>
- 			<li id="m_user" class="restrict_role admin_role"><a href="/fieldManager/userManagement.html"><i class="glyphicon glyphicon-users"></i> <span class="lang" data-lang="m_user">Users</span></a></li>
+ 			<li class="restrict_role admin_role analyst_role"><a href="/fieldManager/surveyManagement.html"><i class="glyphicon glyphicon-wrench"></i> <span class="lang" data-lang="m_tm">Admin</span></a></li>
+ 			<li id="m_user" class="restrict_role admin_role"><a href="/fieldManager/userManagement.html"><i class="glyphicon glyphicon-user"></i> <span class="lang" data-lang="m_user">Users</span></a></li>
 			<li id="m_help"><a href="https://drive.google.com/drive/folders/0B5_SmpWlQYxvRHZ6Z0ZYMGNJS3M?usp=sharing" target="_blank"><i class="fa fa-info-circle"></i> <span class="lang" data-lang="m_help">help</span></a></li>
 	        <!--  
 	        <li>
@@ -88,16 +92,16 @@
         	<div class="col-sm-6">
             	<h2 class="lang" data-lang="m_s_m_f">mf</h2>   
             </div>
-            <div class="col-sm-6">
-            	<div class="row">
-					<form role="form" class="form-horizontal heading-element">
-						<label class="lang col-sm-4 control-label" data-lang="c_project" for="project_name">Select Project</label>
-						<div class="col-sm-8">
-							<select class="project_list form-control" id="project_name"></select>
+			<div class="col-sm-10">
+				<form role="form" class="form-inline">
+					<div class="col-sm-6 pt-4">
+						<div class="form-group row">
+							<label class="lang col-md-4"  data-lang="c_project"  for="project_name"></label>
+							<select class="project_list form-control form-control-lg col-md-8" id="project_name"></select>
 						</div>
-					</form>	
-				</div>
-        	</div>
+					</div>
+				</form>
+			</div>
         </div>
         
         <!-- Tracked forms -->
@@ -105,22 +109,15 @@
         	<div class="row selectmanaged">
                 <div class="col-md-12">
                     <div class="ibox float-e-margins">
-                    	<div class="ibox-title">
-                            <div class="ibox-tools">
-                                <a class="collapse-link">
-                                    <i class="fa fa-chevron-up"></i>
-                                </a>
-                            </div>
-                        </div>
                         <div class="panel_msg msg alert alert-success" role="alert"></div>
                         <div class="ibox-content">
                         	<div class="tabs-container">
-				            	<ul class="nav nav-tabs">       
-				                    <li class="active"><a data-toggle="tab" href="#managed-view"><span class="lang" data-lang="mf_mf">mf</span></a></li>
-				                    <li class=""><a data-toggle="tab" href="#reports-view"><span class="lang" data-lang="mf_ao">ao</span></a></li>
+				            	<ul class="nav nav-tabs">
+				                    <li class="nav-item"><a class="nav-link active" data-toggle="tab" href="#managed-view"><span class="lang" data-lang="mf_mf"></span></a></li>
+				                    <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#reports-view"><span class="lang" data-lang="mf_ao"></span></a></li>
 				                </ul>
 								<div class="tab-content">
-									<div id="managed-view" class="tab-pane active">
+									<div id="managed-view" class="tab-pane active" role="tabpanel">
 				                		<div class="panel-body">
 				                		
 												<div class = "well">	
@@ -134,11 +131,11 @@
 				                        </div>
 				        			</div>
 				        			
-				        			<div id="reports-view" class="tab-pane">
+				        			<div id="reports-view" class="tab-pane" role="tabpanel">
 				                		<div class="panel-body">
 											<div class = "well">	
-												<a id="addReport" type="button" class="btn btn-primary lang" data-lang="c_add" aria-label="Add Report">add</a>
-												<a id="downloadTemplate" type="button" class="btn btn-default lang" data-lang="tm_g_temp" aria-label="Download Template" href="/oversight_template.xlsx">download</a>
+												<a id="addReport" role="button" class="btn btn-primary lang" data-lang="c_add" aria-label="Add Report">add</a>
+												<a id="downloadTemplate" role="button" class="btn btn-default lang" data-lang="tm_g_temp" aria-label="Download Template" href="/oversight_template.xlsx">download</a>
 												<div class="table-responsive">
 													<div id = "cr_list"></div>
 														
@@ -170,8 +167,6 @@
 
 <img class="hour_glass" src="/images/ajax-loader.gif" style="display:none;" alt="hourglass" height="60" width="60">
 
-
-
 <!-- Modal to change the managed survey -->
 <div id="changeManagedSurvey" class="modal fade" aria-hidden="true">
 	<div class="modal-dialog">
@@ -183,9 +178,11 @@
 						<p class="lang" data-lang="mf_sel"></p>
 
 						<form id="changeSurveyForm" role="form">
-							<label class="lang col-sm-4 control-label" data-lang="mf_of" for="newOversightForm">of</label>
-							<div class="col-sm-8">
-								<select class="customReportList form-control" id="changeOversightForm"></select>
+							<div class="form-group row">
+								<label class="lang col-sm-4 control-label" data-lang="mf_of" for="changeOversightForm"></label>
+								<div class="col-sm-8">
+									<select class="customReportList form-control" id="changeOversightForm"></select>
+								</div>
 							</div>
 						</form>
 					</div>
@@ -200,31 +197,29 @@
 </div>
 
 <!-- Popup to allow the user to add a report -->
-<div id="addReportPopup" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="addReportLabel" aria-hidden="true">
+<div id="addReportPopup" class="modal fade" tabindex="-1"  role="dialog" aria-labelledby="addReportLabel" aria-hidden="true">
 	<div class="modal-dialog">
    		<div class="modal-content">
     			<div class="modal-header">
-      				<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-      				<h4 class="modal-title lang" id="addReportLabel" data-lang="sr_cr">reports</h4>
+					<h4 class="modal-title lang" id="addReportLabel" data-lang="sr_cr"></h4>
+					<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
     			</div>
     			
 		    <div class="modal-body">
 		    	<div class="upload_file_msg alert alert-success mediaManage" role="alert"></div>
-				<form id="report_edit_form" class="form-horizontal" role="form" enctype="multipart/form-data" name="crupload">
-					<div class="form-group">
+				<form id="report_edit_form" role="form" enctype="multipart/form-data" name="crupload">
+					<div class="form-group row">
 						<label class="lang col-sm-2 control-label" data-lang="c_name" for="report_name">name</label>
 						<div class="col-sm-10">
-							<input type="text" id="report_name" name="name" class="form-control" 
-								placeholder="report name" 
-								required>
+							<input type="text" id="report_name" name="name" class="form-control" placeholder="" required>
 						</div>
 					</div>
-					
-					<div class="form-group">
-						<label class="col-sm-2 control-label lang" data-lang="c_file" for="report_file"></label> 
-						<div class="col-sm-10">
-							<input accept="application/vnd.ms-excel, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" 
-								type="file" class="form-control" name="filename" id="report_file" required/>
+
+					<div class="form-group custom-file row">
+						<div class="custom-file">
+							<input name="filename" type="file" class="custom-file-input" id="report_file"
+								   accept="application/vnd.ms-excel, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel.sheet.macroEnabled.12">
+							<label class="custom-file-label lang" data-lang="c_file" for="report_file" data-browse=""></label>
 						</div>
 					</div>
 					
@@ -239,79 +234,6 @@
 		</div>
 	</div>
 </div>
-
-<!-- Modal to allow the user to edit their own details -->
-<div id="modify_me_popup" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="modifyMeLabel" aria-hidden="true">
-	<div class="modal-dialog">
-   		<div class="modal-content">
-   			<div class="modal-header">
-     			<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-     			<h4 class="modal-title lang" id="modifyMeLabel"></h4>
-   			</div>
-		     <div class="modal-body">
-				<form role="form" class="form-horizontal" id="me_edit_form">
-					<div class="form-group">
-						<label for="me_name" data-lang="c_name" class="lang col-sm-2 control-label">Name</label>
-						<div class="col-sm-10">
-							<input type="text" id="me_name" required class="form-control">
-						</div>
-					</div>
-					<div class="form-group">
-						<label for="me_language" data-lang="c_lang" class="lang col-sm-2 control-label">Language</label>
-						<div class="col-sm-10">
-							<select id="me_language" class="language_select form-control"></select>
-						</div>
-					</div>
-					<div class="form-group">
-						<label for="me_email" data-lang="c_email" class="lang col-sm-2 control-label">Email</label>
-						<div class="col-sm-10">
-							<input type="email" class="form-control" id="me_email" 
-									placeholder="Enter email" 
-									pattern="^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$">
-						</div>
-					</div>
-					<div id="reset_me_password_fields" style="display:none;">
-						<div class="form-group">
-							<div class="col-sm-offset-2 col-sm-10">
-								<div class="checkbox">
-									<label>
-										<input type="checkbox" id="reset_me_password"><span data-lang="c_r_p" class="lang">Reset Password</span>
-									</label>
-								</div>
-							</div>
-						</div>
-					</div>
-					<div id="password_me_fields" style="display:none;">
-						<div class="form-group">
-							<label for="me_password" data-lang="c_password" class="lang col-sm-2 control-label">Password</label>
-							<div class="col-sm-10">
-								<input id="me_password" type="password" placeholder="Password" class="form-control">
-							</div>
-						</div>	
-						<div class="form-group">
-							<label for="me_password_confirm" data-lang="c_c_p" class="lang col-sm-2 control-label">Confirm Password</label>
-							<div class="col-sm-10">
-								<input id="me_password_confirm" type="password" placeholder="Password" class="form-control">
-							</div>
-						</div>	
-					</div>		
-				</form>	
-			</div>
-
-			<div class="modal-footer">
-            	<button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_close">Close</button>
-            	<button id="userProfileLogout"type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_logout">Logout</button>
-            	<button id="userProfileSave" type="button" class="btn btn-primary lang" data-dismiss="modal" data-lang="c_save">Save</button>
-        	</div>
-		</div>
-	</div>
-</div>
-
-<script>
-	setCustomManage();			// Apply custom javascript
-</script>
-
-
 
 </body>
 </html>

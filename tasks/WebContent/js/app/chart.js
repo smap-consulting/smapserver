@@ -190,22 +190,23 @@ define([
                 chart,
                 chartArray = [],
                 dataLength = results.count(),
-                xlsResponse = [];
+                xlsResponse = [],
+                groupIdx;
 
             if(alldata) {
                 // Create an array of dummy charts that will generate the counts
-                var columns = gTasks.cache.surveyConfig[globals.gViewId].columns;
+                var columns = gTasks.cache.currentData.schema.columns;
                 for (i = 0; i < columns.length; i++) {
                     if (columns[i].chartQuestion) {
 
                         chart = {
-                            title: columns[i].select_name ? columns[i].select_name : columns[i].humanName,
+                            title: columns[i].select_name ? columns[i].select_name : columns[i].displayName,
                             tSeries: false,
                             chart_type: "other",
-                            fn: "count",
+                            fn: getChartFunction(columns[i].type),
                             groups: [{
-                                name: columns[i].select_name ? columns[i].select_name  : columns[i].humanName,
-                                dataLabel: columns[i].select_name ? columns[i].select_name  : columns[i].humanName,
+                                name: columns[i].select_name ? columns[i].select_name  : columns[i].displayName,
+                                dataLabel: columns[i].select_name ? columns[i].select_name  : columns[i].displayName,
                                 l_id: columns[i].l_id,
                                 type: columns[i].type
                             }
@@ -215,6 +216,24 @@ define([
                         if (columns[i].type === "select") {
                             chart.groups[0].choiceNames = columns[i].choiceNames;
                             chart.groups[0].choices = columns[i].choices;
+                        }
+
+                        groupIdx = $('#srf_group').val();
+                        if(groupIdx == i) {
+                            continue;   // Don't create a chart of the question grouped by itself
+                        }
+                        if(groupIdx != -1) {
+                            chart.groups.push({
+                                name: columns[groupIdx].select_name ? columns[groupIdx].select_name  : columns[groupIdx].displayName,
+                                    dataLabel: columns[groupIdx].select_name ? columns[groupIdx].select_name  : columns[groupIdx].displayName,
+                                l_id: columns[groupIdx].l_id,
+                                type: columns[groupIdx].type
+                            });
+
+                            if (columns[groupIdx].type === "select" || columns[groupIdx].type === "select1") {
+                                chart.groups[1].choiceNames = columns[groupIdx].choiceNames;
+                                chart.groups[1].choices = columns[groupIdx].choices;
+                            }
                         }
                         chartArray.push(chart);
                     }
@@ -362,18 +381,48 @@ define([
                 // Rollup the data as per the chart settings
 
                 var add = true;
+                var rows = data.length;
+                if(chart.fn === "percent" && rows === 0) {
+                    return;
+                }
+
+                var groupsObject = {};
+                // Get the number of entries per row for calculating percentage
+                if(chart.fn === "percent") {
+                    var groupRows = d3.nest()
+                        .key(function (d) {
+                            return d[chart.groups[1].name];
+                        })
+                        .rollup(function (v) {
+                            return v.length;
+                        })
+                        .entries(data);
+
+                    for(i = 0; i < groupRows.length; i++) {
+                        groupsObject["x" + groupRows[i].key] = groupRows[i].value;
+                    }
+                }
+
                 if(chart.groups.length === 1) {
-                    if(chart.fn === "count") {
+                    if(chart.fn === "count" || chart.fn === "percent") {
+
                         newData = d3.nest()
                             .key(function (d) {
                                 return d[chart.groups[0].name];
                             })
                             .rollup(function (v) {
-                                return v.length;
+                                if(chart.fn === "count") {
+                                    return v.length;
+                                } else {
+                                    return v.length * 100 / rows;
+                                }
                             })
                             .entries(data);
                     } else {
                         newData = d3.nest()
+                            .key(function (d) {
+                                return chart.groups[0].name;
+                            })
                             .rollup(function (v) {
                                if (chart.fn === "average") {
                                     return d3.mean(v, function (d) {
@@ -400,7 +449,8 @@ define([
                             .entries(data);
                     }
                 } else {
-                    if(chart.fn === "count") {
+                    if(chart.fn === "count" || chart.fn === "percent") {
+
                         newData = d3.nest()
                             .key(function (d) {
                                 return d[chart.groups[0].name];
@@ -412,6 +462,18 @@ define([
                                 return v.length;
                             })
                             .entries(data);
+
+                        if(chart.fn === "percent") {
+                            for(i = 0; i < newData.length; i++) {
+                                for(j = 0; j < newData[i].values.length; j++) {
+                                    if (groupsObject["x" + newData[i].values[j].key] == 0) {
+                                        newData[i].values[j].value = 0;
+                                    } else {
+                                        newData[i].values[j].value = newData[i].values[j].value * 100 / groupsObject["x" + newData[i].values[j].key];
+                                    }
+                                }
+                            }
+                        }
                     } else {
                         newData = d3.nest()
                             .key(function (d) {
@@ -452,7 +514,7 @@ define([
 
                 // Get the array of columns
                 var columnArray = [];
-                if(chart.groups.length === 2  && chart.fn === "count") {
+                if(chart.groups.length === 2 && (chart.fn === "count" || chart.fn === "percent")) {
                     for(i = 0; i < newData.length; i++) {
                         for(j = 0; j < newData[i].values.length; j++) {
                             var key = newData[i].values[j].key;
@@ -466,18 +528,12 @@ define([
                 // Normalise 2 dimensional array
                 for(i = 0; i < newData.length; i++) {
 
-                    //var choiceLabel = newData[i].key;
-                    //if(chart.groups.length === 1 && (chart.groups[0].type == 'select' || chart.groups[0].type == 'select1')) {
-                    //    choiceLabel = lookupChoiceLabel(chart.groups[0].l_id, newData[i].key);
-                    //} else  if(chart.groups.length === 2 && (chart.groups[1].type == 'select' || chart.groups[1].type == 'select1')) {
-                    //    choiceLabel = lookupChoiceLabel(chart.groups[1].l_id, newData[i].key);
-                    //}
                     var item = {
                         key: newData[i].key,
                         pr: []
                     };
 
-                    if(chart.groups.length === 1 || chart.fn !== "count") {
+                    if(chart.groups.length === 1 || (chart.fn !== "count" && chart.fn !== "percent")) {
                         item.pr.push({
                             key: chart.fn,
                             value: newData[i].value
@@ -530,7 +586,7 @@ define([
          */
         function processData(results, chart, dataLength) {
             var i, j,
-                columns = gTasks.cache.surveyConfig[globals.gViewId].columns,
+                columns = gTasks.cache.currentData.schema.columns,
                 datalabel = chart.qlabel ? 'label' : 'name';
 
             if (!gTasks.cache.surveyConfig[globals.gViewId].processedData) {
@@ -551,13 +607,13 @@ define([
                         var di = {};
                         di.count = 1;
                         for (j = 0; j < columns.length; j++) {
-                            var val = results[i][columns[j].humanName];
+                            var val = results[i][columns[j].displayName];
                             if(columns[j].l_id > 0) {
                                 if(chart.qlabel) {
                                     val = lookupChoiceLabel(columns[j].l_id, val);  // Convert to the default label
                                 }
                             }
-                            di[columns[j].humanName] = val;
+                            di[columns[j].displayName] = val;
                         }
                         if (!di["Survey Duration"]) {         // Make sure durations have a number
                             di["Survey Duration"] = 0;
@@ -781,8 +837,9 @@ define([
                 selM,
                 nonM,
                 row,
-                choiceValues = [],
-                val;
+                choiceValues,
+                val,
+                selectedValues;
 
             // Get index of select multiple
             groups = chart.groups;
@@ -797,28 +854,30 @@ define([
             }
 
             // Get the choice values from the choices which have the question name in them
-            for(i = 0; i < selM.choices.length; i++) {
-                var n = selM.choices[i].split(" - ");
-                choiceValues.push(n[1]);
+            var choiceLists = gTasks.cache.surveyConfig[globals.gViewId].choiceLists;
+            for(i = 0; i < choiceLists.length; i++) {
+                if(choiceLists[i].l_id == selM.l_id) {
+                    choiceValues = choiceLists[i].choices;
+                    break;
+                }
             }
 
-
             for(i = 0; i < results.length; i++) {
-                for(j = 0; j < selM.choiceNames.length; j++) {
-                    if(results[i][selM.choiceNames[j]] == 1) {
+                if(results[i][selM.dataLabel]) {
+                    selectedValues = results[i][selM.dataLabel].split(" ");
+
+                    for(j = 0; j < selectedValues.length; j++) {
                         // add a row
                         row = {
                             count: 1
                         };
 
-                        val = choiceValues[j];
-                        if(selM.l_id > 0) {
-                            if(chart.qlabel) {
-                                val = lookupChoiceLabel(selM.l_id, val);
-                            } else {
-                                val = choiceValues[j];
-                            }
+                        if(chart.qlabel) {
+                            val = lookupChoiceLabel(selM.l_id, selectedValues[j]);
+                        } else {
+                            val = selectedValues[j];
                         }
+
                         row[selM.dataLabel] = val;
                         if(nonM) {
                             row[nonM.dataLabel] = results[i][nonM.dataLabel];
@@ -989,8 +1048,6 @@ define([
                     }
                 }
 
-                console.log("delete");
-
             });
 
             $('.widget-edit').off().click(function () {
@@ -1035,7 +1092,7 @@ define([
          */
         function initialiseWidgetDialog() {
 
-            var columns = gTasks.cache.surveyConfig[globals.gViewId].columns,
+            var columns = gTasks.cachecurrentData.schema.columns,
                 q1, q2;
 
             $('#ew_tseries').prop("checked", gEdChart.tSeries);
@@ -1075,7 +1132,7 @@ define([
          */
         function addFunctions() {
 
-            var columns = gTasks.cache.surveyConfig[globals.gViewId].columns;
+            var columns = gTasks.cachecurrentData.schema.columns;
             var qIdx1 = $("#ew_question1").val();
             var addNumeric = false;
             var addNonNumeric = false;
@@ -1196,7 +1253,7 @@ define([
         function addQuestions(defValue1, defValue2) {
 
             var tSeries = $('#ew_tseries').prop("checked");
-            var columns = gTasks.cache.surveyConfig[globals.gViewId].columns;
+            var columns = gTasks.cache.currentData.schema.columns;
             var h = [];
             var idx = -1;
             var i;
@@ -1209,7 +1266,7 @@ define([
                         h[++idx] = '<option value="';
                         h[++idx] = i;
                         h[++idx] = '">';
-                        h[++idx] = columns[i].humanName;
+                        h[++idx] = columns[i].displayName;
                         h[++idx] = '</option>';
                     }
                 }
@@ -1226,7 +1283,7 @@ define([
                         h[++idx] = '<option value="';
                         h[++idx] = i;
                         h[++idx] = '">';
-                        h[++idx] = columns[i].select_name ? columns[i].select_name : columns[i].humanName;
+                        h[++idx] = columns[i].select_name ? columns[i].select_name : columns[i].displayName;
                         h[++idx] = '</option>';
                     }
                 }
@@ -1247,11 +1304,11 @@ define([
          */
         function getFullIndex(name) {
             var i = 0,
-                columns = gTasks.cache.surveyConfig[globals.gViewId].columns,
+                columns = gTasks.cache.currentData.schema.columns,
                 index = -1;
 
             for (i = 0; i < columns.length; i++) {
-                if (columns[i].humanName === name) {
+                if (columns[i].displayName === name) {
                     index = i;
                     break;
                 }
@@ -1269,7 +1326,7 @@ define([
                 qIdx2,
                 group;
 
-            var columns = gTasks.cache.surveyConfig[globals.gViewId].columns;
+            var columns = gTasks.cache.currentData.schema.columns;
             var oldWidth = gEdChart.width;
 
             var title = $('#ew_title').val();
@@ -1299,8 +1356,8 @@ define([
                     group = {
                         qIdx: qIdx1,
                         type: columns[qIdx1].type,
-                        name: columns[qIdx1].select_name ? columns[qIdx1].select_name : columns[qIdx1].humanName,
-                        dataLabel: columns[qIdx1].select_name ? columns[qIdx1].select_name : columns[qIdx1].humanName,
+                        name: columns[qIdx1].select_name ? columns[qIdx1].select_name : columns[qIdx1].displayName,
+                        dataLabel: columns[qIdx1].select_name ? columns[qIdx1].select_name : columns[qIdx1].displayName,
                         l_id: columns[qIdx1].l_id,
                         choices: columns[qIdx1].choices,
                         choiceNames: columns[qIdx1].choiceNames
@@ -1313,8 +1370,8 @@ define([
                     group = {
                         qIdx: qIdx2,
                         type: columns[qIdx2].type,
-                        name: columns[qIdx2].select_name ? columns[qIdx2].select_name : columns[qIdx2].humanName,
-                        dataLabel: columns[qIdx2].select_name ? columns[qIdx2].select_name : columns[qIdx2].humanName,
+                        name: columns[qIdx2].select_name ? columns[qIdx2].select_name : columns[qIdx2].displayName,
+                        dataLabel: columns[qIdx2].select_name ? columns[qIdx2].select_name : columns[qIdx2].displayName,
                         l_id: columns[qIdx2].l_id,
                         choices: columns[qIdx2].choices,
                         choiceNames: columns[qIdx2].choiceNames
@@ -1392,10 +1449,10 @@ define([
                 data: {chartView: saveString},
                 success: function (data, status) {
                     removeHourglass();
-                    if(globals.gViewId != data.viewId) {  // Store data under new viewId
-                        gTasks.cache.surveyConfig[data.viewId] = gTasks.cache.surveyConfig[globals.gViewId];
-                        globals.gViewId = data.viewId;
-                    }
+                    //if(globals.gViewId != data.viewId) {  // Store data under new viewId
+                    //    gTasks.cache.surveyConfig[data.viewId] = gTasks.cache.surveyConfig[globals.gViewId];
+                    //    globals.gViewId = data.viewId;
+                    //}
 
 
                 }, error: function (data, status) {
@@ -1437,6 +1494,18 @@ define([
 
             return name;    // Not found
 
+        }
+
+        /*
+         * get the chart function from the question type
+         */
+        function getChartFunction(type) {
+            if(type === "decimal" || type === "int" || type === "duration") {
+                // numeric
+                return $('#srf_num_fn').val();
+            } else {
+                return $('#srf_text_fn').val();
+            }
         }
 
     });

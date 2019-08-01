@@ -38,6 +38,7 @@
     }; </script>
 
     <script src="/js/libs/modernizr.js"></script>
+    <script src="/js/app/theme.js"></script>
     <script src="/js/libs/d3.v3.min.js"></script>
     <script src="/js/libs/ol3/ol.js"></script>
     <script src="/js/libs/ol3/ol3-layerswitcher.js"></script>
@@ -46,9 +47,7 @@
     <script src="/js/app/custom.js"></script>  <!-- Override this in custom code to apply changes at run time -->
 
     <script>
-        var isBrowseResults = true,
-            isManagedForms = false,
-            isDuplicates = false;
+        var isDuplicates = false;
     </script>
     <script data-main="js/managed_forms" src="/js/libs/require.js"></script>
 
@@ -77,11 +76,11 @@
                                 class="glyphicon glyphicon-edit"></i> <span class="lang" data-lang="c_edit">Edit</span></a>
                         </li>
                         <li class="restrict_role admin_role analyst_role"><a
-                                href="/fieldManager/templateManagement.html"><i class="glyphicon glyphicon-wrench"></i>
+                                href="/fieldManager/surveyManagement.html"><i class="glyphicon glyphicon-wrench"></i>
                             <span class="lang" data-lang="m_admin">Admin</span></a></li>
                         <li class="restrict_role enum_role"><a href="/webForm.html"><i
                                 class="glyphicon glyphicon-globe"></i> <span class="nav-label lang"
-                                                                             data-lang="m_data_mod">web forms</span>
+                                                                             data-lang="m_console"></span>
                         </a></li>
                         <li class="restrict_role analyst_role"><a href="/fieldAnalysis/index.html"><i
                                 class="glyphicon glyphicon-stats"></i> <span class="nav-label lang"
@@ -90,12 +89,14 @@
                         <li class="restrict_role admin_role analyst_role"><a href="/tasks/taskManagement.html"><i
                                 class="fa fa-tasks"></i> <span class="nav-label lang" data-lang="m_assign">assign</span></a>
                         </li>
-
+                        <li class="restrict_role billing_role" style="display:none;"><a href="/fieldManager/billing.html"><i
+                                class="fa fa-usd"></i> <span class="nav-label lang" data-lang="m_billing">billing</span></a>
+                        </li>
                     </ul>
                 </li>
 
                 <li id="m_duplicates" class="restrict_role admin_role"><a href="/tasks/duplicates.html"><i class="fa fa-filter"></i> <span class="lang" data-lang="mon_dup">dups</span></a></li>
-                <li id="m_mf" class="restrict_role admin_role manage_role"><a href="/tasks/managed_forms.html"><i class="fa fa-wpforms"></i> <span class="lang" data-lang="m_mf">manage</span></a></li>
+                <li id="m_mf" class="restrict_role admin_role manage_role"><a href="/tasks/managed_forms.html"><i class="fa fa-wpforms"></i> <span class="lang" data-lang="c_records">r</span></a></li>
                 <li id="m_web_forms" class="restrict_role enum_role"><a href="/webForm.html"><i class="fa fa-globe" aria-hidden="true"></i> <span class="lang" data-lang="m_web_forms">web forms</span></a></li>
                 <li id="m_rep" class="restrict_role admin_role analyst_role"><a href="/reports.html"><i class="fa fa-table"></i> <span class="lang" data-lang="m_reports">reports</span></a></li>
                 <!-- 
@@ -109,7 +110,7 @@
                                                                                 data-lang="m_help">help</span></a></li>
 
                 <li class="nav-divider"></li>
-                <li class="restrict_role admin_role analyst_role"><a class="genxlsfileall"><i class="btn fa fa-file-excel-o"></i> <span class="lang" data-lang="c_counts">counts</span></a></li>
+                <li class="restrict_role admin_role analyst_role data_role"><a class="genxlsfileall"><i class="btn fa fa-file-excel-o"></i> <span class="lang" data-lang="mf_sr">summary</span></a></li>
 
 
             </ul>
@@ -149,7 +150,7 @@
                 <div class="col-sm-2">
                     <h2 class="lang" data-lang="m_br">browse</h2>
                 </div>
-                <div class="col-sm-5">
+                <div class="col-sm-3">
                     <div class="row">
                         <form role="form" class="form-horizontal heading-element">
                             <label class="lang col-sm-4 control-label" data-lang="c_project"
@@ -160,13 +161,25 @@
                         </form>
                     </div>
                 </div>
-                <div class="col-sm-5">
+                <div class="col-sm-3">
                     <div class="row">
                         <form role="form" class="form-horizontal heading-element">
                             <label class="lang col-sm-4 control-label" data-lang="c_survey"
                                    for="survey_name">survey</label>
                             <div class="col-sm-8">
                                 <select class="survey_select form-control" id="survey_name"></select>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                <div class="col-sm-3">
+                    <div class="row">
+                        <form role="form" class="form-horizontal heading-element">
+                            <label class="col-sm-4 control-label"
+                                   for="advanced_filter"><span class="lang" data-lang="c_filter"></span>
+                                    <a href="/sqlFilterHelp.html" target="_blank"> ( i ) </a></label>
+                            <div class="col-sm-8">
+                                <input type="text" class="form-control" id="advanced_filter"></input>
                             </div>
                         </form>
                     </div>
@@ -222,6 +235,7 @@
                 <div class="col-md-12">
                     <div class="ibox float-e-margins">
                         <div class="ibox-title">
+                            <div id="timezone" style="float:left;"></div>
                             <div class="ibox-tools">
                                 <a id="showlayers" style="display:none;">
                                     <i class="btn btn-info fa fa-align-justify fa-lg"> <span class="nav-label lang" data-lang="d_layers">layers</span></i>
@@ -478,7 +492,7 @@
                             </div>
 
                             <div class="form-group">
-                                <label class="col-sm-2 control-label"  for="ew_question1"><span data-lang="c_question" class=""lang>question</span> 1</label>
+                                <label class="col-sm-2 control-label"  for="ew_question1"><span data-lang="c_question" class="lang">question</span> 1</label>
                                 <div class="col-sm-4">
                                     <select class="form-control question_req" id="ew_question1">
                                     </select>
@@ -618,88 +632,66 @@
     </div>
 </div>
 
-<!-- Modal to allow the user to edit their own details -->
-<div id="modify_me_popup" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="modifyMeLabel"
-     aria-hidden="true">
-    <div class="modal-dialog">
+<!-- Modal to create an overview report -->
+<div id="overviewReport" class="modal fade" aria-hidden="true">
+    <div class="modal-dialog custom-modal-width">
         <div class="modal-content">
             <div class="modal-header">
                 <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span
-                        class="sr-only">Close</span></button>
-                <h4 class="modal-title lang" id="modifyMeLabel"></h4>
+                        class="sr-only">close</span></button>
             </div>
             <div class="modal-body">
-                <form role="form" class="form-horizontal" id="me_edit_form">
-                    <div class="form-group">
-                        <label for="me_name" data-lang="c_name" class="lang col-sm-2 control-label">Name</label>
-                        <div class="col-sm-10">
-                            <input type="text" id="me_name" required class="form-control">
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="me_language" data-lang="c_lang" class="lang col-sm-2 control-label">Language</label>
-                        <div class="col-sm-10">
-                            <select id="me_language" class="language_select form-control"></select>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="me_email" data-lang="c_email" class="lang col-sm-2 control-label">Email</label>
-                        <div class="col-sm-10">
-                            <input type="email" class="form-control" id="me_email"
-                                   placeholder="Enter email"
-                                   pattern="^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$">
-                        </div>
-                    </div>
-                    <div id="reset_me_password_fields" style="display:none;">
-                        <div class="form-group">
-                            <div class="col-sm-offset-2 col-sm-10">
-                                <div class="checkbox">
-                                    <label>
-                                        <input type="checkbox" id="reset_me_password"><span data-lang="c_r_p"
-                                                                                            class="lang">Reset Password</span>
-                                    </label>
+                <div class="row">
+                    <div class="col-sm-12 b-r">
+                        <h3 class="m-t-none m-b lang" data-lang="a_rd">report definition</h3>
+
+                        <form id="summaryReportForm" role="form" class="form-horizontal">
+
+
+                            <div class="form-group">
+                                <label class="col-sm-4 control-label" for="srf_text_fn">
+                                    <span class="lang" data-lang="a_fn">fn</span><span> </span><span class="lang" data-lang="br_tf">text</span></label>
+                                <div class="col-sm-6">
+                                    <select class="form-control" id="srf_text_fn">
+                                        <option class="lang" value="count" data-lang="count">count</option>
+                                        <option class="lang" value="percent" data-lang="percent">percent</option>
+                                    </select>
                                 </div>
                             </div>
-                        </div>
-                    </div>
-                    <div id="password_me_fields" style="display:none;">
-                        <div class="form-group">
-                            <label for="me_password" data-lang="c_password"
-                                   class="lang col-sm-2 control-label">Password</label>
-                            <div class="col-sm-10">
-                                <input id="me_password" type="password" placeholder="Password" class="form-control">
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label for="me_password_confirm" data-lang="c_c_p" class="lang col-sm-2 control-label">Confirm
-                                Password</label>
-                            <div class="col-sm-10">
-                                <input id="me_password_confirm" type="password" placeholder="Password"
-                                       class="form-control">
-                            </div>
-                        </div>
-                    </div>
-                </form>
-            </div>
 
+                            <div class="form-group">
+                                <label class="col-sm-4 control-label" for="srf_num_fn">
+                                    <span class="lang" data-lang="a_fn">fn</span><span> </span><span class="lang" data-lang="br_nf">text</span></label>
+                                <div class="col-sm-6">
+                                    <select class="form-control" id="srf_num_fn">
+                                        <option class="lang" value="average" data-lang="average">average</option>
+                                        <option class="lang" value="min" data-lang="min">min</option>
+                                        <option class="lang" value="max" data-lang="max">max</option>
+                                        <option class="lang" value="sum" data-lang="sum">sum</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="col-sm-4 control-label" for="srf_group">
+                                    <span class="lang" data-lang="a_gb">group</span></label>
+                                <div class="col-sm-6">
+                                    <select class="form-control" id="srf_group"></select>
+                                </div>
+                            </div>
+
+                        </form>
+                    </div>
+                </div>
+            </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_close">Close
                 </button>
-                <button id="userProfileLogout" type="button" class="btn btn-default lang" data-dismiss="modal"
-                        data-lang="c_logout">Logout
-                </button>
-                <button id="userProfileSave" type="button" class="btn btn-primary lang" data-dismiss="modal"
-                        data-lang="c_save">Save
-                </button>
+                <button id="overviewReportSave" type="button" class="btn btn-primary lang" data-lang="m_export">export</button>
             </div>
         </div>
     </div>
 </div>
-
-<script>
-    setCustomManage();
-</script>
-
 
 </body>
 </html>
