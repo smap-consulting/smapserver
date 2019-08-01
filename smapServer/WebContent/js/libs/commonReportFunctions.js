@@ -22,14 +22,18 @@ function getDisplayDescription(fn, reportType, survey, question, group, option, 
 	
 	var txt = [],
 		idx = -1,
+		msg;
+	/*
 		fnText = {ocha: "location of responses to ", 
 			percent: "percentage of responses that selected ", 
 			average: "average of responses to ", 
 			count: "count of responses to ", 
 			total: "total of responses to ",
 			none: "responses to "};
+			*/
 	
 	console.log("getDisplayDescription: " + qtype + " : " + question);
+	/*
 	txt[++idx] = "Shows the ";
 	if(typeof question === "undefined" || question === "None") {
 		txt[++idx] = "results";
@@ -44,13 +48,60 @@ function getDisplayDescription(fn, reportType, survey, question, group, option, 
 		txt[++idx] = question;
 		txt[++idx] ="'";
 	}
+	*/
+	if(typeof question === "undefined" || question === "None") {
+		txt[++idx] = localise.set["a_dd_sl"];
+	} else {
+		if(reportType === "map") {
+			if(fn === "ocha") {
+				msg = localise.set["a_dd_ocha_map"];
+			} else if(fn === "percent") {
+				msg = localise.set["a_dd_percent_map"];
+			} else if(fn === "average") {
+				msg = localise.set["a_dd_average_map"];
+			} else if(fn === "count") {
+				msg = localise.set["a_dd_count_map"];
+			} else if(fn === "total") {
+				msg = localise.set["a_dd_total_map"];
+			} else if(fn === "none") {
+				msg = localise.set["a_dd_none_map"];
+			}
+			msg = msg.replace('%s1', option);
+		} else {
+			if(fn === "ocha") {
+				msg = localise.set["a_dd_ocha_table"];
+			} else if(fn === "percent") {
+				msg = localise.set["a_dd_percent_table"];
+			} else if(fn === "average") {
+				msg = localise.set["a_dd_average_table"];
+			} else if(fn === "count") {
+				msg = localise.set["a_dd_count_table"];
+			} else if(fn === "total") {
+				msg = localise.set["a_dd_total_table"];
+			} else if(fn === "none") {
+				msg = localise.set["a_dd_none_table"];
+			}
+
+		}
+		msg = msg.replace('%s2', question);
+		msg = msg.replace('%s3', survey);
+		txt[++idx] = msg;
+	}
+
 	
 	if(units) {
-		txt[++idx] = " (units are " + units + ")";
+		//txt[++idx] = " (units are " + units + ")";
+		msg = localise.set["a_dd_units"];
+		msg = msg.replace("%s1", units);
+		txt[++idx] = ' ';
+		txt[++idx] = msg;
 	}
-	txt[++idx] = " in survey '";
-	txt[++idx] = survey;
-	txt[++idx] = "'";
+
+	//txt[++idx] = " in survey '";
+	//txt[++idx] = survey;
+	//txt[++idx] = "'";
+
+	/*
 	if(typeof group !== "undefined") {
 		txt[++idx] = " grouped by the responses to the question ";
 		txt[++idx] = group;
@@ -63,6 +114,22 @@ function getDisplayDescription(fn, reportType, survey, question, group, option, 
 			txt[++idx] = " grouped by ";
 			txt[++idx] = interval;
 		}
+	}*/
+	if(typeof group !== "undefined") {
+		if(typeof interval !== "undefined") {
+			msg = localise.set["a_dd_group_interval"];
+			msg = msg.replace("%s2", interval);
+		} else {
+			msg = localise.set["a_dd_group"];
+		}
+		msg = msg.replace("%s1", group);
+		txt[++idx] = ' ';
+		txt[++idx] = msg;
+	} else if(typeof interval !== "undefined"){
+		msg = localise.set["a_dd_interval"];
+		msg = msg.replace("%s1", interval);
+		txt[++idx] = ' ';
+		txt[++idx] = msg;
 	}
 	
 	if(typeof end === "undefined") {
@@ -81,11 +148,16 @@ function getDisplayDescription(fn, reportType, survey, question, group, option, 
 	// Add filter
 	if(filter) {
 		var filterObj = JSON.parse(filter);
-		txt[++idx] = " <b>Where ";
-		txt[++idx] = filterObj.qName;
-		txt[++idx] = " equals ";
-		txt[++idx] = filterObj.value;
-		txt[++idx] = "</b>";
+		msg = localise.set["a_dd_where"];
+		msg.replace("%s1", filterObj.qName);
+		msg.replace("%s2", filterObj.value);
+		txt[++idx] = ' ';
+		txt[++idx] = msg;
+		//txt[++idx] = " <b>Where ";
+		//txt[++idx] = filterObj.qName;
+		//txt[++idx] = " equals ";
+		//txt[++idx] = filterObj.value;
+		//txt[++idx] = "</b>";
 	}
 	
 	return txt.join('');
@@ -101,7 +173,13 @@ function addAnchors (property, minsize) {
 		media,
 		i,
 		style = '';
-	
+
+	if(property && typeof property.type !== "undefined") {
+		// Geospatial
+		return [ property.coordinates ];
+
+	}
+
 	if( Object.prototype.toString.call(property) !== '[object Array]' ) {
 		property = [ property ];
 	}
@@ -130,8 +208,9 @@ function addAnchors (property, minsize) {
                         + 'Your browser does not support this video type'
                         + '</video>';
                 } else {
+                    style = (media.thumbNail == '/fieldAnalysis/img/link.png') ? "width:32px;" : "width:100%;";
                     output[i] = '<a href="' + media.url
-                        + '" target="_blank"><img style="width:100%;" src="'
+                        + '" target="_blank"><img style="' + style + '" src="'
                         + (minsize ? media.thumbNail : media.url)
 						+ '" alt="Picture"></a>';
                 }
@@ -215,7 +294,7 @@ function getMedia(property) {
 		} else {
 			media.type = "unknown";
 			media.url = property; 
-			media.thumbNail = "/fieldAnalysis/img/audio-icon.png"
+			media.thumbNail = "/fieldAnalysis/img/link.png"
 		}
 
 

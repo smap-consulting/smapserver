@@ -24,6 +24,7 @@
     }; </script>
 
     <script src="/js/libs/modernizr.js"></script>
+    <script src="/js/app/theme.js"></script>
     <script src="/js/app/custom.js"></script>  <!-- Override this in custom code to apply changes at run time -->
 
     <script data-main="js/reports" src="/js/libs/require.js"></script>
@@ -53,41 +54,33 @@
                                 class="glyphicon glyphicon-edit"></i> <span class="lang" data-lang="c_edit">Edit</span></a>
                         </li>
                         <li class="restrict_role admin_role analyst_role"><a
-                                href="/fieldManager/templateManagement.html"><i class="glyphicon glyphicon-wrench"></i>
-                            <span class="lang" data-lang="m_admin">Admin</span></a></li>
+                                href="/fieldManager/surveyManagement.html"><i class="glyphicon glyphicon-wrench"></i>
+                            <span class="lang" data-lang="m_admin"></span></a></li>
                         <li class="restrict_role enum_role disabled"><a href="/webForm.html"><i
                                 class="glyphicon glyphicon-globe"></i> <span class="nav-label lang"
-                                                                             data-lang="m_data_mod">web forms</span>
+                                                                             data-lang="m_console"></span>
                         </a></li>
-                        <li class="restrict_role analyst_role"><a href="/fieldAnalysis/index.html"><i
+                        <li class="restrict_role analyst_role data_role"><a href="/fieldAnalysis/index.html"><i
                                 class="glyphicon glyphicon-stats"></i> <span class="nav-label lang"
                                                                              data-lang="m_analysis">Analysis</span></a>
                         </li>
                         <li class="restrict_role admin_role analyst_role"><a href="/tasks/taskManagement.html"><i
                                 class="fa fa-tasks"></i> <span class="nav-label lang" data-lang="m_assign">assign</span></a>
                         </li>
-
+                        <li class="restrict_role billing_role" style="display:none;"><a href="/fieldManager/billing.html"><i
+                                class="fa fa-usd"></i> <span class="nav-label lang" data-lang="m_billing">billing</span></a>
+                        </li>
                     </ul>
                 </li>
 
-                <li id="m_mf" class="restrict_role admin_role manage_role"><a href="/tasks/managed_forms.html"><i
-                        class="fa fa-wpforms"></i> <span class="lang" data-lang="m_mf">manage</span></a></li>
-                <li id="m_duplicates" class="restrict_role admin_role"><a href="/tasks/duplicates.html"><i
-                        class="fa fa-filter"></i> <span class="lang" data-lang="mon_dup">dups</span></a></li>
-                <li id="m_br" class="restrict_role admin_role analyst_role"><a href="/tasks/browse_results.html"><i
-                        class="fa fa-table"></i> <span class="lang" data-lang="m_br">browse</span></a></li>
-                <li id="m_web_forms" class="restrict_role enum_role"><a href="/webForm.html"><i
-                        class="fa fa-globe" aria-hidden="true"></i><span class="lang" data-lang="m_web_forms">web forms</span></a></li>
+                <li id="m_dash" class="restrict_role analyst_role data_role"><a href="/fieldAnalysis"><i
+                        class="fa fa-chart-bar"></i> <span class="lang" data-lang="m_analysis"></span></a></li>
+                <li id="m_review" class="restrict_role analyst_role"><a href="/fieldAnalysis/modify_data.html"><i
+                        class="fa fa-filter"></i> <span class="lang" data-lang="m_review">review</span></a></li>
                 <li id="m_help"><a href="/mfHelp.html" target="_blank"><i class="fa fa-info-circle"></i> <span
                         class="lang" data-lang="m_help">help</span></a></li>
-                <!--
-                <li>
-                     <a id="username" type="button" class="btn btn-default" data-toggle="modal" data-target="#modify_me_popup" aria-label="User">
-                    <span class="glyphicon glyphicon-user" aria-hidden="true"></span>
-                    </a>
-                </li>
-                -->
 
+                <!--<li class="nav-divider"></li>-->
             </ul>
         </div>
 
@@ -105,15 +98,13 @@
                 </div>
 
                 <ul class="nav navbar-top-links navbar-right">
-
-
+                    <li>
+                        <a href="#" id="addReport"><span class="lang" data-lang="r_add">add report</span></a>
+                    </li>
                     <li>
                         <a href="#" id="m_refresh"><span class="lang" data-lang="m_refresh">refresh</span></a>
                     </li>
-
-
                 </ul>
-
             </nav>
         </div>
 
@@ -123,7 +114,15 @@
                 <h2 class="lang" data-lang="m_reports">reports</h2>
             </div>
             <div class="col-sm-5">
-
+                <div class="row">
+                    <form role="form" class="form-horizontal heading-element">
+                        <label class="lang col-sm-4 control-label" data-lang="c_project"
+                               for="project_name">project</label>
+                        <div class="col-sm-8">
+                            <select class="project_list form-control" id="project_name"></select>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
 
@@ -133,29 +132,28 @@
                 <div class="col-lg-12">
                     <div class="ibox float-e-margins">
                         <div class="ibox-title">
-                            <h5 id="survey_title"></h5>
-                            <div class="ibox-tools">
-                            </div>
-
+                            <div id="main_alert" style="display:none; word-wrap:break-word;" class="alert alert-success" role="alert"></div>
                         </div>
                         <div class="ibox-content">
-                            <div class="tabs-container">
-
-                                <!-- Put content here -->
-                                <ul class="nav nav-tabs tab_controls">
-                                    <li id="formsTab" role="presentation" class="active"><a href="#"><span></span></a>
-                                </ul>
-
-                                <div class="tab-content">
-
-                                    <div id="reportsPanel" class="tab-pane active">
-                                        <div class="panel-body">
-                                            <div id="report_list"></div>
-                                        </div>
+                            <div id="table-view" class="tab-pane active">
+                                <div class="panel-body">
+                                    <div class="table-responsive" style="min-height: 300px;">
+                                        <table id="reports_table" class="table table-responsive table-striped">
+                                            <thead>
+                                            <tr>
+                                                <th class="lang" data-lang="c_survey">survey</th>
+                                                <th class="lang" data-lang="c_name">name</th>
+                                                <th class="lang" data-lang="c_type">type</th>
+                                                <th class="lang" data-lang="c_cl">copy link</th>
+                                                <!--<th class="lang" data-lang="c_codl">odata</th>-->
+                                                <th class="lang" data-lang="c_action">action</th>
+                                            </tr>
+                                            </thead>
+                                            <tbody id="report_list">
+                                            </tbody>
+                                        </table>
                                     </div>
-
                                 </div>
-
                             </div>
                         </div>
                     </div>
@@ -163,117 +161,303 @@
             </div>
         </div>
     </div>
+</div>
 
-    <!-- Modal to enter parameters for custom reports -->
-    <div id="report_popup" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="reportLabel"
-         aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal"><span
-                            aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-                    <h4 class="modal-title lang" data-lang="a_rp" id="reportLabel">parameters</h4>
-                </div>
-                <div class="modal-body">
-                    <div id="alert" style="display:none; word-wrap:break-word;" class="alert alert-success" role="alert"></div>
-                    <form role="form" class="form-horizontal" id="report_params_form">
-
-                    </form>
-                </div>
-
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_close">Close
-                    </button>
-                    <button id="generateReport" type="button" class="btn btn-primary lang"
-                            data-lang="c_create">create
-                    </button>
-                </div>
+<!-- Modal to edit or create a report -->
+<div id="publish_popup" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="publishLabel"
+     aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal"><span
+                        aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                <h4 class="modal-title lang" data-lang="an_publish" id="publishLabel">parameters</h4>
             </div>
-        </div>
-    </div>
+            <div class="modal-body">
+                <form role="form" class="form-horizontal" id="publish_form">
+                    <div class="form-group">
+                        <label class="lang col-sm-2 control-label lang" data-lang="c_name"
+                               for="r_name">name</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="r_name" required="true">
+                        </div>
+                    </div>
 
-    <!-- Modal to allow the user to edit their own details -->
-    <div id="modify_me_popup" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="modifyMeLabel"
-         aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal"><span
-                            aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-                    <h4 class="modal-title lang" id="modifyMeLabel"></h4>
-                </div>
-                <div class="modal-body">
-                    <form role="form" class="form-horizontal" id="me_edit_form">
+                    <div class="form-group">
+                        <label class="lang col-sm-2 control-label lang" data-lang="c_type"
+                               for="reportType">type</label>
+                        <div class="col-sm-10">
+                            <select class= "form-control" id="reportType">
+                                <option value="xlsx" class="lang" data-lang="c_excel">excel</option>
+                                <!--
+                                <option value="csv">CSV</option>
+                                <option value="osm">OSM</option>
+                                <option value="shape">Shape File</option>
+                                <option value="media">Media</option>
+                                <option value="kml">KML / KMZ</option>
+                                <option value="vrt">VRT / CSV</option>
+                                <option value="stata">Stata / CSV</option>
+                                <option value="spss">SPSS / CSV</option>-->
+                                <option value="pdf" class="lang" data-lang="c_pdf">pdf</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="survey" class="col-sm-2 control-label lang" data-lang="c_survey">survey</label>
+                        <div class="col-sm-10">
+                            <select class="survey_select form-control" id="survey"></select><br/>
+                        </div>
+                    </div>
+
+                    <div class="well">
                         <div class="form-group">
-                            <label for="me_name" data-lang="c_name" class="lang col-sm-2 control-label">Name</label>
+                            <label for="export_language" class="col-sm-2 control-label lang" data-lang="c_lang">language</label>
                             <div class="col-sm-10">
-                                <input type="text" id="me_name" required class="form-control">
+                                <select class="form-control" id="export_language"></select>
                             </div>
                         </div>
                         <div class="form-group">
-                            <label for="me_language" data-lang="c_lang"
-                                   class="lang col-sm-2 control-label">Language</label>
+                            <label for="e_tz" class="col-sm-2 control-label lang" data-lang="c_tz">timezone</label>
                             <div class="col-sm-10">
-                                <select id="me_language" class="language_select form-control"></select>
+                                <select class="form-control timezone_select" id="e_tz"></select>
+                            </div>
+                        </div>
+
+                        <div class="form-group rt_dependent xlsx">
+                            <div class="col-sm-offset-1 col-sm-10">
+                                <div class="checkbox">
+                                    <label>
+                                        <input type="checkbox" id="splitlocn"><span data-lang="a_exp_split" class="lang">split lat lon</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group rt_dependent xlsx">
+                            <div class="col-sm-offset-1 col-sm-10">
+                                <div class="checkbox">
+                                    <label>
+                                        <input type="checkbox" id="mergeSelectMultiple"><span data-lang="a_exp_merge" class="lang">compress select multiples</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group rt_dependent xlsx">
+                            <div class="col-sm-offset-1 col-sm-10">
+                                <div class="checkbox">
+                                    <label>
+                                        <input type="checkbox" id="embedImages"><span data-lang="a_embed" class="lang">embed</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group rt_dependent xlsx">
+                            <div class="col-sm-offset-1 col-sm-10">
+                                <div class="checkbox">
+                                    <label>
+                                        <input type="checkbox" checked="checked" id="includeMeta"><span data-lang="a_exp_meta" class="lang">meta</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group rt_dependent xlsx">
+                            <div class="col-sm-offset-1 col-sm-10">
+                                <div class="checkbox">
+                                    <label>
+                                        <input type="checkbox" checked="checked" id="odata2Data"><span data-lang="a_exp_odata2" class="lang">odata2</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group rt_dependent pdf">
+                            <div class="col-sm-offset-1 col-sm-10">
+                                <div class="radio">
+                                    <label>
+                                        <input type="radio" id="orient_portrait" name="orientation" value="portrait" checked="checked"><span data-lang="c_portrait" class="lang">portrait</span>
+                                    </label>
+                                    <label>
+                                        <input type="radio" id="orient_landscape"name="orientation" value="landscape"><span data-lang="c_landscape" class="lang">landscape</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group rt_dependent xlsx">
+                        <label class="col-sm-2 control-label lang" data-lang="msg_sel_form">select form</label>
+                        <div class="col-sm-10">
+                            <div class="shapeforms"></div>
+                        </div>
+                    </div>
+
+                    <div class="well">
+                        <div class="form-group role_select">
+                            <h4 class="lang" data-lang="c_roles">roles</h4>
+                            <div class="role_select_roles"></div>
+                        </div>
+                    </div><br/>
+
+                    <div class="well">
+                        <h4 class="lang" data-lang="ro_fr">filter</h4>
+                        <div class="form-group">
+                            <label for="export_date_question" class="col-sm-2 control-label lang" data-lang="c_dateq">date</label>
+                            <div class="col-sm-10">
+                                <select class="date_question form-control" id="export_date_question"></select>
                             </div>
                         </div>
                         <div class="form-group">
-                            <label for="me_email" data-lang="c_email" class="lang col-sm-2 control-label">Email</label>
+                            <label for="exp_from_date" class="col-sm-2 control-label lang" data-lang="a_from_date">from</label>
                             <div class="col-sm-10">
-                                <input type="email" class="form-control" id="me_email"
-                                       placeholder="Enter email"
-                                       pattern="^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$">
+                                <div class='input-group date' id='exp_from_date' data-container="body">
+                                    <input type='text' class="form-control" data-date-format="YYYY-MM-DD"/>
+                                    <span class="input-group-addon"><span class="glyphicon glyphicon-calendar"></span></span>
+                                </div>
+                                <span class="lang" data-lang="c_inclusive">Inclusive</span>
                             </div>
                         </div>
-                        <div id="reset_me_password_fields" style="display:none;">
+                        <div class="form-group">
+                            <label for="exp_to_date" class="col-sm-2 control-label lang" data-lang="a_to_date">from</label>
+                            <div class="col-sm-10">
+                                <div class='input-group date' id='exp_to_date' data-container="body">
+                                    <input type='text' class="form-control" data-date-format="YYYY-MM-DD"/>
+                                    <span class="input-group-addon"><span class="glyphicon glyphicon-calendar"></span></span>
+                                </div>
+                                <span class="lang" data-lang="c_inclusive">Inclusive</span>
+                            </div>
+                        </div>
+
+                        <div class="form-group" data-container="body">
+                            <label for="tg_ad_filter" data-lang="c_filter" class="lang col-sm-2 control-label">filter</label>
+                            <div class="col-sm-10">
+                                <div class="input-group">
+                                    <input type="text" id="tg_ad_filter" class="form-control">
+                                    <span class="input-group-addon">
+                                        <a href="/sqlFilterHelp.html" target="_blank">
+                                            <span class="glyphicon glyphicon-info-sign" aria-hidden="true"></span>
+                                        </a>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="well">
+                        <h4 class="lang" data-lang="ro_transform">transform</h4>
+
+                        <form role="form" class="form-horizontal">
+
                             <div class="form-group">
-                                <div class="col-sm-offset-2 col-sm-10">
+                                <div class="col-sm-offset-1 col-sm-10">
                                     <div class="checkbox">
                                         <label>
-                                            <input type="checkbox" id="reset_me_password"><span data-lang="c_r_p"
-                                                                                                class="lang">Reset Password</span>
+                                            <input type="checkbox" id="enabletransform"><span data-lang="c_en" class="lang">enable</span>
                                         </label>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                        <div id="password_me_fields" style="display:none;">
-                            <div class="form-group">
-                                <label for="me_password" data-lang="c_password" class="lang col-sm-2 control-label">Password</label>
-                                <div class="col-sm-10">
-                                    <input id="me_password" type="password" placeholder="Password" class="form-control">
-                                </div>
-                            </div>
-                            <div class="form-group">
-                                <label for="me_password_confirm" data-lang="c_c_p" class="lang col-sm-2 control-label">Confirm
-                                    Password</label>
-                                <div class="col-sm-10">
-                                    <input id="me_password_confirm" type="password" placeholder="Password"
-                                           class="form-control">
-                                </div>
-                            </div>
-                        </div>
-                    </form>
-                </div>
 
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_close">Close
-                    </button>
-                    <button id="userProfileLogout" type="button" class="btn btn-default lang" data-dismiss="modal"
-                            data-lang="c_logout">Logout
-                    </button>
-                    <button id="userProfileSave" type="button" class="btn btn-primary lang" data-dismiss="modal"
-                            data-lang="c_save">Save
-                    </button>
-                </div>
+                            <div class="transformenabled" style="display:none;">
+                                <div class="form-group">
+                                    <label for="t_keys" data-lang="c_keys" class="lang col-sm-2 control-label">keys</label>
+                                    <div class="col-sm-10">
+                                        <div class="input-group">
+                                            <input type="text" id="t_keys" class="form-control">
+                                            <span class="input-group-addon">
+                                                <a href="/transformHelp.html#keys" target="_blank">
+                                                    <span class="glyphicon glyphicon-info-sign" aria-hidden="true"></span>
+                                                </a>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="t_values_question" data-lang="rep_values_question" class="lang col-sm-2 control-label">values question</label>
+                                    <div class="col-sm-10">
+                                        <div class="input-group">
+                                            <input type="text" id="t_values_question" class="form-control">
+                                            <span class="input-group-addon">
+                                                <a href="/transformHelp.html#valuesquestion" target="_blank">
+                                                    <span class="glyphicon glyphicon-info-sign" aria-hidden="true"></span>
+                                                </a>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="t_values" data-lang="rep_values" class="lang col-sm-2 control-label">values</label>
+                                    <div class="col-sm-10">
+                                        <div class="input-group">
+                                            <input type="text" id="t_values" class="form-control">
+                                            <span class="input-group-addon">
+                                                <a href="/transformHelp.html#values" target="_blank">
+                                                    <span class="glyphicon glyphicon-info-sign" aria-hidden="true"></span>
+                                                </a>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="t_wide_columns" data-lang="rep_wide_columns" class="lang col-sm-2 control-label">wide columns</label>
+                                    <div class="col-sm-10">
+                                        <div class="input-group">
+                                            <input type="text" id="t_wide_columns" class="form-control">
+                                            <span class="input-group-addon">
+                                                <a href="/transformHelp.html#widecolumns" target="_blank">
+                                                    <span class="glyphicon glyphicon-info-sign" aria-hidden="true"></span>
+                                                </a>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+
+                </form>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_close">Close</button>
+                <button id="publishReport" type="button" class="btn btn-primary lang" data-lang="c_create">create</button>
+                <button id="saveReport" type="button" class="btn btn-primary lang" data-lang="c_save"
+                    style="display:none;">save</button>
             </div>
         </div>
     </div>
+</div>
 
-    <script>
-        setCustomReports();			// Apply custom javascript
-    </script>
+<!-- Modal to enter parameters for custom reports -->
+<div id="report_popup" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="reportLabel"
+     aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal"><span
+                        aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                <h4 class="modal-title lang" data-lang="a_rp" id="reportLabel">parameters</h4>
+            </div>
+            <div class="modal-body">
+                <div id="alert" style="display:none; word-wrap:break-word;" class="alert alert-success" role="alert"></div>
+                <form role="form" class="form-horizontal" id="report_params_form">
 
+                </form>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_close">Close
+                </button>
+                <button id="generateReport" type="button" class="btn btn-primary lang"
+                        data-lang="c_create">create
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 
 </body>
 </html>

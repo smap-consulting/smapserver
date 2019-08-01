@@ -98,3 +98,4 @@ smap/EULA
 smap/deploy/version1/resources/properties/
 smap/cleanTempFiles.sh
 smap/deploy/rates.sql
+smapServer/enk_up.sh

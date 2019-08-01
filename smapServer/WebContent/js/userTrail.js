@@ -68,6 +68,7 @@ var gSurveyLocationLayer;
 var gSurveyLocationSource;
 var gTrailLayer;
 var featureOverlay;
+var overlaySource;
 var gMap;
 var point = null;
 var line = null;
@@ -115,7 +116,9 @@ var trailStyle = new ol.style.Style({
 });
 
 $(document).ready(function() {
-	
+
+    setCustomUserTrail();			// Apply custom javascript
+	setupUserProfile();
 	localise.setlang();
 		
 	// Set up the start and end dates with date picker
@@ -173,11 +176,8 @@ $(document).ready(function() {
  	 });
 	
 	// Add responses to changing parameters
-	$('#startDate,#endDate').change(function(e) {	
-		if(validDates()) {
-			getData();
-			return true;
-		} 
+	$('#startDate,#endDate').on("dp.change", function(e) {
+		getData();
  	 });
 
 
@@ -194,8 +194,10 @@ $(document).ready(function() {
       });
     
     // Overlay to highlight time of slider
-    featureOverlay = new ol.FeatureOverlay({
+	overlaySource = new ol.source.Vector({});
+    featureOverlay = new ol.layer.Vector({
     	  map: gMap,
+		  source: overlaySource,
     	  style: new ol.style.Style({
     	    image: new ol.style.Circle({
     	      radius: 5,
@@ -248,7 +250,7 @@ $(document).ready(function() {
     	      highlight.getGeometry().setCoordinates(coordinate);
     	    }
     	    if(!gOverlayHasFeature) {
-    	    	featureOverlay.addFeature(highlight);
+    	    	featureOverlay.getSource().addFeature(highlight);
     	    	gOverlayHasFeature = true;
     	    }
     	});
@@ -257,6 +259,11 @@ $(document).ready(function() {
   	   	var date = new Date(m);	// Using Measure coordinate to store unix date
   	    document.getElementById('info').innerHTML = date;
   	    
+    });
+
+    $('#refreshMenu').on('click', function(e) {
+        e.preventDefault();
+        getData();
     });
     
 	// From: http://stackoverflow.com/questions/20247945/bootstrap-3-navbar-dynamic-collapse
@@ -271,7 +278,6 @@ $(document).ready(function() {
 	$(document).on('ready', autocollapse);
 	$(window).on('resize', autocollapse);
 	*/
-	enableUserProfileBS();
     
 });
 
@@ -428,7 +434,7 @@ function showUserTrail() {
 		gTime.duration = gTime.stop - gTime.start;
 	}
 	
-	gMap.getView().fitExtent(gTrailSource.getExtent(), gMap.getSize());
+	gMap.getView().fit(gTrailSource.getExtent(), gMap.getSize());
 
 	gMap.render();
 }
@@ -457,7 +463,7 @@ function showSurveyLocations() {
 	gSurveyLocationSource.addFeatures(gSurveys);
 	
 	// TODO fit the extent to the combination of trail data and survey locations
-	gMap.getView().fitExtent(gTrailSource.getExtent(), gMap.getSize());
+	gMap.getView().fit(gTrailSource.getExtent(), gMap.getSize());
 
 	gMap.render();
 }
@@ -469,7 +475,7 @@ var displaySnap = function(coordinate) {
 	var overlays = featureOverlay.getFeatures(),
 		i;
 	for(i = 0; i < overlays.a.length; i++) {
-		featureOverlay.removeFeature(overlays.a[i]);
+		featureOverlay.getSource().removeFeature(overlays.a[i]);
 	}
 	gOverlayHasFeature = false;
 	  

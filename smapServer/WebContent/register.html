@@ -1,112 +1,114 @@
-<!doctype html">
+<!doctype html>
 <html>
 <head>
-	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-	<title>Registration</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title class="lang" data-lang="r_f"></title>
 
-	<link rel="shortcut icon" href="favicon.ico" />
-	<link rel="stylesheet" href="css/normalize.css" />
-	<link rel="stylesheet" href="/css/bootstrap.min.css" /> 
-	<link rel="stylesheet" href="/css/bootstrapValidator.min.css" />
-	
-	<link rel="stylesheet" href="/css/smap-bs.css" type="text/css">
-	
-	<script type="text/javascript"> if (!window.console) console = {log: function() {}}; </script>
-	<script src="js/libs/modernizr.js"></script>
-	<script src="/js/app/custom.js"></script>  <!-- Override this in custom code to apply changes at run time -->
-	<script data-main="js/register" src="js/libs/require.js"></script>
-	
+    <link rel="shortcut icon" href="favicon.ico"/>
+    <link rel="stylesheet" href="css/normalize.css"/>
+    <link rel="stylesheet" href="/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="/css/bootstrapValidator.min.css"/>
+
+    <link rel="stylesheet" href="/css/smap-bs.css" type="text/css">
+
+    <script type="text/javascript"> if (!window.console) console = {
+        log: function () {
+        }
+    }; </script>
+    <script src="js/libs/modernizr.js"></script>
+    <script src="/js/app/theme-nobody.js"></script>
+    <script src="/js/app/custom.js"></script>  <!-- Override this in custom code to apply changes at run time -->
+    <script data-main="js/register" src="js/libs/require.js"></script>
+
 </head>
 <body>
 
 <header class="navbar navbar-default navbar-static-top" role="banner">
-  <div class="container">
-    <div class="navbar-header">
-      <button class="navbar-toggle" type="button" data-toggle="collapse" data-target=".navbar-collapse">
-        <span class="sr-only">Toggle navigation</span>
-        <span class="icon-bar"></span>
-        <span class="icon-bar"></span>
-        <span class="icon-bar"></span>
-      </button>
-      <a id="navbar-brand" href="#" class="navbar-brand">
-      	<img src="/images/logo.png">
-     	 <span class="thick">SMAP</span> Server
-      </a>
+    <div class="container">
+        <div class="navbar-header">
+            <button class="navbar-toggle" type="button" data-toggle="collapse" data-target=".navbar-collapse">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a id="navbar-brand" href="#" class="navbar-brand">
+                <img src="/images/logo.png">
+                <span class="thick">SMAP</span> Server
+            </a>
+        </div>
+
     </div>
-		
-  </div>
 </header>
 
 
 <div class="page-header text-center">
-    <h1 class="lang" data-lang="r_f">registration form</h1>
+    <h1 class="lang" data-lang="r_f"></h1>
 </div>
 
 <div class="container">
-	<div class="row">
-		<form role="form" method="POST" action="" class="form-horizontal" id="registerForm">
-       	
-                	<div class="form-group">
-                    	<label class="col-lg-3 control-label lang" data-lang="r_o_n" for="org_name">organisation name</label>
-	                    <div class="col-lg-5">
-	                        <input type="text" class="form-control" name="org_name" id="org_name" required>
-	                   
-	                    </div>
-                	</div>
+    <div class="row">
+        <form role="form" method="POST" action="" class="form-horizontal" id="registerForm">
 
-            
-                <div class="form-group">
-                    <label class="col-lg-3 control-label lang" data-lang="r_y_n" for="admin_name">your name</label>
-                    <div class="col-lg-5">
-                        <input type="text" class="form-control" name="admin_name" id="admin_name" required>
-                    </div>
+            <div class="form-group">
+                <label class="col-lg-3 control-label lang" data-lang="r_o_n" for="org_name">organisation name</label>
+                <div class="col-lg-5">
+                    <input type="text" class="form-control" name="org_name" id="org_name" required>
+
                 </div>
-                
-				<div class="form-group">
-					<label class="col-lg-3 control-label lang" data-lang="r_y_e" for="admin_email">your email</label>
-	        		<div class="col-lg-5">
-	            		<input id="admin_email" class="form-control" name="email" type="email" required
-	                		data-bv-emailaddress-message="Not Valid" />
-	        		</div>
-	       		</div>
-                
-                <div class="form-group">
-                    	<label for="website" class="col-lg-3 control-label lang" data-lang="r_y_o">organisation website</label>
-	                    <div class="col-lg-5">
-	                        <input type="url" class="form-control" name="website" id="website">
-	                    </div>
+            </div>
+
+            <div class="form-group">
+                <label class="col-lg-3 control-label lang" data-lang="r_y_n" for="admin_name">your name</label>
+                <div class="col-lg-5">
+                    <input type="text" class="form-control" name="admin_name" id="admin_name" required>
                 </div>
+            </div>
 
-               <div class="form-group">
-                   	<label for="accept_tc" class="col-lg-3 control-label">
-                   		<span class="lang" data-lang="c_agree">i agree to the </span><a id="t_c_link" href="/terms.html">
-                   		<span class="lang" data-lang="c_t_c">terms and conditions</span></a></label>
-                    <div class="col-lg-5">
-                       <input type="checkbox" name="accept_tc" id="accept_tc"/>
-                    </div>
+            <div class="form-group">
+                <label class="col-lg-3 control-label lang" data-lang="r_y_e" for="admin_email">your email</label>
+                <div class="col-lg-5">
+                    <input id="admin_email" class="form-control" name="email" type="email" required
+                           data-bv-emailaddress-message="Not Valid"/>
                 </div>
-                
-               	<div class="form-group has-error">
-			    	<div class="col-sm-12 text-center">
-			   			<button id="registerSubmit" type="submit" class="btn btn-default btn-primary lang" data-lang="c_submit" 
-			   				disabled="disabled">submit</button>
-			   		</div>
-	   			</div>
-            
-		
-	</form>
+            </div>
 
-	</div>
-	</div>
- 
-        
-	<div class="col-sm-12 text-center">
-		<img id="hour_glass" src="/images/ajax-loader.gif" style="display:none;" alt="hourglass" height="60" width="60">
-	</div>
+            <div class="form-group">
+                <label for="website" class="col-lg-3 control-label lang" data-lang="r_y_o">organisation website</label>
+                <div class="col-lg-5">
+                    <input type="url" class="form-control" name="website" id="website">
+                </div>
+            </div>
 
-<script>
-	setCustomRegister();			// Apply custom javascript
-</script>
-	
+            <div class="form-group">
+                <label for="accept_tc" class="col-lg-3 control-label">
+                    <span class="lang" data-lang="c_agree">i agree to the </span><a id="t_c_link" href="/terms.html">
+                    <span class="lang" data-lang="c_t_c">terms and conditions</span></a></label>
+                <div class="col-lg-5">
+                    <input type="checkbox" name="accept_tc" id="accept_tc"/>
+                </div>
+            </div>
+
+            <div class="form-group has-error">
+                <div class="col-sm-12 text-center">
+                    <button id="registerSubmit" type="submit" class="btn btn-default btn-primary lang"
+                            data-lang="c_submit"
+                            disabled="disabled">submit
+                    </button>
+                </div>
+            </div>
+
+
+        </form>
+
+    </div>
+</div>
+
+
+<div class="col-sm-12 text-center">
+    <img id="hour_glass" src="/images/ajax-loader.gif" style="display:none;" alt="hourglass" height="60" width="60">
+</div>
+
+
 </body>
 </html>

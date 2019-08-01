@@ -107,6 +107,7 @@ define([
                 if(refresh) {
                     if(change.question || change.changeType === "optionlist" || (change.property && change.property.type === "question")) {
                         $context = markup.refresh();
+	                    validateAll();
                     } else {
                         $context = option.createChoiceView();
                         var survey = globals.model.survey;
@@ -138,9 +139,11 @@ define([
         function save(callback) {
 
             var url="/surveyKPI/surveys/save/" + globals.gCurrentSurvey,
-                changes = globals.changes,
-                changesString = JSON.stringify(changes);
+                changesString,
+                changesInSeq = resequenceChangeSet(globals.changes);
 
+
+            changesString = JSON.stringify(changesInSeq);
             setHasChanges(0);
             globals.gSaveInProgress = true;
             addHourglass();
@@ -207,12 +210,66 @@ define([
                     if(xhr.readyState == 0 || xhr.status == 0) {
                         // Not an error
                     } else {
-                        bootbox.alert("Error: Failed to save survey: " + err);
+                        bootbox.alert(localise.set["msg_err_save"] + ' ' + err);
                     }
                 }
             });
 
         };
+
+        /*
+         * Resequence a change array to allign with the sequences in the model
+         */
+        function resequenceChangeSet(changes) {
+
+            var fo = [],
+                i,
+                newSeq = [];
+
+            for(i = 0; i < globals.model.survey.forms.length; i++) {
+                fo.push({});
+            }
+
+            // Set the sequence nuber as per the model
+            for(i = 0; i < changes.length; i++) {
+                if(globals.changes[i].changeType === "question") {
+                    var question = globals.changes[i].items[0].question;
+                    if(question && globals.changes[i].items[0].action === "add") {
+                        var form = globals.model.survey.forms[question.formIndex];
+                        for (var j = 0; j < form.qSeq.length; j++) {
+                            if(form.qSeq[j] == question.itemIndex) {
+                                question.seq = j;
+                                fo[question.formIndex]["q"+j] = globals.changes[i];
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Put the question changes in the order of their sequence numbers
+            for(i = 0; i < globals.model.survey.forms.length; i++) {
+                var form = globals.model.survey.forms[i];
+                for (var j = 0; j < form.qSeq.length; j++) {
+                    if(fo[i]["q"+j]) {
+                        newSeq.push(fo[i]["q"+j]);
+                    }
+                }
+            }
+
+            // Add any other changes
+            for(i = 0; i < changes.length; i++) {
+                if (globals.changes[i].changeType !== "question"
+                    || typeof globals.changes[i].items[0].question === "undefined"
+                    || globals.changes[i].items[0].action !== "add"
+                ) {
+                    newSeq.push(changes[i]);
+                }
+            }
+
+            return newSeq;
+
+        }
 
 		/*
 		 * Add a single change item to the array of changes (changeset)
@@ -521,7 +578,7 @@ define([
 							 * If the item is a group question then also remove its group end
 							 */
                             changes.splice(j,1);	// Remove this item
-                            return false;
+                            return true;
 
                         }
                     }
@@ -595,7 +652,8 @@ define([
 							 */
                             if(property.prop === "type" || property.prop === "name") {
 
-                                if(property.newVal.indexOf("select") == 0 || question.type.indexOf("select") == 0) {	// Select question
+                                if(property.newVal.indexOf("select") == 0 || question.type.indexOf("select") == 0 ||
+                                    property.newVal === "rank" || question.type === "rank") {	// Select question
 
                                     // Ensure there is a list name for this question
                                     if(!question.list_name && question.name) {
@@ -740,7 +798,7 @@ define([
 
                                     }
                                     console.log("xxxxxxx remove end group");
-                                    applyToEndGroup(survey.forms[oldFormIdx], question.name, oldLocation, "delete");
+                                    applyToEndGroup(survey.forms[oldFormIdx], question.name, oldLocation, "delete", undefined, undefined);
                                     refresh = true;
                                 } else if(oldVal === "begin repeat") {
                                     console.log("xxxxxxx fix up begin repeat");
@@ -809,7 +867,7 @@ define([
                                 // update the end group name
                                 if(survey.forms[property.formIndex].questions[property.itemIndex].type === "begin group") {
                                     applyToEndGroup(survey.forms[property.formIndex],
-                                        oldVal, 0, "rename", property.newVal);
+                                        oldVal, 0, "rename", property.newVal, undefined);
 
                                 }
                             }
@@ -923,7 +981,7 @@ define([
                             newLocation,
                             sourceForm,
                             oldLocation);
-
+                        
                         // Fix up the form being moved to point to its new parent
                         var movedForm;
                         if(question.type === "begin repeat") {
@@ -982,7 +1040,7 @@ define([
                     form.qSeq.splice(change.question.seq, 1);	// Remove item from the sequence array
                     question.deleted = true;	// Mark deleted
                     if(question.type === "begin group") {
-                        applyToEndGroup(form, question.name, change.question.seq, "delete");
+                        applyToEndGroup(form, question.name, change.question.seq, "delete", undefined, change.question.formIndex);
                         refresh = true;
                     }
                 } else {
@@ -1112,12 +1170,17 @@ define([
                     }
                 }
             }
+
+            // Update the model
+            question.itemIndex = itemIndex;
+            question.formIndex = targetForm;
+
             return itemIndex;
         }
 		/*
 		 * Apply a change to the "end group" of a group
 		 */
-        function applyToEndGroup(form, name, start_seq, action, new_name) {
+        function applyToEndGroup(form, name, start_seq, action, new_name, form_index) {
             var i,
                 end_name = name + "_groupEnd";
 
@@ -1131,10 +1194,25 @@ define([
                         form.questions[form.qSeq[i]].name = new_name + "_groupEnd";
                     }
                     break;
+                } else {
+
+                    // Delete the member
+                    if(action === "delete"  && typeof form_index !== "undefined") {
+                        modelGeneratedChanges.push({
+                            changeType: "question",
+                            action: "delete",
+                            source: "editor",
+                            question: {
+                                seq: i,
+                                formIndex: form_index,
+                                itemIndex: i
+                            }
+                        });
+                    }
                 }
             }
 
-            // Remove any group items from the pending changes list
+            // Remove group end from the pending changes list
             for(i = 0; i < globals.changes.length; i++) {
                 if(globals.changes[i].items[0].question) {
                     if(globals.changes[i].items[0].question.name === end_name) {
@@ -1337,7 +1415,7 @@ define([
                 for(j = 0; j < forms[i].questions.length; j++) {
                     question = forms[i].questions[j];
                     if(!question.deleted &&  !question.soft_deleted &&
-                        question.type.indexOf("select") === 0 &&
+                        (question.type.indexOf("select") === 0 || question.type === "rank") &&
                         question.list_name === list) {
 
                         nameArray.push(question.name);
@@ -1449,7 +1527,7 @@ define([
                 removeValidationError(container, itemIndex,	"item", itemType);
             }
 
-            if(!item.deleted && !item.published &&
+            if(!item.deleted &&
                 ((itemType === "question" && markup.includeQuestion(item)) ||
                 (itemType === "optionlist") ||
                 (itemType === "option"))) {
@@ -1506,6 +1584,91 @@ define([
                     if(isValid) {	// Check parenthesis on choiceFilter
                         isValid = checkParentheisis(container, itemIndex, itemType, item.choice_filter);
                     }
+
+	                if(isValid && (item.type === "child_form" || item.type === "parent_form")) {	// Check that form launch types have a reference form
+
+	                    if(item.parameters && item.parameters.indexOf("form_identifier") >= 0) {
+	                        isValid = true;
+	                    } else {
+	                        isValid = false;
+		                    addValidationError(
+			                    container,
+			                    itemIndex,
+			                    "item",
+			                    localise.set["ed_f_l"],	// Only one geometry question can be added to a form
+			                    itemType,
+			                    "error");
+	                    }
+
+	                }
+
+	                if(isValid && item.type === "begin repeat") {	// Check that a repeat group has children
+
+	                    var itemx = item;
+		                var childFormIndex = getSubFormIndex(item.formIndex, itemIndex);
+		                var questions = survey.forms[childFormIndex].questions;
+                        var isEmpty = true;
+
+                        if(questions.length > 0) {
+                            for(j = 0; j < questions.length; j++) {
+                                if(questions[j].type !== 'calculate') {
+                                    isEmpty = false;
+                                    break;
+                                }
+                            }
+                        }
+
+                        if(isEmpty) {
+	                        isValid = false;
+	                        addValidationError(
+		                        container,
+		                        itemIndex,
+		                        "item",
+		                        localise.set["ed_emp_rep"],
+		                        itemType,
+		                        "warning");
+                        }
+	                }
+
+	                if(isValid && item.type === "begin group") {	// Check that a group has children
+
+		                var endName = item.name + "_groupEnd";
+		                var questions = survey.forms[item.formIndex].questions;
+		                var qSeq = survey.forms[item.formIndex].qSeq;
+		                var isEmpty = true;
+		                var inGroup = false;
+
+		                /*
+						 * Get the questions in the group
+						 */
+		                for(j = 0; j < qSeq.length; j++) {
+
+		                    if(inGroup === true) {
+			                    if (questions[qSeq[j]].name.toLowerCase() === endName.toLowerCase()) {
+				                    break;
+			                    } else if (questions[qSeq[j]].type !== 'calculate') {
+				                    isEmpty = false;
+				                    break;
+			                    }
+		                    }
+
+			                if(qSeq[j] === itemIndex) {
+				                inGroup = true;
+			                }
+
+		                }
+
+		                if(isEmpty) {
+			                isValid = false;
+			                addValidationError(
+				                container,
+				                itemIndex,
+				                "item",
+				                localise.set["ed_emp_rep"],
+				                itemType,
+				                "warning");
+		                }
+	                }
 
 
                 } else if(itemType === "option") {
@@ -1606,7 +1769,7 @@ define([
                 valid = true,
                 survey;
 
-            if(item.type.indexOf('select') === 0) {
+            if(item.type.indexOf('select') === 0 || item.type === "rank") {
                 if(typeof globals.model.survey.optionLists[item.list_name] === "undefined") {
                     valid = false;
                 }
@@ -1710,40 +1873,61 @@ define([
                 }
             }
 
-
-            for(i = 0; i < survey.forms.length; i++) {
-                form = survey.forms[i];
-                for(j = 0; j < form.questions.length; j++) {
-                    var otherItem = form.questions[j];
-                    var questionType = otherItem.type;
-                    if(!otherItem.deleted && !otherItem.soft_deleted && questionType !== "end group") {
-                        if(!(i === container && j === itemIndex)) {	// Don't test the question against itself!
-                            otherItem = form.questions[j];
-
-                            for (name in refQuestions) {
-                                if (refQuestions.hasOwnProperty(name)) {
-                                    if(name === otherItem.name) {
-                                        refQuestions[name].exists = true;
-                                    }
-                                }
-                            }
-
-                        }
-                    }
+            var refCount = 0;
+            for (name in refQuestions) {
+                if (refQuestions.hasOwnProperty(name)) {
+                    refCount++;
                 }
             }
 
-            for (name in refQuestions) {
-                if (refQuestions.hasOwnProperty(name)) {
-                    if(!refQuestions[name].exists) {
-                        addValidationError(
-                            container,
-                            itemIndex,
-                            "item",
-                            localise.set["c_question"] + " ${" + name + "} " + localise.set["msg_not_f"],
-                            itemType,
-                            "error");
-                        return false;
+            if(refCount > 0) {
+
+                for (i = 0; i < survey.forms.length; i++) {
+                    form = survey.forms[i];
+                    for (j = 0; j < form.questions.length; j++) {
+                        var otherItem = form.questions[j];
+                        var questionType = otherItem.type;
+                        if (!otherItem.deleted && !otherItem.soft_deleted && questionType !== "end group") {
+                            if (!(i === container && j === itemIndex)) {	// Don't test the question against itself!
+                                otherItem = form.questions[j];
+
+                                for (name in refQuestions) {
+                                    if (refQuestions.hasOwnProperty(name)) {
+                                        if (name === otherItem.name) {
+                                            refQuestions[name].exists = true;
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Check against preloads
+                console.log("check against preloads");
+                if(survey.meta) {
+                    for (i = 0; i < survey.meta.length; i++) {
+                        for (name in refQuestions) {
+                            if (name === survey.meta[i].name) {
+                                refQuestions[name].exists = true;
+                            }
+                        }
+                    }
+                }
+
+                for (name in refQuestions) {
+                    if (refQuestions.hasOwnProperty(name)) {
+                        if (!refQuestions[name].exists) {
+                            addValidationError(
+                                container,
+                                itemIndex,
+                                "item",
+                                localise.set["c_question"] + " ${" + name + "} " + localise.set["msg_not_f"],
+                                itemType,
+                                "error");
+                            return false;
+                        }
                     }
                 }
             }
@@ -1788,7 +1972,7 @@ define([
 
         function isValidODKOptionName(val) {
 
-            var sqlCheck = /^[A-Za-z0-9_@\-\.:/]*$/;
+            var sqlCheck = /^[A-Za-z0-9_@\-\.\+\(\),%:\/]*$/;
             return sqlCheck.test(val);
         }
 
@@ -2010,7 +2194,7 @@ define([
                             container,
                             itemIndex,
                             "name",
-                            localise.set["ed_vc"],
+                            localise.set["ed_vc"] + " : "  + val,
                             itemType,
                             "error");
 
@@ -2123,9 +2307,33 @@ define([
             $('li.panel.warning', '#formList').removeClass("warning");
 
             for(i = 0; i < forms.length; i++) {
-                for(j = 0; j < forms[i].questions.length; j++) {
-                    if(forms[i].questions[j].visible && !forms[i].questions[j].deleted &&  !forms[i].questions[j].soft_deleted) {
-                        validateItem(i, j, "question", false);		// Validate the question
+                var deleted = false;
+                var parentForm = forms[i].parentFormIndex;
+                var parentQuestion = forms[i].parentQuestionIndex;
+                if(parentForm > -1 && parentQuestion > -1) {
+                    deleted = forms[parentForm].questions[parentQuestion].deleted;
+                }
+                if(!deleted) {
+                    var validate = true;
+                    var groupName;
+                    for (j = 0; j < forms[i].questions.length; j++) {
+                        // Skip deleted groups
+                        if(validate) {
+                            if (!forms[i].questions[j].deleted && !forms[i].questions[j].soft_deleted) {
+                                validateItem(i, j, "question", false);		// Validate the question
+                            } else {
+                                if(forms[i].questions[j].type === "begin group") {
+                                    groupName = forms[i].questions[j].name;
+                                    validate = false;
+                                }
+                            }
+                        } else {
+                            if(forms[i].questions[j].type === "end group") {
+                                if(forms[i].questions[j].name.indexOf(groupName) > 0) {
+                                    validate = true;
+                                }
+                            }
+                        }
                     }
                 }
             }

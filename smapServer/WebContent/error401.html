@@ -1,0 +1,108 @@
+<!doctype html>
+<html class="no-js" lang="en">
+<head>
+	<meta name="keywords" content="" />
+	<meta name="description" content="" />
+	<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<title>Smap Server</title>
+
+	<link rel="shortcut icon" href="favicon.ico" />
+	<link rel="stylesheet" href="css/normalize.css" />
+	<link rel="stylesheet" href="/css/bootstrap.min.css" />
+	<link rel="stylesheet" href="/css/smap-bs.css" type="text/css">
+
+	<script type="text/javascript"> if (!window.console) console = {log: function() {}}; </script>
+	<script src="js/libs/modernizr.js"></script>
+	<script src="/js/app/theme-nobody.js"></script>
+	<script data-main="js/index" src="js/libs/require.js"></script>
+
+</head>
+<body class="backdos">
+
+<header class="navbar navbar-default navbar-static-top" role="banner">
+	<div class="container">
+		<div class="navbar-header">
+			<button class="navbar-toggle" type="button" data-toggle="collapse" data-target=".navbar-collapse">
+				<span class="sr-only">Toggle navigation</span>
+				<span class="icon-bar"></span>
+				<span class="icon-bar"></span>
+				<span class="icon-bar"></span>
+			</button>
+			<a href="#" class="navbar-brand">
+				<img src="/images/logo.png">
+				<span class="thick">SMAP</span> Server
+			</a>
+		</div>
+		<nav class="collapse navbar-collapse" role="navigation">
+			<ul class="nav navbar-nav navbar-right">
+
+				<li class="restrict_role admin_role analyst_role"><a class="lang" data-lang="c_edit" href="/edit.html" title="Edit">Edit</a></li>
+				<li class="restrict_role admin_role analyst_role"><a class="lang" data-lang="m_admin" href="/fieldManager/surveyManagement.html" title="Admin">Admin</a></li>
+				<li class="restrict_role admin_role analyst_role data_role"><a class="lang" data-lang="m_analysis" href="/fieldAnalysis/index.html">Analysis</a></li>
+				<li class="restrict_role enum_role"><a class="lang" data-lang="m_console" href="/webForm.html"></a></li>
+				<li class="restrict_role admin_role analyst_role"><a href="/tasks/taskManagement.html"><span class="nav-label lang" data-lang="m_assign">assign</span></a></li>
+				<li id="logout" class="loggedin"><a class="lang button" data-lang="c_logout">logout</a></li>
+				<li id="login" style="display:none;" class="notloggedin"><a class="lang button" data-lang="m_login" href="/fieldManager/surveyManagement.html">login</a></li>
+				<li><a class="lang" data-lang="m_docs" href="https://docs.google.com/folderview?id=0B5_SmpWlQYxvNExwSFV5X051Yjg&usp=docslist_api#" target="_blank">Documentation</a></li>
+				<li id="signup" style="display:none;" class="notloggedin"><a class="lang button" data-lang="m_register" href="/register.html" > Register</a></li>
+				<li class="notloggedin"><a class="lang button" data-lang="m_forgot_password" href="/forgottenPassword.html" > Forgot Password</a></li>
+				<li><a class="lang button" data-lang="c_subscribe" href="/subscriptions.html" > Subscribe</a></li>
+			</ul>
+		</nav>
+	</div>
+</header>
+
+		<div class="container-fluid">	
+			<div class="row">
+				<div class="col-sm-10 col-md-offset-1">
+					<img class="maxwidth" src="images/cropped-blog1.jpg"/>
+					<h1 class="text-center"><span class="lang" data-lang="ss_welcome">Welcome</span> 19.01</h1>
+					<h4 class="text-center"><a href="http://blog.smap.com.au/version-19-01/"><span class="lang" data-lang="ss_welcome2">Description:</span> </a></h4>
+				</div>
+			</div>
+		</div>
+		<div class="row">
+			<div style="text-align: center;">
+				<iframe seamless style="border-width: 0px "class="text-center" width="80%" src="motd.html"></iframe>
+			</div>
+		</div>
+
+		<div class="row">
+			<div class="col-sm-2 hidden-xs"></div>
+			<div class="col-sm-4">
+				<div class="text-center">
+					<a id="ft" href="#" class="btn btn-primary text-center" role="button" >
+						<img class="img-responsive center-block" width="200"  height="200" style="display:inline-block;"
+							 alt="Get field Task" src="images/fieldTaskBigLogo.png"/></a>
+					<h1 class="lang text-center" data-lang="ss_ft">Get FT</h1>
+				</div>
+			</div>
+			<div class="col-sm-4">
+				<div class="text-center">
+					<a href="smapUploader.jar" class="btn btn-primary" role="button">
+						<img class="img-responsive text-center" width="200"  height="200" style="display:inline-block;"
+							 alt="Get Smap Uploader" src="images/su_logo.png"/></a>
+					<h1 class="lang text-center" data-lang="ss_su">Get SU</h1>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div style="clear: both;">&nbsp;</div>
+
+</div>
+
+<div class="container">
+	<div class="row">
+		<div id="footer">
+			Website created by <a href="http://www.smap.com.au">Smap Consulting</a> (c) November, 2011
+			, <a href="/acknowledgements.html ">acknowledgements</a>
+		</div>
+	</div>
+</div>
+<!-- end #footer -->
+
+</body>
+</html>

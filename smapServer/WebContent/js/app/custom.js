@@ -58,6 +58,14 @@ function setCustomDashboard() {
 	// Menus
 }
 
+function setCustomReview() {
+    // Menus
+}
+
+function setCustomAudit() {
+    // Menus
+}
+
 function setCustomUserDashboard() {
 	// Menus
 }
@@ -73,9 +81,31 @@ function setCustomManage() {
 function setCustomRegister() {
 }
 
+function setCustomSubscriptions() {
+    var elem1 = document.getElementById("navbar-brand");
+
+    // Add branding for subscriptions
+    if(elem1) {
+       elem1.innerHTML = "<img src='/images/logo.png'><span class='thick'>SMAP</span> Server";
+    }
+
+}
+
 function setCustomEdit() {
 }
 
 function setCustomWebForms() {
 	
+}
+
+function setCustomLogs() {
+
+}
+
+function setCustomBilling() {
+
+}
+
+function setCustomMainLogo() {
+    $('.main_logo').attr("src", "/images/cropped-blog1.jpg");
 }

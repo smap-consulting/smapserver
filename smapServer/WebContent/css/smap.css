@@ -598,6 +598,7 @@ tr.deleted td a {
 	margin-top: 2px;
 }
 
+
 /* Analysis Panels */
 
 
@@ -666,13 +667,6 @@ tr.deleted td a {
 	padding: 0px 5px;
 }
 .pExpand {
-	height: 18px; 
-	width: 18px; 
-	float: right;
-	padding: 0px 5px;
-}
-
-.pReport {
 	height: 18px; 
 	width: 18px; 
 	float: right;
@@ -832,6 +826,15 @@ tr.deleted td a {
 .pmain {
 	clear: both;
 	margin: 0px 10px;
+}
+
+.modify_main {
+	padding-left: 20px;
+	padding-right: 20px;
+}
+
+.modify_form {
+	font-size: 16px;
 }
 
 /* Style for buttons used in exporting forms */
@@ -1265,4 +1268,14 @@ span.selectProject
 .node text {
   pointer-events: none;
   font: 10px sans-serif;
+}
+
+.disabled {
+	color: lightgrey;
+	filter:opacity(0.4);
+}
+
+.sec_sel1 {
+	font-size: 16px;
+	width: 150px;
 }

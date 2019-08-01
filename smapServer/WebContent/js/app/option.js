@@ -198,15 +198,25 @@ define([
 					h[++idx] = '<input class="oname form-control has_tt" value="';
 					h[++idx] = option.value;
 					h[++idx] = '" ';
-							
-					//if(option.published) {				// Mark disabled if the option has been published
-					//	h[++idx] = 'readonly="true"';
-					//}
+
 					h[++idx] = ' type="text" title="';
 					h[++idx] = localise.set["ed_cval"];
 					h[++idx] = '">';
 							
 				h[++idx] = '</td>';	// End of option name and label cell
+
+				// Add option display_name cell
+				h[++idx] = '<td>';
+
+					h[++idx] = '<input class="odisplayname form-control has_tt" value="';
+					h[++idx] = option.display_name;
+					h[++idx] = '" ';
+
+					h[++idx] = ' type="text" title="';
+					h[++idx] = localise.set["ed_dn"];
+					h[++idx] = '">';
+
+				h[++idx] = '</td>';	// End of option display_name and label cell
 			
 				h[++idx] = addFilterColumnBody(option.cascade_filters);
 				h[++idx] = addOptionLabel(option);
@@ -482,7 +492,11 @@ define([
 				h[++idx] = '<th>';
 				h[++idx] = localise.set["ed_cval"];
 				h[++idx] = '</th>';
-				
+
+				h[++idx] = '<th>';
+				h[++idx] = localise.set["ed_dn"];
+				h[++idx] = '</th>';
+
 				h[++idx] = addFilterColumnHeadings();
 				
 				h[++idx] = '<th>';

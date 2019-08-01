@@ -117,7 +117,7 @@ define([
 							h[++idx] = '<a button tabindex="-1" class="btn btn-default" data-toggle="collapse"  href="#collapse';
 							h[++idx] = globals.gElementIndex;
 							h[++idx]='"><span class="glyphicon glyphicon-chevron-down edit_icon"></span></a>';
-						} else if(question.type.indexOf("select") === 0) {
+						} else if(question.type.indexOf("select") === 0 || question.type === "rank") {
 						
 							h[++idx] = '<a button tabindex="-1" class="btn btn-default edit_choice" ';
 							h[++idx]='"><span class="glyphicon glyphicon-edit edit_icon"></span></a>';
@@ -136,7 +136,7 @@ define([
 		h[++idx] = '<div id="collapse';
 		h[++idx] = globals.gElementIndex;
 		h[++idx] = '" class="panel-body collapse';
-		if(question.type.indexOf("select") === 0) {
+		if(question.type.indexOf("select") === 0 || question.type === "rank") {
 			h[++idx] = ' selectquestion';
 		}
 		h[++idx] = '">';
@@ -320,7 +320,7 @@ define([
 	
 		h[++idx] = '<button tabindex="-1" id="addnew_optionlist" ';
 		h[++idx] = 'type="button" class="add_option_list add_button add_after_button add_final_button btn">';
-		h[++idx] = 'Add New Choice List'; 	
+		h[++idx] = localise.set["ed_ancl"];
 		h[++idx] = '</button>';
 		h[++idx] = '</li>';
 		
@@ -376,6 +376,8 @@ define([
 	function addQType(type) {
 		
 		var i,
+			j,
+			tArray,
 			types = globals.model.qTypes,
 			h = [],
 			idx = -1,
@@ -388,9 +390,12 @@ define([
 				h[++idx] = name;
 				h[++idx] = '">';
 				if(types[i].glyphicon) {
-					h[++idx] = '<span class="glyphicon glyphicon-';
-					h[++idx] = types[i].glyphicon; 
-					h[++idx] = ' edit_type"></span>';
+					tArray = types[i].glyphicon.split(',');
+					for(j = 0; j < tArray.length; j++) {
+						h[++idx] = '<span class="glyphicon glyphicon-';
+						h[++idx] = tArray[j].trim();
+						h[++idx] = ' edit_type"></span>';
+					}
 				} else if(types[i].image) {
 					h[++idx] = '<img class="edit_image" src="';
 					h[++idx] = types[i].image; 
@@ -442,7 +447,7 @@ define([
 		var h = [],
 			idx = -1,
 			i,
-			linkedSurveys = globals.model.survey.linkedSurveys,
+			//linkedSurveys = globals.model.survey.linkedSurveys,
 			selProperty = globals.gSelProperty,
 			selLabel = globals.gSelLabel,
 			naMedia = '<div class="naMedia text-center">' + localise.set["ed_namedia"] + '</div>';
@@ -472,6 +477,7 @@ define([
 			    }
 			    h[++idx] = '</span></button>';
 			    h[++idx] = '</div>';
+
 			    /*
 			     * Add the text area for the required response text
 			     */
@@ -535,83 +541,143 @@ define([
 					if(question[selProperty] == "audio") {
 						h[++idx] = "active";
 					}
-					h[++idx] = '" value="audio">Audio</button>';
+					h[++idx] = '" value="audio">';
+					h[++idx] = localise.set["ed_audio"];
+					h[++idx] = '</button>';
 					
 				h[++idx] = '</div>';
-				
-			} else if(selProperty === "linked_target" && type === "question") {		// Add selects to get the linked survey, and question				
+
+
+			//} else if(selProperty === "linked_target" && type === "question") {		// Add selects to get the linked survey, and question
+			//	h[++idx] = '<div class="row">';
+			//
+			//	h[++idx] = '<div class="col-xs-6">';	// Start checkbox column
+			//    h[++idx] = '<button type="button" class="btn labelButton ';
+			//    if(question[selProperty]) {
+			//    	h[++idx] = 'prop_yes" ';
+			//    } else {
+			//    	h[++idx] = 'prop_no" ';
+			//    }
+			//    h[++idx] = ' data-prop="';
+			//	h[++idx] = selProperty;
+			//	h[++idx] = '">';
+			//	h[++idx] = '<span class="glyphicon ';
+			//	if(question[selProperty]) {
+			//    	h[++idx] = 'glyphicon-ok-sign"> ';
+			//    	h[++idx] = localise.set["ed_l"];
+			//    } else {
+			//    	h[++idx] = 'glyphicon-remove-sign"> ';
+			//    	h[++idx] = localise.set["ed_nl"];
+			//    }
+			//    h[++idx] = '</span></button>';
+			//    h[++idx] = '</div>';
+			//
+			//    /*
+			//     * Add the select questions
+			//     */
+			//    var  linkedTarget = getLinkedTarget(question[selProperty]);
+			//    h[++idx] = '<div class="col-xs-6">';	// Start select column
+			//    h[++idx] = '<div';
+			//    if(!question[selProperty]) {
+			//    	h[++idx] = ' style="display:none;"';
+			//    }
+			//    h[++idx] = '>';
+			//
+			//    // Linked survey
+			//
+			//	h[++idx] = '<div class="form-group">';
+			//	h[++idx] = '<select class="form-control linkedTarget linkedSurvey"';
+			//	h[++idx] = ' data-prop="';
+			//		h[++idx] = selProperty;
+			//	h[++idx] = '">';
+			//	for(i = 0; i < linkedSurveys.length; i++) {
+			//		h[++idx] = '<option value="';
+			//		h[++idx] = linkedSurveys[i].id;
+			//		h[++idx] = '"';
+			//		if((question[selProperty] && linkedTarget && linkedTarget.sId == linkedSurveys[i].id) ||
+			//				(!question[selProperty] && i == 0)) {
+			//			h[++idx] = ' selected';
+			//		}
+			//		h[++idx] = '>';
+			//		h[++idx] = linkedSurveys[i].name;
+			//		h[++idx] = '</option>';
+			//	}
+			//	h[++idx] = '</select>';
+			//	h[++idx] = '</div>';	// Form Group
+			//
+			//    // Linked question
+			//	h[++idx] = '<div class="form-group">';
+			//	h[++idx] = '<select class="form-control linkedTarget linkedQuestion"';
+			//	h[++idx] = ' data-prop="linked_target">';
+			//	if(question[selProperty] && linkedTarget) {
+			//		getLinkedQuestions(questionId, linkedTarget.sId, linkedTarget.qId);
+			//	}
+			//	h[++idx] = '</select>';
+			//	h[++idx] = '</div>';	// Form Group
+			//	h[++idx] = '</div>';	// Show / No show
+			//
+			//	h[++idx] ='</div>';		// End Col
+			//	h[++idx] ='</div>';		// End Row
+
+			} else if(selProperty === "parameters" && type === "question") {		// Add button to select the parameters dialog
 				h[++idx] = '<div class="row">';
-				
-				h[++idx] = '<div class="col-xs-6">';	// Start checkbox column
-			    h[++idx] = '<button type="button" class="btn labelButton ';
-			    if(question[selProperty]) {
-			    	h[++idx] = 'prop_yes" ';
-			    } else {
-			    	h[++idx] = 'prop_no" ';
-			    }
-			    h[++idx] = ' data-prop="';
+
+				h[++idx] = '<div class="col-sm-6">';	    // start col
+				h[++idx] = '<button type="button" class="btn btn-primary parameterButton"';
+				h[++idx] = ' data-prop="';
 				h[++idx] = selProperty;
 				h[++idx] = '">';
-				h[++idx] = '<span class="glyphicon ';
-				if(question[selProperty]) {
-			    	h[++idx] = 'glyphicon-ok-sign"> ';
-			    	h[++idx] = localise.set["ed_l"];
-			    } else {
-			    	h[++idx] = 'glyphicon-remove-sign"> ';
-			    	h[++idx] = localise.set["ed_nl"];
-			    }
-			    h[++idx] = '</span></button>';
-			    h[++idx] = '</div>';
-			    
-			    /*
-			     * Add the select questions
-			     */
-			    var  linkedTarget = getLinkedTarget(question[selProperty]);
-			    h[++idx] = '<div class="col-xs-6">';	// Start select column
-			    h[++idx] = '<div';
-			    if(!question[selProperty]) {
-			    	h[++idx] = ' style="display:none;"';
-			    }
-			    h[++idx] = '>';
-			    
-			    // Linked survey
-			   
-				h[++idx] = '<div class="form-group">';
-				h[++idx] = '<select class="form-control linkedTarget linkedSurvey"';
-				h[++idx] = ' data-prop="';
-					h[++idx] = selProperty;
-				h[++idx] = '">';
-				for(i = 0; i < linkedSurveys.length; i++) {
-					h[++idx] = '<option value="';
-					h[++idx] = linkedSurveys[i].id;
-					h[++idx] = '"';
-					if((question[selProperty] && linkedTarget && linkedTarget.sId == linkedSurveys[i].id) || 
-							(!question[selProperty] && i == 0)) {
-						h[++idx] = ' selected';
-					} 
-					h[++idx] = '>';
-					h[++idx] = linkedSurveys[i].name;
-					h[++idx] = '</option>';
-				}
-				h[++idx] = '</select>';
-				h[++idx] = '</div>';	// Form Group
-				
-			    // Linked question
-				h[++idx] = '<div class="form-group">';
-				h[++idx] = '<select class="form-control linkedTarget linkedQuestion"';
-				h[++idx] = ' data-prop="linked_target">';
-				if(question[selProperty] && linkedTarget) {
-					getLinkedQuestions(questionId, linkedTarget.sId, linkedTarget.qId);
-				}
-				h[++idx] = '</select>';
-				h[++idx] = '</div>';	// Form Group
-				h[++idx] = '</div>';	// Show / No show
+				h[++idx] = '<span class="glyphicon glyphicon-edit"></span> ';
+				h[++idx] = localise.set["c_edit"];
+				h[++idx] = '</button>';
+				h[++idx] = '</div>';		// End Col
 
-				h[++idx] ='</div>';		// End Col 
+				/*
+			     * Add the text area to display the parameters
+			     */
+				h[++idx] = '<div class="col-sm-6">';
+				h[++idx] = '<textarea class="labelProp has_tt" readonly title="';
+				h[++idx] = selLabel;
+				h[++idx] = '" data-prop="';
+				h[++idx] = selProperty;
+				h[++idx] = '">';
+				h[++idx] = question["parameters"];
+				h[++idx] = '</textarea>';
+				h[++idx] = '</div>';    // End Col
+
 				h[++idx] ='</div>';		// End Row
-				
-			
-				
+
+
+
+			} else if(selProperty === "appearance" && type === "question") {		// Add button to select the appearance dialog
+				h[++idx] = '<div class="row">';
+
+				h[++idx] = '<div class="col-sm-6">';	    // start col
+				h[++idx] = '<button type="button" class="btn btn-info appearanceButton"';
+				h[++idx] = ' data-prop="';
+				h[++idx] = selProperty;
+				h[++idx] = '">';
+				h[++idx] = '<span class="glyphicon glyphicon-edit"></span> ';
+				h[++idx] = localise.set["c_edit"];
+				h[++idx] = '</button>';
+				h[++idx] = '</div>';		// End Col
+
+				/*
+			     * Add the text area to display the appearances
+			     */
+				h[++idx] = '<div class="col-sm-6">';
+				h[++idx] = '<textarea class="labelProp has_tt" readonly title="';
+				h[++idx] = selLabel;
+				h[++idx] = '" data-prop="';
+				h[++idx] = selProperty;
+				h[++idx] = '">';
+				h[++idx] = question["appearance"];
+				h[++idx] = '</textarea>';
+				h[++idx] = '</div>';    // End Col
+
+				h[++idx] ='</div>';		// End Row
+
+
 			} else if(selProperty === "media" && question.type != "calculate") {
 				h[++idx] = '<div class="row">';
 				if(type === "question" && (question.inMeta || question.source != "user" )) {
@@ -865,7 +931,7 @@ define([
 	    h[++idx] = '<a type="button" class="btn btn-default mediaProp form-control" data-element="';
 	    h[++idx] = label.toLowerCase();
 	    h[++idx] = '">';
-	    h[++idx] = lcLabel;
+	    h[++idx] = localise.set["ed_" + lcLabel];
 	    h[++idx] = '</a>';
 	 
 	    h[++idx] = '</div>';

@@ -53,8 +53,10 @@ $(document).ready(function() {
 	var i,
 		params,
 		pArray = [],
-		param = [];
-	
+		param = [],
+		dont_get_current_survey;
+
+	setupUserProfile();
 	localise.setlang();		// Localise HTML
 	
 	// Get the user details

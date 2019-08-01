@@ -42,14 +42,6 @@ body {
     overflow: auto;
 }
 
-.paper {
-    background-color: #E8ECDC;
-    border-radius: 7px;
-    border: 7px solid #ddd;
-    position: relative;
-    min-height: 100%;
-}
-
 .or {
     margin-bottom: 20px;
 }
@@ -92,7 +84,7 @@ body {
     left: 50%;
     margin: 30px 0 0 -100px;
     width: 200px;
-    font-size: 16px;
+    font-size: 14px;
     line-height: 23px;
     text-align: center;
 }
@@ -132,6 +124,11 @@ summary {
     display: block;
 }
 
+.form-header {
+    display: block; /* smap lets not do flex */
+}
+
+
 /* Layout */
 @media screen and (max-width: 600px) {
     body {
@@ -166,8 +163,20 @@ summary {
     }
 
     .form-header {
-        margin: 5px 0;
-    }
+        -moz-box-sizing: border-box;
+        box-sizing: border-box;
+        display: block; /* smap lets not do flex */
+        flex-direction: row;
+        align-items: center;
+        justify-content: flex-end;
+        position: absolute;
+        left: 0;
+        top: -76px;
+        width: 100%;
+        min-height: 69px;
+        margin: 5px 0;      /* smap add margin */
+        padding: 16px 0; }
+
     .form-header .form-language-selector {
         border-right: none;
     }
@@ -218,6 +227,7 @@ summary {
     width: 150px;
     position: static;
     min-height: 32px;
+    white-space: normal;
 }
 .form-footer .main-controls .btn progress {
     margin: 0;
@@ -308,6 +318,15 @@ summary {
     .form-footer .enketo-power {
         position: absolute;
         bottom: -90px;
+        right: 5px;
+        width: auto;
+    }
+}
+
+@media screen and (max-width: 719px) {
+    .enketo-power {
+        position: absolute;
+        bottom: -40px;
         right: 5px;
         width: auto;
     }
@@ -523,7 +542,7 @@ summary {
     overflow: auto;
     overflow-y: scroll;
     position: fixed;
-    top: 0;
+    top: 100px;
     right: 0;
     bottom: 0;
     left: 0;
@@ -615,6 +634,15 @@ summary {
 .modal-footer:after {
     clear: both;
 }
+
+.modal-footer .btn {
+    display: inline-block;
+}
+
+.modal-footer .negative {
+    background-color: darkslategrey;
+}
+
 .modal-footer .btn + .btn {
     margin-left: 5px;
     margin-bottom: 0;
@@ -838,7 +866,7 @@ summary {
     box-sizing: border-box;
     border-radius: 0px;
     position: fixed;
-    z-index: 13;
+    z-index: 20000;     // smap
     top: -100px;
     margin: 0;
     padding: 0;
@@ -886,30 +914,6 @@ summary {
     .ad {
         display: none;
     }
-}
-body {
-    background: #f0f0f0 no-repeat;
-    font-size: 16px;
-    line-height: 20px;
-    overflow-x: hidden;
-}
-
-.main {
-    -webkit-transition: all 0.6s ease-out;
-    transition: all 0.6s ease-out;
-}
-
-progress {
-    display: block;
-    margin: 10px auto;
-}
-
-.preview progress {
-    margin: 80px auto;
-}
-
-.paper {
-    border: 7px solid #e7e7e7;
 }
 
 @media screen and (max-width: 720px) {
@@ -1231,14 +1235,6 @@ button.close {
     -webkit-appearance: none;
 }
 
-
-/* Prevent images in questions from being cut off  - smap */
-/*
-form fieldset.question {
-  overflow:auto;
-}
-*/
-
 /* Submit queue indicator */
 .offline-enabled .queue-length {
     cursor: pointer;
@@ -1266,30 +1262,6 @@ form fieldset.question {
     color: green;
 }
 
-
-.form-control, .modal-dialog input, input:not([type=radio]):not([type=checkbox]), select, textarea {
-    display: block;
-    width: 100%;
-    height: 32px;
-    padding: 6px 12px;
-    font-size: 15px;
-    line-height: 1.25;
-    color: #555555;
-    background-color: white;
-    background-image: none;
-    border: 1px solid #cccccc;
-    border-radius: 4px;
-    -webkit-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075);
-    box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075);
-    -webkit-transition: border-color ease-in-out 0.15s, box-shadow ease-in-out 0.15s;
-    transition: border-color ease-in-out 0.15s, box-shadow ease-in-out 0.15s;
-}
-.form-control:focus, .modal-dialog input:focus, input:focus:not([type=radio]):not([type=checkbox]), select:focus, textarea:focus {
-    border-color: #66afe9;
-    outline: 0;
-    -webkit-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075), 0 0 8px rgba(102, 175, 233, 0.6);
-    box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075), 0 0 8px rgba(102, 175, 233, 0.6);
-}
 .form-control::-moz-placeholder, .modal-dialog input::-moz-placeholder, input:not([type=checkbox]):not([type=radio])::-moz-placeholder, select::-moz-placeholder, textarea::-moz-placeholder {
     color: #999999;
     opacity: 1;
@@ -1307,3 +1279,19 @@ form fieldset.question {
 }
 
 /* override formhub */
+.loader {
+    border: 16px solid #f3f3f3; /* Light grey */
+    border-top: 16px solid #3498db; /* Blue */
+    border-radius: 50%;
+    width: 120px;
+    height: 120px;
+    animation: spin 2s linear infinite;
+    position: fixed;
+    left: 50%;
+    top: 35%;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}

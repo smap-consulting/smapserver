@@ -116,7 +116,7 @@ define([
 		};
 		
 		// Add list of choices if this is a select question
-		if(type.indexOf("select") == 0) {
+		if(type.indexOf("select") == 0 || type === "rank") {
 			var optionList = survey.optionLists[name];
 			if(!optionList) {
 				survey.optionLists[name] = {

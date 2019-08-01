@@ -32,7 +32,8 @@ require.config({
     	toggle: 'bootstrap-toggle.min',
     	moment: 'moment-with-locales.min',
     	lang_location: '..',
-    	icheck: '/wb/plugins/iCheck/icheck.min'
+    	icheck: '/wb/plugins/iCheck/icheck.min',
+	    bootstrapcolorpicker: 'bootstrap-colorpicker.min',
 
     },
     shim: {
@@ -42,6 +43,7 @@ require.config({
         'bootstrap.file-input': ['bootstrap.min'],
     	'bootbox': ['bootstrap.min'],
        	'toggle': ['bootstrap.min'],
+	    'bootstrapcolorpicker': ['bootstrap', 'jquery'],
     	'icheck': ['jquery']
         
     }
@@ -62,7 +64,8 @@ require([
          'app/editorMarkup',
          'app/changeset',
          'app/option',
-         'moment',
+		 'bootstrapcolorpicker',
+		 'moment',
          'icheck'], 
 		function(
 				$, 
@@ -79,6 +82,7 @@ require([
 				markup,
 				changeset,
 				option,
+				bootstrapcolorpicker,
 				moment) {
 
 
@@ -89,22 +93,16 @@ var	gMode = "survey",
 	gTempPulldata = [],
 	gDragCounter,
 	gDragSourceId;
-
 // Media globals
 var gUrl,			// url to submit to
 	gBaseUrl = '/surveyKPI/upload/media';
 
 // Media Modal Parameters
 var gNewVal,
-	//gSelFormId,
-	//gSelId,
-	//gOptionList,
-	gQname,
 	gElement,
-	gNewVal,
+	gQname,
+	gQType,
 	gIsSurveyLevel;
-
-window.moment = moment;
 
 'use strict';
 
@@ -115,15 +113,17 @@ $(document).ready(function() {
 		pArray = [],
 		param = [],
 		openingNew = false,
-		dont_get_current_survey = true,
-		bs = isBusinessServer();
+		dont_get_current_survey = true;
 	
 	window.bootbox = bootbox;
-	
+	window.moment = moment;
+
+    setCustomEdit();
+	setupUserProfile();
 	localise.setlang();		// Localise HTML
 	
 	// Get the parameters and start editing a survey if one was passed as a parameter
-	params = location.search.substr(location.search.indexOf("?") + 1)
+	params = location.search.substr(location.search.indexOf("?") + 1);
 	pArray = params.split("&");
 	dont_get_current_survey = false;
 	for (i = 0; i < pArray.length; i++) {
@@ -142,9 +142,14 @@ $(document).ready(function() {
 	/*
 	 * Get location list
 	 */
-	// Get locations
-	getLocations(setLocationList);
-	
+	//getLocations(setLocationList);
+
+	/*
+	 * Get surveys and csv files that the user can link to
+	 */
+	getAccessibleSurveys($('.linkable_surveys'), true, true, false);
+	getAccessibleCsvFiles($('.linkable_files'), true);
+
 	/*
 	 * Initialise controls in the open form dialog
 	 */
@@ -215,7 +220,10 @@ $(document).ready(function() {
 	$('.m_save_survey').off().click(function() {	// Save a survey to the server
 		changeset.validateAll();
 		if(globals.model.survey.blocked) {
-			bootbox.alert(localise.set["ed_blocked"]);
+			bootbox.alert({
+				locale: gUserLocale,
+				message: localise.set["ed_blocked"]
+			});
 		} else {
 			if(changeset.numberIssues("error") === 0) {
 				changeset.save(surveyListDone);
@@ -287,12 +295,11 @@ $(document).ready(function() {
 		gTempPulldata.push({
 			survey: "",
 			data_key: "",
-			repeats: false,
 			deleted: false
 		});
 		updatePulldataView();
 	});
-	
+
 	// Set up view type toggle
 	$('#viewType').attr("data-on", localise.set["c_questions"]).attr("data-off", localise.set["c_choices"]).bootstrapToggle();
 
@@ -301,8 +308,7 @@ $(document).ready(function() {
 		// Set up media dialog to manage loading and deleting of media
 		$('.mediaManage').show();
 		$('.mediaSelect').hide();
-		$('#mediaModalLabel').html("Manage Media Files For this Form. " +
-				"Note organisation level media files now found under <b>Shared Resources</b> in admin module.");
+		$('#mediaModalLabel').html(localise.set["ed_mmf"]);
 		$('#mediaModal table').off();
 		$('#surveyPanel, #orgPanel').find('tr').removeClass('success');
 		
@@ -331,7 +337,8 @@ $(document).ready(function() {
 		$('.navbar-collapse').removeClass("in");
 		
 		updateSettingsData();		
-		
+
+		$('#settingsMsg').html("").hide();
 		$('#settingsModal').modal('show');
 	});
 
@@ -348,19 +355,31 @@ $(document).ready(function() {
 
 
 	$('#save_settings, #save_keys').off().click(function() {	// Save settings to the database
+
+		// validate
+		var displayName = $('#set_survey_name').val();
+		if(!displayName || displayName.trim().length == 0) {
+			alert(localise.set["ed_er"]);
+            return false;
+		}
 		globals.model.save_settings();
 	});
 	
 	$('#m_info').off().click(function() {	// Show the info dialog
 		
 		var tableNames ="",
-			i;
-		
+			i,
+			idx;
+
+		idx = 0;
 		for(i = 0; i < globals.model.survey.forms.length; i++) {
-			if(i > 0) {
-				tableNames += ", ";
-			}
-			tableNames += globals.model.survey.forms[i].tableName;
+			if(!globals.model.survey.forms[i].reference) {
+                if (idx > 0) {
+                    tableNames += ", ";
+                }
+                tableNames += globals.model.survey.forms[i].tableName;
+                idx++;
+            }
 		}
 		// Close any drop downmenus
 		$('.dropdown-toggle').parent().removeClass("open");
@@ -372,9 +391,298 @@ $(document).ready(function() {
 		$('#i_created').val(localTime(globals.model.survey.created));		
 		$('#i_based_on').val(globals.model.survey.basedOn);	
 		$('#i_table_names').val(tableNames);
-		$('#i_shared').prop('checked', globals.model.survey.sharedTable);	
+        $('#i_id').val(globals.model.survey.id);
 		
 		$('#infoModal').modal('show');
+	});
+
+    $('#m_export').off().click(function() {	// Export to XLS
+        if($(this).closest('li').hasClass('disabled')) {
+            bootbox.alert(localise.set["ed_cx"]);
+        } else {
+            window.location.href = "/surveyKPI/xlsForm/" + gSId + "?filetype=" + "xlsx";
+        }
+
+    });
+
+    /*
+     * Respond to a change in the form to be launched
+     * If the question type is a child form then the list of questions needs to be updated
+     */
+	$('#p_form_identifier').change(function(){
+		var survey = globals.model.survey;
+		var qType = survey.forms[globals.gFormIndex].questions[globals.gItemIndex].type;
+		if(qType === "child_form") {
+			getQuestionsInSurvey($('#p_key_question'), $(this).val(), true);
+		}
+	});
+
+    /*
+     * Respond to clicking of the save parameters button in the parameters edit modal
+     */
+	$('#parameterSave').click(function() {
+		var params = [];
+		var newVal;
+		var survey = globals.model.survey;
+		var question = survey.forms[globals.gFormIndex].questions[globals.gItemIndex];
+		var i;
+		var paramDetails;
+		var other;
+
+		$('#parameter_msg').hide();
+		var qParams = globals.model.qParams[question.type];
+		if(qParams && qParams.length > 0) {
+			for(i = 0; i < qParams.length; i++) {
+				paramDetails = globals.model.paramDetails[qParams[i]];
+				if(!getParam($('#' + paramDetails.field), params, qParams[i], paramDetails.type)) {
+					return false;
+				}
+			}
+		}
+		other=$('#p_other').val();
+		// validate
+		if(other.length > 0) {
+			var oArray = other.split(';');
+			for(i = 0; i < oArray.length; i++) {
+				var oArray2 = oArray[i].split('=');
+				if(oArray2.length != 2) {
+					$('#parameter_msg').show().html(localise.set["msg_pformat"]);
+					return false;
+				}
+			}
+		}
+
+		newVal = params.join(';');
+		if(newVal.length > 0 && other.length > 0) {
+			newVal += ';';
+		}
+		newVal += other;
+		updateLabel("question", globals.gFormIndex, globals.gItemIndex, undefined, "text", newVal, gQname, "parameters");
+
+		$('#parameterModal').modal("hide");
+	});
+
+	/*
+     * Set up colour picker
+     */
+	$('.colorpicker-component').colorpicker({
+		format: 'hex'
+	});
+
+	// Set up the tabs
+	$('#standardTab a').click(function (e) {
+		e.preventDefault();
+		$(this).tab('show');
+
+		$(".appearancetab").hide();
+		$('#standardPanel').show();
+
+	});
+	$('#searchTab a').click(function (e) {
+		e.preventDefault();
+		$(this).tab('show');
+
+		$(".appearancetab").hide();
+		$('#searchPanel').show();
+	});
+
+	$('#pdfTab a').click(function (e) {
+		e.preventDefault();
+		$(this).tab('show');
+
+		$(".appearancetab").hide();
+		$('#pdfPanel').show();
+	});
+
+	// Hide and show search elements
+	$('#a_filter_column, #a_second_filter_column, #a_csv_identifier, ' +
+		'#a_survey_identifier, input[type=radio][name=search_source],' +
+		'#a_search_value, #a_search_label').change(function() {
+		showSearchElements();
+	});
+	$('#a_pdfno').change(function() {
+		if($(this).prop('checked')) {
+			$('.pdf_appearance_field').hide();
+		} else {
+			$('.pdf_appearance_field').show();
+		}
+	});
+	$('#a_pdfcols_number').change(function() {
+		var val = $(this).val();
+		var i;
+
+		$('.pdfcols').hide();
+		if($(this).val() !== '') {
+			for(i = 1; i <= val; i++) {
+				$('.pdfcols' + i).show();
+				$('#a_pdfcols_' + i + '_l').html(localise.set["ed_col_width"].replace('%s1', i));
+			}
+		}
+	});
+
+	// Validate on value change
+	$('#a_sep, #a_numbers, #a_select1_type, #a_likert').change(function(){
+		checkForAppearanceWarnings();
+	});
+
+	/*
+	 * Respond to a change in the question used as the value for a search filter
+	 */
+	$('#a_filter_value_sel').change(function(){
+		$('#a_filter_value_static').val('${' + $(this).val() + '}')
+	});
+	$('#a_second_filter_value_sel').change(function(){
+		$('#a_second_filter_value_static').val('${' + $(this).val() + '}')
+	});
+
+	/*
+     * Respond to a change in the form that is to be searched
+     * If the question type is a child form then the list of questions needs to be updated
+     */
+	$('#a_survey_identifier, #a_csv_identifier').change(function(){
+		var survey = globals.model.survey;
+		var search_source = $('input[type=radio][name=search_source]:checked').val();
+		if(search_source === "survey") {
+			getQuestionsInSurvey($('.column_select'), $(this).val(), true);
+		} else {
+			getQuestionsInCsvFile($('.column_select'), $(this).val(), true);
+		}
+
+	});
+
+	/*
+     * Respond to clicking of the save appearances button in the appearance edit modal
+     */
+	$('#appearanceSave').click(function() {
+		var appearances = [];       // Array of appearance values taken from dialog
+		var app_choices = [];       // Dummy appearances for choice value and labels
+		var newVal;
+		var newAppChoiceVal;
+		var survey = globals.model.survey;
+		var question = survey.forms[globals.gFormIndex].questions[globals.gItemIndex];
+		var i;
+		var appearanceDetails;
+		var other;
+
+		$('#appearance_msg').hide();
+		/*
+		 * Get the appearance values from the dialog
+		 */
+		var qAppearances = globals.model.qAppearances[question.type];
+		if(qAppearances && qAppearances.length > 0) {
+			for(i = 0; i < qAppearances.length; i++) {
+				appearanceDetails = globals.model.appearanceDetails[qAppearances[i]];
+				if(!getAppearance($('#' + appearanceDetails.field), appearances, qAppearances[i], appearanceDetails, question.type, app_choices)) {
+					return false;       // getAppearance returns false if there is an error
+				}
+			}
+		}
+
+		/*
+		 * Get common appearance values
+		 */
+		var colour;
+		if($('#a_hidden').prop('checked')) {
+			appearances.push('hidden');
+		}
+		if($('#a_pdfno').prop('checked')) {
+			appearances.push('pdfno');
+		}
+		if($('#a_pdf_lw').val() !== '') {
+			appearances.push('pdflabelw_' + $('#a_pdf_lw').val());
+		}
+		if($('#a_pdfheight').val() && $('#a_pdfheight').val() !== '') {
+			var pdfHeight = $('#a_pdfheight').val();
+			if(pdfHeight < 0) {
+				showAppearanceError(localise.set["ed_gt_0"]);
+				$('#a_pdfheight').focus();
+				return false;
+			}
+			appearances.push('pdfheight_' + pdfHeight);
+		}
+		var pdfcolsnumber = $('#a_pdfcols_number').val();
+		if(pdfcolsnumber && pdfcolsnumber !== '') {
+			var pdfcols = 'pdfcols';
+			var pdfcolscount = +0;
+			for(i = 1; i<= pdfcolsnumber; i++) {
+				var col_i = $('#a_pdfcols_' + i).val();
+				pdfcolscount += +col_i;
+				pdfcols += '_' + col_i;
+				if(+col_i > 10 || +col_i < 1) {
+					showAppearanceError(localise.set["msg_pdfcols_width"]);
+					$('#a_pdfcols_' + i).focus();
+					return false;
+				}
+			}
+			if(pdfcolscount !== 10) {
+				showAppearanceError(localise.set["msg_pdfcols_count"]);
+				$('#a_pdfcols_1').focus();
+				return false;
+			}
+			appearances.push(pdfcols);
+		}
+		colour = $('input', '#a_pdflabelbg').val();
+		if(colour && colour !== '#ffffff') {
+			 var c1 = colour.substring(1,3);
+			 var c2 = colour.substring(3,5);
+			 var c3 = colour.substring(5,7);
+			 appearances.push('pdflabelbg_' + c1 + '_' + c2 + '_' +c3);
+		}
+		colour = $('input', '#a_pdfvaluebg').val();
+		if(colour && colour !== '#ffffff') {
+			var c1 = colour.substring(1,3);
+			var c2 = colour.substring(3,5);
+			var c3 = colour.substring(5,7);
+			appearances.push('pdfvaluebg_' + c1 + '_' + c2 + '_' +c3);
+		}
+		colour = $('input', '#a_pdfmarkercolor').val();
+		if(colour && colour !== '#ffffff') {
+			var c1 = colour.substring(1,3);
+			var c2 = colour.substring(3,5);
+			var c3 = colour.substring(5,7);
+			appearances.push('pdfmarkercolor_' + c1 + '_' + c2 + '_' +c3);
+		}
+		if($('#a_pdfspace').val() && $('#a_pdfspace').val() !== '') {
+			appearances.push('pdfspace_' + $('#a_pdfspace').val());
+		}
+		if($('#a_pdfnewpage').prop('checked')) {
+			appearances.push('pdfnewpage');
+		}
+		if($('#a_pdflabelcaps').prop('checked')) {
+			appearances.push('pdflabelcaps');
+		}
+		if($('#a_pdflabelbold').prop('checked')) {
+			appearances.push('pdflabelbold');
+		}
+		if($('#a_pdfapp').prop('checked')) {
+			appearances.push('pdfapp');
+		}
+		if($('#a_pdfbarcode').prop('checked')) {
+			appearances.push('pdfbarcode');
+		}
+		if($('#a_pdfhyperlink').prop('checked')) {
+			appearances.push('pdfhyperlink');
+		}
+		if($('#a_pdfaddto').val() !== '') {
+			appearances.push('pdfaddto_' + $('#a_pdfaddto').val());
+		}
+
+		/*
+		 * Add other
+		 */
+		other=$('#a_other').val();
+
+		newVal = appearances.join(' ');
+		if(newVal.length > 0 && other.length > 0) {
+			newVal += ' ';
+		}
+		newVal += other;
+		updateLabel("question", globals.gFormIndex, globals.gItemIndex, undefined, "text", newVal, gQname, "appearance");
+
+		// Save the updated settings for search choices
+		newAppChoiceVal = app_choices.join(' ');
+		updateLabel("question", globals.gFormIndex, globals.gItemIndex, undefined, "text", newAppChoiceVal, gQname, "app_choices");
+		$('#appearanceModal').modal("hide");
 	});
 	
 	/*
@@ -402,12 +710,16 @@ $(document).ready(function() {
 					if(xhr.readyState == 0 || xhr.status == 0) {
 			              return;  // Not an error
 					} else {
-						alert("Error: Failed to save languages: " + xhr.responseText);
+						alert(localise.set["msg_err_save"] + " " + xhr.responseText);
 					}
 				}
 		});
 	});
-	
+
+	$('#p_form_identifier').change(function() {
+		var ident = $(this).val();
+
+	});
 	/*
 	 * Save changes to the pulldata settings
 	 */
@@ -430,7 +742,7 @@ $(document).ready(function() {
 					if(xhr.readyState == 0 || xhr.status == 0) {
 			              return;  // Not an error
 					} else {
-						alert("Error: Failed to save pulldata settings: " + xhr.responseText);
+						alert(localise.set["msg_err_save"] + ' ' + xhr.responseText);
 					}
 				}
 		});
@@ -450,6 +762,15 @@ $(document).ready(function() {
 	
 	// Check for changes in settings
 	$('#set_survey_name, #set_instance_name, #set_hrk').keyup(function(){
+
+		// validate
+		var displayName = $('#set_survey_name').val();
+        if(!displayName || displayName.length == 0) {
+            $('#settings_msg').html(localise.set["msg_val_nm"]).removeClass("alert-success").addClass("alert-danger").show();
+        } else {
+
+            $('#settings_msg').hide();
+		}
 		globals.model.settingsChange();
 	});
 	$('#set_project_name').change(function() {
@@ -463,6 +784,14 @@ $(document).ready(function() {
 		globals.model.settingsChange();
 	});
 	$('#timing_data').change(function() {
+		if($(this).is(':checked')) {
+			$('.audit_location_data').show();
+		} else {
+			$('.audit_location_data').hide();
+		}
+		globals.model.settingsChange();
+	});
+	$('#hide_on_device, #audit_location_data, #track_changes').change(function() {
 		globals.model.settingsChange();
 	});
     $('#exclude_empty').change(function() {
@@ -470,10 +799,18 @@ $(document).ready(function() {
     });
 	$('#addPdfTemplate').off().click(function() {
 		globals.model.settingsAddPdfClicked();
+        $('#pdfSet').val("yes");
 	});
 	$('#delPdfTemplate').off().click(function() {
 		globals.model.settingsAddPdfClicked();
-		$('.upload_file_msg').val("");
+		$('#pdf_file_msg').val("");
+		$('#pdfSet').val("no");
+	});
+    $('#downloadPdfTemplate').off().click(function() {
+        downloadFile("/surveyKPI/file/pdf/surveyPdfTemplate/" + gSId);
+    });
+	$('#prevPdfTemplate').off().click(function() {
+		downloadFile("/surveyKPI/file/pdf/surveyPdfTemplate/" + gSId + '?recovery=true');
 	});
     $('#set_key_policy').change(function() {
         globals.model.settingsChange();
@@ -495,9 +832,6 @@ $(document).ready(function() {
         }
 		return true;
 	});
-	
-	
-	enableUserProfileBS();
 	
 	/*
 	 * Add check prior to the user leaving the screen
@@ -570,13 +904,12 @@ $(document).ready(function() {
 			} else {
 				name = $('#new_form_name').val();
 				if(typeof name === "undefined" || name.trim() == "") {
-					bootbox.alert("Please specify a name for the new survey");
+					bootbox.alert(localise.set["msg_val_nm"]);
 					return false;
 				}
 				existing = $('#base_on_existing').prop('checked');
 				existing_project = $('#existing_project').val();
 				existing_survey = $('#survey_name').val();
-				//existing_form = $('#form_name').val();
 				shared_results = $('#shared_results').prop('checked');
 				createNewSurvey(name, existing, existing_survey, shared_results, surveyDetailsDone);
 			}
@@ -624,8 +957,7 @@ $(document).ready(function() {
 	
 	setupQuestionTypes($('#dialog_types'), 2, false, undefined);		// Double column, not draggable for change type dialog
 	setupQuestionTypes($('#toolbar_types'), 1, true, undefined);		// Single column, draggable for toolbar
-	
-	// Set focus on survey name when create form modal is opened
+
 	$('#openFormModal').on('shown.bs.modal', function () {
 		$('#new_form_name').focus();
 	});
@@ -698,7 +1030,8 @@ function setAllRequired(required) {
 
 //Set up question type dialog
 function setupQuestionTypes($elem, columns, draggable, currentType) {
-	var i,
+	var i,j,
+		tArray,
 		types = globals.model.qTypes,
 		h = [],
 		idx = -1,
@@ -722,9 +1055,13 @@ function setupQuestionTypes($elem, columns, draggable, currentType) {
 			h[++idx] = types[i].type;
 			h[++idx] = '">';
 			if(types[i].glyphicon) {
-				h[++idx] = '<span class="glyphicon glyphicon-';
-				h[++idx] = types[i].glyphicon; 
-				h[++idx] = ' edit_type_select"></span><br/>';
+				tArray = types[i].glyphicon.split(',');
+				for(j = 0; j < tArray.length; j++) {
+					h[++idx] = '<span class="glyphicon glyphicon-';
+					h[++idx] = tArray[j].trim();
+					h[++idx] = ' edit_type_select"></span>';
+				}
+				h[++idx] = '<br/>';
 			} else if(types[i].image) {
 				h[++idx] = '<img class="edit_image_select" src="';
 				h[++idx] = types[i].image; 
@@ -788,8 +1125,7 @@ function surveyDetailsDone() {
 	
 	// Show message if the survey is blocked
 	if(globals.model.survey.blocked) {
-		bootbox.alert("The survey has been blocked. Changes cannot be saved.  You can unblock the " +
-				"survey on the form management page.");
+		bootbox.alert(localise.set["ed_blocked"]);
 	}
 	
 	/*
@@ -815,7 +1151,7 @@ function surveyDetailsDone() {
 	refreshForm();
 	
 	// Set up link to test file
-	$('.m_test_survey').attr("href", "/webForm/s" + globals.gCurrentProject + "_" + globals.gCurrentSurvey);
+	$('.m_test_survey').attr("href", "/webForm/" + globals.model.survey.ident);
 	
 }
 
@@ -868,6 +1204,8 @@ function refreshForm() {
 		$context = markup.refresh();
 		respondToEvents($context);
 	}
+
+	changeset.validateAll();
 
 }
 
@@ -965,7 +1303,7 @@ function respondToEventsChoices($context) {
 		
 		// Show an error and set the filter to none if the user chose cascade when there are no previous select questions
 		if (filterType === "cascade" && $('#previousSelect option').length == 0) {
-			alert("Error; There are no previous select questions to get values from. You may want to set a cutom filter.");
+			alert(localise.set["c_error"] + ": " + localise.set["msg_prev_select"]);
 			filterType = "none";
 			$('#filterType').val(filterType);
 		}
@@ -1098,15 +1436,29 @@ function respondToEventsChoices($context) {
 		var $this = $(this),
 			$elem = $this.closest('tr'),
 			listName = $elem.data("list_name"),
-			formIndex = $elem.data("fid"),
 			itemIndex = $elem.data("id"),
 			qname = $elem.data("qname"),
 			newVal = $this.val();
 		
-		updateLabel("option", formIndex, itemIndex, listName, "text", newVal, qname, "value") ;
+		updateLabel("option", 0, itemIndex, listName, "text", newVal, "", "value") ;
 		
 	});
-	
+
+	// Update the option display name
+	$context.find('.odisplayname').change(function(){
+
+		var $this = $(this),
+			$elem = $this.closest('tr'),
+			listName = $elem.data("list_name"),
+			itemIndex = $elem.data("id"),
+			qname = $elem.data("qname"),
+			newVal = $this.val();
+
+		updateLabel("option", 0, itemIndex, listName, "text", newVal, "", "display_name") ;
+
+	});
+
+
 	// Update the filter values when a custom filter value is changed
 	$context.find('.filter').change(function(){
 		updateFilterValues($(this), false, undefined);
@@ -1348,14 +1700,6 @@ function respondToEvents($context) {
 		respondToEventsChoices($context);
 		changeset.updateViewControls();
 
-		/*
-		globals.gSelQuestionProperty = globals.gSelProperty;	// Restore selProperty and selLabel for options
-		globals.gSelProperty = globals.gSelChoiceProperty;
-		globals.gSelQuestionLabel = globals.gSelLabel;	
-		globals.gSelLabel = globals.gSelChoiceLabel;
-		$('#propSelected').html(globals.gSelLabel);
-		*/
-		
 		$('.editorContent').toggle();
 		$('.notoptionslist').hide();
 	});
@@ -1418,7 +1762,362 @@ function respondToEvents($context) {
 		updateLabel(type, formIndex, itemIndex, optionList, labelType, newVal, qname, prop); 
 
 	});
-	
+
+	// Respond to a click on the parameter button
+	$context.find('.parameterButton').off().click(function() {
+
+		var $this = $(this),
+			$li = $this.closest('li'),
+			survey = globals.model.survey;
+
+		var formIndex = $li.data("fid");
+		var itemIndex = $li.data("id");
+		globals.gFormIndex = formIndex;
+		globals.gItemIndex = itemIndex;
+
+		var qType = survey.forms[formIndex].questions[itemIndex].type;
+		var qName = survey.forms[formIndex].questions[itemIndex].name;
+		gQname = qName;
+		var qParams = globals.model.qParams[qType];
+		var paramDetails;
+		var paramArray = [];
+
+		var paramData = $li.find('.labelProp').val();
+		var otherParams = '';
+		var i, j;
+		var foundParam;
+
+		if(paramData) {
+			paramArray = paramData.split(';');
+			if(paramArray.length == 0) {
+				paramArray = paramData.split(' ');
+			}
+		}
+
+		/*
+         * Add a question select list
+         */
+		var sIdent = "0";
+		if(qType === "parent_form") {
+			$('#p_key_question_label').html(localise.set["ed_qk"]);
+			$('#p_key_question').empty().append(getQuestionsAsSelect());
+		} else if (qType === "child_form") {
+			$('#p_key_question_label').html(localise.set["ed_qkc"]);
+			// Get the form ident
+			for (i = 0; i < paramArray.length; i++) {
+				var p = paramArray[i].split('=');
+				if (p.length > 1) {
+					if (p[0].trim() === 'form_identifier') {
+						sIdent = p[1].trim();
+						break;
+					}
+				}
+			}
+			getQuestionsInSurvey($('#p_key_question'), sIdent, true);
+		} else if(qType === "begin repeat") {
+			$('#p_ref').empty().append(getFormsAsSelect(qName));
+		}
+
+
+		/*
+         * Show any parameter attributes for this question type
+         */
+		$('#parameter_form')[0].reset();
+		$('.parameter_field').hide();
+		if(qParams && qParams.length > 0) {
+			for (j = 0; j < qParams.length; j++) {
+				paramDetails = globals.model.paramDetails[qParams[j]];
+				$('.' + paramDetails.field).show();
+			}
+		}
+
+
+		for (i = 0; i < paramArray.length; i++) {
+
+			var p = paramArray[i].split('=');
+			if (p.length > 1) {
+				foundParam = false;
+				if(qParams && qParams.length > 0) {
+
+					for (j = 0; j < qParams.length; j++) {
+						paramDetails = globals.model.paramDetails[qParams[j]];
+
+						if (p[0].trim() === qParams[j]) {
+							foundParam = true;
+							setParam($('#' + paramDetails.field), p[1].trim(), paramDetails.type);
+							break;
+						}
+					}
+				}
+
+				if(!foundParam) {
+					if (otherParams.length > 0) {
+						otherParams += '; ';
+					}
+					otherParams += p[0].trim() + '=' + p[1].trim();
+				}
+			}
+		}
+
+		// Add any parameter values not explicetely set
+		$('#p_other').val(otherParams);       // Not sure if we want to do this
+
+
+		$('#parameterModal').modal({
+			keyboard: true,
+			backdrop: 'static',
+			show: true
+		});
+
+	});
+
+	// Respond to a click on the appearance button
+	$context.find('.appearanceButton').off().click(function() {
+
+		var $this = $(this),
+			$li = $this.closest('li'),
+			survey = globals.model.survey;
+
+		var formIndex = $li.data("fid");
+		var itemIndex = $li.data("id");
+		globals.gFormIndex = formIndex;
+		globals.gItemIndex = itemIndex;
+
+		var question = survey.forms[formIndex].questions[itemIndex];
+		var qType = question.type;
+		var qName = question.name;
+		gQname = qName;
+		gQType = qType;
+		var qAppearances = globals.model.qAppearances[qType];
+		var appearanceDetails;
+		var appearanceArray = [];
+		var appChoiceArray = [];
+
+		var appearanceData = $li.find('.labelProp').val();
+		var app_choices = question.app_choices;
+		var otherAppearances = '';
+		var i, j;
+		var foundAppearance;
+
+		if(appearanceData) {
+			appearanceArray = tokenizeAppearance(appearanceData);
+		}
+		if(app_choices) {
+			appChoiceArray = app_choices.split(' ');
+		}
+
+		/*
+         * Show any appearance attributes for this question type
+         */
+		$('#appearance_form')[0].reset();
+		$('#appearance_search_form')[0].reset();
+		$('#appearance_pdf_form')[0].reset();
+		$('input','.colorpicker-component').colorpicker('setValue', '#ffffff');
+		$('.appearance_field, .appearance_search_details').hide();
+		$('.pdf_appearance_field').show();
+		$('.pdfcols').hide();
+		$('#standardTab a').click();
+		$('#a_pdfaddto').empty().append(getQuestionsAsSelect());
+		if(qType === 'image') {
+			$('.a_pdfhyperlink').show();
+		} else {
+			$('.a_pdfhyperlink').hide();
+		}
+
+		/*
+		 * Show form controls relevant for this question type
+		 */
+		if(qAppearances && qAppearances.length > 0) {
+			for (j = 0; j < qAppearances.length; j++) {
+				appearanceDetails = globals.model.appearanceDetails[qAppearances[j]];
+				if(qAppearances[j] === 'w') {
+					if(globals.model.survey.surveyClass === "theme-grid") {
+						$('.' + appearanceDetails.field).show(); // Only show width if style is for grid
+					}
+				} else {
+					$('.' + appearanceDetails.field).show();
+				}
+			}
+		}
+
+		// Get questions to select from this survey
+		$('.questions_in_form').empty().append(getQuestionsAsSelect(localise.set["c_question"] + "..."));
+
+		// Add value and label(s) from choices list or they may already be specified as temporary appearance values
+		addLabelControls();
+
+
+		for (i = 0; i < appearanceArray.length; i++) {
+
+			if (qAppearances && qAppearances.length > 0) {
+				foundAppearance = false;
+				for (j = 0; j < qAppearances.length; j++) {
+					appearanceDetails = globals.model.appearanceDetails[qAppearances[j]];
+
+					var m = appearanceArray[i].match(appearanceDetails.rex);
+					if (m) {
+						if(globals.model.survey.surveyClass === "theme-grid" || qAppearances[j] !== 'w') {
+							foundAppearance = true;
+							var val = m[0].substring(appearanceDetails.value_offset);
+							setAppearance($('#' + appearanceDetails.field), val, appearanceDetails.type, appearanceArray[i], question, survey);
+							break;
+						}
+					}
+				}
+
+			}
+
+			/*
+			 * Check for common appearances that are set on every questions type
+			 */
+			var pdfa;
+			var colour;
+			if(appearanceArray[i] === 'hidden') {
+				$('#a_hidden').prop('checked', true);
+				foundAppearance = true;
+			} else if(appearanceArray[i] === 'pdfno') {
+				$('#a_pdfno').prop('checked', true);
+				$('.pdf_appearance_field').hide();
+				foundAppearance = true;
+			} else if(appearanceArray[i].indexOf('pdflabelw_') === 0) {
+				pdfa = appearanceArray[i].split('_');
+				if(pdfa.length > 1) {
+					$('#a_pdf_lw').val(pdfa[1]);
+					foundAppearance = true;
+				}
+			} else if(appearanceArray[i].indexOf('pdfheight_') === 0) {
+				pdfa = appearanceArray[i].split('_');
+				if(pdfa.length > 1) {
+					$('#a_pdfheight').val(pdfa[1]);
+					foundAppearance = true;
+				}
+			} else if(appearanceArray[i].indexOf('pdflabelbg_') === 0) {
+				pdfa = appearanceArray[i].split('_');
+				foundAppearance = true;
+				if(pdfa.length > 1) {
+					colour = '#' + pdfa[1];
+				}
+				if(pdfa.length > 2) {
+					colour += pdfa[2];
+				}
+				if(pdfa.length > 3) {
+					colour += pdfa[3];
+				}
+				$('input', '#a_pdflabelbg').colorpicker('setValue', colour);
+			}  else if(appearanceArray[i].indexOf('pdfvaluebg_') === 0) {
+				pdfa = appearanceArray[i].split('_');
+				foundAppearance = true;
+				if(pdfa.length > 1) {
+					colour = '#' + pdfa[1];
+				}
+				if(pdfa.length > 2) {
+					colour += pdfa[2];
+				}
+				if(pdfa.length > 3) {
+					colour += pdfa[3];
+				}
+				$('input', '#a_pdfvaluebg').colorpicker('setValue', colour);
+
+			} else if(appearanceArray[i].indexOf('pdfmarkercolor_') === 0) {
+				pdfa = appearanceArray[i].split('_');
+				foundAppearance = true;
+				if(pdfa.length > 1) {
+					colour = '#' + pdfa[1];
+				}
+				if(pdfa.length > 2) {
+					colour += pdfa[2];
+				}
+				if(pdfa.length > 3) {
+					colour += pdfa[3];
+				}
+				$('input', '#a_pdfmarkercolor').colorpicker('setValue', colour);
+
+			} else if(appearanceArray[i].indexOf('pdfspace_') === 0) {
+				pdfa = appearanceArray[i].split('_');
+				if(pdfa.length > 1) {
+					$('#a_pdfspace').val(pdfa[1]);
+					foundAppearance = true;
+				}
+
+			} else if(appearanceArray[i] === 'pdfnewpage') {
+				$('#a_pdfnewpage').prop('checked', true);
+				foundAppearance = true;
+
+			} else if(appearanceArray[i] === 'pdflabelcaps') {
+				$('#a_pdflabelcaps').prop('checked', true);
+				foundAppearance = true;
+			} else if(appearanceArray[i] === 'pdflabelbold') {
+				$('#a_pdflabelbold').prop('checked', true);
+				foundAppearance = true;
+			} else if(appearanceArray[i] === 'pdfapp') {
+				$('#a_pdfapp').prop('checked', true);
+				foundAppearance = true;
+			} else if(appearanceArray[i] === 'pdfbarcode') {
+				$('#a_pdfbarcode').prop('checked', true);
+				foundAppearance = true;
+			} else if(appearanceArray[i] === 'pdfhyperlink') {
+				$('#a_pdfhyperlink').prop('checked', true);
+				foundAppearance = true;
+			} else if(appearanceArray[i].indexOf('pdfcols_') === 0) {
+				pdfa = appearanceArray[i].split('_');
+				foundAppearance = true;
+				if(pdfa.length > 1) {
+					$('.pdfcols').hide();
+					$('#a_pdfcols_number').val(pdfa.length - 1);
+					for (j = 1; j <= pdfa.length - 1; j++) {
+						$('#a_pdfcols_' + j + '_l').html(localise.set["ed_col_width"].replace('%s1', j));
+						$('#a_pdfcols_' + j).val(pdfa[j])
+						$('.pdfcols' + j).show();
+					}
+				}
+			} else if(appearanceArray[i].indexOf('pdfaddto_') === 0) {
+				pdfa = appearanceArray[i].split('_');
+				if(pdfa.length > 1) {
+					$('#a_pdfaddto').val(pdfa[1]);
+					foundAppearance = true;
+				}
+			}
+
+			/*
+			 * Add other
+			 */
+			if (!foundAppearance) {
+				if (otherAppearances.length > 0) {
+					otherAppearances += ' ';
+				}
+				otherAppearances += appearanceArray[i];
+			}
+		}
+
+		/*
+		 * Add appearance values for app choices
+		 */
+		var langIdx = 0;
+		for(i = 0; i < appChoiceArray.length; i++) {
+			var ace = appChoiceArray[i].split('::');
+			if(ace.length > 1) {
+				if(ace[0] === '_sv') {
+					$('#a_search_value').val(ace[1]);
+				} else if(ace[0] === '_sl' && ace.length > 2) {
+					$('#a_search_label' + langIdx++).val(ace[2]);
+				}
+			}
+		}
+
+		// Add any appearance values not explicetely set
+		$('#a_other').val(otherAppearances);       // Not sure if we want to do this
+
+
+		$('#appearance_msg').hide();
+		$('#appearanceModal').modal({
+			keyboard: true,
+			backdrop: 'static',
+			show: true
+		});
+
+	});
+
+
 	// Respond to changes on linkedTarget (Survey or Question changed)
 	$context.find('.linkedTarget').off().change(function() {
 
@@ -2059,15 +2758,28 @@ function updateSettingsData() {
 	$('#set_survey_ident').val(globals.model.survey.ident);
 	$('#set_instance_name').val(globals.model.survey.instanceNameDefn);
 	$('#set_style').val(globals.model.survey.surveyClass);
-	$('.upload_file_msg').val(globals.model.survey.pdfTemplateName);
+	$('#pdf_file_msg').val(globals.model.survey.pdfTemplateName);
+	if(globals.model.survey.pdfTemplateName && globals.model.survey.pdfTemplateName.trim().length > 0) {
+		$('#pdfSet').val("yes");
+	} else {
+        $('#pdfSet').val("no");
+	}
 	$('#set_hrk').val(globals.model.survey.hrk);
 	if(globals.model.survey.key_policy) {
         $('#set_key_policy').val(globals.model.survey.key_policy);
     } else {
-        $('#set_key_policy').val("add");
+        $('#set_key_policy').val("replace");
 	}
 	$('#task_file').prop('checked', globals.model.survey.task_file);
 	$('#timing_data').prop('checked', globals.model.survey.timing_data);
+	if(globals.model.survey.timing_data) {
+		$('.audit_location_data').show();
+	} else {
+		$('.audit_location_data').hide();
+	}
+	$('#audit_location_data').prop('checked', globals.model.survey.audit_location_data);
+	$('#track_changes').prop('checked', globals.model.survey.track_changes);
+	$('#hide_on_device').prop('checked', globals.model.survey.hideOnDevice);
     $('#exclude_empty').prop('checked', globals.model.survey.exclude_empty);
 }
 
@@ -2163,8 +2875,7 @@ function updatePulldataView() {
 	h[++idx] = '<tr>';
 	h[++idx] = '<th>' + localise.set["c_survey"], + '</th>';
 	h[++idx] = '<th>' + localise.set["ed_dk"] + '</th>';
-	h[++idx] = '<th>' + localise.set["c_repeats"] + '</th>';
-	h[++idx] = '<th>' + localise.set["c_ident"] + '</th>';
+	h[++idx] = '<th>' + localise.set["c_del"] + '</th>';
 	h[++idx] = '</tr>';
 	h[++idx] = '</thead>';
 	h[++idx] = '<tbody class="table-striped">';
@@ -2193,6 +2904,7 @@ function updatePulldataView() {
 			h[++idx] = '</td>';
 			
 			// Repeats
+			/*
 			h[++idx] = '<td>';
 		      h[++idx] = '<input type="checkbox" class="pd_repeats" data-idx="';
 		      h[++idx] = i;
@@ -2204,8 +2916,10 @@ function updatePulldataView() {
 		      h[++idx] = '';
 		      h[++idx] = '"> ';
 			h[++idx] = '</td>';
+			*/
 			
 			// Identifier
+			/*
 			h[++idx] = '<td>';
 			h[++idx] = '<input type="text" data-idx="';
 			h[++idx] = i;
@@ -2213,6 +2927,7 @@ function updatePulldataView() {
 			h[++idx] = "linked_s_pd_" + pulldata[i].survey;
 			h[++idx] = '"';
 			h[++idx] = '</td>';
+			*/
 		
 			// actions
 			h[++idx] = '<td>';
@@ -2244,11 +2959,6 @@ function updatePulldataView() {
 	$(".pd_data_key", $selector).change(function(){
 		var idx = $(this).data("idx");
 		gTempPulldata[idx].data_key = $(this).val();
-	});
-	
-	$(".pd_repeats", $selector).change(function(){
-		var idx = $(this).data("idx");
-		gTempPulldata[idx].repeats = $(this).prop('checked');
 	});
 
     $(".rm_pulldata", $selector).click(function(){
@@ -2293,13 +3003,12 @@ function updateLabel(type, formIndex, itemIndex, optionList, element, newVal, qn
 	
 	/*
 	 * If the question type is a calculate then the label will contain the calculation unless the
-	 * property type is type, name or linked_survey or display name
+	 * property type is type, name or display name
 	 */
 	if(typeof questionType !== "undefined"
 			&& questionType === "calculate"
 			&& prop !== "name"
         	&& prop !== "type"
-			&& prop !== "linked_survey"
 			&& prop !== "display_name"
 			&& prop !== "appearance"
         	&& prop !== "parameters") {	// Whatever the property for a calculation type the label field contains the calculation expression
@@ -2396,7 +3105,7 @@ function optionListExists(list) {
  */
 function getSurveyForms(sId, callback) {
 
-	if(sId != -1) {
+	if(sId != -1 && sId && sId !== 'null') {
 		var url = '/surveyKPI/survey/' + sId + '/getMeta';
 	
 		addHourglass();
@@ -2409,15 +3118,13 @@ function getSurveyForms(sId, callback) {
 				if(typeof callback === "function") {
 					callback(data);
 				}
-				
-
 			},
 			error: function(xhr, textStatus, err) {
 				removeHourglass();
   				if(xhr.readyState == 0 || xhr.status == 0) {
 		              return;  // Not an error
 				} else {
-					bootbox.alert("Error failed to get forms for survey:" + sId);
+					bootbox.alert(localise.set["msg_err_get_s"] + ":" + xhr.responseText + " : " + sId);
 				}
 			}
 		});
@@ -2584,8 +3291,597 @@ function setNoFilter() {
                     $item.focus();
                 }
 
-
-
             }
 
+            /*
+             * Get the value of a parameter from the parameter dialog
+             */
+            function getParam($elem, params, key, type) {
+				var val;
+				if(type === "boolean") {
+					val = $elem.prop('checked') ? 'yes' : 'no';
+				} else {
+					val = $elem.val();
+				}
+				if(val) {
+					val = val.trim();
+					if(val.length > 0) {
+						// validate
+						if(key === 'max-pixels') {
+							if(val <= 0) {
+								showParameterError(localise.set["ed_gt_0"]);
+								$('#p_max_pixels').focus();
+								return false;
+							}
+						}
+
+						// Save parameter
+						if(key) {
+							val = key + '=' + val;
+						}
+						params.push(val);
+					}
+				}
+				return true;
+            }
+
+			/*
+             * Get the value of an appearance from the appearance dialog
+             */
+			function getAppearance($elem, appearances, key, details, qtype, app_choices) {
+				var val,
+					msg,
+					i;
+
+				if(details.type === "boolean") {
+					val = $elem.prop('checked') ? key : undefined;
+				} else if(details.type === "select") {
+					if($elem.val() === details.undef_value) {
+						val = undefined;
+					} else {
+						if (details.valIsAppearance) {
+							val = $elem.val();
+						} else {
+							val = key + $elem.val();
+						}
+					}
+				} else if(details.type === "form") {
+					// Handcoded
+					if(details.field === 'a_search') {
+						var search_source = $('input[type=radio][name=search_source]:checked').val();
+						if(search_source !== 'worksheet') {
+							val = "search(";        // open
+
+							// filename
+							var filename;
+							var csvfile;
+
+							if(search_source === "survey") {
+								if($('#a_survey_identifier').val() === '') {
+									showAppearanceError(localise.set["msg_search_source2"]);
+									return false;
+								}
+								filename = 'linked_' + $('#a_survey_identifier').val();
+							} else if(search_source === "csv") {
+								if($('#a_csv_identifier').val() === '') {
+									showAppearanceError(localise.set["msg_search_source2"]);
+									return false;
+								}
+								csvfile = globals.gCsvFiles[$('#a_csv_identifier').val()];
+								filename = csvfile.filename;
+								var idx = filename.lastIndexOf('.');    // remove the extension
+								if(idx > 0) {
+									filename = filename.substring(0, idx);
+								}
+							} else {
+								showAppearanceError(localise.set["msg_search_source"]);
+								return false;
+							}
+							val += "'" + filename + "'";
+
+							/*
+							 * Add dummy appearances in app_choices for choice value and choice labels
+							 *
+							 */
+							var searchValue = $('#a_search_value').val();
+							if(!searchValue || searchValue.trim().length == 0) {
+								showAppearanceError(localise.set["msg_choice_value"]);
+								return false;
+							} else {
+								app_choices.push('_sv::' + searchValue);
+							}
+							var languages = globals.model.survey.languages;
+							for(i = 0; i < languages.length; i++) {
+								var labelValue = $('#a_search_label' + i).val();
+								if(!labelValue || labelValue.trim().length == 0) {
+									labelValue = searchValue;
+								}
+								app_choices.push('_sl::' + languages[i].name + '::' +   labelValue);
+							}
+
+
+							// first filter
+							var filterColumn = $('#a_filter_column').val().trim();
+							var filter = $('#a_match').val();
+							var filterValue;
+							var secondFilterColumn;
+							var secondFilterValue;
+							if(filterColumn !== '') {
+								if(filter === '') {
+									msg = localise.set["msg_filter_col"];
+									msg = msg.replace('%s1', filterColumn);
+									$('#appearance_msg').removeClass('alert-warning').addClass('alert-danger').show().html(msg);
+									return false;
+								} else {
+									val += ", '" + filter + "'";
+								}
+
+								// first filter column
+								val += ", '" + filterColumn + "'";
+
+								// first filter Value
+								filterValue = $('#a_filter_value_static').val().trim();
+								if(filterValue.indexOf('${') === 0) {
+									// question value
+									// TODO check that question is in survey
+								} else {
+									// static value
+									filterValue = "'" + filterValue + "'";      // add quotes
+								}
+								val += ", " + filterValue;
+
+								// second filter
+								secondFilterColumn = $('#a_second_filter_column').val();
+								if(secondFilterColumn !== '') {
+									val += ", '" + secondFilterColumn + "'";
+
+									// second filter Value
+									secondFilterValue = $('#a_second_filter_value_static').val().trim();
+									if(secondFilterValue.indexOf('${') === 0) {
+										// question value
+										// TODO check that question is in survey
+									} else {
+										// static value
+										secondFilterValue = "'" + secondFilterValue + "'";      // add quotes
+									}
+									val += ", " + secondFilterValue;
+								}
+							}
+
+
+
+							val += ")";    // Close
+						} else {
+							val = undefined;
+						}
+					} else if(details.field === 'a_select1_type' || details.field === 'a_select_type') {
+						var s1Val = $elem.val();
+						if(s1Val === '') {
+							val = undefined;
+						} else if (s1Val === 'compact' || s1Val === 'quickcompact') {
+							var numberColumns = $('#a_number_columns').val();
+							if(numberColumns === '') {
+								val = s1Val;
+							} else {
+								val = s1Val + '-' + numberColumns;
+							}
+						} else {
+							val = s1Val;
+						}
+					}
+				}
+
+				if(val) {
+					val = val.trim();
+					appearances.push(val);
+				}
+
+				return validateAppearance(qtype, appearances, $('#appearance_msg'));
+
+			}
+
+			/*
+             * Set the value of a parameter in the parameter dialog
+             */
+			function setParam($elem, val, type) {
+				var val;
+				if (type === "boolean") {
+					$elem.prop('checked', val == 'yes' || val === 'true');
+				} else {
+					$elem.val(val);
+				}
+			}
+
+			/*
+             * Set the value of an appearance in the appearance dialog
+             */
+			function setAppearance($elem, val, type, appearance, question, survey) {
+				var val;
+				if (type === "boolean") {
+					$elem.prop('checked', true);
+				} else if (type === "form") {
+					// Custom - hardcoded
+					if(val === "search(") {
+
+						// Now check parameters
+						var idx1 = appearance.indexOf('(');
+						var idx2 = appearance.indexOf(')');
+						var params = appearance.substring(idx1 + 1, idx2);
+						var paramsArray = [];
+						if(params) {
+							paramsArray = params.split(',');
+						}
+						if(paramsArray.length > 0) {
+							var filter;
+							var filter_column;
+							var filter_value;
+							var second_filter_column;
+							var second_filter_value;
+
+							// 1. First parameter is the filename
+							var filename = paramsArray[0].trim();
+							filename = filename.replace(/'/g, "");
+							if(filename.startsWith('linked_s')) {
+								var sIdent = filename.substring("linked_s".length - 1);
+								$('input[type=radio][name=search_source][value=survey]').prop('checked', true);
+								$('#a_survey_identifier').val(sIdent);
+								$('.search_survey').show();
+								getQuestionsInSurvey($('.column_select'), sIdent, true);
+							} else {
+								var csvIndex = getIndexOfCsvFilename(filename);
+								$('input[type=radio][name=search_source][value=csv]').prop('checked', true);
+								$('#a_csv_identifier').val(csvIndex);
+								$('.search_csv').show();
+								if(csvIndex) {
+									getQuestionsInCsvFile($('.column_select'), csvIndex, true);
+								}
+							}
+
+							filter = '';    // default
+							if(paramsArray.length > 1) {
+								// Second parameter is the filter
+								filter = paramsArray[1].trim();
+								filter = filter.replace(/'/g, "");
+								$('#a_match').val(filter);
+							}
+
+							if(paramsArray.length > 2) {
+								// Third parameter is the filter column
+								filter_column = paramsArray[2].trim();
+								filter_column = filter_column.replace(/'/g, "");
+								$('#a_filter_column').val(filter_column);
+							}
+
+							if(paramsArray.length > 3) {
+								// Fourth parameter is the filter value
+								filter_value = paramsArray[3].trim();
+								filter_value = filter_value.replace(/'/g, "");
+								$('#a_filter_value_static').val(filter_value);
+							}
+
+							if(paramsArray.length > 4) {
+								// Fifth parameter is the second filter column
+								second_filter_column = paramsArray[4].trim();
+								second_filter_column = second_filter_column.replace(/'/g, "");
+								$('#a_second_filter_column').val(second_filter_column);
+							}
+
+
+							if(paramsArray.length > 5) {
+								// Sixth parameter is the filter value
+								second_filter_value = paramsArray[5].trim();
+								second_filter_value = second_filter_value.replace(/'/g, "");
+								$('#a_second_filter_value_static').val(second_filter_value);
+							}
+
+
+						}
+						/*
+                         * Add the choice values
+                         */
+						var optionList = survey.optionLists[question.list_name];
+						if(optionList && optionList.options.length > 0) {
+							var i;
+							for(i = 0; i < optionList.options.length; i++) {
+								var v = optionList.options[i].value;
+								if(isNaN(v)) {
+									// Apply this choice
+									$('#a_search_value').val(v);
+									var choiceIdx = 0;
+									var labels = optionList.options[i].labels;
+									for(choiceIdx = 0; choiceIdx <  optionList.options[i].labels.length; choiceIdx++) {
+										$('#a_search_label' + choiceIdx).val(labels[choiceIdx].text);
+									}
+									break;
+								} else {
+									continue;   // Purely numeric must be a static choice
+								}
+							}
+
+						}
+
+						showSearchElements();
+					} else if(val === 'compact' || val === 'quickcompact') {
+						var paramsArray = appearance.split('-');
+						$elem.val(paramsArray[0]);
+						if(paramsArray.length > 0) {
+							$('#a_number_columns').val(paramsArray[1]);
+						}
+						$('.a_number_columns').show();
+
+					} else {
+						$elem.val(val);
+					}
+				} else {
+					$elem.val(val);
+				}
+			}
+
+			/*
+             * Get the forms in the survey as options for a select
+             */
+			function getFormsAsSelect(excludeForm) {
+
+				var i,
+					survey = globals.model.survey,
+					h = [],
+					idx = -1;
+
+				if(survey) {
+					if(survey.forms && survey.forms.length > 0) {
+
+						h[++idx] = '<option value="">';
+						h[++idx] = localise.set["c_none"];
+						h[++idx] = '</option>';
+
+						for(i = 0; i < survey.forms.length; i++) {
+							if(survey.forms[i].name !== excludeForm && survey.forms[i].parentFormIndex != -1) {
+								h[++idx] = '<option value="';
+								h[++idx] = survey.forms[i].name;
+								h[++idx] = '">';
+								h[++idx] = survey.forms[i].name;
+								h[++idx] = '</option>';
+							}
+						}
+					}
+				}
+
+				return h.join("");
+
+			}
+
+			/*
+			 * Get the questions in the form currently being edited as options for a select question
+			 */
+			function getQuestionsAsSelect(noneText) {
+
+				var i,
+					survey = globals.model.survey,
+					h = [],
+					idx = -1;
+
+				/*
+				 * Process the questions in the top level form (parent is 0)
+				 *   Questions that are "begin repeat" type will link to sub level forms which are then processed in turn
+				 *
+				 */
+				if(survey) {
+					if(survey.forms && survey.forms.length > 0) {
+
+						h[++idx] = '<option value="">';
+						if(!noneText) {
+							h[++idx] = localise.set["c_none"];
+						} else {
+							h[++idx] = noneText;
+						}
+						h[++idx] = '</option>';
+
+						for(i = 0; i < survey.forms.length; i++) {
+							if(survey.forms[i].parentFormIndex == -1) {
+								h[++idx] = getQuestionsFromForm(survey.forms[i], i);
+								break;
+							}
+						}
+					}
+				}
+
+				return h.join("");
+
+			}
+
+			function getQuestionsFromForm(form, formIndex) {
+				var i,
+					question,
+					h = [],
+					idx = -1;
+
+				if(form) {
+
+					for (i = 0; i < form.qSeq.length; i++) {
+						globals.gHasItems = true;
+						question = form.questions[form.qSeq[i]];
+
+						// Ignore property type questions, questions that have been deleted and meta questions like end repeat
+						if (!markup.includeQuestion(question)) {
+							continue;
+						}
+
+						h[++idx] = '<option value="';
+						h[++idx] = question.name;
+						h[++idx] = '">';
+						h[++idx] = question.name;
+						h[++idx] = '</option>';
+					}
+				}
+				return h.join('');
+			}
+
+			function getIndexOfCsvFilename(filename) {
+				var csvArray = globals.gCsvFiles;
+				var i;
+
+				filename += ".csv";     // The filename in the csvArray includes the extension
+				for(i = 0; i < csvArray.length; i++) {
+					if(csvArray[i].filename === filename) {
+						return i;
+					}
+				}
+				return undefined;
+			}
+
+			function showSearchElements() {
+
+				var aFilterColumn = $('#a_filter_column').val();
+				var aSecondFilterColumn = $('#a_second_filter_column').val();
+				var searchSource = $('input[type=radio][name=search_source]:checked').val();
+				var searchChoiceValue = $('#a_search_value').val();
+				var fileIdentifier;
+				var hasSearch;
+
+				if(searchSource && searchSource !== '' && searchSource !== 'worksheet') {
+					hasSearch =true;
+				}
+
+				$('#appearance_msg').hide();
+
+				if(hasSearch) {
+					$('.appearance_search_details').show();
+
+					$('.search_csv, .search_survey').hide();
+					if(searchSource == "survey") {
+						$('.search_survey').show();
+						fileIdentifier = $('#a_survey_identifier').val();
+					} else if(searchSource == "csv") {
+						$('.search_csv').show();
+						fileIdentifier = $('#a_csv_identifier').val();
+					}
+
+					if(!fileIdentifier || fileIdentifier === '') {
+						$('.a_choice_values').hide();
+					} else {
+						$('.a_choice_values').show();
+					}
+
+					if(!searchChoiceValue || searchChoiceValue === '') {
+						$('.a_filter_column').hide();
+					} else {
+						$('.a_filter_column').show();
+					}
+
+					if(!aFilterColumn || aFilterColumn === "") {
+						$(".has_filter, .a_second_filter_column, .has_second_filter").hide();
+					} else {
+						$(".has_filter, .a_second_filter_column").show();
+					}
+
+					if(!aSecondFilterColumn || aSecondFilterColumn === "") {
+						$('.has_second_filter').hide();
+					} else {
+						$('.has_second_filter').show();
+					}
+
+				} else {
+					$('.appearance_search_details').hide();
+				}
+			}
+
+			function checkForAppearanceWarnings() {
+				var warningMsg = '';
+				var i;
+				var msg;
+				var qtype = gQType;
+
+				if(qtype === 'string') {
+					// Warn if thousands separator is used without numbers on a text question
+					var ts = $('#a_sep').is(':checked');
+					var numbers = $('#a_numbers').is(':checked');
+					if(ts && !numbers) {
+						if(warningMsg.length > 0) {
+							warningMsg += '. ';
+						}
+						warningMsg += localise.set["msg_numb_ts"];
+					}
+
+				}
+
+				if(qtype === 'select1') {
+					// Warn if likert appearance is used
+					var select1Type = $('#a_select1_type').val();
+					var likert = $('#a_likert').is(':checked');
+					if(likert) {
+						if(warningMsg.length > 0) {
+							warningMsg += '. ';
+						}
+						warningMsg += localise.set["msg_warn_likert"];
+					}
+					if(likert && select1Type !== '') {
+						if(warningMsg.length > 0) {
+							warningMsg += '. ';
+						}
+						warningMsg += localise.set["msg_warn_likert_n"];
+					}
+				}
+
+				if(warningMsg.length > 0) {
+					$('#appearance_msg').removeClass('alert-danger').addClass('alert-warning').show().html(warningMsg);
+				} else {
+					$('#appearance_msg').hide();
+				}
+
+				/*
+				 * Show / hide controls
+				 */
+				if(qtype === 'select1') {
+					var select1Type = $('#a_select1_type').val();
+					if(select1Type === 'compact' || select1Type === 'quickcompact') {
+						$('.a_number_columns').show();
+					} else {
+						$('.a_number_columns').hide();
+					}
+				}
+
+			}
+
+			/*
+			 * Check for errors before returning
+			 * TODO
+			 */
+			function validateAppearance() {
+				return true;
+			}
+
+			/*
+			 * Add a label control for each language
+			 */
+			function addLabelControls() {
+				var languages = globals.model.survey.languages;
+				var i;
+				var h = [];
+				var idx = -1;
+				var labelControlId;
+
+				for (i = 0; i < languages.length; i++) {
+					labelControlId = 'a_search_label' + i;
+					h[++idx] = '<div class="form-group search_label">';
+						h[++idx] = '<label for="';
+						h[++idx] = labelControlId;
+						h[++idx] = '" class="col-sm-4 control-label">';
+						h[++idx] = languages[i].name;
+						h[++idx] = '</label>';
+					h[++idx] = '<div class="col-sm-8">';
+					h[++idx] = '<select id="';
+						h[++idx] = labelControlId;
+						h[++idx] = '" class="form-control column_select"></select>';
+					h[++idx] = '</div>';
+					h[++idx] = '</div>';
+				}
+				$('#search_label_list').empty().append(h.join(''));
+			}
+
+			function showAppearanceError(msg) {
+				$('#appearance_msg').removeClass('alert-warning').addClass('alert-danger').show().html(msg);
+			}
+			function showParameterError(msg) {
+				$('#parameter_msg').removeClass('alert-warning').addClass('alert-danger').show().html(msg);
+			}
 });

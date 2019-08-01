@@ -63,25 +63,14 @@ $(document).ready(function() {
 		params,
 		pArray = [],
 		param = [];
-	
-	localise.setlang();		// Localise HTML
 
-	// Get the parameters and start editing a survey if one was passed as a parameter
-	params = location.search.substr(location.search.indexOf("?") + 1)
-	pArray = params.split("&");
-	dont_get_current_survey = false;
-	for (i = 0; i < pArray.length; i++) {
-		param = pArray[i].split("=");
-		if ( param[0] === "id" ) {
-			dont_get_current_survey = true;		// USe the passed in survey id
-			globals.gCurrentSurvey = param[1];
-			saveCurrentProject(-1, globals.gCurrentSurvey);	// Save the current survey id
-		} 
-	}
+    setCustomEdit();
+	setupUserProfile();
+	localise.setlang();		// Localise HTML
 	
 	// Get the user details
 	globals.gIsAdministrator = false;
-	getLoggedInUser(projectChanged, false, true, undefined, false, dont_get_current_survey);
+	getLoggedInUser(projectChanged, false, true, undefined, false, false);
 	
 	// Save a row filter
 	$('#saveRowFilter').click(function() {
@@ -112,12 +101,13 @@ $(document).ready(function() {
 	});
 	
 	$('#project_name').change(function() {
+        globals.gCurrentProject = $(this).val();
+        globals.gCurrentSurvey = 0;
 		projectChanged();
  	 });
 	
 	// Set change function on survey
 	$('#survey_name').change(function() {
-		globals.gCurrentSurvey = $(this).val();
 		surveyChanged();
 	});
 	
@@ -129,8 +119,7 @@ $(document).ready(function() {
 				+ $('#filter_row_aq option:selected').val()
 				+ "} ");
 	});
-	
-	enableUserProfileBS();
+
 	
 });
 
@@ -140,8 +129,9 @@ function projectChanged() {
 
 function surveyChanged() {
 	gRoles = undefined;
+    globals.gCurrentSurvey = $('#survey_name option:selected').val();
 	$('#survey_name_disp').html($('#survey_name option:selected').text());
-	getSurveyRoles();
+	getAllRolesForSurvey();
 	
 	if(!gCache[globals.gCurrentSurvey]) {
 		getSurveyQuestions(globals.gCurrentSurvey);
@@ -152,32 +142,34 @@ function surveyChanged() {
 }
 
 function getSurveyQuestions(sId) {
-	addHourglass();
-	$.ajax({
-		url: "/surveyKPI/questionList/" + sId + "/none/new?exc_ssc=true",
-		dataType: 'json',
-		cache: false,
-		success: function(data) {
-			removeHourglass();
-			gCache[sId] = data;
-			refreshRFQuestionSelect(gCache[sId]);
-		},
-		error: function(xhr, textStatus, err) {
-			removeHourglass();
-			if(xhr.readyState == 0 || xhr.status == 0) {
-	              return;  // Not an error
-			} else {
-				alert(localise.set["msg_err_get_q"] + ": " + err);
-			}
-		}
-	});	
+	if(sId) {
+        addHourglass();
+        $.ajax({
+            url: "/surveyKPI/questionList/" + sId + "/none/new?exc_ssc=true&inc_meta=true",
+            dataType: 'json',
+            cache: false,
+            success: function (data) {
+                removeHourglass();
+                gCache[sId] = data;
+                refreshRFQuestionSelect(gCache[sId]);
+            },
+            error: function (xhr, textStatus, err) {
+                removeHourglass();
+                if (xhr.readyState == 0 || xhr.status == 0) {
+                    return;  // Not an error
+                } else {
+                    alert(localise.set["msg_err_get_q"] + ": " + err);
+                }
+            }
+        });
+    }
 }
 
-function getSurveyRoles() {
+function getAllRolesForSurvey() {
 	
 	if(gRoles) {
 		refreshView();
-	} else {
+	} else if(globals.gCurrentSurvey) {
 		addHourglass();
 		$.ajax({
 			url: "/surveyKPI/role/survey/" + globals.gCurrentSurvey,
@@ -213,10 +205,17 @@ function refreshRFQuestionSelect(questions) {
 		if(questions[i].toplevel) {			// Only allow top level form questions in row filter
 			h[++idx] = '<option value="';
 			h[++idx] = questions[i].name;
-			h[++idx] = '">';
+			h[++idx] = '"';
+			if (questions[i].id < 0) {       // Show meta in blue
+				h[++idx] = ' style="color:blue"';
+			}
+			h[++idx] = '>';
 			h[++idx] = questions[i].name;
+
 			h[++idx] = '</option>';
+
 		}
+
 	}
 	$element.empty().append(h.join(''));
 	
@@ -224,7 +223,7 @@ function refreshRFQuestionSelect(questions) {
 
 
 /*
- * Convert change log JSON to html
+ * Convert roles to html
  */
 function refreshView() {
 	
@@ -392,7 +391,7 @@ function refreshColumnSelect(questions, filter_columns) {
 	h[++idx] = '</th>';
 	h[++idx] = '</thead>';
 	h[++idx] = '<tbody>';
-	
+
 	j = 0;
 	for(i = 0; i < questions.length; i++) {
 		h[++idx] = '<tr>';

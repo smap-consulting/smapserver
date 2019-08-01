@@ -4,26 +4,27 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<meta charset="utf-8">
 
-	<title>Web Forms</title>
+	<title class="lang" data-lang="m_web_forms">wf</title>
 
-    <link href="/css/bootstrap.min.css" rel="stylesheet">
+	<link href="/css/bootstrap.v4.min.css" rel="stylesheet">
     <link href="/font-awesome/css/font-awesome.css" rel="stylesheet">
+	<link href="/css/wb/animate.css" rel="stylesheet">
     <link href="/css/bootstrap-datetimepicker.min.css" rel="stylesheet">
     <link href="/css/wb/plugins/iCheck/custom.css" rel="stylesheet">
-
-    <link href="/css/wb/animate.css" rel="stylesheet">
-    <link href="/css/wb/style.css" rel="stylesheet">
-    <link href="/js/libs/DataTables/datatables.min.css" rel="stylesheet" >
-    <link href="/js/libs/DataTables/Select/css/select.bootstrap.min.css" rel="stylesheet" >
-    <link href="/css/dataTables.fontAwesome.css" rel="stylesheet" >
+	<link href="/css/wb/style.v2.9.1.css" rel="stylesheet">
     <link href="/css/smap-wb.css" rel="stylesheet">
 
-<script> if (!window.console) console = {log: function() {}}; </script>
+	<script> if (!window.console) console = {log: function() {}}; </script>
 
-<script src="/js/libs/modernizr.js"></script>
-<script src="/js/app/custom.js"></script>  <!-- Override this in custom code to apply changes at run time -->
+	<script src="/js/libs/modernizr.js"></script>
+	<script src="/js/app/theme.js"></script>
+	<script src="/js/libs/jquery-2.1.1.js"></script>
+	<script src="/js/libs/bootstrap.bundle.v4.min.js"></script>
+	<script src="/js/libs/bootbox.5.1.1.min.js"></script>
+	<script src="/js/libs/bootbox.5.1.1.locales.min.js"></script>
+	<script src="/js/app/custom.js"></script>  <!-- Override this in custom code to apply changes at run time -->
 
-<script data-main="js/webFormLauncher" src="/js/libs/require.js"></script>
+	<script data-main="js/webFormLauncher" src="/js/libs/require.js"></script>
 
 </head>
 <body>
@@ -39,23 +40,24 @@
 							<i class="glyphicon glyphicon-user" aria-hidden="true"></i> <span class="lang" data-lang="m_user_profile"></span></a>
 				</li>
 		      	<li>
-		         <a href="#" id="m_modules_inspinia"  aria-expanded="false"><i class="fa fa-th-large"></i> <span class="lang" data-lang="m_modules">modules</span></a>
+		         <a href="#" id="m_modules_inspinia"  aria-expanded="false"><i class="fa fa-th-large"></i> <span class="lang" data-lang="m_modules"></span></a>
 		          <ul class="nav nav-second-level" aria-expanded="false">
 		            
-		            <li class="restrict_role admin_role analyst_role"><a class="lang" data-lang="m_home" href="/?loggedin=yes">home</a></li>
+		            <li><a class="lang" data-lang="m_home" href="/?loggedin=yes">home</a></li>
 		            <li class="restrict_role admin_role analyst_role"><a href="/edit.html"><i class="glyphicon glyphicon-edit"></i> <span class="lang" data-lang="c_edit">Edit</span></a></li>
-		            <li class="restrict_role admin_role analyst_role"><a href="/fieldManager/templateManagement.html"><i class="glyphicon glyphicon-wrench"></i> <span class="lang" data-lang="m_admin">Admin</span></a></li>
-		            <li class="restrict_role enum_role disabled"><a href="/webForm.html"><i class="glyphicon glyphicon-globe"></i> <span class="nav-label lang" data-lang="m_data_mod">web forms</span></a></li>
-		            <li class="restrict_role analyst_role"><a href="/fieldAnalysis/index.html"><i class="glyphicon glyphicon-stats"></i> <span class="nav-label lang" data-lang="m_analysis">Analysis</span></a></li>
-		            <li class="restrict_role admin_role analyst_role"><a href="/tasks/taskManagement.html"><i class="fa fa-tasks"></i> <span class="nav-label lang" data-lang="m_assign">assign</span></a></li>
-		          
-		          </ul>
+		            <li class="restrict_role admin_role analyst_role"><a href="/fieldManager/surveyManagement.html"><i class="glyphicon glyphicon-wrench"></i> <span class="lang" data-lang="m_admin"></span></a></li>
+		            <li class="restrict_role enum_role disabled"><a href="/webForm.html"><i class="glyphicon glyphicon-globe"></i> <span class="nav-label lang" data-lang="m_console"></span></a></li>
+		            <li class="restrict_role analyst_role data_role"><a href="/fieldAnalysis/index.html"><i class="glyphicon glyphicon-stats"></i> <span class="nav-label lang" data-lang="m_analysis"></span></a></li>
+		            <li class="restrict_role admin_role analyst_role"><a href="/tasks/taskManagement.html"><i class="fa fa-tasks"></i> <span class="nav-label lang" data-lang="m_assign"></span></a></li>
+					  <li class="restrict_role billing_role" style="display:none;"><a href="/fieldManager/billing.html"><i
+							  class="fa fa-usd"></i> <span class="nav-label lang" data-lang="m_billing">billing</span></a>
+					  </li>
+				  </ul>
 		        </li> 
 
-			<li id="m_mf" class="restrict_role admin_role manage_role"><a href="/tasks/managed_forms.html"><i class="fa fa-wpforms"></i> <span class="lang" data-lang="m_mf">manage</span></a></li>
-			<li id="m_duplicates" class="restrict_role admin_role"><a href="/tasks/duplicates.html"><i class="fa fa-filter"></i> <span class="lang" data-lang="mon_dup">dups</span></a></li>
-			<li id="m_br" class="restrict_role admin_role analyst_role"><a href="/tasks/browse_results.html"><i class="fa fa-table"></i> <span class="lang" data-lang="m_br">browse</span></a></li>
-			<li id="m_rep" class="restrict_role admin_role analyst_role"><a href="/reports.html"><i class="fa fa-table"></i> <span class="lang" data-lang="m_reports">reports</span></a></li>
+			<li id="m_mf" class="restrict_role admin_role manage_role"><a href="/tasks/managed_forms.html"><i class="fa fa-wpforms"></i> <span class="lang" data-lang="c_records">r</span></a></li>
+			<li id="m_duplicates" class="restrict_role admin_role"><a href="/tasks/duplicates.html"><i class="fa fa-filter"></i> <span class="lang" data-lang="mon_dup"></span></a></li>
+			<li id="m_rep" class="restrict_role admin_role analyst_role"><a href="/reports.html"><i class="fa fa-table"></i> <span class="lang" data-lang="m_reports"></span></a></li>
 			<li id="m_help"><a href="/mfHelp.html" target="_blank"><i class="fa fa-info-circle"></i> <span class="lang" data-lang="m_help">help</span></a></li>
 	        <!--  
 	        <li>
@@ -81,16 +83,9 @@
         		</div>
         		
 	            <ul class="nav navbar-top-links navbar-right">
-	            
-	          
+
 	          		<li>
-                    	<a href="#" id="m_refresh"><span class="lang" data-lang="m_refresh">refresh</span></a>
-                	</li>
-                	
-                	<li>
-                    	<a class="right-sidebar-toggle">
-                        	<i class="fa fa-cog"></i>
-                    	</a>
+                    	<a href="#" id="m_refresh"><span class="lang" data-lang="m_refresh">r</span></a>
                 	</li>
                 	
 	            </ul>
@@ -101,18 +96,19 @@
         <!-- Header Row -->
         <div class="row wrapper border-bottom white-bg page-heading">
         	<div class="col-sm-2">
-            	<h2 class="lang" data-lang="m_web_forms">webform</h2>   
+            	<h2 class="lang" data-lang="m_web_forms">wf</h2>
             </div>
-            <div class="col-sm-5">
-            	<div class="row">
-					<form role="form" class="form-horizontal heading-element" id="service_filter_form">
-						<label class="lang col-sm-4 control-label" data-lang="c_project" for="project_name">project</label>
-						<div class="col-sm-8">
-							<select class="project_list form-control" id="project_name"></select>
+			<div class="col-sm-10">
+				<form class="form-inline">
+					<div class="col-sm-6 pt-4">
+						<div class="form-group row">
+							<label class="lang col-md-4"  data-lang="c_project"  for="project_name"></label>
+							<select class="project_list form-control form-control-lg col-md-8" id="project_name"></select>
 						</div>
-					</form>	
-				</div>
-        	</div>
+					</div>
+				</form>
+
+			</div>
         </div>   
 		  
         <!-- Main panel -->
@@ -121,7 +117,7 @@
                 <div class="col-lg-12">
                     <div class="ibox float-e-margins">
                     	<div class="ibox-title">
-                            <h5 id="survey_title"></h5> 
+                            <h5 id="survey_title"></h5>
                             <div class="ibox-tools">  
                             </div>
                             
@@ -130,43 +126,50 @@
                         	<div class="tabs-container">
 	                        	
 		                        	<!-- Put content here -->
-								    <ul class="nav nav-tabs tab_controls">
-								        <li id="formsTab" role="presentation" class="active"><a href="#"><span class="lang" data-lang="m_web_forms">web forms</span></a></li>
-								        <li id="userTab" role="presentation"><a href="#"><span class="lang" data-lang="c_settings">My Settings</span></a></li>
+								    <ul class="nav nav-tabs" role="tablist">
+										<li id="tasksTab" class="nav-item"><a class="nav-link active" data-toggle="tab" role="tab" href="#tasksPanel"><span class="lang" data-lang="t_tasks"></span> <span id="tasks_count">(0)</span></a></li>
+								        <li id="formsTab" class="nav-item"><a class="nav-link" data-toggle="tab" role="tab" href="#formsPanel"><span class="lang" data-lang="m_web_forms"></span> <span id="forms_count">(0)</span></a></li>
+								        <li id="userTab" class="nav-item"><a class="nav-link" data-toggle="tab" role="tab" href="#userPanel"><span class="lang" data-lang="c_settings">s</span></a></li>
 								    </ul>
 								    
 								    <div class="tab-content">
-								    
-									    <div id="formsPanel" class="tab-pane active">
+
+										<div id="tasksPanel" class="tab-pane show fade active" role="tabpanel">
+											<div class="panel-body">
+												<div id="task_list"></div>
+											</div>
+										</div>
+
+									    <div id="formsPanel" class="tab-pane fade" role="tabpanel">
 											<div class="panel-body">
 												<div id="form_list"></div>	    
 											</div>
 										</div>
 											
-										<div id="userPanel" class="tab-pane">
+										<div id="userPanel" class="tab-pane fade" role="tabpanel">
 											<div class="panel-body">
 												<div id="up_alert" style="display:none;" class="alert alert-success" role="alert"></div>
-												<form role="form" class="form-horizontal" id="my_edit_form" enctype="multipart/form-data" name="signaturesave">
-													<div class="form-group">
+												<form id="my_edit_form" enctype="multipart/form-data" name="signaturesave">
+													<div class="form-group row">
 														<label for="my_name" data-lang="c_name" class="lang col-sm-2 control-label">Name</label>
 														<div class="col-sm-10">
 															<input type="text" id="my_name" required class="form-control">
 														</div>
 													</div>
-													<div class="form-group">
+													<div class="form-group row">
 														<label for="my_title" data-lang="c_title" class="lang col-sm-2 control-label">Title</label>
 														<div class="col-sm-10">
 															<input type="text" id="my_title" class="form-control">
 														</div>
 													</div>
-													<div class="form-group">
+													<div class="form-group row">
 														<label for="my_license" data-lang="c_license" class="lang col-sm-2 control-label">License</label>
 														<div class="col-sm-10">
 															<input type="text" id="my_license" class="form-control">
 														</div>
 													</div>				
 									
-													<div class="form-group">
+													<div class="form-group row">
 														<label for="my_signature_file" data-lang="wf_sig" class="lang col-sm-2 control-label">sig</label>
 									   					<div class="col-sm-10">
 										   					<div class="input-group form-control">
@@ -181,7 +184,7 @@
 										 				</div>
 									       			</div>     
 									       			
-									       			<div class="form-group">
+									       			<div class="form-group row">
 										       			<div class="col-sm-10 col-sm-offset-2">
 										       				<img id="my_signature" src="" width="300" height="200">
 										       			</div>
@@ -205,110 +208,6 @@
         	</div>
         </div>
 	</div>
-
-    <div id="right-sidebar">
-            <div class="sidebar-container">
-
-                <ul class="nav nav-tabs navs-3">
-
-                    <li class="active"><a data-toggle="tab" href="#tab-1"><i class="fa fa-cogs"></i></a></li>
-                 
-                </ul>
-
-                <div class="tab-content">
-
-                    <div id="tab-1" class="tab-pane active">
-
-                        <div class="sidebar-title">
-                            <h3> <span class="lang" data-lang="c_settings">settings</span></h3>
-                        </div>
-
-						<div id="tab-settings-content">
-
-						</div>
-
-                        <div class="sidebar-content">
-                           <button id="applyColumns" type="button" class="btn btn-primary lang" data-lang="c_apply">apply</button>
-  
-                        </div>
-
-                    </div>
-                </div>
-            </div>
-        </div>
-
-<!-- Modal to allow the user to edit their own details -->
-<div id="modify_me_popup" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="modifyMeLabel" aria-hidden="true">
-	<div class="modal-dialog">
-   		<div class="modal-content">
-   			<div class="modal-header">
-     			<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-     			<h4 class="modal-title lang" id="modifyMeLabel"></h4>
-   			</div>
-		     <div class="modal-body">
-				<form role="form" class="form-horizontal" id="me_edit_form">
-					<div class="form-group">
-						<label for="me_name" data-lang="c_name" class="lang col-sm-2 control-label">Name</label>
-						<div class="col-sm-10">
-							<input type="text" id="me_name" required class="form-control">
-						</div>
-					</div>
-					<div class="form-group">
-						<label for="me_language" data-lang="c_lang" class="lang col-sm-2 control-label">Language</label>
-						<div class="col-sm-10">
-							<select id="me_language" class="language_select form-control"></select>
-						</div>
-					</div>
-					<div class="form-group">
-						<label for="me_email" data-lang="c_email" class="lang col-sm-2 control-label">Email</label>
-						<div class="col-sm-10">
-							<input type="email" class="form-control" id="me_email" 
-									placeholder="Enter email" 
-									pattern="^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$">
-						</div>
-					</div>
-					<div id="reset_me_password_fields" style="display:none;">
-						<div class="form-group">
-							<div class="col-sm-offset-2 col-sm-10">
-								<div class="checkbox">
-									<label>
-										<input type="checkbox" id="reset_me_password"><span data-lang="c_r_p" class="lang">Reset Password</span>
-									</label>
-								</div>
-							</div>
-						</div>
-					</div>
-					<div id="password_me_fields" style="display:none;">
-						<div class="form-group">
-							<label for="me_password" data-lang="c_password" class="lang col-sm-2 control-label">Password</label>
-							<div class="col-sm-10">
-								<input id="me_password" type="password" placeholder="Password" class="form-control">
-							</div>
-						</div>	
-						<div class="form-group">
-							<label for="me_password_confirm" data-lang="c_c_p" class="lang col-sm-2 control-label">Confirm Password</label>
-							<div class="col-sm-10">
-								<input id="me_password_confirm" type="password" placeholder="Password" class="form-control">
-							</div>
-						</div>	
-					</div>		
-				</form>	
-			</div>
-
-			<div class="modal-footer">
-            	<button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_close">Close</button>
-            	<button id="userProfileLogout"type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_logout">Logout</button>
-            	<button id="userProfileSave" type="button" class="btn btn-primary lang" data-dismiss="modal" data-lang="c_save">Save</button>
-        	</div>
-		</div>
-	</div>
-</div>
-
-<script>
-	setCustomWebForms();			// Apply custom javascript
-</script>
-
-
 
 </body>
 </html>

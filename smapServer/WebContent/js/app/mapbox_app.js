@@ -32,12 +32,12 @@ function initialiseMap(elementId, zoom, setUserLocation, callbackClick, callback
 	if(!L.mapbox.accessToken) {
 		addHourglass();
 		$.ajax({
-			url: '/surveyKPI/server',
+			url: '/surveyKPI/server/mapbox',
 			cache: false,
 			success: function(data) {
 				removeHourglass();
-				if(data.mapbox_default) {
-					L.mapbox.accessToken = data.mapbox_default;
+				if(data) {
+					L.mapbox.accessToken = data;
 					initialiseMapKeySet(elementId, zoom, setUserLocation, callbackClick, callbackInitialised);
 				} else {
 					alert("mapbox key not set");
@@ -172,10 +172,28 @@ function initialiseMapKeySet(elementId, zoom, setUserLocation, callbackClick, ca
  * Assignment specific
  */
 function refreshMapAssignments(elementId, taskList) {
-	var thisMapData = mapData[elementId];
-	
+	var thisMapData = mapData[elementId],
+		i;
+
+	// Filter on status
+	var statusFilterArray = $('#status_filter').val();
+	var statusFilter = statusFilterArray ? statusFilterArray.join('') : "";
+	var statusLookup;
+
+	var filteredGeoJson = {
+		type: "FeatureCollection",
+		features: []
+	};
+
+	// Filter out the tasks
+	for (i = 0; i < taskList.features.length; i++) {
+		if(statusFilter.indexOf(taskList.features[i].properties.status) >= 0) {
+			filteredGeoJson.features.push(taskList.features[i]);
+		}
+	}
+
 	if(thisMapData) {
-		thisMapData.featureLayer.setGeoJSON(taskList);
+		thisMapData.featureLayer.setGeoJSON(filteredGeoJson);
 		zoomToFeatureLayer(elementId);
 	}
 }
@@ -187,6 +205,7 @@ function clearDraggableMarker(elementId) {
 	if(gDraggableMarker) {
 		mapData[elementId].map.removeLayer(gDraggableMarker);
 	}
+	gDraggableMarker = undefined;
 }
 
 /*
@@ -223,8 +242,10 @@ function zoomToFeatureLayer(elementId) {
 	var thisMapData = mapData[elementId];
 	
 	var flBounds = thisMapData.featureLayer.getBounds(),
+		bounds,
 		validFlBounds = false,
-		validUserLocation = false;
+		validUserLocation = false,
+		validMarkerLocation = false;
 	
 	if(flBounds) {
 		validFlBounds = flBounds.isValid();
@@ -232,13 +253,32 @@ function zoomToFeatureLayer(elementId) {
 	if(gUserLocation) {
 		validUserLocation = gUserLocation.isValid();
 	}
-	
-	if(validUserLocation && validFlBounds) {
-		thisMapData.map.fitBounds(flBounds.extend(gUserLocation));
-	} else if(validFlBounds) {
-		thisMapData.map.fitBounds(flBounds);
-	} else if(validUserLocation) {
-		thisMapData.map.fitBounds(gUserLocation);
+	if(gDraggableMarker) {
+		validMarkerLocation = true;
 	}
+
+	// set initial bounds
+	if(validFlBounds) {
+		bounds = flBounds;
+	} else if(validUserLocation) {
+		bounds = gUserLocation;
+	} else if(validMarkerLocation) {
+		bounds = gDraggableMarker.getLatLng();
+	}
+
+	if(bounds) {
+		// Extend bounds
+		if(validUserLocation) {
+			bounds = bounds.extend(gUserLocation);
+		}
+		if(validMarkerLocation) {
+			bounds = bounds.extend(gDraggableMarker.getLatLng());
+		}
+
+		// Fit to bounds
+		thisMapData.map.fitBounds(bounds);
+	}
+	
+
 }
 

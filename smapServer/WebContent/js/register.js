@@ -53,6 +53,7 @@ require([
 
         window.bootbox = bootbox;
 
+        setCustomRegister();			// Apply custom javascript
         localise.setlang();
 
         $('#registerForm').bootstrapValidator({
@@ -95,8 +96,9 @@ require([
                 data: {registrationDetails: regString},
                 success: function (data, status) {
                     removeHourglass();
-                    bootbox.alert("Registration accepted.  An email has been sent to " + email + " with a " +
-                        "link that you can use to set your password.");
+                    var msg = localise.set["msg_reg"];
+                    msg = msg.replace('%s1', email);
+                    bootbox.alert(msg);
                     $('#registerForm')[0].reset();
                 }, error: function (data, status) {
                     removeHourglass();

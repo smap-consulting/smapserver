@@ -195,6 +195,7 @@ $(window).bind("resize", function () {
 // Local Storage functions
 // Set proper body class and plugins based on user configuration
 $(document).ready(function () {
+    /* smap
     if (localStorageSupport) {
 
         var collapse = localStorage.getItem("collapse_menu");
@@ -239,6 +240,8 @@ $(document).ready(function () {
             $(".footer").addClass('fixed');
         }
     }
+
+     */
 });
 
 // check if browser support HTML5 local storage

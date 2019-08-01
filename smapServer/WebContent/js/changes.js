@@ -59,7 +59,8 @@ $(document).ready(function() {
 		params,
 		pArray = [],
 		param = [];
-	
+
+	setupUserProfile();
 	localise.setlang();		// Localise HTML
 
 	// Get the user details
@@ -77,21 +78,6 @@ $(document).ready(function() {
 		refreshView(gMode);
 	});
 
-
-	
-	// Add responses to events
-	$('#project_name').change(function() {
-		globals.gCurrentProject = $('#project_name option:selected').val();
-		globals.gCurrentSurvey = -1;
-		globals.gCurrentTaskGroup = undefined;
-		
-		saveCurrentProject(globals.gCurrentProject, 
-				globals.gCurrentSurvey, 
-				globals.gCurrentTaskGroup);
-		
-		getSurveyList();
- 	 });
-	
 	
 	$('.language_list').off().change(function() {
 		globals.gLanguage1 = $('#language1').val();
@@ -99,20 +85,8 @@ $(document).ready(function() {
 		refreshView(gMode);
 		//$('#set_language').foundation('reveal', 'close');
  	 });
-	
 
-	
-	enableUserProfileBS();
 });
-
-function getSurveyList() {
-	console.log("getSurveyList: " + globals.gCurrentSurvey);
-	if(globals.gCurrentSurvey > 0) {
-		loadSurveys(globals.gCurrentProject, undefined, false, false, surveyListDone);
-	} else {
-		loadSurveys(globals.gCurrentProject, undefined, false, false, undefined);
-	}
-}
 
 function surveyListDone() {
 	getSurveyDetails(refreshView, true);
@@ -160,12 +134,27 @@ function setChangesHtml($element, survey) {
 		// write the table headings
 		h[++idx] = '<thead>';
 			h[++idx] = '<tr>';
-				h[++idx] = '<th>Version</th>';
-				h[++idx] = '<th>Change</th>';
-				h[++idx] = '<th>Changed By</th>';
-				h[++idx] = '<th>When changed</th>';
-				h[++idx] = '<th>Results Table Updated</th>';
-				h[++idx] = '<th>Msg</th>';
+        		h[++idx] = '<th>';
+        			h[++idx] = localise.set["c_version"];
+        		h[++idx] = '</th>';
+
+        		h[++idx] = '<th>';
+        			h[++idx] = localise.set["c_changes"];
+        		h[++idx] = '</th>';
+
+        		h[++idx] = '<th>';
+					h[++idx] = localise.set["rev_cb"];
+        		h[++idx] = '</th>';
+
+				h[++idx] = '<th>';
+					h[++idx] = localise.set["ed_dt"];
+					h[++idx] = ' (';
+					h[++idx] = globals.gTimezone;
+					h[++idx] = ')';
+				h[++idx] = '</th>';
+
+				h[++idx] = '<th>' + localise.set["c_file"] + '</th>';
+				h[++idx] = '<th>' + localise.set["c_msg"] + '</th>';
 			h[++idx] = '</tr>';
 		h[++idx] = '</thead>';
 		
@@ -177,6 +166,21 @@ function setChangesHtml($element, survey) {
 			if(!changes[i].apply_results) {		// Change has been applied to the results tables
 				status = changes[i].success ? "success" : "failed";
 			}
+			var filehtml = "";
+			if(changes[i].change.fileName && changes[i].change.fileName.trim().length > 0) {
+                var filename = changes[i].change.fileName;
+				var fnIndex = changes[i].change.fileName.lastIndexOf('/');
+				if(fnIndex >= 0) {
+					filename = filename.substr(fnIndex + 1);
+				}
+				var url = null;
+				if(filename.indexOf("_template.pdf") > 0) {
+					url = '/surveyKPI/file/' + filename + '/surveyPdfTemplate/' + changes[i].change.origSId + '?archive=true';
+				} else {
+					url = '/surveyKPI/survey/' + changes[i].change.origSId + '/download?type=xls';
+				}
+                filehtml = '<a href="' + url + '">' + filename + '</a>';
+			}
 			h[++idx] = '<tr class="change_';
 					h[++idx] = status;
 					h[++idx] = '">';
@@ -184,7 +188,7 @@ function setChangesHtml($element, survey) {
 				h[++idx] = changes[i].version;
 				h[++idx] = '</td>';	
 				h[++idx] = '<td>';
-				h[++idx] = getChangeDescription(changes[i].change);
+				h[++idx] = getChangeDescription(changes[i].change, changes[i].version);
 				h[++idx] = '</td>';
 				h[++idx] = '<td>';
 				h[++idx] = changes[i].userName;
@@ -193,7 +197,7 @@ function setChangesHtml($element, survey) {
 				h[++idx] = changes[i].updatedTime;
 				h[++idx] = '</td>';
 				h[++idx] = '<td>';
-				h[++idx] = status;
+				h[++idx] = filehtml;
 				h[++idx] = '</td>';
 				h[++idx] = '<td>';
 				h[++idx] = changes[i].msg;

@@ -4,7 +4,7 @@
     waitSeconds: 0,
     wrapShim: false,
     baseUrl: 'js/libs',
-//    optimize: 'none',
+    optimize: 'none',
     paths: {
     	jquery: 'jquery-2.1.1',
     	jquery_ui: 'empty:',
@@ -17,6 +17,7 @@
 	toggle: 'bootstrap-toggle.min',
 	bootstrap: 'bootstrap.min',
         bootstrapfileinput: 'bootstrap.file-input',
+    	bootstrapcolorpicker: '../../../../smapServer/WebContent/js/libs/bootstrap-colorpicker.min',
         inspinia: 'wb/inspinia',
 	metismenu: 'wb/plugins/metisMenu/jquery.metisMenu',
 	slimscroll: 'wb/plugins/slimscroll/jquery.slimscroll.min',
@@ -33,6 +34,7 @@
         },
         {
             name: '../webFormLauncher',
+	    exclude: ['jquery', 'bootstrap']
         },
         {
             name: '../reports',
@@ -45,6 +47,9 @@
         },
         {
             name: '../queries',
+        },
+        {
+            name: '../subscriptions',
         },
         {
             name: '../userTrail',

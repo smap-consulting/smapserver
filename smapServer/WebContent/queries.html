@@ -18,6 +18,7 @@
 <script> if (!window.console) console = {log: function() {}}; </script>
 
 <script src="/js/libs/modernizr.js"></script>
+	<script src="/js/app/theme.js"></script>
 <script src="/js/app/custom.js"></script>  <!-- Override this in custom code to apply changes at run time -->
 <script data-main="js/queries" src="/js/libs/require.js"></script>
 
@@ -40,16 +41,18 @@
 		            
 		            <li><a class="lang" data-lang="m_home" href="/?loggedin=yes">home</a></li>
 		            <li class="restrict_role admin_role analyst_role"><a href="/edit.html"><i class="glyphicon glyphicon-edit"></i> <span class="lang" data-lang="c_edit">Edit</span></a></li>
-		            <li class="restrict_role admin_role analyst_role"><a href="/fieldManager/templateManagement.html"><i class="glyphicon glyphicon-wrench"></i> <span class="lang" data-lang="m_admin">Admin</span></a></li>
-		            <li class="restrict_role enum_role"><a href="/webForm.html"><i class="glyphicon glyphicon-globe"></i> <span class="nav-label lang" data-lang="m_data_mod">web forms</span></a></li>
-		            <li class="restrict_role analyst_role"><a href="/fieldAnalysis/index.html"><i class="glyphicon glyphicon-stats"></i> <span class="nav-label lang" data-lang="m_analysis">Analysis</span></a></li>
+		            <li class="restrict_role admin_role analyst_role"><a href="/fieldManager/surveyManagement.html"><i class="glyphicon glyphicon-wrench"></i> <span class="lang" data-lang="m_admin">Admin</span></a></li>
+		            <li class="restrict_role enum_role"><a href="/webForm.html"><i class="glyphicon glyphicon-globe"></i> <span class="nav-label lang" data-lang="m_console"></span></a></li>
+		            <li class="restrict_role analyst_role data_role"><a href="/fieldAnalysis/index.html"><i class="glyphicon glyphicon-stats"></i> <span class="nav-label lang" data-lang="m_analysis">Analysis</span></a></li>
 		            <li class="restrict_role admin_role analyst_role"><a href="/tasks/taskManagement.html"><i class="fa fa-tasks"></i> <span class="nav-label lang" data-lang="m_assign">assign</span></a></li>
-		          
-		          </ul>
+					  <li class="restrict_role billing_role" style="display:none;"><a href="/fieldManager/billing.html"><i
+							  class="fa fa-usd"></i> <span class="nav-label lang" data-lang="m_billing">billing</span></a>
+					  </li>
+				  </ul>
 		        </li> 
 
- 			<li class="restrict_role admin_role analyst_role"><a href="/fieldManager/templateManagement.html"><i class="glyphicon glyphicon-wrench"></i> <span class="lang" data-lang="m_tm">Admin</span></a></li>
- 			<li id="m_user" class="restrict_role admin_role"><a href="/fieldManager/userManagement.html"><i class="glyphicon glyphicon-users"></i> <span class="lang" data-lang="m_user">Users</span></a></li>
+ 			<li class="restrict_role admin_role analyst_role"><a href="/fieldManager/surveyManagement.html"><i class="glyphicon glyphicon-wrench"></i> <span class="lang" data-lang="m_tm">Admin</span></a></li>
+ 			<li id="m_user" class="restrict_role admin_role"><a href="/fieldManager/userManagement.html"><i class="glyphicon glyphicon-user"></i> <span class="lang" data-lang="m_user">Users</span></a></li>
 			<li id="m_help"><a href="https://drive.google.com/drive/folders/0B5_SmpWlQYxvRHZ6Z0ZYMGNJS3M?usp=sharing" target="_blank"><i class="fa fa-info-circle"></i> <span class="lang" data-lang="m_help">help</span></a></li>
 	     
 			
@@ -274,7 +277,7 @@
 	</div>
 </div>
 
-<!-- Modal to allow the user to edit their own details -->
+<!-- Modal to allow the user to edit their own details
 <div id="modify_me_popup" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="modifyMeLabel" aria-hidden="true">
 	<div class="modal-dialog">
    		<div class="modal-content">
@@ -302,6 +305,18 @@
 							<input type="email" class="form-control" id="me_email" 
 									placeholder="Enter email" 
 									pattern="^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$">
+						</div>
+					</div>
+					<div class="form-group">
+						<label for="me_organisation" data-lang="c_org" class="lang col-sm-2 control-label">organisation</label>
+						<div class="col-sm-10">
+							<select id="me_organisation" class="organisation_select form-control"></select>
+						</div>
+					</div>
+					<div class="form-group">
+						<label for="u_tz" class="col-sm-2 control-label lang" data-lang="c_tz">timezone</label>
+						<div class="col-sm-10">
+							<select class="form-control timezone_select" id="u_tz"></select>
 						</div>
 					</div>
 					<div id="reset_me_password_fields" style="display:none;">
@@ -340,12 +355,7 @@
 		</div>
 	</div>
 </div>
-
-<script>
-	setCustomManage();			// Apply custom javascript
-</script>
-
-
+-->
 
 </body>
 </html>

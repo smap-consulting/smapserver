@@ -22,10 +22,25 @@
 define(function () {
     window.globals = {
 
+        // Security groups
+        GROUP_ADMIN: 1,
+        GROUP_ANALYST: 2,
+        GROUP_ENUM: 3,
+        GROUP_ORG_ADMIN : 4,
+        GROUP_MANAGE: 5,
+        GROUP_SECURITY: 6,
+        GROUP_VIEW_DATA: 7,
+        GROUP_ENTERPRISE : 8,
+        GROUP_OWNER : 9,
+
+        REC_LIMIT: 200,     // Page size for table views in analysis
+	    MAP_REC_LIMIT: 1000,    // Max size for map views in analysis
+
         gProjectList: undefined,
         gRoleList: undefined,
         gCurrentProject: 0,
         gCurrentSurvey: 0,
+	    gGroupSurveys: {},
         gCurrentForm: 0,
         gCurrentLayer: undefined,
         gLoggedInUser: undefined,
@@ -36,9 +51,19 @@ define(function () {
         gIsManage: false,
         gIsOrgAdministrator: false,
         gIsSecurityAdministrator: false,
-        gSendTrail: false,
+        gIsEnterpriseAdministrator: false,
+        gIsServerOwner: false,
+        gViewData: false,
+        gBillingData: false,
+        gOrgBillingData: false,
+        gSendTrail: 'off',
         gViewIdx: 0,
         gSelector: new Selector(),
+        gOrgId: 0,
+        gTimezone: undefined,
+	    gEnterpriseName: undefined,
+	    gSetAsTheme: undefined,
+	    gNavbarColor: undefined,
 
         gRegions: undefined,
         gRegion: {},
@@ -84,6 +109,7 @@ define(function () {
         gShowingChoices: false,
         gMaxOptionList: 0,
         gLatestOptionList: undefined,	// Hack to record the last option list name added
+	    gCsvFiles: undefined,
 
         gListName: undefined,					// Choice Modal parameters, Set if started from choice list view
         gOptionList: undefined,					// The option list name applying to this set of choices
@@ -99,10 +125,12 @@ define(function () {
         gMainTable: undefined,			// Data tables
         gReports: undefined,			// reports
         gCharts: {},					// charts
+	    gRecordMaps: [],                // Maps shown when editing a record
+	    gRecordChangeMaps: [],          // Maps shown when viewing change history
         gMapLayersShown: false,
         gViewId: 0,						// Current survey view
 
-        gServerSettings: undefined,		// Server Settings
+        gMapboxDefault: undefined,		// Mapbox key
         
         model: new Model()
 
@@ -117,6 +145,7 @@ define(function () {
         this.surveysExtended = new Object();
         this.surveyLanguages = new Object();
         this.surveyQuestions = new Object();
+        this.surveyMeta = new Object();
         this.questions = new Object();
         this.allSurveys;				// Simple list of surveys
         this.allRegions;
@@ -169,6 +198,10 @@ define(function () {
             } else {
                 return null;
             }
+        };
+
+        this.getSurveyMeta = function (key) {
+            return this.surveyMeta[key];
         };
 
         this.getSurveyLanguages = function (key) {
@@ -251,6 +284,7 @@ define(function () {
             this.surveys = new Object();
             this.surveyLanguages = new Object();
             this.surveyQuestions = new Object();
+            this.surveyMeta = new Object();
             this.questions = new Object();
             this.allSurveys = undefined;
             this.allRegions = undefined;
@@ -271,6 +305,10 @@ define(function () {
             var langQ = new Object();
             langQ[language] = value;
             this.surveyQuestions[sId] = langQ;
+        };
+
+        this.setSurveyMeta = function (key, value) {
+            this.surveyMeta[key] = value;
         };
 
         this.setRegionList = function (list) {
@@ -327,7 +365,230 @@ define(function () {
         this.translateChanges = [];
         this.currentTranslateChange = 0;
         this.savedSettings = undefined;
-        this.forcceSettingsChange = false;
+        this.forceSettingsChange = false;
+
+	    // A list of valid appearances for each question type
+	    this.qAppearances = {
+		    'begin group': ['page', 'w'],
+		    string: ['numbers', 'thousands-sep', 'w'],
+		    note: ['w'],
+            select1: ['select1_type', 'search', 'likert', 'w'],
+            select: ['select_type', 'search', 'w'],
+            image: ['image_type', 'selfie', 'new', 'w'],
+            int:['thousands-sep', 'w'],
+		    geopoint:['placement-map', 'w'],
+		    audio:['w', 'new'],
+		    video:['selfie', 'w', 'new'],
+		    barcode:['read_nfc', 'w'],
+		    date:['date_type', 'w'],
+		    dateTime:['no-calendar', 'w'],
+		    time:['w'],
+            decimal:['thousands-sep', 'bearing', 'w'],
+		    geotrace:['w'],
+		    geoshape:['w'],
+		    acknowledge:['w'],
+		    range:['w', 'rating', 'vertical', 'picker'],
+		    file:['w'],
+		    rank:['w']
+	    };
+
+	    this.appearanceDetails = {
+		    'page': {
+			    field: 'a_page',
+			    type: 'select',
+                rex: 'field-list|table-list',
+                valIsAppearance: true,
+			    value_offset: 0,
+                undef_value: ''
+		    },
+		    'image_type': {
+			    field: 'a_image_type',
+			    type: 'select',
+			    rex: 'annotate|draw|signature',
+			    valIsAppearance: true,
+			    value_offset: 0,
+			    undef_value: ''
+		    },
+		    'select1_type': {
+			    field: 'a_select1_type',
+			    type: 'form',
+			    rex: 'minimal|quick$|autocomplete|compact|quickcompact|image-map'
+		    },
+		    'select_type': {
+			    field: 'a_select_type',
+			    type: 'form',
+			    rex: 'minimal|autocomplete|compact|image-map'
+		    },
+		    'date_type': {
+			    field: 'a_date_type',
+			    type: 'select',
+			    rex: 'no-calendar|month-year|year|coptic|ethiopian|islamic|myanmar',
+			    valIsAppearance: true,
+			    value_offset: 0,
+			    undef_value: ''
+		    },
+		    'no-calendar': {
+			    field: 'a_no_calendar',
+			    type: 'boolean',
+			    rex: 'no-calendar'
+		    },
+		    'placement-map': {
+			    field: 'a_placement-map',
+			    type: 'boolean',
+			    rex: 'placement-map'
+		    },
+		    'search': {
+			    field: 'a_search',
+			    type: 'form',
+			    rex: 'search\\('
+		    },
+		    'rating': {
+			    field: 'a_rating',
+			    type: 'boolean',
+			    rex: 'rating'
+		    },
+		    'likert': {
+			    field: 'a_likert',
+			    type: 'boolean',
+			    rex: 'likert'
+		    },
+		    'selfie': {
+			    field: 'a_selfie',
+			    type: 'boolean',
+			    rex: 'selfie'
+		    },
+		    'new': {
+			    field: 'a_new',
+			    type: 'boolean',
+			    rex: 'new'
+		    },
+		    'read_nfc': {
+			    field: 'a_read_nfc',
+			    type: 'boolean',
+			    rex: 'read_nfc'
+		    },
+		    'vertical': {
+			    field: 'a_vertical',
+			    type: 'boolean',
+			    rex: 'vertical'
+		    },
+		    'picker': {
+			    field: 'a_picker',
+			    type: 'boolean',
+			    rex: 'picker'
+		    },
+		    'bearing': {
+			    field: 'a_bearing',
+			    type: 'boolean',
+			    rex: 'bearing'
+		    },
+		    'thousands-sep': {
+			    field: 'a_sep',
+			    type: 'boolean',
+			    rex: 'thousands-sep'
+		    },
+		    'numbers': {
+			    field: 'a_numbers',
+			    type: 'boolean',
+			    rex: 'numbers'
+		    },
+		    'w': {
+			    field: 'a_width',
+			    type: 'select',
+                rex: 'w[1-9]|w1[0-2]',
+                value_offset: 1,
+                undef_value: ''
+		    }
+	    };
+
+        // A list of valid parameters for each question type
+        this.qParams = {
+            string: ['rows'],
+	        barcode: ['auto'],
+            image: ['max-pixels', 'auto'],
+	        video: ['auto'],
+	        audio: ['auto'],
+            range: ['start', 'end', 'step'],
+            select: ['randomize'],
+            select1: ['randomize'],
+            rank: ['randomize'],
+            parent_form: ['form_identifier', 'key_question', 'auto'],
+	        child_form: ['form_identifier', 'key_question', 'auto'],
+	        geopoint: ['auto'],
+            'begin repeat':['ref', 'instance_order', 'instance_count', 'key_policy'],
+	        chart: ['chart_type', 'stacked', 'normalized']
+        };
+
+        this.paramDetails = {
+	        rows: {
+	            field: 'p_rows',
+                type: 'integer'
+            },
+            'max-pixels': {
+	            field: 'p_max_pixels',
+                type: 'integer'
+            },
+            start: {
+	            field: 'p_start',
+                type: 'number'
+            },
+	        end: {
+		        field: 'p_end',
+		        type: 'number'
+	        },
+	        step: {
+		        field: 'p_step',
+		        type: 'number'
+	        },
+	        randomize: {
+		        field: 'p_randomize',
+		        type: 'boolean'
+	        },
+	        auto: {
+		        field: 'p_auto',
+		        type: 'boolean'
+	        },
+	        form_identifier: {
+		        field: 'p_form_identifier',
+		        type: 'select'
+	        },
+	        key_question: {
+		        field: 'p_key_question',
+		        type: 'select'
+	        },
+	        ref: {
+		        field: 'p_ref',
+		        type: 'select'
+	        },
+	        instance_order: {
+		        field: 'p_instance_order',
+		        type: 'select'
+	        },
+	        instance_count: {
+		        field: 'p_instance_count',
+		        type: 'integer'
+	        },
+	        key_policy: {
+		        field: 'p_key_policy',
+		        type: 'select'
+	        },
+	        chart_type: {
+		        field: 'p_chart_type',
+		        type: 'select'
+	        },
+	        stacked: {
+		        field: 'p_stacked',
+		        type: 'boolean'
+	        },
+	        normalized: {
+		        field: 'p_normalized',
+		        type: 'boolean'
+	        },
+	        _other: {
+		        field: 'p_other',
+		        type: 'text'
+	        }
+        };
 
         this.qTypes = [{
             name: "Text",
@@ -338,7 +599,7 @@ define(function () {
             visible: true,
 				source: "user",
                 compatTypes: ["select1"]
-        },
+            },
             {
                 name: "Note",
                 type: "note",
@@ -370,7 +631,7 @@ define(function () {
             {
                 name: "Form",
                 type: "begin repeat",
-                trans: "c_form",
+                trans: "c_rep_type",
                 glyphicon: "repeat",
                 canSelect: true,
                 visible: true,
@@ -462,7 +723,7 @@ define(function () {
                 name: "Date and Time",
                 type: "dateTime",
                 trans: "ed_dt",
-                glyphicon: "calendar",
+                glyphicon: "calendar, time",
                 canSelect: true,
                 visible: true,
                 source: "user"
@@ -523,6 +784,54 @@ define(function () {
                 source: "user"
             },
             {
+                name: "Chart",
+                type: "chart",
+                trans: "c_chart",
+                glyphicon: "stats",
+                text: "Chart",
+                canSelect: true,
+                visible: true,
+                source: "user"
+            },
+	        {
+		        name: "Parent Form",
+		        type: "parent_form",
+		        trans: "c_parent_form",
+		        glyphicon: "open-file",
+		        text: "Parent Form",
+		        canSelect: true,
+		        visible: true,
+		        source: "user"
+	        },
+	        {
+		        name: "Child Form",
+		        type: "child_form",
+		        trans: "c_child_form",
+		        glyphicon: "save-file",
+		        text: "Child Form",
+		        canSelect: true,
+		        visible: true,
+		        source: "user"
+	        },
+            {
+                name: "File",
+                type: "file",
+                trans: "c_file",
+                glyphicon: "file",
+                canSelect: true,
+                visible: true,
+                source: "user"
+            },
+            {
+                name: "Rank",
+                type: "rank",
+                trans: "c_rank",
+                glyphicon: "sort-by-attributes",
+                canSelect: true,
+                visible: true,
+                source: "user"
+            },
+            {
                 name: "Unknown Type",
                 glyphicon: "record",
                 canSelect: false
@@ -555,7 +864,7 @@ define(function () {
                 success: function (data, status) {
                     removeHourglass();
                     globals.model.savedSettings = settings;
-                    globals.model.survey.pdfTemplateName = $('.upload_file_msg').val();
+                    globals.model.survey.pdfTemplateName = data;
                     globals.model.forceSettingsChange = false;
                     $('#save_settings, #save_keys').prop("disabled", true);
 
@@ -759,6 +1068,9 @@ define(function () {
                 $('#set_default_language option:selected').text(),
                 $('#task_file').prop('checked'),
                 $('#timing_data').prop('checked'),
+	            $('#audit_location_data').prop('checked'),
+	            $('#track_changes').prop('checked'),
+	            $('#hide_on_device').prop('checked'),
                 $('#exclude_empty').prop('checked'),
                 $('#set_hrk').val(),
                 $('#set_key_policy').val()
@@ -773,6 +1085,9 @@ define(function () {
                 this.survey.def_lang = current.def_lang;
                 this.survey.task_file = current.task_file;
                 this.survey.timing_data = current.timing_data;
+	            this.survey.audit_location_data = current.audit_location_data;
+	            this.survey.track_changes = current.track_changes;
+	            this.survey.hideOnDevice = current.hideOnDevice;
                 this.survey.exclude_empty = current.exclude_empty;
                 this.survey.hrk = current.hrk;
                 this.survey.key_policy = current.key_policy;
@@ -791,6 +1106,9 @@ define(function () {
                     this.survey.def_lang,
                     this.survey.task_file,
                     this.survey.timing_data,
+	                this.survey.audit_location_data,
+	                this.survey.track_changes,
+                    this.survey.hideOnDevice,
                     this.survey.exclude_empty,
                     this.survey.hrk,
                     this.survey.key_policy
@@ -805,6 +1123,9 @@ define(function () {
                                               def_lang,
                                               task_file,
                                               timing_data,
+                                              audit_location_data,
+                                              track_changes,
+                                              hideOnDevice,
                                               exclude_empty,
                                               hrk,
                                               key_policy) {
@@ -823,6 +1144,9 @@ define(function () {
                 def_lang: def_lang,
                 task_file: task_file,
                 timing_data: timing_data,
+	            audit_location_data: audit_location_data,
+	            track_changes: track_changes,
+                hideOnDevice: hideOnDevice,
                 exclude_empty: exclude_empty,
                 hrk: hrk,
                 key_policy: key_policy

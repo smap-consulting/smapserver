@@ -63,7 +63,8 @@ $(document).ready(function() {
 		params,
 		pArray = [],
 		param = [];
-	
+
+	setupUserProfile();
 	localise.setlang();		// Localise HTML
 	
 	// Get the user details
@@ -134,8 +135,7 @@ $(document).ready(function() {
 		saveCurrentProject(globals.gCurrentProject, globals.gCurrentSurvey);	// Save the current survey id
 		getSurveyDetails(refreshView);
  	 });
-	
-	enableUserProfileBS();
+
 });
 
 function getSurveyList() {
@@ -219,7 +219,7 @@ function saveTranslations(callback) {
 			if(xhr.readyState == 0 || xhr.status == 0) {
 	              return;  // Not an error
 			} else {
-				alert("Error: Failed to save translations: " + err);
+				alert(localise.set["msg_err_save"] + ' ' + err);
 			}
 					
 			if(typeof responseFn === "function") { 

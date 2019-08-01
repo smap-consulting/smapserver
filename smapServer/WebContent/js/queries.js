@@ -90,7 +90,9 @@ var gQueries,
 'use strict';
 
 $(document).ready(function() {
- 
+
+    setCustomManage();			// Apply custom javascript
+	setupUserProfile();
 	localise.setlang();		// Localise HTML
 	
 	loadQueries();
@@ -408,7 +410,7 @@ function saveQuery() {
  			if(xhr.readyState == 0 || xhr.status == 0) {
  				return;  // Not an error
  			} else {
- 				alert("Error: Failed to save queries: " + err);
+ 				alert(localise.set["msg_err_save"] + ' ' + err);
  			}
  		}
  	});	 

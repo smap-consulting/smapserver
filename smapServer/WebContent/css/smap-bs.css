@@ -12,12 +12,16 @@
     color: #fff;
 }
 
+.navbar-default .navbar-nav > li > a.btn-default {
+	color: #111;
+}
+
 .navbar-default .navbar-nav > li > .btn {
 	padding: 5px;
 	margin-top:10px;
 	margin-left: 5px;
 	margin-right: 5px;
-    color: #222;
+    color: #fff;
 }
 
 .navbar-default .navbar-nav > li > a:hover, .navbar-default .navbar-brand:hover, .navbar-default .navbar-brand:focus
@@ -356,7 +360,7 @@ li .panel-body {
 
 .question_type {
 	background-color: #fff;
-	height: 60px;
+	min-height: 60px;
 }
 .question_type.disabled {
 	opacity: 0.4;
@@ -424,7 +428,7 @@ li.panel {
 	margin-bottom: 15px;
 }
 
-.qname,.oname, .filter {
+.qname,.oname, .odisplayname, .filter {
 	width: 100%;
 	height: 60px;
 }
@@ -699,6 +703,14 @@ td.completed, td.submitted {
 
 .disabled {
 	color: lightgrey;
+	filter:opacity(0.4);
 }
 
+#notification_list .row {
+	margin-top:10px;
+}
+
+.colorpicker-visible {
+	z-index: 20000;
+}
 

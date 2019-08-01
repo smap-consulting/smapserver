@@ -4,176 +4,181 @@
 
 	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-	
+
 	<meta name="keywords" content="" />
 	<meta name="description" content="" />
 	<!--  
 	<meta name="viewport" content="width=device-width, initial-scale=0.7">
 	-->
 
-	<title>Form Builder</title>
-	
+	<title class="lang" data-lang="c_edit"></title>
+
 	<link href="/css/wb/plugins/iCheck/custom.css" rel="stylesheet">
 	<link rel="shortcut icon" href="favicon.ico" />
 	<link rel="stylesheet" href="css/normalize.css" />
-	<link rel="stylesheet" href="/css/bootstrap.min.css" /> 
-	<link rel="stylesheet" href="/css/bootstrap-toggle.min.css" /> 
+	<link rel="stylesheet" href="/css/bootstrap.min.css" />
+	<link rel="stylesheet" href="/css/bootstrap-toggle.min.css" />
+	<link rel="stylesheet" href="/css/bootstrap-colorpicker.min.css" />
 	<link rel="stylesheet" href="/css/smap-bs.css" type="text/css">
-    
- 	<script type="text/javascript"> if (!window.console) console = {log: function() {}}; </script>
+
+	<script type="text/javascript"> if (!window.console) console = {log: function() {}}; </script>
 	<script src="js/libs/modernizr.js"></script>
+	<script src="/js/app/theme-nobody.js"></script>
 	<script src="/js/app/custom.js"></script>  <!-- Override this in custom code to apply changes at run time -->
-    <script data-main="js/edit" src="js/libs/require.js"></script>
+	<script data-main="js/edit" src="js/libs/require.js"></script>
 </head>
 <body>
 
-	<header class="navbar navbar-default navbar-fixed-top" role="banner">
-	  <div class="container">
-	    <div class="navbar-header">
-	      <button class="navbar-toggle" type="button" data-toggle="collapse" data-target=".navbar-collapse">
-	        <span class="sr-only">Toggle navigation</span>
-	        <span class="icon-bar"></span>
-	        <span class="icon-bar"></span>
-	        <span class="icon-bar"></span>
-	      </button>
-	      <a href='javascript:void(0)' class="navbar-brand">
-	      	<span class="glyphicon glyphicon-edit" aria-hidden="true"></span>
-	     	 <span class="formName"></span>
-	      </a>
-	    </div>
+<header class="navbar navbar-default navbar-fixed-top" role="banner">
+	<div class="container" style="width:100%;">
+		<div class="navbar-header">
+			<button class="navbar-toggle" type="button" data-toggle="collapse" data-target=".navbar-collapse">
+				<span class="sr-only">Toggle navigation</span>
+				<span class="icon-bar"></span>
+				<span class="icon-bar"></span>
+				<span class="icon-bar"></span>
+			</button>
+			<a href='javascript:void(0)' class="navbar-brand">
+				<span class="glyphicon glyphicon-edit" aria-hidden="true"></span>
+				<span class="formName"></span>
+			</a>
+		</div>
 		<nav class="collapse navbar-collapse" role="navigation">
-	      <ul class="nav navbar-nav navbar-right">
-	      	<li id="m_modules" class="dropdown">
-	          <a href='javascript:void(0)' class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false"><span class="lang" data-lang="m_modules">View</span> <span class="caret"></span></a>
-	          <ul class="dropdown-menu" role="menu">
-	            
-	            <li><a class="lang" data-lang="m_home" href="/?loggedin=yes">home</a></li>
-	            <li class="disabled restrict_role admin_role analyst_role"><a href='javascript:void(0)'><span class="lang" data-lang="c_edit">Edit</span><span class="glyphicon glyphicon-edit pull-right"></span></a></li>
-	            <li class="restrict_role admin_role analyst_role"><a href="/fieldManager/templateManagement.html"><span class="lang" data-lang="m_admin">admin</span><span class="glyphicon glyphicon-wrench pull-right"></span></a></li>
-	            <li class="restrict_role enum_role"><a href="/webForm.html"><span class="lang" data-lang="m_data_mod" >Web Forms</span><span class="glyphicon glyphicon-globe pull-right"></span></a></li>
-	            <li class="restrict_role analyst_role"><a href="/fieldAnalysis/index.html"><span class="lang" data-lang="m_analysis">Analysis</span><span class="glyphicon glyphicon-stats pull-right"></span></a></li>
-	            <li class="restrict_role admin_role analyst_role bus_only"><a href="/tasks/taskManagement.html"><span class="nav-label lang" data-lang="m_assign">assign</span><span class="glyphicon glyphicon-tasks pull-right"></span></a></li>
-	          </ul>
-	        </li> 
-	        <li class="dropdown">
-	          <a href='javascript:void(0)' class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false"><span class="lang" data-lang="c_file">File</span> <span class="caret"></span></a>
-	          <ul class="dropdown-menu" role="menu">
-	            <li><a id="c_save" class="m_save_survey lang" href='javascript:void(0)' data-lang="c_save">save</a></li>
-	            <li><a id="m_open" href='javascript:void(0)' class="lang" data-lang="m_open">open</a></li>
-	            <li><a id="m_new" href='javascript:void(0)' class="lang" data-lang="m_new">New</a></li>
-	            <li class="disabled"><a id="m_import" href='javascript:void(0)' class="lang" data-lang="m_import">import</a></li>
-	            <li role="presentation" class="divider"></li>
-	            <li><a id="m_languages" class="lang m_languages" data-lang="c_langs" href='javascript:void(0)'>languages</a></li>
-	           	<li><a id="m_pulldata" class="lang" data-lang="c_pulldata" href='javascript:void(0)'>pulldata</a></li>
-	            <li><a id="m_media" href='javascript:void(0)' class="lang" data-lang="c_media">media</a></li>
-	            <li><a id="m_settings" href='javascript:void(0)' class="lang" data-lang="c_settings">settings</a></li>
-				<li><a id="m_keys" href='javascript:void(0)' class="lang" data-lang="c_keys">keys</a></li>
-	            <li role="presentation" class="divider"></li>
-	            <li><a id="m_changes" href="/changes.html" class="lang" data-lang="c_changes">changes</a></li>
-				<li><a id="m_calculations" href="/ssc.html" class="lang" data-lang="c_calc">calculations</a></li>
-				<li class="restrict_role org_role security_role"><a id="m_roles" href="/surveyRoles.html" class="lang" data-lang="c_roles">roles</a></li>
-				<li><a id="m_info" href='javascript:void(0)' class="lang" data-lang="m_info">info</a></li>
-	          </ul>
-	        </li> 
-	        <li class="dropdown">
-	          <a href='javascript:void(0)' class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false"><span class="lang" data-lang="c_tools">Tools</span> <span class="caret"></span></a>
-	          <ul class="dropdown-menu" role="menu">
-	            <li><a id="m_required" class="lang" data-lang="c_required" href='javascript:void(0)'>Req</a></li>
-	            <li><a id="m_not_required" class="lang" data-lang="c_not_required" href='javascript:void(0)'>NR</a></li>
-	            <li role="presentation" class="divider"></li>
-	            <li><a id="m_translate" class="lang" data-lang="trans" href="translate.html">translate</a>
-				<li><a id="m_validate" class="lang m_validate" data-lang="c_validate" href='javascript:void(0)'>validate</a></li>
-	          </ul>
-	        </li> 
-	      	<li class="dropdown">
-	          <a href='javascript:void(0)' class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false"><span id="langSelected"></span> <span class="caret"></span></a>
-	          <ul id="language" class="dropdown-menu language_menu_list" role="menu">
-	          </ul>
-	        </li> 
-	        <li class="dropdown">
-	          <a href='javascript:void(0)' class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false"><span id="propSelected"></span> <span class="caret"></span></a>
-				<ul id="selProperty" class="dropdown-menu" role="menu">
-					<li class="q_only default"><a data-prop="label" href='javascript:void(0)'  class="lang" data-lang="ed_qt">question text</a></li>
-					<li class="o_only default"><a data-prop="label" href='javascript:void(0)'  class="lang" data-lang="ed_ct">choice text</a></li>
-					<li class="q_only"><a data-prop="hint" href='javascript:void(0)'  class="lang" data-lang="ed_qh">question hint</a></li>
-					<li><a data-prop="media" href='javascript:void(0)'  class="lang" data-lang="c_media">media</a></li>
-					<li class="q_only"><a data-prop="appearance" href='javascript:void(0)'  class="lang" data-lang="ed_appearance">appearance</a></li>
-					<li class="q_only"><a data-prop="parameters" href='javascript:void(0)'  class="lang" data-lang="ed_parameters">parameters</a></li>
-					<li class="q_only"><a data-prop="constraint" href='javascript:void(0)'  class="lang" data-lang="ed_con">constraint</a></li>
-					<li class="q_only"><a data-prop="constraint_msg" href='javascript:void(0)'  class="lang" data-lang="ed_con_msg">constraint message</a></li>
-					<li class="q_only"><a data-prop="relevant" href='javascript:void(0)'  class="lang" data-lang="ed_rel">relevant</a></li>
-					<li class="q_only"><a data-prop="required" href='javascript:void(0)'  class="lang" data-lang="ed_req">required</a></li>
-					<li class="q_only"><a data-prop="autoplay" href='javascript:void(0)'  class="lang" data-lang="ed_ap">auto play</a></li>
-					<li class="q_only"><a data-prop="accuracy" href='javascript:void(0)'  class="lang" data-lang="ed_at">accuracy</a></li>
-					<li class="q_only"><a data-prop="linked_survey" href='javascript:void(0)'  class="lang" data-lang="ed_ls">linked</a></li>
-					<li class="q_only"><a data-prop="readonly" href='javascript:void(0)'  class="lang" data-lang="ed_ro">Read Only</a></li>
-					<li class="q_only"><a data-prop="display_name" href='javascript:void(0)'  class="lang" data-lang="ed_dn">Read Only</a></li>
-					<!--  <li><a data-value="group" href='javascript:void(0)'>Set the end of a group</a></li> -->
-				</ul>
-	        </li> 
-	        <li class="notoptionslist"><input id="viewType" type="checkbox" checked 
-	        		data-onstyle="primary" data-offstyle="info"></li>
-	        <li><a type="button" tabindex="-1"  class="btn btn-success lang disabled m_save_survey" disabled="disabled">
-	        		<span class="lang" data-lang="c_save">Save</span> 
-	        		<span class="badge">0</span></a></li>
-	 		<li><a type="button" tabindex="-1"  data-lang="c_test" 
-	 				class="btn btn-primary lang m_test_survey" href='javascript:void(0)' target="_blank">Test</a></li>
-	                      
-		    <!-- 
-		   	<li><a id="m_undo" href='javascript:void(0)'>Undo</a></li>
-		    <li><a id="m_redo" href='javascript:void(0)'>Redo</a></li>
-		    -->
-			<li id="m_help"><a class="lang" data-lang="m_help" href="/editorHelp.html" target="_blank">Help</a></li>
-			<!-- 
-	        <li>
-	         	<a id="username" type="button" class="btn btn-default" data-toggle="modal" data-target="#modify_me_popup" aria-label="User">
-				<span class="glyphicon glyphicon-user" aria-hidden="true"></span>
-				</a>
-			</li>
-			-->
-	      </ul>
-	      	
+			<ul class="nav navbar-nav navbar-right">
+				<li id="m_modules" class="dropdown">
+					<a href='javascript:void(0)' class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false"><span class="lang" data-lang="m_modules">View</span> <span class="caret"></span></a>
+					<ul class="dropdown-menu" role="menu">
+
+						<li><a class="lang" data-lang="m_home" href="/?loggedin=yes">home</a></li>
+						<li class="disabled restrict_role admin_role analyst_role"><a href='javascript:void(0)'><span class="lang" data-lang="c_edit">Edit</span><span class="glyphicon glyphicon-edit pull-right"></span></a></li>
+						<li class="restrict_role admin_role analyst_role"><a href="/fieldManager/surveyManagement.html"><span class="lang" data-lang="m_admin">admin</span><span class="glyphicon glyphicon-wrench pull-right"></span></a></li>
+						<li class="restrict_role enum_role"><a href="/webForm.html"><span class="lang" data-lang="m_console" ></span><span class="glyphicon glyphicon-globe pull-right"></span></a></li>
+						<li class="restrict_role analyst_role"><a href="/fieldAnalysis/index.html"><span class="lang" data-lang="m_analysis">Analysis</span><span class="glyphicon glyphicon-stats pull-right"></span></a></li>
+						<li class="restrict_role admin_role analyst_role"><a href="/tasks/taskManagement.html"><span class="nav-label lang" data-lang="m_assign">assign</span><span class="glyphicon glyphicon-tasks pull-right"></span></a></li>
+						<li class="restrict_role billing_role" style="display:none;"><a href="/fieldManager/billing.html"><span class="nav-label lang" data-lang="m_billing">billing</span><span class="glyphicon glyphicon-usd pull-right"></span></a></li>
+					</ul>
+				</li>
+				<li class="dropdown">
+					<a href='javascript:void(0)' class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false"><span class="lang" data-lang="c_file">File</span> <span class="caret"></span></a>
+					<ul class="dropdown-menu" role="menu">
+						<li><a id="c_save" class="m_save_survey lang" href='javascript:void(0)' data-lang="c_save">save</a></li>
+						<li><a id="m_open" href='javascript:void(0)' class="lang" data-lang="m_open">open</a></li>
+						<li><a id="m_new" href='javascript:void(0)' class="lang" data-lang="m_new">New</a></li>
+						<li class="disabled"><a id="m_import" href='javascript:void(0)' class="lang" data-lang="m_import">import</a></li>
+						<li role="presentation" class="divider"></li>
+						<li><a id="m_languages" class="lang m_languages" data-lang="c_langs" href='javascript:void(0)'>languages</a></li>
+						<li><a id="m_pulldata" class="lang" data-lang="c_pulldata_r" href='javascript:void(0)'>pulldata</a></li>
+						<li><a id="m_media" href='javascript:void(0)' class="lang" data-lang="c_media">media</a></li>
+						<li><a id="m_settings" href='javascript:void(0)' class="lang" data-lang="c_settings">settings</a></li>
+						<li><a id="m_keys" href='javascript:void(0)' class="lang" data-lang="c_keys">keys</a></li>
+						<li role="presentation" class="divider"></li>
+						<li><a id="m_calculations" href="/ssc.html" class="lang" data-lang="c_calc">calculations</a></li>
+						<li class="restrict_role org_role security_role"><a id="m_roles" href="/surveyRoles.html" class="lang" data-lang="c_roles">roles</a></li>
+						<li><a id="m_info" href='javascript:void(0)' class="lang" data-lang="m_info">info</a></li>
+						<li><a id="m_export" href='javascript:void(0)' class="lang" data-lang="m_export">export</a></li>
+					</ul>
+				</li>
+				<li class="dropdown">
+					<a href='javascript:void(0)' class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false"><span class="lang" data-lang="c_tools">Tools</span> <span class="caret"></span></a>
+					<ul class="dropdown-menu" role="menu">
+						<li><a id="m_required" class="lang" data-lang="c_required" href='javascript:void(0)'>Req</a></li>
+						<li><a id="m_not_required" class="lang" data-lang="c_not_required" href='javascript:void(0)'>NR</a></li>
+						<li role="presentation" class="divider"></li>
+						<li><a id="m_translate" class="lang" data-lang="c_trans" href="translate.html">translate</a>
+						<li><a id="m_validate" class="lang m_validate" data-lang="c_validate" href='javascript:void(0)'>validate</a></li>
+						<li><a id="m_changes" href="/changes.html" class="lang" data-lang="c_changes">changes</a></li>
+						<li><a id="m_meta" href="/meta.html" class="lang" data-lang="c_meta">meta</a></li>
+					</ul>
+				</li>
+				<li class="dropdown">
+					<a href='javascript:void(0)' class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false"><span id="langSelected"></span> <span class="caret"></span></a>
+					<ul id="language" class="dropdown-menu language_menu_list" role="menu">
+					</ul>
+				</li>
+				<li class="dropdown">
+					<a href='javascript:void(0)' class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false"><span id="propSelected"></span> <span class="caret"></span></a>
+					<ul id="selProperty" class="dropdown-menu" role="menu">
+						<li class="q_only default"><a data-prop="label" href='javascript:void(0)'  class="lang" data-lang="ed_qt">question text</a></li>
+						<li class="o_only default"><a data-prop="label" href='javascript:void(0)'  class="lang" data-lang="ed_ct">choice text</a></li>
+						<li class="q_only"><a data-prop="hint" href='javascript:void(0)'  class="lang" data-lang="ed_qh">question hint</a></li>
+						<li><a data-prop="media" href='javascript:void(0)'  class="lang" data-lang="c_media">media</a></li>
+						<li class="q_only"><a data-prop="appearance" href='javascript:void(0)'  class="lang" data-lang="ed_appearance">appearance</a></li>
+						<li class="q_only"><a data-prop="parameters" href='javascript:void(0)'  class="lang" data-lang="ed_parameters">parameters</a></li>
+						<li class="q_only"><a data-prop="constraint" href='javascript:void(0)'  class="lang" data-lang="ed_con">constraint</a></li>
+						<li class="q_only"><a data-prop="constraint_msg" href='javascript:void(0)'  class="lang" data-lang="ed_con_msg">constraint message</a></li>
+						<li class="q_only"><a data-prop="relevant" href='javascript:void(0)'  class="lang" data-lang="ed_rel">relevant</a></li>
+						<li class="q_only"><a data-prop="required" href='javascript:void(0)'  class="lang" data-lang="ed_req">required</a></li>
+						<li class="q_only"><a data-prop="autoplay" href='javascript:void(0)'  class="lang" data-lang="ed_ap">auto play</a></li>
+						<li class="q_only"><a data-prop="accuracy" href='javascript:void(0)'  class="lang" data-lang="ed_at">accuracy</a></li>
+						<li class="q_only"><a data-prop="readonly" href='javascript:void(0)'  class="lang" data-lang="ed_ro">Read Only</a></li>
+						<li class="q_only"><a data-prop="display_name" href='javascript:void(0)'  class="lang" data-lang="ed_dn">display name</a></li>
+						<li class="q_only"><a data-prop="defaultanswer" href='javascript:void(0)'  class="lang" data-lang="c_default">default</a></li>
+						<li class="q_only"><a data-prop="calculation" href='javascript:void(0)'  class="lang" data-lang="ed_calc">calculation</a></li>
+					</ul>
+				</li>
+				<li class="notoptionslist"><input id="viewType" type="checkbox" checked
+												  data-onstyle="primary" data-offstyle="info"></li>
+				<li><a type="button" class="btn btn-success lang disabled m_save_survey" disabled="disabled">
+					<span class="lang" data-lang="c_save">Save</span>
+					<span class="badge">0</span></a></li>
+				<li><a type="button" data-lang="c_test"
+					   class="btn btn-primary lang m_test_survey" href='javascript:void(0)' target="_blank">Test</a></li>
+
+				<!--
+                   <li><a id="m_undo" href='javascript:void(0)'>Undo</a></li>
+                <li><a id="m_redo" href='javascript:void(0)'>Redo</a></li>
+                -->
+				<li id="m_help"><a class="lang" data-lang="m_help" href="/editorHelp.html" target="_blank">Help</a></li>
+				<!--
+                <li>
+                     <a id="username" type="button" class="btn btn-default" data-toggle="modal" data-target="#modify_me_popup" aria-label="User">
+                    <span class="glyphicon glyphicon-user" aria-hidden="true"></span>
+                    </a>
+                </li>
+                -->
+			</ul>
+
 		</nav>
-	
-	  </div>
-	</header>
+
+	</div>
+</header>
 
 
-	<div id="content" class="editorContent">
-		<div class="container-fluid">
-			<div class="row">
-				<div class="col-md-12">
-					<ol id="formList" class="list-unstyled">
-					</ol>
-				</div>
+<div id="content" class="editorContent">
+	<div class="container-fluid">
+		<div class="row">
+			<div class="col-md-12">
+				<ol id="formList" class="list-unstyled">
+				</ol>
 			</div>
 		</div>
 	</div>
-	<div id="toolbar" class="editorContent">
-		<div class="row margin-bottom" id="error-nav-btns" style="display:none;">
-			<div class="col-xs-6">
-  				<button type="button" id="next-warning" class="btn btn-warning"><span class="badge warning-count">0</span></button>
-  			</div>
-  			<div class="col-xs-6">
-  				<button type="button" id="next-error" class="btn btn-danger"><span class="badge error-count">0</span></button>
-  			</div>
+</div>
+<div id="toolbar" class="editorContent">
+	<div class="row margin-bottom" id="error-nav-btns" style="display:none;">
+		<div class="col-xs-6">
+			<button type="button" id="next-warning" class="btn btn-warning"><span class="badge warning-count">0</span></button>
 		</div>
-		<div id="toolbar_types"></div>
+		<div class="col-xs-6">
+			<button type="button" id="next-error" class="btn btn-danger"><span class="badge error-count">0</span></button>
+		</div>
 	</div>
-	
-	<div id="choiceView" class="editorContent" style="display:none;">
-		<div class="container-fluid">
-			<div class="row">
-	     		<h4><span class="modal-title lang" data-lang="c_choices" id="choiceViewLabel">choices</span> - <span id="choiceViewQuestion"></span></h4>	   			
-	   		</div>
-	   		<div class="choice-content"></div>
+	<div id="toolbar_types"></div>
+</div>
+
+<div id="choiceView" class="editorContent" style="display:none;">
+	<div class="container-fluid">
+		<div class="row">
+			<h4><span class="modal-title lang" data-lang="c_choices" id="choiceViewLabel">choices</span> - <span id="choiceViewQuestion"></span></h4>
 		</div>
-	</div>	
-	
+		<div class="choice-content"></div>
+	</div>
+</div>
+
 <div class="col-md-12 text-center">
 	<img class="hour_glass" src="/images/ajax-loader.gif" style="display:none;position: fixed; top: 200px; left:300px;" alt="hourglass" height="60" width="60">
-</div>    
-	
+</div>
+
 <!-- Informational -->
 <div id="infobox" class="alert alert-warning alert-dismissible" role="alert" style="display:none;">
 	<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
@@ -181,76 +186,110 @@
 </div>
 
 <!-- Setting Dialog -->
-<div id="settingsModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="settingsLabel" aria-hidden="true">
+<div id="settingsModal" class="modal fade" role="dialog" aria-labelledby="settingsLabel" aria-hidden="true">
 	<div class="modal-dialog">
-   		<div class="modal-content">
-   		 	<div class="modal-header">
-     			<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-     			<h4 class="modal-title lang" id="settingsLabel" data-lang="c_settings">Settings</h4>
-   			</div>
-		     <div class="modal-body">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+				<h4 class="modal-title lang" id="settingsLabel" data-lang="c_settings">Settings</h4>
+			</div>
+			<div class="modal-body">
+				<div id="settings_msg" class="alert alert-success" role="alert" style="display:none;"></div>
 				<form role="form" class="form-horizontal">
-					
 					<div class="form-group">
-						<label for="set_survey_name" class="lang col-sm-2 control-label">Form Name</label>
+						<label for="set_survey_name" data-lang="c_form" class="lang col-sm-2 control-label">form</label>
 						<div class="col-sm-10">
 							<input type="text" id="set_survey_name" required class="form-control survey_name">
 						</div>
 					</div>
-					
+
 					<div class="form-group">
-						<label for="set_survey_ident" class="lang col-sm-2 control-label">Form Ident</label>
+						<label for="set_survey_ident" data-lang="ed_fi" class="lang col-sm-2 control-label">ident</label>
 						<div class="col-sm-10">
 							<input type="text" id="set_survey_ident" readonly class="form-control">
 						</div>
 					</div>
-					
+
 					<div class="form-group">
-						<label for="set_project_name" class="lang col-sm-2 control-label">Project</label>
+						<label for="set_project_name" data-lang="c_project" class="lang col-sm-2 control-label">Project</label>
 						<div class="col-sm-10">
 							<select id="set_project_name" class="form-control project_list"></select>
 						</div>
 					</div>
-					
+
 					<div class="form-group">
-						<label for="set_default_language" class="lang col-sm-2 control-label">Default Language</label>
+						<label for="set_default_language" data-lang="ed_dl" class="lang col-sm-2 control-label">language</label>
 						<div class="col-sm-10">
 							<select id="set_default_language" class="form-control language_list"></select>
 						</div>
 					</div>
-					
+
 					<div class="form-group">
-						<label for="set_instance_name" class="lang col-sm-2 control-label" data-lang="ed_in">Instance Name</label>
+						<label for="set_instance_name" data-lang="ed_in" class="lang col-sm-2 control-label" data-lang="ed_in">Instance Name</label>
 						<div class="col-sm-10">
 							<input type="text" id="set_instance_name" required class="form-control instance_name">
 						</div>
 					</div>
-					
+
 					<div class="form-group">
-						<label for="set_style" class="lang col-sm-2 control-label">Style</label>
+						<label for="set_style" data-lang="c_style" class="lang col-sm-2 control-label">Style</label>
 						<div class="col-sm-10">
 							<select id="set_style" class="form-control">
-								<option value="none">None</option>
-								<option value="theme-grid">Grid (Web Forms)</option>
+								<option class="lang" data-lang="c_none" value="none">none</option>
+								<option class="lang" data-lang="ed_s_g" value="theme-grid">grid</option>
+								<option class="lang" data-lang="ed_s_p" value="pages">pages</option>
 							</select>
 						</div>
 					</div>
-					
+
 					<div class="form-group">
 						<div class="col-sm-offset-2 col-sm-10">
 							<div class="checkbox">
 								<label>
-									<input type="checkbox" id="task_file" tabindex="5"><span class="lang" data-lang="ed_ld">allow import</span>
+									<input type="checkbox" id="task_file"><span class="lang" data-lang="ed_ld">allow import</span>
 								</label>
 							</div>
 						</div>
 					</div>
-					
+
+					<div class="well">
+						<div class="form-group">
+							<div class="col-sm-offset-2 col-sm-10">
+								<div class="checkbox">
+									<label>
+										<input type="checkbox" id="timing_data"><span class="lang" data-lang="ed_td">timing data</span>
+									</label>
+								</div>
+							</div>
+						</div>
+
+						<div class="form-group audit_location_data" style="display:none;">
+							<div class="col-sm-offset-2 col-sm-10">
+								<div class="checkbox">
+									<label>
+										<input type="checkbox" id="audit_location_data"><span class="lang" data-lang="ed_rl"></span>
+									</label>
+								</div>
+							</div>
+						</div>
+
+						<div class="form-group audit_location_data" style="display:none;">
+							<div class="col-sm-offset-2 col-sm-10">
+								<div class="checkbox">
+									<label>
+										<input type="checkbox" id="track_changes"><span class="lang" data-lang="ed_rc"></span>
+									</label>
+								</div>
+							</div>
+						</div>
+
+					</div>
+
 					<div class="form-group">
 						<div class="col-sm-offset-2 col-sm-10">
 							<div class="checkbox">
 								<label>
-									<input type="checkbox" id="timing_data" tabindex="5"><span class="lang" data-lang="ed_td">timing data</span>
+									<input type="checkbox" id="hide_on_device"><span class="lang" data-lang="ed_hod"></span>
 								</label>
 							</div>
 						</div>
@@ -260,173 +299,175 @@
 						<div class="col-sm-offset-2 col-sm-10">
 							<div class="checkbox">
 								<label>
-									<input type="checkbox" id="exclude_empty" tabindex="6"><span class="lang" data-lang="ed_ee">exclude empty</span>
+									<input type="checkbox" id="exclude_empty"><span class="lang" data-lang="ed_ee">exclude empty</span>
 								</label>
 							</div>
 						</div>
 					</div>
-					
-				</form>	
-				<form enctype="multipart/form-data" name="pdftemplate" role="form" class="form-horizontal" 
-						method="POST" accept-charset="utf-8">
+
+				</form>
+				<form enctype="multipart/form-data" name="pdftemplate" role="form" class="form-horizontal"
+					  method="POST" accept-charset="utf-8">
 					<fieldset>
-						<legend>Pdf Template:</legend>
+						<legend class="lang" data-lang="ft_pdf">Pdf Template:</legend>
 						<input id="pdfSettings" type="hidden" name="settings" >
-						
+						<input id="pdfSet" type="hidden" name="pdfSet" >
+
 						<div class="form-group">
-      						<div class="input-group col-sm-offset-2 col-sm-8" style="float:left;">	<!-- Override float:none set for input group -->
-      							<span class="input-group-btn">
+							<div class="input-group col-sm-offset-2 col-sm-7	" style="float:left;">	<!-- Override float:none set for input group -->
+								<span class="input-group-btn">
         							<input id="addPdfTemplate" name="files" title="Add" class="file-inputs" type="file" accept="application/pdf">
       							</span>
-     					 		<input type="text" class="upload_file_msg form-control" placeholder="None selected ...">
-    						</div>
-    
-							<button type="button" class="btn btn-danger col-sm-1" id="delPdfTemplate"><i class="glyphicon glyphicon-trash"></i></button>
-							
-						</div>          			
+								<input type="text" id="pdf_file_msg" class="upload_file_msg form-control" placeholder="None selected ...">
+							</div>
+
+							<button type="button" class="btn btn-danger col-sm-1" id="delPdfTemplate"><i class="glyphicon glyphicon-trash" aria-hidden=true"></i></button>
+							<button type="button" class="btn btn-default col-sm-1" id="downloadPdfTemplate"><i class="glyphicon glyphicon-chevron-down" aria-hidden=true"></i></button>
+						</div>
+						<div class="form-group">
+							<div class="col-sm-offset-2 col-sm-10">
+								<button type="button" class="btn btn-default lang" data-lang="c_recover" id="prevPdfTemplate"></button>
+							</div>
+						</div>
 					</fieldset>
-				</form>	
+				</form>
 			</div>
-			
+
 			<div class="modal-footer">
-	            <button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_cancel">Cancel</button>
-	            <button id="save_settings" type="button" class="btn btn-primary lang" data-lang="m_save" disabled="disabled">Save</button>
-	        </div>
-	        
-		</div>
-  	</div>	
-</div>
-
-	<!-- Keys Dialog -->
-	<div id="keysModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="keysLabel" aria-hidden="true">
-		<div class="modal-dialog">
-			<div class="modal-content">
-				<div class="modal-header">
-					<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-					<h4 class="modal-title lang" id="keysLabel" data-lang="c_recid">Record Identifiers</h4>
-				</div>
-				<div class="modal-body">
-					<form role="form" class="form-horizontal">
-
-						<div class="form-group">
-							<label for="set_key_policy" class="lang col-sm-2 control-label" data-lang="ed_kp">key policy</label>
-							<div class="col-sm-10">
-								<select id="set_key_policy" class="form-control">
-									<option value="add" class="lang" data-lang="c_add">add</option>
-									<option value="merge" class="lang" data-lang="c_merge">merge</option>
-									<option value="discard" class="lang" data-lang="c_discard">discard</option>
-								</select>
-							</div>
-						</div>
-
-						<div class="form-group">
-							<label for="set_hrk" class="lang col-sm-2 control-label" data-lang="ed_hrk"
-								   title="Specify a unique key if you want to refer to the data collected by this form from another form"
-							>key</label>
-							<div class="col-sm-10">
-								<input type="text" id="set_hrk" required class="form-control">
-							</div>
-						</div>
-
-					</form>
-
-				</div>
-
-				<div class="modal-footer">
-					<button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_cancel">Cancel</button>
-					<button id="save_keys" type="button" class="btn btn-primary lang" data-lang="m_save" disabled="disabled">Save</button>
-				</div>
-
+				<button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_cancel">Cancel</button>
+				<button id="save_settings" type="button" class="btn btn-primary lang" data-lang="m_save" disabled="disabled">Save</button>
 			</div>
+
 		</div>
 	</div>
+</div>
+
+<!-- Keys Dialog -->
+<div id="keysModal" class="modal fade" role="dialog" aria-labelledby="keysLabel" aria-hidden="true">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+				<h4 class="modal-title lang" id="keysLabel" data-lang="c_recid">Record Identifiers</h4>
+			</div>
+			<div class="modal-body">
+				<form role="form" class="form-horizontal">
+
+					<div class="form-group">
+						<label for="set_key_policy" class="lang col-sm-2 control-label" data-lang="ed_kp">kp</label>
+						<div class="col-sm-10">
+							<select id="set_key_policy" class="form-control">
+								<option value="replace" class="lang" data-lang="c_replace">r</option>
+								<option value="merge" class="lang" data-lang="c_merge">m</option>
+								<option value="discard" class="lang" data-lang="c_discard">d</option>
+							</select>
+						</div>
+					</div>
+
+					<div class="form-group">
+						<label for="set_hrk" class="lang col-sm-2 control-label" data-lang="ed_hrk"
+							   title="Specify a unique key if you want to refer to the data collected by this form from another form"
+						>key</label>
+						<div class="col-sm-10">
+							<input type="text" id="set_hrk" required class="form-control">
+						</div>
+					</div>
+
+				</form>
+
+			</div>
+
+			<div class="modal-footer">
+				<button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_cancel">Cancel</button>
+				<button id="save_keys" type="button" class="btn btn-primary lang" data-lang="m_save" disabled="disabled">Save</button>
+			</div>
+
+		</div>
+	</div>
+</div>
 
 <!-- Info Dialog -->
-<div id="infoModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="infoLabel" aria-hidden="true">
+<div id="infoModal" class="modal fade" role="dialog" aria-labelledby="infoLabel" aria-hidden="true">
 	<div class="modal-dialog">
-   		<div class="modal-content">
-   		 	<div class="modal-header">
-     			<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-     			<h4 class="modal-title lang" id="infoLabel" data-lang="m_info">info</h4>
-   			</div>
-		     <div class="modal-body">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+				<h4 class="modal-title lang" id="infoLabel" data-lang="m_info">info</h4>
+			</div>
+			<div class="modal-body">
 				<form role="form" class="form-horizontal">
-					
+
 					<div class="form-group">
 						<label for="i_name" class="lang col-sm-2 control-label" data-lang="c_name">name</label>
 						<div class="col-sm-10">
 							<input type="text" id="i_name" readonly class="form-control">
 						</div>
 					</div>
-					
+
 					<div class="form-group">
 						<label for="i_ident" class="lang col-sm-2 control-label" data-lang="c_ident">ident</label>
 						<div class="col-sm-10">
 							<input type="text" id="i_ident" readonly class="form-control">
 						</div>
 					</div>
-					
+
 					<div class="form-group">
 						<label for="i_version" class="lang col-sm-2 control-label" data-lang="c_version">version</label>
 						<div class="col-sm-10">
 							<input type="text" id="i_version" readonly class="form-control">
 						</div>
 					</div>
-					
+
 					<div class="form-group">
 						<label for="i_created" class="lang col-sm-2 control-label" data-lang="ed_i_c">created</label>
 						<div class="col-sm-10">
 							<input type="text" id="i_created" readonly  class="form-control survey_name">
 						</div>
 					</div>
-					
+
 					<div class="form-group">
 						<label for="i_based_on" class="lang col-sm-2 control-label" data-lang="ed_i_bo">based on</label>
 						<div class="col-sm-10">
 							<input type="text" id="i_based_on" readonly class="form-control survey_name">
 						</div>
 					</div>
-					
+
 					<div class="form-group">
 						<label for="i_table_names" class="lang col-sm-2 control-label" data-lang="ed_i_tn">table names</label>
 						<div class="col-sm-10">
 							<input type="text" id="i_table_names" readonly class="form-control survey_name">
 						</div>
 					</div>
-					
+
 					<div class="form-group">
-						<div class="col-sm-offset-2 col-sm-10">
-							<div class="checkbox">
-								<label>
-									<input type="checkbox" id="i_shared" disabled><span class="lang" data-lang="ed_st">shared table</span>
-								</label>
-							</div>
+						<label for="i_id" class="lang col-sm-2 control-label" data-lang="c_id">id</label>
+						<div class="col-sm-10">
+							<input type="text" id="i_id" readonly class="form-control survey_name">
 						</div>
 					</div>
-					
-					
-				</form>	
+
+				</form>
 			</div>
-			
+
 			<div class="modal-footer">
-	            <button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_cancel">Cancel</button>
-	        </div>
-	        
+				<button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_cancel">Cancel</button>
+			</div>
+
 		</div>
-  	</div>	
-</div>	
+	</div>
+</div>
 
 <!-- Modals -->
-<div id="openFormModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="openFormLabel" aria-hidden="true">
+<div id="openFormModal" class="modal fade" role="dialog" aria-labelledby="openFormLabel" aria-hidden="true">
 	<div class="modal-dialog">
-   		<div class="modal-content">
-   			<div class="modal-header">
-     			<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-     			<h4 class="modal-title" id="openSurveyLabel">Open Form</h4>
-   			</div>
-		     <div class="modal-body">
-		  		<form role="form" class="form-horizontal">
-		  			<div class="form-group">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+				<h4 class="modal-title" id="openSurveyLabel">Open Form</h4>
+			</div>
+			<div class="modal-body">
+				<form role="form" class="form-horizontal">
+					<div class="form-group">
 						<label for="project_name" class="lang col-sm-2 control-label" data-lang="c_project">Project :</label>
 						<div class="col-sm-10">
 							<select id="project_name" class="project_list form-control"></select>
@@ -435,7 +476,7 @@
 					<div class="form-group new_form" style="display:none;">
 						<label for="new_form_name" data-lang="c_name" class="lang col-sm-2 control-label">Name</label>
 						<div class="col-sm-10">
-							<input type="text" id="new_form_name" required class="form-control">
+							<input type="text" id="new_form_name" value="" autofocus required class="form-control">
 						</div>
 					</div>
 					<div class="form-group new_form" style="display:none;">
@@ -459,14 +500,6 @@
 							<select id="survey_name" class="survey_select form-control"></select>
 						</div>
 					</div>
-					<!--
-					<div class="form-group reusing_form">
-						<label for="form_name" class="lang col-sm-2 control-label" data-lang="msg_sel_form">Form</label>
-						<div class="col-sm-10">
-							<select id="form_name" class="form_select form-control"></select>
-						</div>
-					</div>
-					-->
 					<div class="form-group reusing_form" style="display:none;">
 						<div class="col-sm-offset-2 col-sm-10">
 							<div class="checkbox">
@@ -480,141 +513,938 @@
 			</div>
 
 			<div class="modal-footer">
-	            <button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_cancel">Cancel</button>
-	            <button id="get_form" type="button" class="btn btn-primary lang" data-lang="m_open">Open</button>
-	        </div>
+				<button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_cancel">Cancel</button>
+				<button id="get_form" type="button" class="btn btn-primary lang" data-lang="m_open">Open</button>
+			</div>
 		</div>
 	</div>
 </div>
-	
+
 
 <!-- Modal for managing media -->
-<div id="mediaModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="mediaModalLabel" aria-hidden="true">
+<div id="mediaModal" class="modal fade" role="dialog" aria-labelledby="mediaModalLabel" aria-hidden="true">
 	<div class="modal-dialog">
-   		<div class="modal-content">
-   			<div class="modal-header">
-     			<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-     			<h4 class="modal-title" id="mediaModalLabel"></h4>
-   			</div>
-   			<div class="container">
-		    <div class="modal-body row">
-   				<ul class="nav nav-pills mediaSelect" role="tablist">
-       				<li id="orgLevelTab" role="presentation" class="active"><a href='javascript:void(0)' class="lang" data-lang="c_org">organisation</a></li>
-       				<li id="surveyLevelTab" role="presentation" class="disabled"><a href='javascript:void(0)' class="lang" data-lang="c_form">form</a></li>
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+				<h4 class="modal-title" id="mediaModalLabel"></h4>
+			</div>
+			<div class="container">
+				<div class="modal-body row">
+					<ul class="nav nav-pills mediaSelect" role="tablist">
+						<li id="orgLevelTab" role="presentation" class="active"><a href='javascript:void(0)' class="lang" data-lang="c_org">organisation</a></li>
+						<li id="surveyLevelTab" role="presentation" class="disabled"><a href='javascript:void(0)' class="lang" data-lang="c_form">form</a></li>
 
-   				</ul>
-   
-   				<!-- The file upload form used as target for the file upload widget -->
-   				<form enctype="multipart/form-data" name="fileupload">
-       
-	       			<input id="survey_id" type="hidden" name="survey_id" >
-	       			<!-- The fileupload-buttonbar contains buttons to add files and start/cancel the upload -->
-	       			<div class="row fileupload-buttonbar mediaManage">
-	           			<div class="col-lg-7">
-	                		<!-- The fileinput-button span is used to style the file input field as button -->
-	
-	                		<input name="files" title="Add files..." class="file-inputs" type="file" multiple
-	                			accept="image/png, image/jpeg, image/gif, video/3gpp, video/mp4, audio/mp4, audio/mpeg, audio/mp3, audio/x-wav, text/csv">
-	                
-	                		<button type="button" id="submitFiles" class="btn btn-primary">
-	                    		<i class="glyphicon glyphicon-upload"></i>
-	                    		<span class="lang" data-lang="c_start">start</span>
-	                		</button>
-	                		<button type="reset" class="btn btn-warning cancel">
-	                    		<i class="glyphicon glyphicon-ban-circle"></i>
-	                    		<span class="lang" data-lang="c_cancel">cancel</span>
-	                		</button>
-	                		
-	                		<!-- The global file processing state -->
-	                		<span class="fileupload-process"></span>
-	           			</div>
-	           			<!-- The global progress state -->
-	           			<div class="col-lg-5 fileupload-progress fade">
-	                		<!-- The global progress bar -->
-	                		<div class="progress progress-striped active" role="progressbar" aria-valuemin="0" aria-valuemax="100">
-	                    		<div class="progress-bar progress-bar-success" style="width:0%;"></div>
-	                		</div>
-	         
-	            		</div>
-	       			</div>
-  				</form>   
-  				
-				<!-- Status -->
-				<div class="upload_file_msg alert alert-success mediaManage" role="alert"></div>
-		
-				<!-- The global progress bar -->
-			    <div id="progress" class="progress mediaManage">
-			        <div class="progress-bar progress-bar-success"></div>
-			    </div>
-	    
-	   			<!-- The container for the uploaded Survey files -->
-			    <div id="surveyPanel" class="col-lg-10" style="display:none;">
-				    <h4 class="formName"></h4>
-				    
-				    <div class="table-responsive">
-					    <table role="presentation" class="table table-striped col-lg-10">
-					       	<tbody id="filesSurvey">
-				   			</tbody>
-					    </table>
-				    </div>
-			    </div>
-			   
-				<!-- The container for the uploaded Survey files -->
-				<div id="orgPanel" class="col-lg-10">
-					<div class="table-responsive">
-			   			<table role="presentation" class="table table-striped col-lg-10">
-			   				<tbody id="filesOrg">
-			   				</tbody>
-			    		</table>
-			    	</div>
-		    	</div>
-	
-			</div>	<!-- End Body -->
+					</ul>
+
+					<!-- The file upload form used as target for the file upload widget -->
+					<form enctype="multipart/form-data" name="fileupload">
+
+						<input id="survey_id" type="hidden" name="survey_id" >
+						<!-- The fileupload-buttonbar contains buttons to add files and start/cancel the upload -->
+						<div class="row fileupload-buttonbar mediaManage">
+							<div class="col-lg-7">
+								<!-- The fileinput-button span is used to style the file input field as button -->
+
+								<input name="files" title="Add files..." class="file-inputs" type="file" multiple
+									   accept="image/png, image/jpeg, image/gif, video/3gpp, video/mp4, audio/mp4, audio/mpeg, audio/mp3, audio/x-wav, text/csv">
+
+								<button type="button" id="submitFiles" class="submitFiles btn btn-primary">
+									<i class="glyphicon glyphicon-upload"></i>
+									<span class="lang" data-lang="c_start">start</span>
+								</button>
+								<button type="reset" class="btn btn-warning cancel">
+									<i class="glyphicon glyphicon-ban-circle"></i>
+									<span class="lang" data-lang="c_cancel">cancel</span>
+								</button>
+
+								<!-- The global file processing state -->
+								<span class="fileupload-process"></span>
+							</div>
+							<!-- The global progress state -->
+							<div class="col-lg-5 fileupload-progress fade">
+								<!-- The global progress bar -->
+								<div class="progress progress-striped active" role="progressbar" aria-valuemin="0" aria-valuemax="100">
+									<div class="progress-bar progress-bar-success" style="width:0%;"></div>
+								</div>
+
+							</div>
+						</div>
+					</form>
+
+					<!-- Status -->
+					<div class="upload_file_msg alert alert-success mediaManage" role="alert"></div>
+
+					<!-- The global progress bar -->
+					<div id="progress" class="progress mediaManage">
+						<div class="progress-bar progress-bar-success"></div>
+					</div>
+
+					<!-- The container for the uploaded Survey files -->
+					<div id="surveyPanel" class="col-lg-10" style="display:none;">
+						<h4 class="formName"></h4>
+
+						<div class="table-responsive">
+							<table role="presentation" class="table table-striped col-lg-10">
+								<tbody id="filesSurvey">
+								</tbody>
+							</table>
+						</div>
+					</div>
+
+					<!-- The container for the uploaded Survey files -->
+					<div id="orgPanel" class="col-lg-10">
+						<div class="table-responsive">
+							<table role="presentation" class="table table-striped col-lg-10">
+								<tbody id="filesOrg">
+								</tbody>
+							</table>
+						</div>
+					</div>
+
+				</div>	<!-- End Body -->
 			</div>
 
 			<div class="modal-footer">
 				<button id="removeMedia" type="button" class="btn btn-danger" data-dismiss="modal" ><span class="glyphicon glyphicon-trash" aria-hidden="true"></span> <span class="lang" data-lang="c_del">delete</span></button>
-	           	<button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_close">Close</button>
-	           	<button id="mediaSelectSave" type="button" class="btn btn-primary lang mediaSelect" data-dismiss="modal" data-lang="c_save">Save</button>
-	       	</div>
+				<button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_close">Close</button>
+				<button id="mediaSelectSave" type="button" class="btn btn-primary lang mediaSelect" data-dismiss="modal" data-lang="c_save">Save</button>
+			</div>
 		</div>
 	</div>
 </div>
 
 <!-- Modal for setting question type -->
-<div id="typeModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="typeModalLabel" aria-hidden="true">
+<div id="typeModal" class="modal fade" role="dialog" aria-labelledby="typeModalLabel" aria-hidden="true">
 	<div class="modal-dialog">
-   		<div class="modal-content">
-   			<div class="modal-header">
-     			<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-     			<h4 class="modal-title lang" id="typeModalLabel" data-lang="c_type">type</h4>
-   			</div>
-   			
-   			<div class="modal-body">
-   				<div class="container-fluid">
-		  			<div class="btn-group" id="dialog_types"></div>
-		  		</div>
-	    		
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+				<h4 class="modal-title lang" id="typeModalLabel" data-lang="c_type">type</h4>
+			</div>
+
+			<div class="modal-body">
+				<div class="container-fluid">
+					<div class="btn-group" id="dialog_types"></div>
+				</div>
+
 			</div>
 			<div class="modal-footer">
-        		<button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_close">close</button>
-      		</div>
+				<button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_close">close</button>
+			</div>
+		</div>
+	</div>
+</div>
+
+<!-- Modal for setting parameters -->
+<div id="parameterModal" class="modal fade" role="dialog" aria-labelledby="typeModalLabel" aria-hidden="true">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+				<h4 class="modal-title lang" data-lang="ed_parameters">params</h4>
+			</div>
+
+			<div class="modal-body">
+				<div class="container-fluid">
+
+					<form id="parameter_form" role="form" class="form-horizontal">
+						<div class="form-group parameter_field p_max_pixels">
+							<label for="p_max_pixels" data-lang="u_ft_img_size" class="lang col-sm-4 control-label">max</label>
+							<div class="col-sm-8">
+								<input type="number" id="p_max_pixels" class="form-control">
+							</div>
+						</div>
+						<div class="form-group parameter_field p_rows">
+							<label for="p_rows" data-lang="ro_fr_rule" class="lang col-sm-4 control-label">rows</label>
+							<div class="col-sm-8">
+								<input type="number" id="p_rows" class="form-control">
+							</div>
+						</div>
+						<div class="form-group parameter_field p_start">
+							<label for="p_start" data-lang="c_start" class="lang col-sm-4 control-label">start</label>
+							<div class="col-sm-8">
+								<input type="number" id="p_start" class="form-control">
+							</div>
+						</div>
+						<div class="form-group parameter_field p_end">
+							<label for="p_end" data-lang="c_end" class="lang col-sm-4 control-label">end</label>
+							<div class="col-sm-8">
+								<input type="number" id="p_end" class="form-control">
+							</div>
+						</div>
+						<div class="form-group parameter_field p_step">
+							<label for="p_step" data-lang="c_step" class="lang col-sm-4 control-label">rows</label>
+							<div class="col-sm-8">
+								<input type="number" id="p_step" class="form-control">
+							</div>
+						</div>
+						<div class="form-group parameter_field p_randomize">
+							<div class="col-sm-offset-4 col-sm-8">
+								<div class="checkbox">
+									<label>
+										<input type="checkbox" id="p_randomize"><span class="lang" data-lang="c_random">random</span>
+									</label>
+								</div>
+							</div>
+						</div>
+						<div class="form-group parameter_field p_auto">
+							<div class="col-sm-offset-4 col-sm-8">
+								<div class="checkbox">
+									<label>
+										<input type="checkbox" id="p_auto"><span class="lang" data-lang="ed_ap"></span>
+									</label>
+								</div>
+							</div>
+						</div>
+						<div class="form-group parameter_field p_form_identifier">
+							<label for="p_form_identifier" data-lang="ed_sl" class="lang col-sm-4 control-label">survey</label>
+							<div class="col-sm-8">
+								<select id="p_form_identifier" class="form-control linkable_surveys"></select>
+							</div>
+						</div>
+						<div class="form-group parameter_field p_key_question">
+							<label for="p_key_question" id="p_key_question_label" class="col-sm-4 control-label">question</label>
+							<div class="col-sm-8">
+								<select id="p_key_question" class="form-control"></select>
+							</div>
+						</div>
+
+						<div class="form-group parameter_field p_ref">
+							<label for="p_ref" data-lang="ed_rf" class="lang col-sm-4 control-label">question</label>
+							<div class="col-sm-8">
+								<select id="p_ref" class="form-control"></select>
+							</div>
+						</div>
+
+						<div class="form-group parameter_field p_instance_order">
+							<label for="p_instance_order" data-lang="ed_io" class="lang col-sm-4 control-label">order</label>
+							<div class="col-sm-8">
+								<select id="p_instance_order" class="form-control">
+									<option class="lang" data-lang="c_forward" value="forward"></option>
+									<option class="lang" data-lang="c_rev" value="reverse"></option>
+								</select>
+							</div>
+						</div>
+
+						<div class="form-group parameter_field p_instance_count">
+							<label for="p_instance_count" data-lang="ed_ic" class="lang col-sm-4 control-label">count</label>
+							<div class="col-sm-8">
+								<input type="number" id="p_instance_count" class="form-control">
+							</div>
+						</div>
+
+						<div class="form-group parameter_field p_chart_type">
+							<label for="p_chart_type" data-lang="a_type" class="lang col-sm-4 control-label">type</label>
+							<div class="col-sm-8">
+								<select id="p_chart_type" class="form-control">
+									<option class="lang" data-lang="bar_h" value="horizontal_bar"></option>
+									<option class="lang" data-lang="line" value="line"></option>
+								</select>
+							</div>
+						</div>
+
+						<div class="form-group parameter_field p_key_policy">
+							<label for="p_key_policy" data-lang="ed_kp" class="lang col-sm-4 control-label">order</label>
+							<div class="col-sm-8">
+								<select id="p_key_policy" class="form-control">
+									<option class="lang" data-lang="c_append" value="append"></option>
+									<option class="lang" data-lang="c_merge" value="merge"></option>
+									<option class="lang" data-lang="c_replace" value="replace"></option>
+								</select>
+							</div>
+						</div>
+
+						<div class="form-group parameter_field p_stacked">
+							<div class="col-sm-offset-4 col-sm-8">
+								<div class="checkbox">
+									<label>
+										<input type="checkbox" id="p_stacked"><span class="lang" data-lang="stacked">stacked</span>
+									</label>
+								</div>
+							</div>
+						</div>
+
+						<div class="form-group parameter_field p_normalized">
+							<div class="col-sm-offset-4 col-sm-8">
+								<div class="checkbox">
+									<label>
+										<input type="checkbox" id="p_normalized"><span class="lang" data-lang="normalized">normalized</span>
+									</label>
+								</div>
+							</div>
+						</div>
+
+						<div class="form-group p_other">
+							<label for="p_other" data-lang="c_other" class="lang col-sm-4 control-label">other</label>
+							<div class="col-sm-8">
+								<input type="text" id="p_other" class="form-control">
+							</div>
+						</div>
+					</form>
+
+					<div id="parameter_msg" class="alert alert-danger" role="alert" style="display:none;"></div>
+
+				</div>
+
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_cancel">cancel</button>
+				<button id="parameterSave" type="button" class="btn btn-primary lang" data-lang="c_done">done</button>
+			</div>
+		</div>
+	</div>
+</div>
+
+<!-- Modal for setting appearances -->
+<div id="appearanceModal" class="modal fade" role="dialog" aria-labelledby="typeModalLabel" aria-hidden="true">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+				<h4 class="modal-title lang" data-lang="ed_appearance">appearance</h4>
+			</div>
+
+			<div class="modal-body">
+				<ul class="nav nav-pills" role="tablist">
+					<li id="standardTab" role="presentation" class="active"><a href="#" class="lang" data-lang="c_standard">standard</a></li>
+					<li id="searchTab" role="presentation"><a href="#" class="lang appearance_field a_search" data-lang="br_s">search</a></li>
+					<li id="pdfTab" role="presentation"><a href="#" class="lang" data-lang="ed_pdf_layout">pdf</a></li>
+				</ul>
+				<div id="standardPanel" class="appearancetab">
+					<div class="container-fluid">
+						<form id="appearance_form" role="form" class="form-horizontal">
+
+							<div class="form-group appearance_field a_page">
+								<label for="a_width" data-lang="ed_pl" class="lang col-sm-4 control-label">page</label>
+								<div class="col-sm-8">
+									<select id="a_page" class="form-control">
+										<option class="lang" data-lang="c_none" value=""></option>
+										<option class="lang" data-lang="c_field_list" value="field-list"></option>
+										<option class="lang" data-lang="c_table_list" value="table-list"></option>
+									</select>
+								</div>
+							</div>
+
+							<div class="form-group appearance_field a_image_type">
+								<label for="a_width" data-lang="ed_image_type" class="lang col-sm-4 control-label">image</label>
+								<div class="col-sm-8">
+									<select id="a_image_type" class="form-control">
+										<option class="lang" data-lang="c_photo" value=""></option>
+										<option class="lang" data-lang="c_annotate" value="annotate"></option>
+										<option class="lang" data-lang="c_draw" value="draw"></option>
+										<option class="lang" data-lang="wf_sig" value="signature"></option>
+									</select>
+								</div>
+							</div>
+
+							<div class="form-group appearance_field a_date_type">
+								<label for="a_width" data-lang="ed_date_type" class="lang col-sm-4 control-label">date</label>
+								<div class="col-sm-8">
+									<select id="a_date_type" class="form-control">
+										<option class="lang" data-lang="c_normal" value=""></option>
+										<option class="lang" data-lang="ed_nc" value="no-calendar"></option>
+										<option class="lang" data-lang="ed_my" value="month-year"></option>
+										<option class="lang" data-lang="c_year" value="year"></option>
+										<option class="lang" data-lang="ed_bikram" value="bikram-sambat"></option>
+										<option class="lang" data-lang="ed_coptic" value="coptic"></option>
+										<option class="lang" data-lang="ed_ethiopian" value="ethiopian"></option>
+										<option class="lang" data-lang="ed_islamic" value="islamic"></option>
+										<option class="lang" data-lang="ed_myanmar" value="myanmar"></option>
+									</select>
+								</div>
+							</div>
+
+							<div class="form-group appearance_field a_select1_type">
+								<label for="a_select1_type" data-lang="ed_select_type" class="lang col-sm-4 control-label"></label>
+								<div class="col-sm-8">
+									<select id="a_select1_type" class="form-control">
+										<option class="lang" data-lang="c_normal" value=""></option>
+										<option class="lang" data-lang="ed_min" value="minimal"></option>
+										<option class="lang" data-lang="ed_adv" value="quick"></option>
+										<option class="lang" data-lang="ed_ac" value="autocomplete"></option>
+										<option class="lang" data-lang="ed_compact" value="compact"></option>
+										<option class="lang" data-lang="ed_compact_adv" value="quickcompact"></option>
+										<option class="lang" data-lang="ed_image_map" value="image-map"></option>
+									</select>
+								</div>
+							</div>
+
+							<div class="form-group appearance_field a_select_type">
+								<label for="a_select_type" data-lang="ed_select_type" class="lang col-sm-4 control-label"></label>
+								<div class="col-sm-8">
+									<select id="a_select_type" class="form-control">
+										<option class="lang" data-lang="c_normal" value=""></option>
+										<option class="lang" data-lang="ed_min" value="minimal"></option>
+										<option class="lang" data-lang="ed_ac" value="autocomplete"></option>
+										<option class="lang" data-lang="ed_compact" value="compact"></option>
+										<option class="lang" data-lang="ed_image_map" value="image-map"></option>
+									</select>
+								</div>
+							</div>
+
+							<div class="form-group appearance_field a_number_columns">
+								<label for="a_number_columns" data-lang="ed_numb_cols" class="lang col-sm-4 control-label">cols</label>
+								<div class="col-sm-8">
+									<select id="a_number_columns" class="form-control">
+										<option class="lang" data-lang="max" value="">max</option>
+										<option value="1">1</option>
+										<option value="2">2</option>
+										<option value="3">3</option>
+										<option value="4">4</option>
+										<option value="5">5</option>
+										<option value="6">6</option>
+										<option value="7">7</option>
+										<option value="8">8</option>
+										<option value="9">9</option>
+										<option value="10">10</option>
+										<option value="11">11</option>
+										<option value="12">12</option>
+									</select>
+								</div>
+							</div>
+
+							<div class="form-group appearance_field a_no_calendar">
+								<div class="col-sm-offset-4 col-sm-8">
+									<div class="checkbox">
+										<label>
+											<input type="checkbox" id="a_no_calendar"><span class="lang" data-lang="ed_nc">no cal</span>
+										</label>
+									</div>
+								</div>
+							</div>
+
+							<div class="form-group appearance_field a_likert">
+								<div class="col-sm-offset-4 col-sm-8">
+									<div class="checkbox">
+										<label>
+											<input type="checkbox" id="a_likert"><span class="lang" data-lang="c_likert">likert</span>
+										</label>
+									</div>
+								</div>
+							</div>
+
+							<div class="form-group appearance_field a_placement-map">
+								<div class="col-sm-offset-4 col-sm-8">
+									<div class="checkbox">
+										<label>
+											<input type="checkbox" id="a_placement-map"><span class="lang" data-lang="ed_place_map"></span>
+										</label>
+									</div>
+								</div>
+							</div>
+
+							<div class="form-group appearance_field a_selfie">
+								<div class="col-sm-offset-4 col-sm-8">
+									<div class="checkbox">
+										<label>
+											<input type="checkbox" id="a_selfie"><span class="lang" data-lang="ed_selfie"></span>
+										</label>
+									</div>
+								</div>
+							</div>
+
+							<div class="form-group appearance_field a_new">
+								<div class="col-sm-offset-4 col-sm-8">
+									<div class="checkbox">
+										<label>
+											<input type="checkbox" id="a_new"><span class="lang" data-lang="ed_new"></span>
+										</label>
+									</div>
+								</div>
+							</div>
+
+							<div class="form-group appearance_field a_read_nfc">
+								<div class="col-sm-offset-4 col-sm-8">
+									<div class="checkbox">
+										<label>
+											<input type="checkbox" id="a_read_nfc"><span class="lang" data-lang="ed_read_nfc"></span>
+										</label>
+									</div>
+								</div>
+							</div>
+
+							<div class="form-group appearance_field a_rating">
+								<div class="col-sm-offset-4 col-sm-8">
+									<div class="checkbox">
+										<label>
+											<input type="checkbox" id="a_rating"><span class="lang" data-lang="ed_r">rating</span>
+										</label>
+									</div>
+								</div>
+							</div>
+
+							<div class="form-group appearance_field a_picker">
+								<div class="col-sm-offset-4 col-sm-8">
+									<div class="checkbox">
+										<label>
+											<input type="checkbox" id="a_picker"><span class="lang" data-lang="ed_pick">picker</span>
+										</label>
+									</div>
+								</div>
+							</div>
+
+							<div class="form-group appearance_field a_vertical">
+								<div class="col-sm-offset-4 col-sm-8">
+									<div class="checkbox">
+										<label>
+											<input type="checkbox" id="a_vertical"><span class="lang" data-lang="c_vertical">vertical</span>
+										</label>
+									</div>
+								</div>
+							</div>
+
+							<div class="form-group appearance_field a_bearing">
+								<div class="col-sm-offset-4 col-sm-8">
+									<div class="checkbox">
+										<label>
+											<input type="checkbox" id="a_bearing"><span class="lang" data-lang="ed_bear">bearing</span>
+										</label>
+									</div>
+								</div>
+							</div>
+
+							<div class="form-group appearance_field a_numbers">
+								<div class="col-sm-offset-4 col-sm-8">
+									<div class="checkbox">
+										<label>
+											<input type="checkbox" id="a_numbers"><span class="lang" data-lang="ed_sn">numbers</span>
+										</label>
+									</div>
+								</div>
+							</div>
+
+							<div class="form-group appearance_field a_sep">
+								<div class="col-sm-offset-4 col-sm-8">
+									<div class="checkbox">
+										<label>
+											<input type="checkbox" id="a_sep"><span class="lang" data-lang="ed_sep">sep</span>
+										</label>
+									</div>
+								</div>
+							</div>
+
+							<div class="form-group appearance_field a_width">
+								<label for="a_width" data-lang="ed_w" class="lang col-sm-4 control-label">order</label>
+								<div class="col-sm-8">
+									<select id="a_width" class="form-control">
+										<option class="lang" data-lang="max" value="">max</option>
+										<option value="1">1</option>
+										<option value="2">2</option>
+										<option value="3">3</option>
+										<option value="4">4</option>
+										<option value="5">5</option>
+										<option value="6">6</option>
+										<option value="7">7</option>
+										<option value="8">8</option>
+										<option value="9">9</option>
+										<option value="10">10</option>
+										<option value="11">11</option>
+										<option value="12">12</option>
+									</select>
+								</div>
+							</div>
+
+							<div class="form-group">
+								<div class="col-sm-offset-4 col-sm-8">
+									<div class="checkbox">
+										<label>
+											<input type="checkbox" id="a_hidden"><span class="lang" data-lang="ed_hidden">hide</span>
+										</label>
+									</div>
+								</div>
+							</div>
+
+							<div class="form-group a_other">
+								<label for="p_other" data-lang="c_other" class="lang col-sm-4 control-label">other</label>
+								<div class="col-sm-8">
+									<input type="text" id="a_other" class="form-control">
+								</div>
+							</div>
+						</form>
+					</div>
+				</div>
+
+				<div id="pdfPanel" style="display:none;" class="appearancetab">
+					<form id="appearance_pdf_form" role="form" class="form-horizontal">
+
+						<div class="form-group">
+							<div class="col-sm-offset-4 col-sm-8">
+								<div class="checkbox">
+									<label>
+										<input type="checkbox" id="a_pdfno"><span class="lang" data-lang="ed_pdfno">hide</span>
+									</label>
+								</div>
+							</div>
+						</div>
+
+						<div class="form-group pdf_appearance_field">
+							<label for="a_pdf_lw" data-lang="ed_lw" class="lang col-sm-4 control-label">width</label>
+							<div class="col-sm-8">
+								<select id="a_pdf_lw" class="form-control">
+									<option class="lang" data-lang="c_default" value="">default</option>
+									<option value="1">1</option>
+									<option value="2">2</option>
+									<option value="3">3</option>
+									<option value="4">4</option>
+									<option value="5">5</option>
+									<option value="6">6</option>
+									<option value="7">7</option>
+									<option value="8">8</option>
+									<option value="9">9</option>
+									<option value="10">10</option>
+								</select>
+							</div>
+						</div>
+
+						<div class="form-group pdf_appearance_field">
+							<label for="a_pdfheight" data-lang="ed_height" class="lang col-sm-4 control-label">height</label>
+							<div class="col-sm-8">
+								<input type="number" id="a_pdfheight">
+							</div>
+						</div>
+
+						<div class="well pdf_appearance_field">
+							<div class="form-group pdf_appearance_field">
+								<p class="lang" data-lang="ed_pdfcols_help"></p>
+								<label for="a_pdfcols_number" data-lang="ed_numb_cols" class="lang col-sm-4 control-label">width</label>
+								<div class="col-sm-8">
+									<select id="a_pdfcols_number" class="form-control">
+										<option class="lang" data-lang="c_default" value="">default</option>
+										<option value="1">1</option>
+										<option value="2">2</option>
+										<option value="3">3</option>
+										<option value="4">4</option>
+										<option value="5">5</option>
+										<option value="6">6</option>
+										<option value="7">7</option>
+										<option value="8">8</option>
+										<option value="9">9</option>
+										<option value="10">10</option>
+									</select>
+								</div>
+							</div>
+
+							<div class="form-group pdfcols pdfcols1">
+								<label id="a_pdfcols_1_l" for="a_pdfcols_1" class="col-sm-4 control-label"></label>
+								<div class="col-sm-8">
+									<input type="number" id="a_pdfcols_1">
+								</div>
+							</div>
+
+							<div class="form-group pdfcols pdfcols2">
+								<label id="a_pdfcols_2_l" for="a_pdfcols_2" class="col-sm-4 control-label"></label>
+								<div class="col-sm-8">
+									<input type="number" id="a_pdfcols_2">
+								</div>
+							</div>
+
+							<div class="form-group pdfcols pdfcols3">
+								<label id="a_pdfcols_3_l" for="a_pdfcols_3" class="col-sm-4 control-label"></label>
+								<div class="col-sm-8">
+									<input type="number" id="a_pdfcols_3">
+								</div>
+							</div>
+
+							<div class="form-group pdfcols pdfcols4">
+								<label id="a_pdfcols_4_l" for="a_pdfcols_4" class="col-sm-4 control-label"></label>
+								<div class="col-sm-8">
+									<input type="number" id="a_pdfcols_4">
+								</div>
+							</div>
+
+							<div class="form-group pdfcols pdfcols5">
+								<label id="a_pdfcols_5_l" for="a_pdfcols_5" class="col-sm-4 control-label"></label>
+								<div class="col-sm-8">
+									<input type="number" id="a_pdfcols_5">
+								</div>
+							</div>
+
+							<div class="form-group pdfcols pdfcols6">
+								<label id="a_pdfcols_6_l" for="a_pdfcols_6" class="col-sm-4 control-label"></label>
+								<div class="col-sm-8">
+									<input type="number" id="a_pdfcols_6">
+								</div>
+							</div>
+
+							<div class="form-group pdfcols pdfcols7">
+								<label id="a_pdfcols_7_l" for="a_pdfcols_7" class="col-sm-4 control-label"></label>
+								<div class="col-sm-8">
+									<input type="number" id="a_pdfcols_7">
+								</div>
+							</div>
+
+							<div class="form-group pdfcols pdfcols8">
+								<label id="a_pdfcols_8_l" for="a_pdfcols_8" class="col-sm-4 control-label"></label>
+								<div class="col-sm-8">
+									<input type="number" id="a_pdfcols_8">
+								</div>
+							</div>
+
+							<div class="form-group pdfcols pdfcols9">
+								<label id="a_pdfcols_9_l" for="a_pdfcols_9" class="col-sm-4 control-label"></label>
+								<div class="col-sm-8">
+									<input type="number" id="a_pdfcols_9">
+								</div>
+							</div>
+
+							<div class="form-group pdfcols pdfcols10">
+								<label id="a_pdfcols_10_l" for="a_pdfcols_10" class="col-sm-4 control-label"></label>
+								<div class="col-sm-8">
+									<input type="number" id="a_pdfcols_10">
+								</div>
+							</div>
+
+
+						</div>
+
+						<div class="form-group pdf_appearance_field">
+							<label for="a_pdflabelbg" data-lang="ed_bgc" class="lang control-label col-sm-4">background</label>
+							<div class="col-sm-6">
+								<div id="a_pdflabelbg" class="input-group colorpicker-component">
+									<input type="text" value="#ffffff" class="form-control" />
+									<span class="input-group-addon"><i></i></span>
+								</div>
+							</div>
+						</div>
+
+						<div class="form-group pdf_appearance_field">
+							<label for="a_pdfvaluebg" data-lang="ed_vbgc" class="lang control-label col-sm-4">value background</label>
+							<div class="col-sm-6">
+								<div id="a_pdfvaluebg" class="input-group colorpicker-component">
+									<input type="text" value="#ffffff" class="form-control" />
+									<span class="input-group-addon"><i></i></span>
+								</div>
+							</div>
+						</div>
+
+						<div class="form-group pdf_appearance_field">
+							<label for="a_pdfmarkercolor" data-lang="ed_mc" class="lang control-label col-sm-4">value background</label>
+							<div class="col-sm-6">
+								<div id="a_pdfmarkercolor" class="input-group colorpicker-component">
+									<input type="text" value="#ffffff" class="form-control" />
+									<span class="input-group-addon"><i></i></span>
+								</div>
+							</div>
+						</div>
+
+						<div class="form-group pdf_appearance_field">
+							<label for="a_pdfspace" data-lang="ed_sa" class="lang col-sm-4 control-label">space</label>
+							<div class="col-sm-8">
+								<input type="number" id="a_pdfspace">
+							</div>
+						</div>
+
+						<div class="form-group pdf_appearance_field">
+							<div class="col-sm-offset-4 col-sm-8">
+								<div class="checkbox">
+									<label>
+										<input type="checkbox" id="a_pdfnewpage"><span class="lang" data-lang="ed_npb">hide</span>
+									</label>
+								</div>
+							</div>
+						</div>
+
+						<div class="form-group pdf_appearance_field">
+							<div class="col-sm-offset-4 col-sm-8">
+								<div class="checkbox">
+									<label>
+										<input type="checkbox" id="a_pdflabelcaps"><span class="lang" data-lang="ed_caps"></span>
+									</label>
+								</div>
+							</div>
+						</div>
+
+						<div class="form-group pdf_appearance_field">
+							<div class="col-sm-offset-4 col-sm-8">
+								<div class="checkbox">
+									<label>
+										<input type="checkbox" id="a_pdflabelbold"><span class="lang" data-lang="ed_l_bold"></span>
+									</label>
+								</div>
+							</div>
+						</div>
+
+						<div class="form-group">	<!-- This appearance is never hidden because it can apply to a hidden question -->
+							<label for="a_pdfaddto" class="col-sm-4 control-label lang" data-lang="ed_add_to"></label>
+							<div class="col-sm-8">
+								<select id="a_pdfaddto" class="form-control"></select>
+							</div>
+						</div>
+
+						<div class="form-group pdf_appearance_field">
+							<div class="col-sm-offset-4 col-sm-8">
+								<div class="checkbox">
+									<label>
+										<input type="checkbox" id="a_pdfapp"><span class="lang" data-lang="ed_app"></span>
+									</label>
+								</div>
+							</div>
+						</div>
+
+						<div class="form-group pdf_appearance_field. a_pdfhyperlink">
+							<div class="col-sm-offset-4 col-sm-8">
+								<div class="checkbox">
+									<label>
+										<input type="checkbox" id="a_pdfhyperlink"><span class="lang" data-lang="ed_hyperlink"></span>
+									</label>
+								</div>
+							</div>
+						</div>
+
+						<div class="form-group pdf_appearance_field">
+							<div class="col-sm-offset-4 col-sm-8">
+								<div class="checkbox">
+									<label>
+										<input type="checkbox" id="a_pdfbarcode"><span class="lang" data-lang="ed_barcode"></span>
+									</label>
+								</div>
+							</div>
+						</div>
+
+					</form>
+				</div>
+
+				<div id="searchPanel" style="display:none;" class="appearancetab">
+					<form id="appearance_search_form" role="form" class="form-horizontal">
+
+						<div class="form-group">
+							<label for="a_width" data-lang="c_source" class="lang col-sm-4 control-label">source</label>
+							<div class="col-sm-8" id="a_source">
+								<div class="radio">
+									<label>
+										<input type="radio" name="search_source" value="worksheet" checked="checked"><span class="lang" data-lang="ed_cws"></span>
+									</label>
+								</div>
+								<div class="radio">
+									<label>
+										<input type="radio" name="search_source" value="csv"><span class="lang" data-lang="c_csv"></span>
+									</label>
+								</div>
+								<div class="radio">
+									<label>
+										<input type="radio" name="search_source" value="survey"><span class="lang" data-lang="c_survey"></span>
+									</label>
+								</div>
+							</div>
+						</div>
+
+
+						<div class="appearance_search_details" style="display:none;">
+
+							<div class="form-group search_csv">
+								<label for="a_csv_identifier" data-lang="ed_csv" class="lang col-sm-4 control-label">file</label>
+								<div class="col-sm-8">
+									<select id="a_csv_identifier" class="form-control linkable_files"></select>
+								</div>
+							</div>
+
+							<div class="form-group search_survey">
+								<label for="a_survey_identifier" data-lang="c_survey" class="lang col-sm-4 control-label">survey</label>
+								<div class="col-sm-8">
+									<select id="a_survey_identifier" class="form-control linkable_surveys"></select>
+								</div>
+							</div>
+
+
+							<div class="form-group search_value a_choice_values">
+								<label for="a_search_value" data-lang="ed_cval" class="lang col-sm-4 control-label"></label>
+								<div class="col-sm-8">
+									<select id="a_search_value" class="form-control column_select"></select>
+								</div>
+							</div>
+
+							<div class="well a_choice_values" style="display:none;">
+								<div class="form-group search_label">
+									<label data-lang="ed_clabs" class="lang col-sm-4 control-label"></label>
+								</div>
+
+								<div id="search_label_list">
+
+								</div>
+							</div>
+
+							<div class="form-group a_filter_column">
+								<label for="a_filter_column" data-lang="ed_fc" class="lang col-sm-4 control-label">filter column</label>
+								<div class="col-sm-8">
+									<select id="a_filter_column" class="form-control column_select"></select>
+								</div>
+							</div>
+
+							<div class="form-group has_filter">
+								<label for="a_match" data-lang="ed_m" class="lang col-sm-4 control-label">match</label>
+								<div class="col-sm-8">
+									<select id="a_match" class="form-control">
+										<option class="lang" data-lang="c_none" value=""></option>
+										<option class="lang" data-lang="c_matches" value="matches"></option>
+										<option class="lang" data-lang="contains" value="contains"></option>
+										<option class="lang" data-lang="startsWith" value="startsWith"></option>
+										<option class="lang" data-lang="endsWith" value="endsWith"></option>
+										<option class="lang" data-lang="c_in" value="in"></option>
+										<option class="lang" data-lang="c_notin" value="not in"></option>
+									</select>
+								</div>
+							</div>
+
+							<div class="form-group has_filter">
+								<label for="a_filter_value" data-lang="ed_fv" class="lang control-label col-sm-4"></label>
+								<div class="col-sm-8">
+									<div class="input-group mb-3">
+										<div id="a_filter_value" class="input-group-prepend">
+											<select id="a_filter_value_sel" class="custom-select questions_in_form"></select>
+											<input type="text" id="a_filter_value_static">
+										</div>
+									</div>
+								</div>
+							</div>
+
+							<div class="form-group a_second_filter_column">
+								<label for="a_second_filter_column" data-lang="ed_sfc" class="lang col-sm-4 control-label">second filter</label>
+								<div class="col-sm-8">
+									<select id="a_second_filter_column" class="form-control column_select"></select>
+								</div>
+							</div>
+
+							<div class="form-group has_second_filter">
+								<label for="a_filter_value" data-lang="ed_sfv" class="lang control-label col-sm-4"></label>
+								<div class="col-sm-8">
+									<div class="input-group mb-3">
+										<div id="a_second_filter_value" class="input-group-prepend">
+											<select id="a_second_filter_value_sel" class="custom-select questions_in_form"></select>
+											<input type="text" id="a_second_filter_value_static">
+										</div>
+									</div>
+								</div>
+							</div>
+
+
+						</div>
+					</form>
+				</div>
+
+				<div id="appearance_msg" class="alert alert-danger" role="alert" style="display:none;"></div>
+
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_cancel">cancel</button>
+				<button id="appearanceSave" type="button" class="btn btn-primary lang" data-lang="c_done">done</button>
+			</div>
 		</div>
 	</div>
 </div>
 
 <!-- Modal to add/remove a filter -->
-<div id="filterModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="filterModalLabel" aria-hidden="true">
+<div id="filterModal" class="modal fade" role="dialog" aria-labelledby="filterModalLabel" aria-hidden="true">
 	<div class="modal-dialog">
-   		<div class="modal-content">
-   			<div class="modal-header">
-     			<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-     			<h4 class="modal-title lang" id="filterModalLabel" data-lang="c_filter">filter</h4>
-   			</div>
-   			
-   			<div class="modal-body">
-   				<div class="container-fluid">
-		  			<form role="form" class="form-horizontal">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+				<h4 class="modal-title lang" id="filterModalLabel" data-lang="c_filter">filter</h4>
+			</div>
+
+			<div class="modal-body">
+				<div class="container-fluid">
+					<form role="form" class="form-horizontal">
 						<div class="form-group">
 							<label for="filter_name" data-lang="c_name" class="lang col-sm-2 control-label">name</label>
 							<div class="col-sm-10">
@@ -622,30 +1452,30 @@
 							</div>
 						</div>
 					</form>
-		  		</div>
-	    		
+				</div>
+
 			</div>
 			<div class="modal-footer">
-        		<button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_close">close</button>
-        		<button id="filterModalSave" type="button" data-dismiss="modal" class="btn btn-primary lang" data-lang="c_save">save</button>
-      		</div>
+				<button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_close">close</button>
+				<button id="filterModalSave" type="button" data-dismiss="modal" class="btn btn-primary lang" data-lang="c_save">save</button>
+			</div>
 		</div>
 	</div>
 </div>
 
 
 <!-- Model to edit languages -->
-<div id="editLanguageModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="editLanguageLabel" aria-hidden="true">
+<div id="editLanguageModal" class="modal fade" role="dialog" aria-labelledby="editLanguageLabel" aria-hidden="true">
 	<div class="modal-dialog">
-   		<div class="modal-content">
-   			<div class="modal-header">
-     			<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-     			<h4 class="modal-title lang" data-lang="c_langs" id="editLanguageLabel">lang</h4>
-   			</div>
-   			
-   			<div class="modal-body">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+				<h4 class="modal-title lang" data-lang="c_langs" id="editLanguageLabel">lang</h4>
+			</div>
+
+			<div class="modal-body">
 				<div class="container-fluid">
-					<div class = "well">					
+					<div class = "well">
 						<div class="table-responsive">
 							<div id="language_edit_list"></div>
 						</div>
@@ -656,28 +1486,30 @@
 					</div>
 				</div>
 			</div>
-			
+
 			<div class="modal-footer">
-        		<button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_close">Close</button>
-        		<button id="editLanguageSave" type="button" class="btn btn-primary lang" data-lang="c_save">Save</button>
-      		</div>
+				<button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_close">Close</button>
+				<button id="editLanguageSave" type="button" class="btn btn-primary lang" data-lang="c_save">Save</button>
+			</div>
 		</div>
 	</div>
-		
+
 </div>
 
 <!-- Model to edit pull data settings -->
-<div id="pulldataModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="pulldataLabel" aria-hidden="true">
+<div id="pulldataModal" class="modal fade" role="dialog" aria-labelledby="pulldataLabel" aria-hidden="true">
 	<div class="modal-dialog">
-   		<div class="modal-content">
-   			<div class="modal-header">
-     			<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-     			<h4 class="modal-title lang" data-lang="c_pulldata" id="pulldataLabel">pulldata</h4>
-   			</div>
-   			
-   			<div class="modal-body">
+		<div class="modal-content">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+				<h4 class="modal-title lang" data-lang="c_pulldata_r" id="pulldataLabel">pulldata</h4>
+			</div>
+
+			<p id="pulldata_key_desc"></p>
+
+			<div class="modal-body">
 				<div class="container-fluid">
-					<div class = "well">					
+					<div class = "well">
 						<div class="table-responsive">
 							<div id="pulldata_edit_list"></div>
 						</div>
@@ -688,86 +1520,15 @@
 					</div>
 				</div>
 			</div>
-			
+
 			<div class="modal-footer">
-        		<button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_close">Close</button>
-        		<button id="pulldataSave" type="button" class="btn btn-primary lang" data-lang="c_save">Save</button>
-      		</div>
-		</div>
-	</div>
-		
-</div>
-
-
-<!-- Modal to allow the user to edit their own details -->
-<div id="modify_me_popup" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="modifyMeLabel" aria-hidden="true">
-	<div class="modal-dialog">
-   		<div class="modal-content">
-   			<div class="modal-header">
-     			<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-     			<h4 class="modal-title" id="modifyMeLabel">New message</h4>
-   			</div>
-		     <div class="modal-body">
-				<form role="form" class="form-horizontal" id="me_edit_form">
-					<div class="form-group">
-						<label for="me_name" data-lang="c_name" class="lang col-sm-2 control-label">Name</label>
-						<div class="col-sm-10">
-							<input type="text" id="me_name" required class="form-control">
-						</div>
-					</div>
-					<div class="form-group">
-						<label for="me_language" data-lang="c_lang" class="lang col-sm-2 control-label">Language</label>
-						<div class="col-sm-10">
-							<select id="me_language" class="language_select form-control"></select>
-						</div>
-					</div>
-					<div class="form-group">
-						<label for="me_email" data-lang="c_email" class="lang col-sm-2 control-label">Email</label>
-						<div class="col-sm-10">
-							<input type="email" class="form-control" id="me_email" 
-									placeholder="Enter email" 
-									pattern="^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$">
-						</div>
-					</div>
-					<div id="reset_me_password_fields" style="display:none;">
-						<div class="form-group">
-							<div class="col-sm-offset-2 col-sm-10">
-								<div class="checkbox">
-									<label>
-										<input type="checkbox" id="reset_me_password"><span data-lang="c_r_p" class="lang">Reset Password</span>
-									</label>
-								</div>
-							</div>
-						</div>
-					</div>
-					<div id="password_me_fields" style="display:none;">
-						<div class="form-group">
-							<label for="me_password" data-lang="c_password" class="lang col-sm-2 control-label">Password</label>
-							<div class="col-sm-10">
-								<input id="me_password" type="password" placeholder="Password" class="form-control">
-							</div>
-						</div>	
-						<div class="form-group">
-							<label for="me_password_confirm" data-lang="c_c_p" class="lang col-sm-2 control-label">Confirm Password</label>
-							<div class="col-sm-10">
-								<input id="me_password_confirm" type="password" placeholder="Password" class="form-control">
-							</div>
-						</div>	
-					</div>		
-				</form>	
+				<button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_close">Close</button>
+				<button id="pulldataSave" type="button" class="btn btn-primary lang" data-lang="c_save">Save</button>
 			</div>
-
-			<div class="modal-footer">
-            	<button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_close">Close</button>
-            	<button id="userProfileLogout"type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_logout">Logout</button>
-            	<button id="userProfileSave" type="button" class="btn btn-primary lang" data-dismiss="modal" data-lang="c_save">Save</button>
-        	</div>
 		</div>
 	</div>
+
 </div>
 
-<script>
-	setCustomEdit();
-</script>
 </body>
 </html>

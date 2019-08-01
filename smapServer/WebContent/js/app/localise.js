@@ -31,7 +31,8 @@ define(['jquery', 'i18n!lang_location/nls/lang'], function($, lang) {
 		
 		
 		setlang: function () {
-			
+
+			// Content
 			$(".lang").each(function(index) {
 				var $this = $(this);
 				var code = $this.data("lang");
@@ -39,14 +40,28 @@ define(['jquery', 'i18n!lang_location/nls/lang'], function($, lang) {
 					$this.html(lang[code]);
 				}
 			});
+
+			// tooltips
+			$(".lang_tt").each(function(index) {
+				var $this = $(this);
+				var code = $this.data("lang_tt");
+				if(code) {
+					$this.prop("title", lang[code]);
+				}
+			});
+
+			// placeholders
+			$(".lang_ph").each(function(index) {
+				var $this = $(this);
+				var code = $this.data("lang_ph");
+				if(code) {
+					$this.prop("placeholder", lang[code]);
+				}
+			});
+
 			if(typeof responsiveMobileMenu === "function") {
 				rmmResizeLabels();		// Resize menus
 			}
-			
-			// Set RTL
-			//if(gUserLocale && gUserLocale === "ar") {
-			//	$('html').attr("dir", "rtl").attr("lang", "ar");
-			//	}
 		},
 		set: lang,
 		dt: function() {

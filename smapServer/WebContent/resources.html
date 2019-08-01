@@ -28,10 +28,11 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 	<link rel="stylesheet" href="/css/bootstrap.min.css" /> 
 	<link type="text/css" rel=StyleSheet href="/css/smap-bs.css">															 
 	    
-    <title>Shared Resources</title>
+    <title class="lang" data-lang="m_resources"></title>
     
     <script type="text/javascript"> if (!window.console) console = {log: function() {}}; </script>
 	<script src="/js/libs/modernizr.js"></script>
+	<script src="/js/app/theme-nobody.js"></script>
 	<script src="/js/app/custom.js"></script>  <!-- Override this in custom code to apply changes at run time -->
     <script data-main="js/resources" src="js/libs/require.js"></script>
         
@@ -49,7 +50,7 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 	      </button>
 	      <a href="#" class="navbar-brand">
 	      	<span class="glyphicon glyphicon-wrench" aria-hidden="true"></span>
-	     	<span class="lang" data-lang="m_resources">resources</span>
+	     	<span class="lang" data-lang="m_resources"></span>
 	      </a>
 	    </div>
 		<nav class="collapse navbar-collapse" role="navigation">
@@ -60,16 +61,16 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
           		<ul class="dropdown-menu" role="menu">
             		<li><a class="lang" data-lang="m_home" href="/?loggedin=yes">home</a></li>
             		<li class="restrict_role admin_role analyst_role"><a href="/edit.html"><span class="lang" data-lang="c_edit">Edit</span><span class="glyphicon glyphicon-edit pull-right"></span></a></li>
-            		<li class="disabled restrict_role admin_role analyst_role"><a href="/fieldManager/templateManagement.html"><span class="lang" data-lang="m_admin">Admin</span><span class="glyphicon glyphicon-wrench pull-right"></span></a></li>
-            		<li class="restrict_role enum_role"><a href="/webForm.html"><span class="lang" data-lang="m_data_mod" >Web Forms</span><span class="glyphicon glyphicon-globe pull-right"></span></a></li>
-            		<li class="restrict_role analyst_role"><a href="/fieldAnalysis/index.html"><span class="lang" data-lang="m_analysis">Analysis</span><span class="glyphicon glyphicon-stats pull-right"></span></a></li>   
-            		<li class="restrict_role admin_role analyst_role bus_only"><a href="/tasks/taskManagement.html"><span class="nav-label lang" data-lang="m_assign">assign</span><span class="glyphicon glyphicon-tasks pull-right"></span></a></li>   
+            		<li class="disabled restrict_role admin_role analyst_role"><a href="/fieldManager/surveyManagement.html"><span class="lang" data-lang="m_admin">Admin</span><span class="glyphicon glyphicon-wrench pull-right"></span></a></li>
+            		<li class="restrict_role enum_role"><a href="/webForm.html"><span class="lang" data-lang="m_console" ></span><span class="glyphicon glyphicon-globe pull-right"></span></a></li>
+            		<li class="restrict_role analyst_role data_role"><a href="/fieldAnalysis/index.html"><span class="lang" data-lang="m_analysis">Analysis</span><span class="glyphicon glyphicon-stats pull-right"></span></a></li>
+            		<li class="restrict_role admin_role analyst_role"><a href="/tasks/taskManagement.html"><span class="nav-label lang" data-lang="m_assign">assign</span><span class="glyphicon glyphicon-tasks pull-right"></span></a></li>
+					<li class="restrict_role billing_role" style="display:none;"><a href="/fieldManager/billing.html"><span class="nav-label lang" data-lang="m_billing">billing</span><span class="glyphicon glyphicon-usd pull-right"></span></a></li>
           		</ul>
         	</li>      
-        	<li id="m_tm" class="restrict_role admin_role analyst_role"><a class="lang" data-lang="m_tm" href="/fieldManager/templateManagement.html">Forms</a></li>     
+        	<li id="m_tm" class="restrict_role admin_role analyst_role"><a class="lang" data-lang="m_tm" href="/fieldManager/surveyManagement.html">Forms</a></li>
 			<li id="m_user" class="restrict_role admin_role"><a class="lang" data-lang="m_user" href="/fieldManager/userManagement.html">Users</a></li>
 			<li id="m_monitor" class="restrict_role admin_role analyst_role"><a class="lang" data-lang="m_monitor" href="/fieldManager/monitor.html">Monitoring</a></li>
-			<li id="m_assign_pub" class="restrict_role analyst_role public_only" style="display:none"><a class="lang" data-lang="m_assign" href="/fieldManager/assignments.html">Tasks</a></li>
 			<li id="m_help"><a class="lang" data-lang="m_help" href="https://docs.google.com/folderview?id=0B5_SmpWlQYxvNExwSFV5X051Yjg&usp=docslist_api#" target="_blank">Help</a></li>
 	        <li>
 	         	<a id="username" type="button" class="btn btn-default" data-toggle="modal" data-target="#modify_me_popup" aria-label="User">
@@ -87,12 +88,12 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
     <ul class="nav nav-pills tab_controls" role="tablist">
         <li id="mediaTab" role="presentation" class="active"><a href="#" class="lang" data-lang="sr_res">images</a></li>
         <li id="mapTab" role="presentation"><a href="#" class="lang" data-lang="c_maps">maps</a></li>
-        <li id="nfcTab" class="bus_only" role="presentation"><a href="#" class="lang" data-lang="sr_nfc">tags</a></li>  <!-- Hidden unless business server -->
-        <li id="crTab" class="bus_only" role="presentation"><a href="#" class="lang" data-lang="sr_cr">os</a></li>  <!-- Hidden unless business server -->
+		<li id="locationTab" role="presentation"><a href="#" class="lang" data-lang="c_location"></a></li>
+		<!--<li id="crTab" role="presentation"><a href="#" class="lang" data-lang="sr_cr">os</a></li>-->
     
     </ul>
     
-    <div id="mediaPanel" >
+    <div class="resourcePanel" id="mediaPanel" >
 		<div class="container">
 			   	<!-- The file upload form used as target for the file upload widget -->
    				<form enctype="multipart/form-data" name="fileupload">
@@ -105,12 +106,12 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 	
 	                		<input name="files" title="Add files..." class="file-inputs" type="file" multiple
 	                			accept="image/png, image/jpeg, image/gif, video/3gpp, video/mp4, audio/mpeg, 
-	                			audio/mp3, audio/mp4, audio/x-wav, text/csv, .geojson,
+	                			audio/mp3, audio/mp4, audio/x-wav, text/csv, .geojson, .json,
 								application/zip,application/octet-stream,application/x-zip,application/x-zip-compressed,
 								application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,
-								application/vnd.ms-excel">
+								application/vnd.ms-excel, image/svg+xml">
 	                
-	                		<button type="button" id="submitFiles" class="btn btn-primary">
+	                		<button type="button" id="submitFiles" class="submitFiles btn btn-primary">
 	                    		<i class="glyphicon glyphicon-upload"></i>
 	                    		<span class="lang" data-lang="c_upload">upload</span>
 	                		</button>
@@ -169,7 +170,7 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 		</div>
 	</div>
 		
-	<div id="mapPanel" style="display:none;">
+	<div class="resourcePanel" id="mapPanel" style="display:none;">
 		<div class="container">
 			<div class = "well">	
 				<a id="addMap" type="button" class="btn btn-default lang" data-lang="msg_add_map" aria-label="Add Map">add</a>
@@ -180,10 +181,10 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 		</div>
     </div>
     
-    <div id="nfcPanel" style="display:none;">
+    <div class="resourcePanel" id="locationPanel" style="display:none;">
 		<div class="container">
 		  	<!-- The file upload form used as target for the file upload widget -->
-  			<form enctype="multipart/form-data" name="nfcupload">
+  			<form enctype="multipart/form-data" name="locationupload">
       
        			<!-- The fileupload-buttonbar contains buttons to add files and start/cancel the upload -->
        			<div class="row fileupload-buttonbar mediaManage">
@@ -193,7 +194,7 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
                 		<input name="files" title="Add files..." class="file-inputs" type="file"
                 			accept="application/vnd.ms-excel, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">
                 
-                		<button type="button" id="submitNfcFiles" class="btn btn-primary">
+                		<button type="button" id="submitLocationFiles" class="submitFiles btn btn-primary">
                     		<i class="glyphicon glyphicon-upload"></i>
                     		<span class="lang" data-lang="c_upload">upload</span>
                 		</button>
@@ -201,7 +202,7 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
                     		<i class="glyphicon glyphicon-ban-circle"></i>
                     		<span class="lang" data-lang="c_cancel">cancel</span>
                 		</button>
-                		<button type="button" id="downloadNfcFiles" class="btn btn-primary">
+                		<button type="button" id="downloadLocationFiles" class="btn btn-primary">
                     		<i class="glyphicon glyphicon-download"></i>
                     		<span class="lang" data-lang="c_download">download</span>
                 		</button>
@@ -226,43 +227,78 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 			<!-- Status -->
 			<div class="upload_file_msg alert alert-success mediaManage" role="alert"></div>
 		   
-			<!-- The container for the uploaded Survey files -->
-			<div id="nfcListPanel" class="col-lg-10">
-		    	<h4 class="lang" data-lang="sr_fn">file</h4>
-						    
-				<div class="table-responsive">
-		   			<table role="presentation" class="table table-striped col-md-10">
-		   				<thead>
-		   					<tr>
-		   						<th class="lang" data-lang="c_type">type</th>
-		   						<th class="lang" data-lang="sr_g">group</th>
-		   						<th>UID</th>
-		   						<th class="lang" data-lang="c_name">name</th>
-		   					</tr>
-		   				</thead>
-		   				<tbody id="nfcList">
-		   				</tbody>
-		    		</table>
-		    	</div>
+			<!-- The container for the uploaded location files -->
+			<div id="locationListPanel" class="col-lg-10">
+				<div class="row">
+					<form role="form">
+						<div class="form-group">
+							<div class="col-sm-offset-4 col-sm-8">
+								<div class="checkbox">
+									<label>
+										<input type="checkbox" id="includeNfc" checked="checked"><span data-lang="sr_nfc" class="lang"></span>
+									</label>
+								</div>
+							</div>
+						</div>
+						<div class="form-group">
+							<div class="col-sm-offset-4 col-sm-8">
+								<div class="checkbox">
+									<label>
+										<input type="checkbox" id="includeGeo" checked="checked"><span data-lang="sr_geo" class="lang"></span>
+									</label>
+								</div>
+							</div>
+						</div>
+						<div class="form-group">
+							<label class="lang col-sm-4 control-label" data-lang="sr_g" for="location_group"></label>
+							<div class="col-sm-8">
+								<select class="location_group_list form-control" id="location_group"></select>
+							</div>
+						</div>
+					</form>
+				</div>
+
+				<div class="row">
+					<div class="table-responsive">
+						<table role="presentation" class="table table-striped col-md-10">
+							<thead>
+								<tr>
+									<th class="lang" data-lang="c_type"></th>
+									<th class="lang" data-lang="sr_g"></th>
+									<th>UID</th>
+									<th class="lang" data-lang="c_name"></th>
+									<th class="lang" data-lang="c_lat"></th>
+									<th class="lang" data-lang="c_lon"></th>
+								</tr>
+							</thead>
+							<tbody id="locationList">
+							</tbody>
+						</table>
+					</div>
+				</div>
 	    	</div>
 		</div>
     </div>
+
+
+	<!--
+    <div class="resourcePanel"  id="crPanel" style="display:none;">
     
-    <div id="crPanel" style="display:none;">
-    
-    <div class="container">
-		
-    	<div class="container">
-    		<div class="panel_msg upload_file_msg alert alert-success mediaManage" role="alert"></div>
-			<div class = "well">	
-				<a id="addReport" type="button" class="btn btn-default lang" data-lang="c_add" aria-label="Add Report">add</a>
-				<div class="table-responsive">
-					<div id = "cr_list"></div>
-						
+		<div class="container">
+
+			<div class="container">
+				<div class="panel_msg upload_file_msg alert alert-success mediaManage" role="alert"></div>
+				<div class = "well">
+					<a id="addReport" type="button" class="btn btn-default lang" data-lang="c_add" aria-label="Add Report">add</a>
+					<div class="table-responsive">
+						<div id = "cr_list"></div>
+
+					</div>
 				</div>
 			</div>
 		</div>
-    </div>
+	</div>
+	-->
 </div>
 
 <!-- Popup to allow the user to add a map -->
@@ -393,77 +429,6 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 		</div>
 	</div>
 </div>
-    
-<!-- Popup to allow the user to edit their own details -->
-<div id="modify_me_popup" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="modifyMeLabel" aria-hidden="true">
-	<div class="modal-dialog">
-   		<div class="modal-content">
-   			<div class="modal-header">
-     			<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-     			<h4 class="modal-title" id="modifyMeLabel">New message</h4>
-   			</div>
-		     <div class="modal-body">
-				<form role="form" class="form-horizontal" id="me_edit_form">
-					<div class="form-group">
-						<label for="me_name" data-lang="c_name" class="lang col-sm-2 control-label">Name</label>
-						<div class="col-sm-10">
-							<input type="text" id="me_name" required class="form-control">
-						</div>
-					</div>
-					<div class="form-group">
-						<label for="me_language" data-lang="c_lang" class="lang col-sm-2 control-label">Language</label>
-						<div class="col-sm-10">
-							<select id="me_language" class="language_select form-control"></select>
-						</div>
-					</div>
-					<div class="form-group">
-						<label for="me_email" data-lang="c_email" class="lang col-sm-2 control-label">Email</label>
-						<div class="col-sm-10">
-							<input type="email" class="form-control" id="me_email" 
-									placeholder="Enter email" 
-									pattern="^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$">
-						</div>
-					</div>
-					<div id="reset_me_password_fields" style="display:none;">
-						<div class="form-group">
-							<div class="col-sm-offset-2 col-sm-10">
-								<div class="checkbox">
-									<label>
-										<input type="checkbox" id="reset_me_password"><span data-lang="c_r_p" class="lang">Reset Password</span>
-									</label>
-								</div>
-							</div>
-						</div>
-					</div>
-					<div id="password_me_fields" style="display:none;">
-						<div class="form-group">
-							<label for="me_password" data-lang="c_password" class="lang col-sm-2 control-label">Password</label>
-							<div class="col-sm-10">
-								<input id="me_password" type="password" placeholder="Password" class="form-control">
-							</div>
-						</div>	
-						<div class="form-group">
-							<label for="me_password_confirm" data-lang="c_c_p" class="lang col-sm-2 control-label">Confirm Password</label>
-							<div class="col-sm-10">
-								<input id="me_password_confirm" type="password" placeholder="Password" class="form-control">
-							</div>
-						</div>	
-					</div>		
-				</form>	
-			</div>
-
-			<div class="modal-footer">
-            	<button type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_close">Close</button>
-            	<button id="userProfileLogout"type="button" class="btn btn-default lang" data-dismiss="modal" data-lang="c_logout">Logout</button>
-            	<button id="userProfileSave" type="button" class="btn btn-primary lang" data-dismiss="modal" data-lang="c_save">Save</button>
-        	</div>
-		</div>
-	</div>
-</div>
-  
-<script>
-	setCustomResources();			// Apply custom javascript
-</script>  
 
 </body>
 </html>

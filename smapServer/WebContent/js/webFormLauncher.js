@@ -32,36 +32,36 @@ requirejs.config({
     locale: gUserLocale,
     paths: {
     	app: '../app',
-    	jquery: '../../../../js/libs/jquery-2.1.1',
+	    jquery: 'jquery',
+	    metismenu: 'wb/metisMenu/jquery.metisMenu',
        	lang_location: '../'
     },
     shim: {
     	'app/common': ['jquery'],
-    	'bootstrap.min': ['jquery'],
     	'icheck': ['jquery'],
-       	'inspinia': ['jquery'],
     	'metismenu': ['jquery'],
     	'slimscroll': ['jquery']
     }
 });
 
 require([
-         'jquery', 
-         'bootstrap.min',
+         'jquery',
          'app/common', 
          'app/globals',
          'app/localise',
-         'bootstrapfileinput',
-         'inspinia',
+		 'bootstrapfileinput',
          'metismenu',
          'slimscroll',
          'pace',
          'icheck'
-         ], function($, bootstrap, common, globals, localise, bsfi) {
+         ], function($, common, globals, localise) {
 
 $(document).ready(function() {
-	
+
+    setCustomWebForms();			// Apply custom javascript
+	setupUserProfile(true);
 	localise.setlang();		// Localise HTML
+	$("#side-menu").metisMenu();
 	
 	// Get the user details
 	globals.gIsAdministrator = false;
@@ -79,23 +79,12 @@ $(document).ready(function() {
 				globals.gCurrentSurvey, 
 				globals.gCurrentTaskGroup);
  	 });
-	
-	// Set up the tabs
-    $('#userTab a').click(function (e) {
-    	e.preventDefault();
-    	$(this).tab('show');
-    		
-		$('#formsPanel').hide();
-		$('#userPanel').show();
-    })
-    $('#formsTab a').click(function (e) {
-    	e.preventDefault();
-    	$(this).tab('show');
-    		  	  
-		$('#formsPanel').show();
-		$('#userPanel').hide();
-    })
-	
+
+    // Refresh menu
+    $('#m_refresh').click(function () {
+        projectSet();
+    });
+
     /*
 	 * Save the user details
 	 * There is some overlap between this and saving the user profile
@@ -156,8 +145,7 @@ $(document).ready(function() {
 		 checkboxClass: 'icheckbox_square-green',
 		 radioClass: 'iradio_square-green'
 	});
-	
-	enableUserProfileBS();
+
 });
 
 /*
@@ -184,7 +172,7 @@ function saveUserDetails(formData, key) {
 		  success: function(data, status) {
 			  removeHourglass();
 			  var user = JSON.parse(data);
-			  $('#up_alert').show().removeClass('alert-danger').addClass('alert-success').html("User details saved");
+			  $('#up_alert').show().removeClass('alert-danger').addClass('alert-success').html(localise.set["msg_upd"]);
 			  $('#my_signature').attr("src", user.signature);
 			  $('#my_signature_file').val(undefined);
 		  },
@@ -201,7 +189,7 @@ function saveUserDetails(formData, key) {
 			  if(!originalKey) {
 				  getKey(originalFormData);
 			  } else {
-				 $('#up_alert').show().removeClass('alert-success').addClass('alert-danger').html("Error profile not saved" + xhr.responseText);
+				 $('#up_alert').show().removeClass('alert-success').addClass('alert-danger').html(localise.set["msg_err_upd"] + xhr.responseText);
 			 }
 		  }
 	});
@@ -236,7 +224,6 @@ function projectSet() {
 	//getAlerts();
 }
 
-
 function getSurveysForList(projectId) {
 
 	url="/surveyKPI/myassignments";
@@ -266,73 +253,181 @@ function getSurveysForList(projectId) {
  * Fill in the survey list
  */
 function completeSurveyList(surveyList, filterProjectId) {
-	
+
+	var i,
+		h = [],
+		idx = -1,
+		formList = surveyList.forms,
+		taskList = surveyList.data;
+
+
+
+	// Add the tasks
+	if (taskList) {
+		addTaskList(taskList, filterProjectId);
+	} else {
+		$('#tasks_count').html('(0)');
+		$('#task_list').html('');
+	}
+
+	// Add the forms
+	if (formList) {
+		addFormList(formList, filterProjectId);
+	} else {
+		$('#forms_count').html('(0)');
+		$('#form_list').html('');
+	}
+}
+
+function addFormList(formList, filterProjectId) {
 	var i,
 		h = [],
 		idx = -1,
 		$formList = $('#form_list'),
-		formList = surveyList.forms,
-		taskList = surveyList.data,
-		params,
-		repeat;
+		count = 0;
 
-	// Add the forms
-	if(formList) {
-		for(i = 0; i < formList.length; i++) {
-			if(!filterProjectId || filterProjectId == formList[i].pid) {
-				h[++idx] = '<a role="button" class="btn btn-primary btn-block btn-lg" target="_blank" href="/webForm/';
-				h[++idx] = formList[i].ident;
-				h[++idx] = '">';
-				h[++idx] = formList[i].name;
-				h[++idx] = '</a>';	
-			} 
+	for(i = 0; i < formList.length; i++) {
+		if(!filterProjectId || filterProjectId == formList[i].pid) {
+			h[++idx] = '<a role="button" class="btn btn-primary btn-block btn-lg" target="_blank" href="/webForm/';
+			h[++idx] = formList[i].ident;
+			h[++idx] = '">';
+			h[++idx] = formList[i].name;
+			h[++idx] = '</a>';
+			count++;
 		}
 	}
-	
-	// Add the tasks
-	if(taskList) {
-		for(i = 0; i < taskList.length; i++) {
-			if(!filterProjectId || filterProjectId == taskList[i].task.pid) {
-				repeat = taskList[i].task.repeat;	// Can complete the task multiple times
-				h[++idx] = '<a role="button" class="task btn btn-warning btn-block btn-lg" target="_blank" data-repeat="';
-				if(repeat) {
-					h[++idx] = 'true';
-				} else {
-					h[++idx] = 'false';
-				}
-				h[++idx] = '" href="/webForm/';
-				h[++idx] = taskList[i].task.form_id;
-				if(taskList[i].task.initial_data) {
-					// Add the initial data parameters
-					params = taskList[i].task.initial_data;
-					params = params.substring(params.indexOf('?'));
-					// TODO Hack to fix inconsistency in parameter names between webforms and fieldTask
-					params = params.replace("key=", "datakey=");
-					params = params.replace("keyval=", "datakeyvalue=");
-					h[++idx] = params;
-					// Add the assignment id
-					h[++idx] = '&assignment_id=';
-				} else {	// Launch the form without data
-					// Add the assignment id
-					h[++idx] = '?assignment_id=';
-				}
-				h[++idx] = taskList[i].assignment.assignment_id; 
-				h[++idx] = '">';
-				h[++idx] = taskList[i].task.title + " (task id: " + taskList[i].task.id + ")";
-				h[++idx] = '</a>';	
-			} 
-		}
-	}
-	
+	$('#forms_count').html('(' + count+ ')');
 	$formList.html(h.join(''));
-	$formList.find('.task').off().click(function(){
+}
+
+function addTaskList(taskList, filterProjectId) {
+	var i,
+		h = [],
+		idx = -1,
+		$taskList = $('#task_list'),
+		count = 0;
+
+	for(i = 0; i < taskList.length; i++) {
+
+		if(!filterProjectId || filterProjectId == taskList[i].task.pid) {
+			repeat = taskList[i].task.repeat;	// Can complete the task multiple times
+			h[++idx] = '<div class="btn-group btn-group-lg d-flex" role="group" aria-label="Button group for task selection or rejection">';
+			h[++idx] = '<a id="a_';
+			h[++idx] = taskList[i].assignment.assignment_id;
+			h[++idx] = '" class="task btn btn-warning w-80" role="button" target="_blank" data-repeat="';
+
+			if(repeat) {
+				h[++idx] = 'true';
+			} else {
+				h[++idx] = 'false';
+			}
+			h[++idx] = '" href="/webForm/';
+			h[++idx] = taskList[i].task.form_id;
+
+			var hasParam = false;
+			if(taskList[i].task.initial_data_source) {
+				if (taskList[i].task.initial_data_source === 'survey' && taskList[i].task.update_id) {
+
+					h[++idx] = (hasParam ? '&' : '?');
+					h[++idx] = 'datakey=instanceid&datakeyvalue=';
+					h[++idx] = taskList[i].task.update_id;
+					hasParam = true;
+
+				} else if (taskList[i].task.initial_data_source === 'task') {
+					h[++idx] = (hasParam ? '&' : '?');
+					h[++idx] = 'taskkey=';
+					h[++idx] = taskList[i].task.id;
+					hasParam = true;
+				}
+			}
+			// Add the assignment id
+			h[++idx] = (hasParam ? '&' : '?');
+			h[++idx] = 'assignment_id=';
+			h[++idx] = taskList[i].assignment.assignment_id;
+
+			h[++idx] = '">';
+			h[++idx] = taskList[i].task.title + " (" + localise.set["c_id"] + ": " + taskList[i].assignment.assignment_id + ")";
+			h[++idx] = '</a>';
+
+			// Add button with additional options
+			h[++idx] = '<button ';
+			h[++idx] = 	'id="a_r_' + taskList[i].assignment.assignment_id;
+			h[++idx] = '" class="btn btn-info w-20 reject" type="button"';
+			h[++idx] = '" data-aid="';
+			h[++idx] = taskList[i].assignment.assignment_id;
+			h[++idx] = '">';
+			h[++idx] = localise.set["c_reject"]
+			h[++idx] = '</button>';
+
+			h[++idx] = '</div>';        // input group
+			count++;
+		}
+	}
+
+	$('#tasks_count').html('(' + taskList.length + ')');
+	$taskList.html(h.join(''));
+
+	$taskList.find('.task').off().click(function(){
 		var $this = $(this),
 			repeat = $this.data("repeat");
-		
+
 		if(!repeat) {
 			$this.removeClass('btn-warning').addClass('btn-success');		// Mark task as done
+			$this.addClass('disabled');
+			$this.closest(".btn-group").find(".reject").addClass("disabled");
 		}
 	});
+
+	$taskList.find('.reject').off().click(function(){
+		var $this = $(this);
+
+		if(!$this.hasClass('disabled')) {
+			reject($this.data("aid"));
+		}
+	});
+}
+
+
+function reject(aid) {
+
+	bootbox.prompt({
+		title: localise.set["a_res"],
+		centerVertical: true,
+		locale: gUserLocale,
+		callback: function(result){
+			console.log(result);
+
+			var assignment = {
+				assignment_id: aid,
+				assignment_status: 'rejected',
+				task_comment: result
+			}
+			var assignmentString = JSON.stringify(assignment);
+
+			addHourglass();
+			$.ajax({
+				type: "POST",
+				data: {assignment: assignmentString},
+				cache: false,
+				contentType: "application/json",
+				url: "/surveyKPI/myassignments/update_status",
+				success: function(data, status) {
+					removeHourglass();
+					$('#a_' + aid).removeClass('btn-warning').addClass('btn-danger');
+					$('#a_r_' + aid).addClass('disabled');
+
+
+				},
+				error: function(xhr, textStatus, err) {
+					removeHourglass();
+					$('#up_alert').show().removeClass('alert-success').addClass('alert-danger').html(localise.set["msg_err_upd"] + xhr.responseText);
+
+				}
+			});
+		}
+	});
+
+
 }
 
 });

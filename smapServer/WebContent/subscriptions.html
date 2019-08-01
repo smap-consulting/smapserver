@@ -1,0 +1,97 @@
+<!doctype html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title class="lang" data-lang="r_s"></title>
+
+    <link rel="shortcut icon" href="favicon.ico"/>
+    <link rel="stylesheet" href="css/normalize.css"/>
+    <link rel="stylesheet" href="/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="/css/bootstrapValidator.min.css"/>
+
+    <link rel="stylesheet" href="/css/smap-bs.css" type="text/css">
+
+    <script type="text/javascript"> if (!window.console) console = {
+        log: function () {
+        }
+    }; </script>
+    <script src="js/libs/modernizr.js"></script>
+    <script src="/js/app/theme-nobody.js"></script>
+    <script src="/js/app/custom.js"></script>  <!-- Override this in custom code to apply changes at run time -->
+    <script data-main="js/subscriptions" src="js/libs/require.js"></script>
+
+</head>
+<body>
+
+<header class="navbar navbar-default navbar-static-top" role="banner">
+    <div class="container">
+        <div class="navbar-header">
+            <button class="navbar-toggle" type="button" data-toggle="collapse" data-target=".navbar-collapse">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a id="navbar-brand" href="#" class="navbar-brand">
+            </a>
+        </div>
+
+    </div>
+</header>
+
+
+<div class="page-header text-center">
+    <h1 id="heading">subscriptions</h1>
+</div>
+
+<div class="container">
+    <div id="unsubscribe" class="forms row" style="display:none;">
+        <div class="col-sm-12 text-center">
+            <button id="unsubscribeSubmit" class="btn btn-default btn-primary lang"
+                    data-lang="c_unsubscribe">unsubscribe
+            </button>
+        </div>
+    </div>
+
+    <div id="subscribe2" class="forms row" style="display:none;">
+        <div class="col-sm-12 text-center">
+            <button id="subscribe2Submit" class="btn btn-default btn-primary lang"
+                    data-lang="c_subscribe">subscribe
+            </button>
+        </div>
+    </div>
+
+    <div id="subscribe" class="row" style="display:none;">
+        <form role="form" method="POST" action="" class="form-horizontal forms" id="subscribeForm">
+
+            <div class="form-group">
+                <label class="col-lg-3 control-label lang" data-lang="msg_s3" for="email">your email</label>
+                <div class="col-lg-5">
+                    <input id="email" class="form-control" name="email" type="email" required
+                           data-bv-emailaddress-message="Not Valid"/>
+                </div>
+            </div>
+
+            <div class="form-group has-error">
+                <div class="col-sm-12 text-center">
+                    <button id="subscribeSubmit" type="submit" class="btn btn-default btn-primary lang"
+                            data-lang="c_submit"
+                            disabled="disabled">submit
+                    </button>
+                </div>
+            </div>
+
+
+        </form>
+
+    </div>
+</div>
+
+
+<div class="col-sm-12 text-center">
+    <img id="hour_glass" src="/images/ajax-loader.gif" style="display:none;" alt="hourglass" height="60" width="60">
+</div>
+
+
+</body>
+</html>

@@ -1,0 +1,200 @@
+<!doctype html>
+<html class="no-js" lang="en">
+<head>
+    <meta name="keywords" content=""/>
+    <meta name="description" content=""/>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Data Transformation Help</title>
+
+    <link rel="shortcut icon" href="favicon.ico"/>
+    <link rel="stylesheet" href="css/normalize.css"/>
+    <link rel="stylesheet" href="css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="css/smap-bs.css">
+    <link rel="stylesheet" href="css/bootstrap-datetimepicker.min.css"/>
+    <link rel="stylesheet" href="css/smap-docs.css" type="text/css">
+
+    <!--[if lt IE 9]>
+    <script src="//html5shim.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+
+
+    <script type="text/javascript"> if (!window.console) console = {
+        log: function () {
+        }
+    }; </script>
+    <script src="js/libs/modernizr.js"></script>
+    <script src="/js/app/theme-nobody.js"></script>
+
+
+</head>
+<body>
+
+
+<!--#if expr="true" -->
+<!-- Get the navigation menu -->
+<!--#include FILE="navInc2.inc"-->
+<!--#else -->
+<!-- Default Header without SSI -->
+<header class="navbar navbar-default navbar-static-top" role="banner">
+    <div class="container">
+        <div class="navbar-header">
+            <button class="navbar-toggle" type="button" data-toggle="collapse" data-target=".navbar-collapse">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a href="#" class="navbar-brand">
+                <span class="glyphicon glyphicon-question-sign" aria-hidden="true"></span>
+                Data Filtering Help
+            </a>
+        </div>
+
+
+    </div>
+</header>
+<!--#endif -->
+
+<div class="container help">
+    <div class="row">
+        <div class="col-md-9" role="main">
+
+            <div class="bs-docs-section">
+                <h1 id="introduction" class="page-header">
+                    <a class="anchorjs-link " href="#introduction" aria-label="Anchor link for: introduction"
+                       data-anchorjs-icon="" style="font-family: anchorjs-icons; font-style: normal;
+	   				font-variant: normal; font-weight: normal; position: absolute; margin-left: -1em;
+	   				padding-right: 0.5em; margin-bottom: 2em;">Introduction</a>
+                </h1>
+                <p>The only transform available is "long to wide".  This is available with Smap version 19.01+</p>
+            </div>
+
+            <div class="bs-docs-section">
+                <h1 id="keys" class="page-header">
+                    <a class="anchorjs-link " href="#keys" aria-label="Anchor link for: keys"
+                       data-anchorjs-icon="" style="font-family: anchorjs-icons; font-style: normal;
+	   				font-variant: normal; font-weight: normal; position: absolute; margin-left: -1em; 
+	   				padding-right: 0.5em; margin-bottom: 2em;">Keys</a>
+                </h1>
+                <p>Specify one or more question names separated by commas</p>
+                <p>When applying the long to wide transformation the objective is to reduce the number of rows of data.
+                This is done by specifying key questions whose combined value has to be unique</p>
+                <p>For example if you had a table of data like the following:</p>
+                <table class="table">
+                    <thead>
+                        <th>a</th>
+                        <th>b</th>
+                        <th>...</th>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>x</td>
+                            <td>y</td>
+                            <td>...</td>
+                        </tr>
+                        <tr>
+                            <td>x</td>
+                            <td>y</td>
+                            <td>...</td>
+                        </tr>
+                        <tr>
+                            <td>x</td>
+                            <td>z</td>
+                            <td>...</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <p>Then if you enable transform and specify the keys to be questions <b>a</b> and <b>b</b> then the duplicate
+                    values for those two columns will be removed and the data will be reduced to:</p>
+                <table class="table">
+                    <thead>
+                    <th>a</th>
+                    <th>b</th>
+                    <th>...</th>
+                    </thead>
+                    <tbody>
+                    <tr>
+                        <td>x</td>
+                        <td>y</td>
+                        <td>...</td>
+                    </tr>
+                    <tr>
+                        <td>x</td>
+                        <td>z</td>
+                        <td>...</td>
+                    </tr>
+                    </tbody>
+                </table>
+                <h2>What happens to the rest of the data?</h2>
+                <p>The data in the non key columns will consist of:</p>
+                <ul>
+                    <li>The data from the last submission that matches the key.  So the older data is not kept</li>
+                    <li>New columns for the data that is converted to "wide"</li>
+                </ul>
+            </div>
+
+            <div class="bs-docs-section">
+                <h1 id="valuesquestion" class="page-header">
+                    <a class="anchorjs-link " href="#valuesquestion" aria-label="Anchor link for: Values Question"
+                       data-anchorjs-icon="" style="font-family: anchorjs-icons; font-style: normal;
+	   				font-variant: normal; font-weight: normal; position: absolute; margin-left: -1em;
+	   				padding-right: 0.5em; margin-bottom: 2em;">Values Question</a>
+                </h1>
+                <p>This is the name of the question that contains the values that will be converted into new columns.</p>
+            </div>
+
+
+            <div class="bs-docs-section">
+                <h1 id="values" class="page-header">
+                    <a class="anchorjs-link " href="#values" aria-label="Anchor link for: Values"
+                       data-anchorjs-icon="" style="font-family: anchorjs-icons; font-style: normal;
+	   				font-variant: normal; font-weight: normal; position: absolute; margin-left: -1em;
+	   				padding-right: 0.5em; margin-bottom: 2em;">Values</a>
+                </h1>
+                <p>A comma separated list of values that appear in the values question.  New columns will be created for each of these
+                in the transformed output. </p>
+            </div>
+
+            <div class="bs-docs-section">
+                <h1 id="widecolumns" class="page-header">
+                    <a class="anchorjs-link " href="#widecolumns" aria-label="Anchor link for: Wide Columns"
+                       data-anchorjs-icon="" style="font-family: anchorjs-icons; font-style: normal;
+	   				font-variant: normal; font-weight: normal; position: absolute; margin-left: -1em;
+	   				padding-right: 0.5em; margin-bottom: 2em;">Wide Columns</a>
+                </h1>
+                <p>A comma separated list of question names. Multiple new copies of these columns will be created in the output. </p>
+            </div>
+        </div>
+
+        <div class="col-md-3" role="complementary">
+            <nav class="bs-docs-sidebar hidden-print hidden-xs hidden-sm affix">
+                <ul class="nav bs-docs-sidenav">
+
+                    <li class="">
+                        <a href="#introduction">Introduction</a>
+                    </li>
+                    <li class="">
+                        <a href="#keys">Keys</a>
+                    </li>
+                    <li class="">
+                        <a href="#valuesquestion">Values Question</a>
+                    </li>
+                    <li class="">
+                        <a href="#values">Values</a>
+                    </li>
+                    <li class="">
+                        <a href="#widecolumns">Wide Columns</a>
+                    </li>
+
+                </ul>
+            </nav>
+        </div>
+    </div>
+
+</div>
+
+<a href="http://glyphicons.com/" style="font-size: 12px; padding: 20px;">Icons from Glyphicons</a>
+</body>
+</html>

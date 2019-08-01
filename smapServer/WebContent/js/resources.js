@@ -27,10 +27,11 @@ if (Modernizr.localstorage) {
 requirejs.config({
     baseUrl: 'js/libs',
     waitSeconds: 0,
+    locale: gUserLocale,
     paths: {
     	app: '../app',
     	jquery: '../../../../js/libs/jquery-2.1.1',
-       	lang_location: '../'
+       	lang_location: '..'
     },
     shim: {
     	'app/common': ['jquery'],
@@ -49,10 +50,14 @@ require([
 
 	var gMaps,
 		gMapVersion,
-		gMapId;
+		gMapId,
+		gTags,          // NFC tags
+		gCurrentGroup;
 	
 $(document).ready(function() {
-	
+
+    setCustomResources();			// Apply custom javascript
+	setupUserProfile();
 	var bs = isBusinessServer();
 	localise.setlang();		// Localise HTML
 	$('#map_name').attr("placeholder", localise.set["sr_m_ph"]);
@@ -68,49 +73,42 @@ $(document).ready(function() {
 	
 	// Set up the tabs
 	if(bs) {
-		getLocations(refreshLocationView);
+		getLocations(loadedLocationData);
 	}
     $('#mediaTab a').click(function (e) {
     	e.preventDefault();
     	$(this).tab('show');
-    		
-		$('#mapPanel').hide();
-	   	$('#nfcPanel').hide();
+
+    	$('.resourcePanel').hide();
 		$('#mediaPanel').show();
-		$('#crPanel').hide();
 		
 		$('.upload_file_msg').removeClass('alert-danger').addClass('alert-success').html("");
     });
     $('#mapTab a').click(function (e) {
     	e.preventDefault();
     	$(this).tab('show');
-    		  	  
-		$('#mapPanel').show();
-	   	$('#nfcPanel').hide();
-		$('#mediaPanel').hide();
-		$('#crPanel').hide();
+
+	    $('.resourcePanel').hide();
+	   	$('#mapPanel').show();
 		
 		$('.upload_file_msg').removeClass('alert-danger').addClass('alert-success').html("");
     });
-    $('#nfcTab a').click(function (e) {
+    $('#locationTab a').click(function (e) {
     	e.preventDefault();
     	$(this).tab('show');
-    	
-    	$('#nfcPanel').show();
-		$('#mapPanel').hide();
-		$('#mediaPanel').hide();
-		$('#osPanel').hide();
+
+	    $('.resourcePanel').hide();
+    	$('#locationPanel').show();
 		
 		$('.upload_file_msg').removeClass('alert-danger').addClass('alert-success').html("");
     });
+
     $('#crTab a').click(function (e) {
     	e.preventDefault();
     	$(this).tab('show');
-    	
+
+	    $('.resourcePanel').hide();
     	$('#crPanel').show();
-    	$('#nfcPanel').hide();
-		$('#mapPanel').hide();
-		$('#mediaPanel').hide();
 		
 		$('.upload_file_msg').removeClass('alert-danger').addClass('alert-success').html("");
     })
@@ -145,22 +143,27 @@ $(document).ready(function() {
     	uploadFiles('/surveyKPI/upload/lqasreport', "crupload", refreshCustomReportView, undefined, undefined);
     });
     
-    // Respond to nfc upload
-    $('#submitNfcFiles').click( function() {
-    	if(!$('#submitNfcFiles').hasClass('disabled')) {
-    		uploadFiles('/surveyKPI/tasks/locations/upload', "nfcupload", refreshLocationView, undefined, undefined);
+    // Respond to location upload
+    $('#submitLocationFiles').click( function() {
+    	if(!$('#submitLocationFiles').hasClass('disabled')) {
+    		uploadFiles('/surveyKPI/tasks/locations/upload', "locationupload", loadedLocationData, undefined, undefined);
     	}
     });
     
-    // Respond to nfc download
-    $('#downloadNfcFiles').click( function() {
-    	if(!$('#downloadNfcFiles').hasClass('disabled')) {
-		
+    // Respond to location download
+    $('#downloadLocationFiles').click( function() {
+    	if(!$('#downloadLocationFiles').hasClass('disabled')) {
     		downloadFile('/surveyKPI/tasks/locations/download');
-    		//downloadFile('/surveyKPI/tasks/locations/download', "locations.xlsx", 
-    			//	"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
     	}
     });
+
+    $('#location_group').change(function() {
+	    refreshLocationView();
+    });
+	$('#includeNfc, #includeGeo').change(function() {
+		refreshLocationGroups(gTags, false);
+		refreshLocationView();
+	});
     
     /*
      * Set up maps tab
@@ -181,7 +184,7 @@ $(document).ready(function() {
 	getMaps();
 	
 	/*
-	 * Set up nfc tabs
+	 * Set up location tabs
 	 */
 	$('#addNfc').click(function(){
 		$('#addMapPopup').modal("show");
@@ -226,8 +229,7 @@ $(document).ready(function() {
 			$('#report_name').val(newReportName);
 		}
 	});
-	
-	enableUserProfileBS();
+
 });
 
 function showMapDialogSections(type) {
@@ -256,7 +258,7 @@ function edit_map(idx) {
 		title = localise.set["msg_edit_map"],
 		
 		$('#map_name').val(map.name);
-		$('#map_type').val(map_name);
+		$('#map_type').val(map.type);
 		$('#map_description').val(map.description);
 		
 		$('#map_zoom').val(map.config.zoom);
@@ -474,41 +476,64 @@ function delete_map(id) {
 /*
  * Show the NFC tags
  */
-function refreshLocationView(tags) {
+function loadedLocationData(tags) {
+
+	gTags = tags;
+	refreshLocationGroups(gTags, false);
+	refreshLocationView();
+}
+
+function refreshLocationView() {
 	
 	var i,
 		survey = globals.model.survey,
 		$element,
 		h = [],
-		idx = -1;
+		idx = -1,
+		currentGroup = $('#location_group').val();
 
-	if(tags) {
+	var includeNfc = $('#includeNfc').prop('checked'),
+		includeGeo = $('#includeGeo').prop('checked');
 
-		$element = $('#nfcList');
-		
-		h[++idx] = '<tr>';
-		
-		for(i = 0; i < tags.length; i++){
-			h[++idx] = '<tr>';
-			
-			h[++idx] = '<td>';
-			h[++idx] = tags[i].type;
-			h[++idx] = '</td>';
-			
-			h[++idx] = '<td>';
-			h[++idx] = tags[i].group;
-			h[++idx] = '</td>';
-			
-			h[++idx] = '<td>';
-			h[++idx] = tags[i].uid;
-			h[++idx] = '</td>';
-		
-			h[++idx] = '<td>';
-			h[++idx] = tags[i].name;
-			h[++idx] = '</td>';
-			
-			
-			h[++idx] = '</tr>';
+	if(gTags) {
+
+		$element = $('#locationList');
+
+
+		for(i = 0; i < gTags.length; i++){
+
+			if(currentGroup === gTags[i].group) {
+
+				if(includeLocation(includeNfc, includeGeo, gTags[i].uid, gTags[i].lat, gTags[i].lon)) {
+					h[++idx] = '<tr>';
+
+					h[++idx] = '<td>';
+					h[++idx] = gTags[i].type;
+					h[++idx] = '</td>';
+
+					h[++idx] = '<td>';
+					h[++idx] = gTags[i].group;
+					h[++idx] = '</td>';
+
+					h[++idx] = '<td>';
+					h[++idx] = gTags[i].uid;
+					h[++idx] = '</td>';
+
+					h[++idx] = '<td>';
+					h[++idx] = gTags[i].name;
+					h[++idx] = '</td>';
+
+					h[++idx] = '<td>';
+					h[++idx] = gTags[i].lat == "0" ? '' : gTags[i].lat;
+					h[++idx] = '</td>';
+
+					h[++idx] = '<td>';
+					h[++idx] = gTags[i].lon == "0" ? '' : gTags[i].lon;
+					h[++idx] = '</td>';
+
+					h[++idx] = '</tr>';
+				}
+			}
 			
 		}
 		
