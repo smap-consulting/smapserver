@@ -80,15 +80,6 @@ public class ReviewResultsText extends Application {
 
 		Connection dConnection = null;
 				
-		// Get the Postgres driver
-		try {
-		    Class.forName("org.postgresql.Driver");	 
-		} catch (ClassNotFoundException e) {
-			String msg = "Error: Can't find PostgreSQL JDBC Driver";
-			log.log(Level.SEVERE, msg, e);
-			response = Response.status(Status.INTERNAL_SERVER_ERROR).entity(msg).build();
-		    return response;
-		}
 		// Authorisation - Access
 		Connection connectionSD = SDDataSource.getConnection("surveyKPI-Results");
 		boolean superUser = false;

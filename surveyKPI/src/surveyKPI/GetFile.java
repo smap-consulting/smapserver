@@ -1,9 +1,6 @@
 package surveyKPI;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.OutputStream;
+
 
 /*
 This file is part of SMAP.
@@ -44,10 +41,8 @@ import javax.ws.rs.core.Response.Status;
 import org.smap.sdal.Utilities.AuthorisationException;
 import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
-import org.smap.sdal.Utilities.JsonAuthorisationException;
 import org.smap.sdal.Utilities.SDDataSource;
-import org.smap.sdal.Utilities.UtilityMethodsEmail;
-import org.smap.sdal.model.FileDescription;
+import org.smap.sdal.managers.FileManager;
 
 /*
  * Authorises the user and then
@@ -66,6 +61,7 @@ public class GetFile extends Application {
 	public GetFile() {
 		ArrayList<String> authorisations = new ArrayList<String> ();	
 		authorisations.add(Authorise.ANALYST);
+		authorisations.add(Authorise.VIEW_DATA);
 		authorisations.add(Authorise.ADMIN);
 		authorisations.add(Authorise.ENUM);
 		a = new Authorise(authorisations, null);	
@@ -81,7 +77,7 @@ public class GetFile extends Application {
 			@QueryParam("settings") boolean settings,
 			@QueryParam("org") int requestedOrgId) throws Exception {
 		
-		return getOrganisationFile(request, response, request.getRemoteUser(), requestedOrgId, filename, settings);
+		return getOrganisationFile(request, response, request.getRemoteUser(), requestedOrgId, filename, settings, false);
 	}
 	
 	/*
@@ -101,7 +97,7 @@ public class GetFile extends Application {
 		String user = null;		
 		Connection connectionSD = SDDataSource.getConnection("surveyKPI-Get File Key");
 		
-		System.out.println("Getting file authenticated with a key");
+		log.info("Getting file authenticated with a key");
 		try {
 			user = GeneralUtilityMethods.getDynamicUser(connectionSD, key);
 		} catch (SQLException e) {
@@ -114,7 +110,23 @@ public class GetFile extends Application {
 			log.info("User not found for key");
 			throw new AuthorisationException();
 		}
-		return getOrganisationFile(request, response, user, requestedOrgId, filename, settings);
+		return getOrganisationFile(request, response, user, requestedOrgId, filename, settings, false);
+	}
+	
+	/*
+	 * Get file for anonymous user
+	 */
+	@GET
+	@Produces("application/x-download")
+	@Path("/organisation/user/{ident}")
+	public Response getOrganisationFileAnon(
+			@Context HttpServletRequest request, 
+			@Context HttpServletResponse response,
+			@PathParam("filename") String filename,
+			@PathParam("ident") String user) throws SQLException {
+				
+		log.info("Getting file authenticated with a key");
+		return getOrganisationFile(request, response, user, 0, filename, false, true);
 	}
 	
 	@GET
@@ -125,13 +137,6 @@ public class GetFile extends Application {
 			@Context HttpServletResponse response,
 			@PathParam("filename") String filename,
 			@QueryParam("type") String type) throws Exception {
-
-		try {
-		    Class.forName("org.postgresql.Driver");	 
-		} catch (ClassNotFoundException e) {
-			log.log(Level.SEVERE, "Can't find PostgreSQL JDBC Driver", e);
-		    throw new Exception("Can't find PostgreSQL JDBC Driver");
-		}
 		
 		int uId = 0;
 		Response r = null;
@@ -158,7 +163,8 @@ public class GetFile extends Application {
 			String basepath = GeneralUtilityMethods.getBasePath(request);
 			String filepath = basepath + "/media/users/" + uId + "/" + (type != null ? (type + "/") : "") + filename;
 			log.info("Getting user file: " + filepath);
-			getFile(response, filepath, filename);
+			FileManager fm = new FileManager();
+			fm.getFile(response, filepath, filename);
 			
 			r = Response.ok("").build();
 			
@@ -172,6 +178,71 @@ public class GetFile extends Application {
 		return r;
 	}
 	
+	/*
+	 * Get template pdf file
+	 */
+	@GET
+	@Path("/surveyPdfTemplate/{sId}")
+	@Produces("application/x-download")
+	public Response getPdfTemplateFile (
+			@Context HttpServletRequest request, 
+			@Context HttpServletResponse response,			
+			@PathParam("filename") String filename,
+			@PathParam("sId") int sId,
+			@QueryParam("archive") boolean archive,
+			@QueryParam("recovery") boolean recovery) throws Exception {
+		
+		log.info("Get PDF Template File:  for survey: " + sId);
+		
+		Response r = null;
+	
+		// Authorisation - Access
+		Connection sd = SDDataSource.getConnection("Get Survey File");
+		boolean superUser = false;
+		try {
+			superUser = GeneralUtilityMethods.isSuperUser(sd, request.getRemoteUser());
+		} catch (Exception e) {
+		}
+		a.isAuthorised(sd, request.getRemoteUser());
+		a.isValidDelSurvey(sd, request.getRemoteUser(), sId, superUser);
+		// End Authorisation 
+		
+		try {
+			String basepath = GeneralUtilityMethods.getBasePath(request);
+			
+			if(!archive) {
+				// Ignore the provided filename, get the filename from the survey details
+				String displayName = GeneralUtilityMethods.getSurveyName(sd, sId);
+				filename = GeneralUtilityMethods.getSafeTemplateName(displayName);
+				if(recovery) {
+					filename += "__prev___template.pdf";
+				} else {
+					filename += "_template.pdf";
+				}
+			}
+			
+			int pId = GeneralUtilityMethods.getProjectId(sd, sId);
+			String folderPath = basepath + "/templates/" + pId ;						
+			String filepath = folderPath + "/" + filename;
+			
+			FileManager fm = new FileManager();
+			fm.getFile(response, filepath, filename);
+			
+			r = Response.ok("").build();
+			
+		}  catch (Exception e) {
+			log.log(Level.SEVERE, "Error getting file", e);
+			r = Response.status(Status.NOT_FOUND).entity(e.getMessage()).build();
+		} finally {	
+			SDDataSource.closeConnection("Get Survey File", sd);	
+		}
+		
+		return r;
+	}
+	
+	/*
+	 * Get survey level resource file
+	 */
 	@GET
 	@Path("/survey/{sId}")
 	@Produces("application/x-download")
@@ -181,13 +252,6 @@ public class GetFile extends Application {
 			@PathParam("filename") String filename,
 			@PathParam("sId") int sId,
 			@QueryParam("linked") boolean linked) throws Exception {
-
-		try {
-		    Class.forName("org.postgresql.Driver");	 
-		} catch (ClassNotFoundException e) {
-			log.log(Level.SEVERE, "Can't find PostgreSQL JDBC Driver", e);
-		    throw new Exception("Can't find PostgreSQL JDBC Driver");
-		}
 		
 		log.info("Get File: " + filename + " for survey: " + sId);
 		
@@ -206,15 +270,17 @@ public class GetFile extends Application {
 		// End Authorisation 
 		
 		try {
+			
 			String basepath = GeneralUtilityMethods.getBasePath(request);
 			String sIdent = GeneralUtilityMethods.getSurveyIdent(connectionSD, sId);
 			String filepath = basepath + "/media/" + sIdent+ "/";
-			if(filename.startsWith("linked_s") || filename.startsWith("linked_s_pd_s")) {
+			if(filename.startsWith("linked_s") || filename.startsWith("linked_s_pd_s") || filename.startsWith("chart_s")) {
 				filepath += request.getRemoteUser() + "/";
 			}
 			filepath += filename;
 			
-			getFile(response, filepath, filename);
+			FileManager fm = new FileManager();
+			fm.getFile(response, filepath, filename);
 			
 			r = Response.ok("").build();
 			
@@ -228,21 +294,33 @@ public class GetFile extends Application {
 		return r;
 	}
 	
+
+	
+
+	
 	/*
 	 * Get the file at the organisation level
 	 */
-	private Response getOrganisationFile(HttpServletRequest request, 
+	private Response getOrganisationFile(
+			HttpServletRequest request, 
 			HttpServletResponse response, 
-			String user, int requestedOrgId, String filename, boolean settings) {
+			String user, 
+			int requestedOrgId, 
+			String filename, boolean 
+			settings,
+			boolean isTemporaryUser) {
 		
 		int oId = 0;
 		Response r = null;
 		
 		// Authorisation - Access
 		Connection connectionSD = SDDataSource.getConnection("Get Organisation File");	
+		if (isTemporaryUser) {
+			a.isValidTemporaryUser(connectionSD, user);
+		}
 		a.isAuthorised(connectionSD, user);		
 		try {		
-			oId = GeneralUtilityMethods.getOrganisationId(connectionSD, user, 0);
+			oId = GeneralUtilityMethods.getOrganisationId(connectionSD, user);
 		} catch(Exception e) {
 			// ignore error
 		}
@@ -252,13 +330,12 @@ public class GetFile extends Application {
 		}
 		// End Authorisation 
 		
+		
 		log.info("Get File: " + filename + " for organisation: " + oId);
 		try {
-			String basepath = GeneralUtilityMethods.getBasePath(request);
-			String filepath = basepath + "/media/organisation/" + oId + (settings ? "/settings/" : "/") + filename;
-			getFile(response, filepath, filename);
 			
-			r = Response.ok("").build();
+			FileManager fm = new FileManager();
+			r = fm.getOrganisationFile(connectionSD, request, response, user, oId, filename, settings, isTemporaryUser);
 			
 		}  catch (Exception e) {
 			log.info("Error getting file:" + e.getMessage());
@@ -269,31 +346,5 @@ public class GetFile extends Application {
 		
 		return r;
 	}
-	
-	/*
-	 * Add the file to the response stream
-	 */
-	private void getFile(HttpServletResponse response, String filepath, String filename) throws IOException {
-		
-		File f = new File(filepath);
-		response.setContentType(UtilityMethodsEmail.getContentType(filename));
-			
-		response.addHeader("Content-Disposition", "attachment; filename=" + filename);
-		response.setContentLength((int) f.length());
-			
-		FileInputStream fis = new FileInputStream(f);
-		OutputStream responseOutputStream = response.getOutputStream();
-			
-		int bytes;
-		while ((bytes = fis.read()) != -1) {
-			responseOutputStream.write(bytes);
-		}
-		responseOutputStream.flush();
-		responseOutputStream.close();
-		fis.close();
-
-
-	}
-	
 
 }

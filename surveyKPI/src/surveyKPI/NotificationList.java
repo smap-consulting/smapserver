@@ -26,8 +26,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.Locale;
+import java.util.ResourceBundle;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -41,7 +41,6 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
@@ -65,9 +64,13 @@ import org.smap.sdal.Utilities.ApplicationException;
 import org.smap.sdal.Utilities.AuthorisationException;
 import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
+import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
+import org.smap.sdal.managers.MessagingManager;
 import org.smap.sdal.managers.NotificationManager;
 import org.smap.sdal.model.Notification;
+import org.smap.sdal.model.NotifyDetails;
+import org.smap.sdal.model.SubmissionMessage;
 import org.smap.sdal.model.XformsJavaRosa;
 
 import com.google.gson.Gson;
@@ -81,10 +84,17 @@ import com.google.gson.reflect.TypeToken;
 @Path("/notifications")
 public class NotificationList extends Application {
 	
-	Authorise a = new Authorise(null, Authorise.ANALYST);
+	Authorise a = null;
 	
 	private static Logger log =
 			 Logger.getLogger(NotificationList.class.getName());
+	
+	public NotificationList() {
+		ArrayList<String> authorisations = new ArrayList<String> ();	
+		authorisations.add(Authorise.ANALYST);
+		authorisations.add(Authorise.ADMIN);		// Enumerators with MANAGE access can process managed forms
+		a = new Authorise(authorisations, null);		
+	}
 	
 	@Path("/{projectId}")
 	@GET
@@ -92,17 +102,22 @@ public class NotificationList extends Application {
 			@PathParam("projectId") int projectId) { 
 		
 		Response response = null;
+		String connectionString = "surveyKPI-Notifications";
 		
 		// Authorisation - Access
-		Connection connectionSD = SDDataSource.getConnection("surveyKPI-Notifications");
-		a.isAuthorised(connectionSD, request.getRemoteUser());
+		Connection sd = SDDataSource.getConnection(connectionString);
+		a.isAuthorised(sd, request.getRemoteUser());
 		// End Authorisation
 		
 		PreparedStatement pstmt = null;
 		
 		try {
-			NotificationManager nm = new NotificationManager();
-			ArrayList<Notification> nList = nm.getProjectNotifications(connectionSD, pstmt, request.getRemoteUser(), projectId);
+			// Localisation			
+			Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(sd, request, request.getRemoteUser()));
+			ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
+			
+			NotificationManager nm = new NotificationManager(localisation);
+			ArrayList<Notification> nList = nm.getProjectNotifications(sd, pstmt, request.getRemoteUser(), projectId);
 			
 			Gson gson = new GsonBuilder().disableHtmlEscaping().create();
 			String resp = gson.toJson(nList);
@@ -115,7 +130,7 @@ public class NotificationList extends Application {
 			
 			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 			
-			SDDataSource.closeConnection("surveyKPI-Notifications", connectionSD);
+			SDDataSource.closeConnection(connectionString, sd);
 			
 		}
 
@@ -127,16 +142,20 @@ public class NotificationList extends Application {
 	@GET
 	public Response getTypes(@Context HttpServletRequest request) { 
 		
-		ResponseBuilder builder = Response.ok();
 		Response response = null;
+		String connectionString = "surveyKPI-NotificationList-getTypes";
 		
 		// No Authorisation required
 		
-		Connection connectionSD = SDDataSource.getConnection("surveyKPI-NotificationTypes");	
+		Connection sd = SDDataSource.getConnection(connectionString);	
 		
 		try {
-			NotificationManager fm = new NotificationManager();
-			ArrayList<String> tList = fm.getNotificationTypes(connectionSD);
+			// Localisation			
+			Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(sd, request, request.getRemoteUser()));
+			ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
+			
+			NotificationManager fm = new NotificationManager(localisation);
+			ArrayList<String> tList = fm.getNotificationTypes(sd, request.getRemoteUser());
 			
 			Gson gson = new GsonBuilder().disableHtmlEscaping().create();
 			String resp = gson.toJson(tList);
@@ -147,7 +166,7 @@ public class NotificationList extends Application {
 		    response = Response.serverError().entity("No data available").build();
 		} finally {
 			
-			SDDataSource.closeConnection("surveyKPI-NotificationTypes", connectionSD);
+			SDDataSource.closeConnection(connectionString, sd);
 			
 		}
 
@@ -164,7 +183,6 @@ public class NotificationList extends Application {
 	public Response getRemoteSurveys(@Context HttpServletRequest request,
 			@FormParam("remote") String remoteString) { 
 		
-		ResponseBuilder builder = Response.ok();
 		Response response = null;
 		
 		Type type = new TypeToken<Remote>(){}.getType();
@@ -176,7 +194,6 @@ public class NotificationList extends Application {
 			return response;
 		}
 		
-		System.out.println("Host: " + r.address);
 		// Remove trailing slashes
 		if(r.address.endsWith("/")) {
 			r.address = r.address.substring(0, r.address.length() -1);
@@ -218,7 +235,7 @@ public class NotificationList extends Application {
 			httpget.addHeader("accept", "text/xml");
 			httpget.addHeader("X-OpenRosa-Version", "1.1");
 			
-			System.out.println("Executing request " + httpget.getRequestLine() + " to target " + target);
+			log.info("Executing request " + httpget.getRequestLine() + " to target " + target);
           
 			XformsJavaRosa fList = null;
 			String resp = null;
@@ -244,7 +261,6 @@ public class NotificationList extends Application {
       				   + rem_response.getStatusLine().getStatusCode());
             }
                 
-            System.out.println("----------------------------------------");
             if(fList != null) {
             	System.out.println("Length: " + fList.xform.size());
 				Gson gsonResp = new GsonBuilder().disableHtmlEscaping().create();
@@ -280,45 +296,40 @@ public class NotificationList extends Application {
 	public Response addNotification(@Context HttpServletRequest request,
 			@FormParam("notification") String notificationString) { 
 		
-		ResponseBuilder builder = Response.ok();
 		Response response = null;
-		
-		try {
-		    Class.forName("org.postgresql.Driver");	 
-		} catch (ClassNotFoundException e) {
-			log.log(Level.SEVERE,"Survey: Error: Can't find PostgreSQL JDBC Driver", e);
-		    response = Response.serverError().entity("Survey: Error: Can't find PostgreSQL JDBC Driver").build();
-		    return response;
-		}
+		String connectionString = "surveyKPI-Survey - add notification";
 		
 		Type type = new TypeToken<Notification>(){}.getType();
 		Gson gson=  new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
 		Notification n = gson.fromJson(notificationString, type);
 		
-		System.out.println("Notification:========== " + notificationString);
+		log.info("Add Notification:========== " + notificationString);
 		// Authorisation - Access
-		Connection connectionSD = SDDataSource.getConnection("surveyKPI-Survey");
+		Connection sd = SDDataSource.getConnection(connectionString);
 		boolean superUser = false;
 		try {
-			superUser = GeneralUtilityMethods.isSuperUser(connectionSD, request.getRemoteUser());
+			superUser = GeneralUtilityMethods.isSuperUser(sd, request.getRemoteUser());
 		} catch (Exception e) {
 		}
-		a.isAuthorised(connectionSD, request.getRemoteUser());
-		a.isValidSurvey(connectionSD, request.getRemoteUser(), n.s_id, false, superUser);
+		a.isAuthorised(sd, request.getRemoteUser());
+		a.isValidSurvey(sd, request.getRemoteUser(), n.s_id, false, superUser);
 		// End Authorisation
 		
 		PreparedStatement pstmt = null;
 		
 		try {	
+			// Localisation			
+			Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(sd, request, request.getRemoteUser()));
+			ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
 			
-			NotificationManager nm = new NotificationManager();
+			NotificationManager nm = new NotificationManager(localisation);
 			
 			// Validate
-			if(n.target.equals("forward") && nm.isFeedbackLoop(connectionSD, request.getServerName(), n)) {
+			if(n.target.equals("forward") && nm.isFeedbackLoop(sd, request.getServerName(), n)) {
 				throw new Exception("Survey is being forwarded to itself");
 			}
  
-			nm.addNotification(connectionSD, pstmt, request.getRemoteUser(), n);
+			nm.addNotification(sd, pstmt, request.getRemoteUser(), n);
 			
 			response = Response.ok().build();
 			
@@ -350,7 +361,7 @@ public class NotificationList extends Application {
 			
 			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 			
-			SDDataSource.closeConnection("surveyKPI-Survey", connectionSD);
+			SDDataSource.closeConnection(connectionString, sd);
 			
 		}
 
@@ -363,43 +374,39 @@ public class NotificationList extends Application {
 	public Response updateNotification(@Context HttpServletRequest request,
 			@FormParam("notification") String notificationString) { 
 		
-		ResponseBuilder builder = Response.ok();
 		Response response = null;
-		
-		try {
-		    Class.forName("org.postgresql.Driver");	 
-		} catch (ClassNotFoundException e) {
-			log.log(Level.SEVERE,"Survey: Error: Can't find PostgreSQL JDBC Driver", e);
-		    response = Response.serverError().entity("Survey: Error: Can't find PostgreSQL JDBC Driver").build();
-		    return response;
-		}
+		String connectionString = "surveyKPI-Survey-update notification";
 		
 		Type type = new TypeToken<Notification>(){}.getType();
 		Gson gson=  new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
 		Notification n = gson.fromJson(notificationString, type);
 		
 		// Authorisation - Access
-		Connection connectionSD = SDDataSource.getConnection("surveyKPI-Survey");
+		Connection sd = SDDataSource.getConnection(connectionString);
 		boolean superUser = false;
 		try {
-			superUser = GeneralUtilityMethods.isSuperUser(connectionSD, request.getRemoteUser());
+			superUser = GeneralUtilityMethods.isSuperUser(sd, request.getRemoteUser());
 		} catch (Exception e) {
 		}
-		a.isAuthorised(connectionSD, request.getRemoteUser());
-		a.isValidSurvey(connectionSD, request.getRemoteUser(), n.s_id, false, superUser);
+		a.isAuthorised(sd, request.getRemoteUser());
+		a.isValidSurvey(sd, request.getRemoteUser(), n.s_id, false, superUser);
 		// End Authorisation
 		
-		log.info("Update notification for survey: " + n.s_id + " Remote s_id: " + 
-				n.remote_s_ident + " Email Question: " + n.notifyDetails.emailQuestion );
+		log.info("Update notification for survey: " + request.getRemoteUser() + " : "+ n.s_id + " Remote s_id: " + 
+				n.remote_s_ident + " Email Question: " + n.notifyDetails.emailQuestionName );
 		
 		PreparedStatement pstmt = null;
 		
 		try {
-			NotificationManager nm = new NotificationManager();
-			if(n.target.equals("forward") && nm.isFeedbackLoop(connectionSD, request.getServerName(), n)) {
+			// Localisation			
+			Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(sd, request, request.getRemoteUser()));
+			ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
+			
+			NotificationManager nm = new NotificationManager(localisation);
+			if(n.target.equals("forward") && nm.isFeedbackLoop(sd, request.getServerName(), n)) {
 				throw new Exception("Survey is being forwarded to itself");
 			}
-			nm.updateNotification(connectionSD, pstmt, request.getRemoteUser(), n);	
+			nm.updateNotification(sd, pstmt, request.getRemoteUser(), n);	
 			response = Response.ok().build();
 			
 		} catch (SQLException e) {
@@ -426,7 +433,7 @@ public class NotificationList extends Application {
 			
 			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 			
-			SDDataSource.closeConnection("surveyKPI-Survey", connectionSD);
+			SDDataSource.closeConnection(connectionString, sd);
 			
 		}
 
@@ -439,20 +446,12 @@ public class NotificationList extends Application {
 	public Response deleteForward(@Context HttpServletRequest request,
 			@PathParam("id") int id) { 
 		
-		ResponseBuilder builder = Response.ok();
 		Response response = null;
-		
-		try {
-		    Class.forName("org.postgresql.Driver");	 
-		} catch (ClassNotFoundException e) {
-			log.log(Level.SEVERE,"Survey: Error: Can't find PostgreSQL JDBC Driver", e);
-		    response = Response.serverError().entity("Survey: Error: Can't find PostgreSQL JDBC Driver").build();
-		    return response;
-		}
+		String connectionString = "surveyKPI-Survey-delete notification";
 		
 		// Authorisation - Access
-		Connection connectionSD = SDDataSource.getConnection("surveyKPI-Survey");
-		a.isAuthorised(connectionSD, request.getRemoteUser());
+		Connection sd = SDDataSource.getConnection(connectionString);
+		a.isAuthorised(sd, request.getRemoteUser());
 		// End Authorisation
 		
 		PreparedStatement pstmt = null;
@@ -461,22 +460,26 @@ public class NotificationList extends Application {
 		// Data level authorisation, is the user authorised to delete this forward
 		
 		try {
+			// Localisation			
+			Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(sd, request, request.getRemoteUser()));
+			ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
+			
 			ResultSet resultSet = null;
 			String sql = "select s_id " +
 					" from forward " +
 					" where id = ?";
 			
-			pstmt = connectionSD.prepareStatement(sql);	
+			pstmt = sd.prepareStatement(sql);	
 			pstmt.setInt(1, id);	
 			log.info("Delete forward, validate survey: " + pstmt.toString());
 
 			resultSet = pstmt.executeQuery();
 			if(resultSet.next()) {
 				int sId = resultSet.getInt(1);
-				superUser = GeneralUtilityMethods.isSuperUser(connectionSD, request.getRemoteUser());
-				a.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false, superUser);
-				NotificationManager fm = new NotificationManager();
-				fm.deleteNotification(connectionSD, pstmt, request.getRemoteUser(), id);
+				superUser = GeneralUtilityMethods.isSuperUser(sd, request.getRemoteUser());
+				a.isValidSurvey(sd, request.getRemoteUser(), sId, false, superUser);
+				NotificationManager fm = new NotificationManager(localisation);
+				fm.deleteNotification(sd, request.getRemoteUser(), id);
 			}
 			
 			response = Response.ok().build();
@@ -494,7 +497,7 @@ public class NotificationList extends Application {
 			
 			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 			
-			SDDataSource.closeConnection("surveyKPI-Survey", connectionSD);
+			SDDataSource.closeConnection(connectionString, sd);
 			
 		}
 
@@ -502,7 +505,120 @@ public class NotificationList extends Application {
 
 	}
 	
-	
+	/*
+	 * send an immmediate notification
+	 */
+	@Path("/immediate")
+	@POST
+	public Response immediateNotification(
+			@Context HttpServletRequest request,
+			@FormParam("notification") String notificationString) { 
+		
+		Response response = null;
+		String connectionString = "surveyKPI-Survey-send immediate notification";
+		
+		Type type = new TypeToken<Notification>(){}.getType();
+		Gson gson=  new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
+		Notification n = gson.fromJson(notificationString, type);
+		
+		log.info("Immediate Notification:========== " + notificationString);
+		// Authorisation - Access
+		Connection sd = SDDataSource.getConnection(connectionString);
+		boolean superUser = false;
+		try {
+			superUser = GeneralUtilityMethods.isSuperUser(sd, request.getRemoteUser());
+		} catch (Exception e) {
+		}
+		a.isAuthorised(sd, request.getRemoteUser());
+		if(n.s_id > 0) {
+			a.isValidSurvey(sd, request.getRemoteUser(), n.s_id, false, superUser);
+		} else {
+			a.isValidSurveyIdent(sd, request.getRemoteUser(), n.sIdent, false, superUser);
+		}
+		// End Authorisation
+		
+		PreparedStatement pstmt = null;
+		
+		Connection cResults = ResultsDataSource.getConnection(connectionString);
+		try {	
+			// Localisation			
+			Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(sd, request, request.getRemoteUser()));
+			ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
+			
+			NotificationManager nm = new NotificationManager(localisation);
+			
+			// Validate
+			if(n.target.equals("forward") && nm.isFeedbackLoop(sd, request.getServerName(), n)) {
+				throw new Exception("Survey is being forwarded to itself");
+			}
+			
+			NotifyDetails nd = n.notifyDetails;
+			int pId = GeneralUtilityMethods.getProjectIdFromSurveyIdent(sd, n.sIdent);
+			String basePath = GeneralUtilityMethods.getBasePath(request);
+			String serverName = request.getServerName();
+			String scheme = request.getScheme();
+			int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser());
+			SubmissionMessage subMsg = new SubmissionMessage(
+					0,					// Task Id - ignore, only relevant for a reminder
+					n.sIdent,			// Survey Ident
+					pId,
+					n.instanceId, 
+					nd.from,
+					nd.subject, 
+					nd.content,
+					nd.attach,
+					nd.include_references,
+					nd.launched_only,
+					nd.emailQuestion,
+					nd.emailQuestionName,
+					nd.emailMeta,
+					nd.emails,
+					n.target,
+					request.getRemoteUser(),
+					scheme,
+					serverName,
+					basePath);
+			MessagingManager mm = new MessagingManager();
+			mm.createMessage(sd, oId, "submission", "", gson.toJson(subMsg));
+			
+			response = Response.ok().build();
+			
+		} catch (SQLException e) {
+			String msg = e.getMessage();
+			if(msg.contains("forwarddest")) {	// Unique key
+				response = Response.serverError().entity("Duplicate forwarding address").build();
+			} else {
+				response = Response.serverError().entity("SQL Error").build();
+				log.log(Level.SEVERE,"SQL Exception", e);
+			}
+		} catch (AuthorisationException e) {
+			log.info("Authorisation Exception");
+		    response = Response.serverError().entity("Not authorised").build();
+		} catch (ApplicationException e) {
+		    response = Response.serverError().entity(e.getMessage()).build();
+		} catch (Exception e) {
+			String msg = e.getMessage();
+			log.info(msg);
+			if(msg == null) {
+				msg = "System Error";
+			}
+			if(msg != null && !msg.contains("forwarded to itself")) {
+				msg = "System Error";
+				log.log(Level.SEVERE,"Error", e);
+			}
+		    response = Response.serverError().entity(msg).build();
+		} finally {
+			
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+			
+			SDDataSource.closeConnection(connectionString, sd);
+			ResultsDataSource.closeConnection(connectionString, cResults);
+			
+		}
+
+		return response;
+
+	}
 
 }
 

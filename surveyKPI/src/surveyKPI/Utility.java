@@ -65,12 +65,12 @@ public class Utility extends Application {
 			 Logger.getLogger(Utility.class.getName());
 	
 	private class SmapTimeZone {
-		String offset;
 		String id;
+		String name;
 		
-		public SmapTimeZone(String offset, String id) {
-			this.offset = offset;
+		public SmapTimeZone(String id, String name) {
 			this.id = id;
+			this.name = name;
 		}
 	}
 	
@@ -98,43 +98,37 @@ public class Utility extends Application {
 			) { 
 
 		Response response = null;
-		
-		try {
-		    Class.forName("org.postgresql.Driver");	 
-		} catch (ClassNotFoundException e) {
-			log.log(Level.SEVERE, "Can't find PostgreSQL JDBC Driver", e);
-			response = Response.serverError().build();
-		    return response;
-		}
-		
-		// Authorisation - Access
-		Connection sd = SDDataSource.getConnection("surveyKPI-Utility");
-		a.isAuthorised(sd, request.getRemoteUser());
-		
+		String connectionString = "surveyKPI-Utility - getTimezones";
+
+		// Authorisation - Not required
+		Connection sd = SDDataSource.getConnection(connectionString);
 		// End Authorisation
 		
+		String sql = "select name, utc_offset from pg_timezone_names "
+				+ "where substring(name FROM 1 FOR 3) <> 'Etc' "
+				+ "and substring(name FROM 1 FOR 7) <> 'SystemV' "
+				+ "and substring(name FROM 1 FOR 5) <> 'posix' "
+				+ "and name <> 'GMT0' "
+				+ "and name <> 'GMT-0' "
+				+ "and name <> 'GMT+0' "
+				+ "and name <> 'UCT' "
+				+ "order by utc_offset asc";
+		PreparedStatement pstmt;
+		
 		try {
-			ArrayList<SmapTimeZone> smapTzList = new ArrayList<SmapTimeZone> ();
-			
-			List<TimeZone> tzList = new ArrayList<>();
-		    String[] ids = TimeZone.getAvailableIDs();
-		    for (String id : ids) {
-		        tzList.add(TimeZone.getTimeZone(id));
-		    }
-		    Collections.sort(tzList,
-		                    new Comparator<TimeZone>() {
-		        public int compare(TimeZone s1, TimeZone s2) {
-		            return s1.getRawOffset() - s2.getRawOffset();
-		        }
-		    }); // Need to sort the GMT timezone here after getTimeZone() method call
-		    for (TimeZone tz : tzList) {
-		    	
-		    	smapTzList.add(new SmapTimeZone(getTimeZone(tz), tz.getID()));
-
-		    }
+			ArrayList<SmapTimeZone> timezones = new ArrayList<> ();
+			pstmt = sd.prepareStatement(sql);
+			log.info("Get timezones: " + pstmt.toString());
+			ResultSet rs = pstmt.executeQuery();
+			while(rs.next()) {
+				String id = rs.getString(1);
+				String offset = rs.getString(2);
+				offset = offset.substring(0, offset.lastIndexOf(":"));
+				timezones.add(new SmapTimeZone(id, id + " (" + offset + ")"));
+			}
 		    
 			Gson gson = new GsonBuilder().disableHtmlEscaping().create();
-			String resp = gson.toJson(smapTzList);
+			String resp = gson.toJson(timezones);
 			response = Response.ok(resp).build();
 		} catch (Exception e) {
 			
@@ -143,7 +137,7 @@ public class Utility extends Application {
 
 		} finally {
 			
-			SDDataSource.closeConnection("surveyKPI-Utility", sd);
+			SDDataSource.closeConnection(connectionString, sd);
 		}
 
 		return response;

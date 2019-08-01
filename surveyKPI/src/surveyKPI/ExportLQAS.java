@@ -20,7 +20,10 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Locale;
+import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -68,13 +71,19 @@ import net.sourceforge.jeval.Evaluator;
 @Path("/lqasExport/{sId}/{rId}")
 public class ExportLQAS extends Application {
 	
-	Authorise a = new Authorise(null, Authorise.ANALYST);
+	Authorise a = null;
 	
 	private static Logger log =
 			 Logger.getLogger(ExportLQAS.class.getName());
 
 	LogManager lm = new LogManager();		// Application log
 	
+	public ExportLQAS() {
+		ArrayList<String> authorisations = new ArrayList<String> ();	
+		authorisations.add(Authorise.ANALYST);
+		authorisations.add(Authorise.VIEW_DATA);
+		a = new Authorise(authorisations, null);
+	}
 	/*
 	 * Assume:
 	 *  1) LQAS surveys only have one form and this form is the one that has the "lot" question in it
@@ -89,13 +98,6 @@ public class ExportLQAS extends Application {
 			@PathParam("rId") int rId,
 			@QueryParam("sources") boolean showSources,
 			@QueryParam("filetype") String filetype) throws Exception {
-
-		try {
-		    Class.forName("org.postgresql.Driver");	 
-		} catch (ClassNotFoundException e) {
-			log.log(Level.SEVERE, "Can't find PostgreSQL JDBC Driver", e);
-		    throw new Exception("Can't find PostgreSQL JDBC Driver");
-		}
 				
 		// Authorisation - Access
 		Connection sd = SDDataSource.getConnection("createLQAS");	
@@ -114,7 +116,7 @@ public class ExportLQAS extends Application {
 		lm.writeLog(sd, sId, request.getRemoteUser(), "view", "Export to LQAS");
 		
 		Response responseVal = null;
-		SurveyManager sm = new SurveyManager();
+		
 		org.smap.sdal.model.Survey survey = null;
 		Connection cResults = ResultsDataSource.getConnection("createLQAS");
 		
@@ -126,10 +128,14 @@ public class ExportLQAS extends Application {
 		}
 		
 		try {
-			
+			// Get the users locale
+			Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(sd, request, request.getRemoteUser()));
+			ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
+						
+			SurveyManager sm = new SurveyManager(localisation, "UTC");
 			// Get the survey details
 			survey = sm.getById(sd, cResults, request.getRemoteUser(), sId, false, basePath, null, false, false, 
-					false, false, false, "real", false, superUser, 0, null);
+					false, false, false, "real", false, false, superUser, null, false, false);
 			
 			/*
 			 * Get the LQAS definition to apply to this survey

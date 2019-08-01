@@ -35,6 +35,7 @@ import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.model.Form;
+import org.smap.sdal.model.MetaItem;
 import org.smap.sdal.model.QuestionLite;
 
 import com.google.gson.Gson;
@@ -42,8 +43,6 @@ import com.google.gson.GsonBuilder;
 
 import java.sql.*;
 import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -55,11 +54,19 @@ import java.util.logging.Logger;
 @Path("/questionList/{sId}/{language}")
 public class QuestionList extends Application {
 	
-	Authorise a = new Authorise(null, Authorise.ANALYST);
+	Authorise a = null;
 	
 	private static Logger log =
 			 Logger.getLogger(Review.class.getName());
 
+	public QuestionList() {
+		ArrayList<String> authorisations = new ArrayList<String> ();	
+		authorisations.add(Authorise.ANALYST);
+		authorisations.add(Authorise.ADMIN);
+		authorisations.add(Authorise.VIEW_DATA);
+		a = new Authorise(authorisations, null);
+	}
+	
 	/*
 	 * Return a list of all questions in the survey
 	 * Deprecate.  This service has been replaced by the next one. It should be deleted however 
@@ -73,13 +80,6 @@ public class QuestionList extends Application {
 			@QueryParam("single_type") String single_type,
 			@QueryParam("exc_read_only") boolean exc_read_only,
 			@QueryParam("exc_ssc") boolean exc_ssc) { 
-
-		try {
-		    Class.forName("org.postgresql.Driver");	 
-		} catch (ClassNotFoundException e) {
-		    e.printStackTrace();
-		    return "Error: Can't find PostgreSQL JDBC Driver";
-		}
 		
 		// Authorisation - Access
 		Connection connectionSD = SDDataSource.getConnection("surveyKPI-QuestionList");
@@ -94,12 +94,28 @@ public class QuestionList extends Application {
 		
 		JSONArray jaQuestions = new JSONArray();
 		String response = null;
-
-		log.info("Get questions: " + single_type + " : " + exc_read_only);
+		
+		
 		
 		PreparedStatement pstmt = null;
 		PreparedStatement pstmtSSC = null;
 		try {
+			
+			// Get metaItems
+			ArrayList<MetaItem> items = GeneralUtilityMethods.getPreloads(connectionSD, sId);	
+			int metaId = -1000;		// Backward compatability to when meta items did not have an id
+			for(MetaItem mi : items) {
+				if(mi.isPreload) {
+					JSONObject joQuestion = new JSONObject();
+					int id = (mi.id <= -1000) ? mi.id : metaId--;
+					joQuestion.put("id", id);
+					joQuestion.put("type", mi.dataType);
+					joQuestion.put("q", mi.display_name);
+					joQuestion.put("name", mi.name);
+					jaQuestions.put(joQuestion);			
+				}
+			}
+			
 			String sql = null;
 			String sql1 = null;
 			String sqlro = null;
@@ -136,8 +152,8 @@ public class QuestionList extends Application {
 				sqlst = "";
 			}
 			
-			sqlEnd = " ORDER BY f.table_name, q.seq;";
-			
+			//sqlEnd = " ORDER BY f.table_name, q.seq;";
+			sqlEnd = " ORDER BY q.qname asc";
 			
 			sql = sql1 + sqlro  + sqlst + sqlEnd;	
 			
@@ -203,6 +219,7 @@ public class QuestionList extends Application {
 	
 	/*
 	 * Return a list of all questions in the survey
+	 * Deprecate this service and move to using survey ident only See QuestionListByIdent
 	 */
 	@GET
 	@Path("/new")
@@ -212,15 +229,10 @@ public class QuestionList extends Application {
 			@PathParam("language") String language,
 			@QueryParam("single_type") String single_type,
 			@QueryParam("exc_read_only") boolean exc_read_only,
-			@QueryParam("exc_ssc") boolean exc_ssc) { 
+			@QueryParam("exc_ssc") boolean exc_ssc,
+			@QueryParam("inc_meta") boolean inc_meta) { 
 
-		try {
-		    Class.forName("org.postgresql.Driver");	 
-		} catch (ClassNotFoundException e) {
-		    e.printStackTrace();
-		    return Response.serverError().entity("Error: Can't find PostgreSQL JDBC Driver").build();
-		}
-		
+	
 		Response response = null;
 		
 		// Authorisation - Access
@@ -240,6 +252,23 @@ public class QuestionList extends Application {
 		PreparedStatement pstmtSSC = null;
 		try {
 			Form tf = GeneralUtilityMethods.getTopLevelForm(sd, sId);
+			
+			if(inc_meta) {
+				ArrayList<MetaItem> metaItems = GeneralUtilityMethods.getPreloads(sd, sId);
+				for(MetaItem mi : metaItems) {
+					if(mi.isPreload) {
+						QuestionLite q = new QuestionLite();
+						q.id = mi.id;
+						q.name = mi.name;
+						q.f_id = tf.id;
+						q.type = mi.type;
+						q.is_ssc = false;
+						q.toplevel = true;
+						
+						questions.add(q);
+					}	
+				}
+			}
 			
 			StringBuffer combinedSql = new StringBuffer("");
 			String sql = null;
@@ -273,8 +302,8 @@ public class QuestionList extends Application {
 				sqlro = "";
 			}
 			
-			if(single_type != null) {
-				sqlst = " and q.qtype = ? ";
+			if(single_type != null && single_type.equals("string")) {
+				sqlst = " and (q.qtype = 'string' or q.qtype = 'calculate' or q.qtype = 'barcode') ";
 			} else {
 				sqlst = "";
 			}
@@ -290,9 +319,6 @@ public class QuestionList extends Application {
 			pstmt = sd.prepareStatement(sql);	 
 			pstmt.setString(1,  language);
 			pstmt.setInt(2,  sId);
-			if(single_type != null) {
-				pstmt.setString(3,  single_type);
-			}
 
 			log.info("Get questions: " + pstmt.toString());
 			resultSet = pstmt.executeQuery();
@@ -358,13 +384,6 @@ public class QuestionList extends Application {
 			@PathParam("sId") int sId,
 			@PathParam("language") String language,
 			@QueryParam("exc_read_only") boolean exc_read_only) { 
-
-		try {
-		    Class.forName("org.postgresql.Driver");	 
-		} catch (ClassNotFoundException e) {
-		    e.printStackTrace();
-		    return Response.serverError().entity("Error: Can't find PostgreSQL JDBC Driver").build();
-		}
 		
 		Response response = null;
 		
@@ -470,13 +489,6 @@ public class QuestionList extends Application {
 			@PathParam("language") String language,
 			@PathParam("form") int fId) { 
 
-		try {
-		    Class.forName("org.postgresql.Driver");	 
-		} catch (ClassNotFoundException e) {
-		    e.printStackTrace();
-		    return "Error: Can't find PostgreSQL JDBC Driver";
-		}
-		
 		// Authorisation - Access
 		Connection connectionSD = SDDataSource.getConnection("surveyKPI-QuestionList");
 		boolean superUser = false;

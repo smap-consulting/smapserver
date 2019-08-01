@@ -70,15 +70,7 @@ public class ServerSideCalculates extends Application {
 		
 		ResponseBuilder builder = Response.ok();
 		Response response = null;
-		
-		try {
-		    Class.forName("org.postgresql.Driver");	 
-		} catch (ClassNotFoundException e) {
-			log.log(Level.SEVERE,"Survey: Error: Can't find PostgreSQL JDBC Driver", e);
-		    response = Response.serverError().entity("Survey: Error: Can't find PostgreSQL JDBC Driver").build();
-		    return response;
-		}
-		
+
 		// Authorisation - Access
 		Connection connectionSD = SDDataSource.getConnection("surveyKPI-Survey");
 		a.isAuthorised(connectionSD, request.getRemoteUser());
@@ -147,15 +139,7 @@ public class ServerSideCalculates extends Application {
 		
 		ResponseBuilder builder = Response.ok();
 		Response response = null;
-		
-		try {
-		    Class.forName("org.postgresql.Driver");	 
-		} catch (ClassNotFoundException e) {
-			log.log(Level.SEVERE,"Survey: Error: Can't find PostgreSQL JDBC Driver", e);
-		    response = Response.serverError().entity("Survey: Error: Can't find PostgreSQL JDBC Driver").build();
-		    return response;
-		}
-		
+
 		// Authorisation - Access
 		Connection connectionSD = SDDataSource.getConnection("surveyKPI-Survey");
 		a.isAuthorised(connectionSD, request.getRemoteUser());
@@ -255,15 +239,7 @@ public class ServerSideCalculates extends Application {
 		
 		ResponseBuilder builder = Response.ok();
 		Response response = null;
-		
-		try {
-		    Class.forName("org.postgresql.Driver");	 
-		} catch (ClassNotFoundException e) {
-			log.log(Level.SEVERE,"Survey: Error: Can't find PostgreSQL JDBC Driver", e);
-		    response = Response.serverError().entity("Survey: Error: Can't find PostgreSQL JDBC Driver").build();
-		    return response;
-		}
-		
+
 		// Authorisation - Access
 		Connection connectionSD = SDDataSource.getConnection("surveyKPI-Survey");
 		a.isAuthorised(connectionSD, request.getRemoteUser());

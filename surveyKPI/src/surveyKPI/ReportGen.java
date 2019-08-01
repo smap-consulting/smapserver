@@ -61,7 +61,7 @@ public class ReportGen extends Application {
 		Connection sd = SDDataSource.getConnection(fn);
 		PreparedStatement pstmt = null;
 		
-		StringBuffer sql = new StringBuffer("select id, name, s_id from report where s_id in "
+		StringBuffer sql = new StringBuffer("select id, name, s_id, url from report where s_id in "
 				+ "(select s_id from survey s, users u, user_project up, project p "
 				+ "where u.id = up.u_id "
 				+ "and p.id = up.p_id "
@@ -102,6 +102,7 @@ public class ReportGen extends Application {
 				report.id = resultSet.getInt("id");
 				report.name = resultSet.getString("name");
 				report.sId = resultSet.getInt("s_id");
+				report.url = resultSet.getString("url");
 				reports.add(report);
 		
 			}
@@ -162,7 +163,7 @@ public class ReportGen extends Application {
 			
 			DocumentXLSManager rxm = new DocumentXLSManager();
 			String basePath = GeneralUtilityMethods.getBasePath(request);			
-			int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser(), sId);
+			int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser());
 			rxm.create(sd, request.getRemoteUser(), data, response.getOutputStream(), basePath, oId);
 			
 			responseVal = Response.ok("").build();

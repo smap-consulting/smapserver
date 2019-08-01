@@ -27,6 +27,7 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
+import org.smap.notifications.interfaces.EmitNotifications;
 import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.SDDataSource;
@@ -41,10 +42,8 @@ import org.smap.sdal.model.UserGroup;
 import com.google.gson.Gson;
 import java.sql.*;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.Locale;
 import java.util.ResourceBundle;
-import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -80,16 +79,7 @@ public class Register extends Application {
 		
 		log.info("Registering a new user: " + rd.email);
 		
-	
-		try {
-		    Class.forName("org.postgresql.Driver");	 
-		} catch (ClassNotFoundException e) {
-			log.log(Level.SEVERE,"Error: Can't find PostgreSQL JDBC Driver", e);
-			response = Response.serverError().build();
-		    return response;
-		}
-		
-		Connection sd = SDDataSource.getConnection("surveyKPI-OrganisationList");
+		Connection sd = SDDataSource.getConnection("surveyKPI-Register");
 		
 		PreparedStatement pstmt = null;
 		try {
@@ -110,28 +100,38 @@ public class Register extends Application {
 			/*
 			 * 1. Create organisation
 			 */
-			OrganisationManager om = new OrganisationManager();
+			OrganisationManager om = new OrganisationManager(localisation);
 			Organisation o = new Organisation();
 			o.admin_email = rd.email;
 			o.name = rd.org_name;
 			o.company_name = rd.org_name;
 			o.website = rd.website;
 			o.can_edit = true;
+			o.can_notify = true;
+			o.can_use_api = true;
+			o.can_submit = true;
+			o.appearance.set_as_theme = false;
+			o.appearance.navbar_color = Organisation.DEFAULT_NAVBAR_COLOR;
+			o.email_task = false;
+			o.can_sms = false;
+			o.e_id = 1;				// Default organisation!
 			
 			int o_id = om.createOrganisation(
 					sd, 
 					o, 
 					userIdent, 
 					null,
+					null,
 					requestUrl,
 					basePath,
+					null,
 					null,
 					rd.email);
 			
 			/*
 			 * 2. Create the user
 			 */
-			UserManager um = new UserManager();
+			UserManager um = new UserManager(localisation);
 			
 			User u = new User();
 			u.name = rd.admin_name;
@@ -157,15 +157,26 @@ public class Register extends Application {
 					request.getServerName(),
 					rd.admin_name,
 					localisation);			 
-			
-			/*
-			 * 3. Create a default project
-			 */
+
+			 // 3. Create a default project
 			ProjectManager pm = new ProjectManager();
 			Project p = new Project();
 			p.name = "default";
 			p.desc = "Default Project - Created on registration";
 			pm.createProject(sd, p, o_id, u_id, request.getRemoteUser());
+			
+			 // 4. Create a notification recording this event
+			try {
+				EmitNotifications en = new EmitNotifications();
+				en.publish(EmitNotifications.AWS_REGISTER_ORGANISATION,
+						getRegistrationMsg(rd, request.getServerName()),
+						"Register new organisation");
+			} catch (Exception e) {
+				// Don't fail on this step
+				log.log(Level.SEVERE, e.getMessage(), e);
+			} catch(NoClassDefFoundError e) {		// This should be fixed!
+				log.log(Level.SEVERE, e.getMessage(), e);
+			}
 			
 			response = Response.ok().build();
 		
@@ -187,7 +198,7 @@ public class Register extends Application {
 			
 			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 			
-			SDDataSource.closeConnection("surveyKPI-OrganisationList", sd);
+			SDDataSource.closeConnection("surveyKPI-Register", sd);
 		}
 		
 		return response;

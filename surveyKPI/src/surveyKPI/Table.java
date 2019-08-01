@@ -71,15 +71,7 @@ public class Table extends Application {
 		
 		if(tableName != null) {
 			tableName = tableName.toLowerCase();	// Support for older surveys without clean table name
-			
-			try {
-			    Class.forName("org.postgresql.Driver");	 
-			} catch (ClassNotFoundException e) {
-				log.log(Level.SEVERE, "Can't find PostgreSQL JDBC Driver", e);
-			    response = Response.serverError().build();
-			    return response;
-			}
-	
+
 			Connection connectionRel = null; 
 			Connection connectionSD = null;
 			try {

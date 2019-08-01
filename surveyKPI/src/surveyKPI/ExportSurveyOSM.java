@@ -13,6 +13,8 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Locale;
+import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -57,10 +59,16 @@ import org.w3c.dom.Element;
 @Path("/exportSurveyOSM/{sId}/{filename}")
 public class ExportSurveyOSM extends Application {
 	
-	Authorise a = new Authorise(null, Authorise.ANALYST);
+	Authorise a = null;
 	
 	LogManager lm = new LogManager();		// Application log
 	
+	public ExportSurveyOSM() {
+		ArrayList<String> authorisations = new ArrayList<String> ();	
+		authorisations.add(Authorise.ANALYST);
+		authorisations.add(Authorise.VIEW_DATA);
+		a = new Authorise(authorisations, null);
+	}
 	private static Logger log =
 			 Logger.getLogger(ExportSurveyOSM.class.getName());
 	
@@ -141,37 +149,23 @@ public class ExportSurveyOSM extends Application {
 		ResponseBuilder builder = Response.ok();
 		String wayArray [] = null;
 		idcounter = -1;
-
-		try {
-		    Class.forName("org.postgresql.Driver");	 
-		} catch (ClassNotFoundException e) {
-			log.log(Level.SEVERE, "Can't find PostgreSQL JDBC Driver", e);
-		    try {
-		    	String msg = "Error: Can't find PostgreSQL JDBC Driver";
-				log.log(Level.SEVERE, msg, e);
-		    	response = Response.status(Status.INTERNAL_SERVER_ERROR).entity(msg).build();
-			    return response;
-		    } catch (Exception ex) {
-		    	log.log(Level.SEVERE, "Exception", ex);
-		    }
-		}
 		
 		if(waylist != null) {
 			wayArray = waylist.split(",");
 		}
 		
 		// Authorisation - Access
-		Connection connectionSD = SDDataSource.getConnection("surveyKPI-ExportSurveyOSM");
+		Connection sd = SDDataSource.getConnection("surveyKPI-ExportSurveyOSM");
 		boolean superUser = false;
 		try {
-			superUser = GeneralUtilityMethods.isSuperUser(connectionSD, request.getRemoteUser());
+			superUser = GeneralUtilityMethods.isSuperUser(sd, request.getRemoteUser());
 		} catch (Exception e) {
 		}
-		a.isAuthorised(connectionSD, request.getRemoteUser());
-		a.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false, superUser);
+		a.isAuthorised(sd, request.getRemoteUser());
+		a.isValidSurvey(sd, request.getRemoteUser(), sId, false, superUser);
 		// End Authorisation
 
-		lm.writeLog(connectionSD, sId, request.getRemoteUser(), "view", "Export as OSM");
+		lm.writeLog(sd, sId, request.getRemoteUser(), "view", "Export as OSM");
 		
 		String escapedFileName = null;
 		try {
@@ -201,6 +195,11 @@ public class ExportSurveyOSM extends Application {
 
 			try {
  
+				Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(sd, request,request.getRemoteUser()));
+				ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
+				
+				String tz = "UTC";
+				
 				HashMap<Integer, FormDesc> forms = new HashMap<Integer, FormDesc> ();			// A description of each form in the survey
 				ArrayList <FormDesc> formList = new ArrayList<FormDesc> ();					// A list of all the forms
 				FormDesc topForm = null;
@@ -215,10 +214,11 @@ public class ExportSurveyOSM extends Application {
 						" WHERE s_id = ? " +
 						" ORDER BY f_id;";	
 
-				pstmt = connectionSD.prepareStatement(sql);	
+				pstmt = sd.prepareStatement(sql);	
 				pstmt.setInt(1, sId);
 				ResultSet resultSet = pstmt.executeQuery();
 				
+				String surveyIdent = GeneralUtilityMethods.getSurveyIdent(sd, sId);
 				while (resultSet.next()) {
 
 					FormDesc fd = new FormDesc();
@@ -253,10 +253,14 @@ public class ExportSurveyOSM extends Application {
 				for(FormDesc f : formList) {
 					
 					f.cols = GeneralUtilityMethods.getColumnsInForm(
-							connectionSD,
+							sd,
 							connectionResults,
+							localisation,
+							language,
 							sId,
+							surveyIdent,
 							request.getRemoteUser(),
+							null,		// Roles to apply
 							f.parent,
 							f.f_id,
 							f.table_name,
@@ -264,17 +268,20 @@ public class ExportSurveyOSM extends Application {
 							false,		// Don't include parent key
 							false,		// Don't include "bad" columns
 							false,		// Don't include instance id
+							true,		// Include prikey
 							true,		// Include other meta data
 							true,		// Include preloads
 							true,		// Include instancename
 							false,		// Survey duration
-							superUser,
+							false,		// superUser - Always apply filters
 							false,		// HXL only include with XLS exports
-							false		// Don't include audit data
+							false,		// Don't include audit data
+							tz,
+							false		// mgmt
 							);
 					
 					for(TableColumn col : f.cols) {
-						String name = col.name;
+						String name = col.column_name;
 						String qType = col.type;
 						
 						// Ignore the following columns
@@ -292,10 +299,7 @@ public class ExportSurveyOSM extends Application {
 						} else if(qType.equals("dateTime")) {	// Return all timestamps at UTC with no time zone
 							selName = "timezone('UTC', " + name + ") as " + name;	
 						} else {
-							boolean isAttachment = false;
-								if(qType.equals("image") || qType.equals("audio") || qType.equals("video")) {
-									isAttachment = true;
-								}
+							boolean isAttachment = GeneralUtilityMethods.isAttachmentType(qType);
 							if(isAttachment) {
 								selName = "'" + urlprefix + "' || " + name + " as " + name;
 							} else {
@@ -349,7 +353,7 @@ public class ExportSurveyOSM extends Application {
 				try {if (pstmt != null) {pstmt.close();	}} catch (SQLException e) {	}
 				try {if (pstmt2 != null) {pstmt2.close();	}} catch (SQLException e) {	}
 
-				SDDataSource.closeConnection("surveyKPI-ExportSurveyOSM", connectionSD);
+				SDDataSource.closeConnection("surveyKPI-ExportSurveyOSM", sd);
 				ResultsDataSource.closeConnection("surveyKPI-ExportSurvey", connectionResults);
 			}
 		}
@@ -477,7 +481,7 @@ public class ExportSurveyOSM extends Application {
 				
 				for(TableColumn col : f.cols) {
 					
-					String key = col.name;
+					String key = col.column_name;
 					if(key.equals("prikey") ||
 							key.equals("instancename") ||	
 							key.equals("parkey") ||	

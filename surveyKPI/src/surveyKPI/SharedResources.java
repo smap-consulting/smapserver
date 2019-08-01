@@ -66,6 +66,7 @@ public class SharedResources extends Application {
 		ArrayList<String> authorisations = new ArrayList<String> ();	
 		authorisations.add(Authorise.ANALYST);
 		authorisations.add(Authorise.ADMIN);
+		authorisations.add(Authorise.VIEW_DATA);
 		orgLevelAuth = new Authorise(authorisations, null);		
 	}
 	
@@ -94,7 +95,7 @@ public class SharedResources extends Application {
 		try {
 			ArrayList<MapResource> maps = new ArrayList<MapResource> ();	
 			
-			int o_id = GeneralUtilityMethods.getOrganisationId(sd, user, 0);
+			int o_id = GeneralUtilityMethods.getOrganisationId(sd, user);
 			
 			String sql = "select id, name, map_type, description, config, version " +
 					" from map " + 
@@ -146,14 +147,6 @@ public class SharedResources extends Application {
 		Response response = null;
 		System.out.println("Map details:" + mapString);
 
-		try {
-		    Class.forName("org.postgresql.Driver");	 
-		} catch (ClassNotFoundException e) {
-			log.log(Level.SEVERE,"Error: Can't find PostgreSQL JDBC Driver", e);
-			response = Response.serverError().build();
-		    return response;
-		}
-		
 		// Authorisation - Access
 		Connection sd = SDDataSource.getConnection("surveyKPI-SharedResources");
 		orgLevelAuth.isAuthorised(sd, request.getRemoteUser());	
@@ -171,7 +164,7 @@ public class SharedResources extends Application {
 		
 		try {	
 			
-			int o_id = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser(), 0);
+			int o_id = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser());
 			
 			if(map.id < 1) {
 						
@@ -243,15 +236,7 @@ public class SharedResources extends Application {
 		
 		ResponseBuilder builder = Response.ok();
 		Response response = null;
-		
-		try {
-		    Class.forName("org.postgresql.Driver");	 
-		} catch (ClassNotFoundException e) {
-			log.log(Level.SEVERE,"Survey: Error: Can't find PostgreSQL JDBC Driver", e);
-		    response = Response.serverError().entity("Survey: Error: Can't find PostgreSQL JDBC Driver").build();
-		    return response;
-		}
-		
+
 		// Authorisation - Access
 		Connection sd = SDDataSource.getConnection("surveyKPI-DeleteMap");
 		orgLevelAuth.isAuthorised(sd, request.getRemoteUser());	
@@ -261,7 +246,7 @@ public class SharedResources extends Application {
 		
 		
 		try {
-			int o_id = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser(), 0);
+			int o_id = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser());
 			
 			String sql = "delete from map where id = ? and o_id = ?; ";
 			pstmt = sd.prepareStatement(sql);	 			

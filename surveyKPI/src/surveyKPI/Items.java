@@ -35,17 +35,20 @@ import javax.ws.rs.core.Response.Status;
 import model.Filter;
 
 import org.codehaus.jettison.json.JSONArray;
-import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
+import org.smap.sdal.Utilities.ApplicationException;
 import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.Utilities.UtilityMethodsEmail;
+import org.smap.sdal.constants.SmapServerMeta;
 import org.smap.sdal.managers.LogManager;
 import org.smap.sdal.managers.RoleManager;
+import org.smap.sdal.managers.SubmissionsManager;
+import org.smap.sdal.model.Form;
 import org.smap.sdal.model.SqlFrag;
-import org.smap.sdal.model.SqlFragParam;
+import org.smap.sdal.model.SqlParam;
 import org.smap.sdal.model.TableColumn;
 
 import utilities.QuestionInfo;
@@ -64,21 +67,31 @@ import java.util.ResourceBundle;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/*
- * Returns data for the passed in table name
- */
-@Path("/items/{form}")
+@Path("/items")
 public class Items extends Application {
 	
-	Authorise a = new Authorise(null, Authorise.ANALYST);
+	Authorise a = null;
+	Authorise aUpdate = null;
 	
 	private static Logger log =
 			 Logger.getLogger(Items.class.getName());
 
 	LogManager lm = new LogManager();		// Application log
 	
+	public Items() {
+		ArrayList<String> authorisations = new ArrayList<String> ();	
+		authorisations.add(Authorise.ANALYST);
+		authorisations.add(Authorise.VIEW_DATA);
+		a = new Authorise(authorisations, null);
+		
+		authorisations = new ArrayList<String> ();	
+		authorisations.add(Authorise.ANALYST);
+		aUpdate = new Authorise(authorisations, null);
+	}
+	
 	/*
 	 * JSON
+	 * Gets data for the supplied form id
 	 * Usage /surveyKPI/items/{formId}?geom=yes|no&feats=yes|no&mustHaveGeom=yes|no
 	 *   geom=yes  then location information will be returned
 	 *   feats=yes then features associated with geometries will be returned
@@ -88,6 +101,7 @@ public class Items extends Application {
 	 *   	Not return "bad" records unless get_bad is set to true
 	 */
 	@GET
+	@Path("/{form}")
 	@Produces("application/json")
 	public String getTable(@Context HttpServletRequest request,
 			@PathParam("form") int fId, 
@@ -99,16 +113,19 @@ public class Items extends Application {
 			@QueryParam("dateId") int dateId,		// Id of question containing the date to filter by
 			@QueryParam("startDate") Date startDate,
 			@QueryParam("endDate") Date endDate,
-			@QueryParam("filter") String sFilter) { 
+			@QueryParam("filter") String sFilter,
+			@QueryParam("advanced_filter") String advanced_filter,
+			@QueryParam("tz") String tz) { 
 		
 		JSONObject jo = new JSONObject();
 		boolean bGeom = true;
 		boolean bMustHaveGeom = true;
 		int maxRec = 0;
 		int recCount = 0;
-
+		String language = "none";
 		ArrayList<String> colNames = new ArrayList<String> ();
 		HashMap<String, String> surveyNames = new HashMap<String, String> ();
+		String connectionString = "surveyKPI-Items";
 		
 		String urlprefix = request.getScheme() + "://" + request.getServerName() + "/";	
 
@@ -119,16 +136,9 @@ public class Items extends Application {
 		if(mustHaveGeom != null && mustHaveGeom.equals("no")) {
 			bMustHaveGeom = false;
 		}
-			
-		try {
-		    Class.forName("org.postgresql.Driver");	 
-		} catch (ClassNotFoundException e) {
-			log.log(Level.SEVERE,"Error: Can't find PostgreSQL JDBC Driver", e);
-		    return "Error: Can't find PostgreSQL JDBC Driver";
-		}
-		
+	
 		// Authorisation - Access
-		Connection sd = SDDataSource.getConnection("surveyKPI-Items");
+		Connection sd = SDDataSource.getConnection(connectionString);
 		int sId = 0;
 		boolean superUser = false;
 		try {
@@ -143,12 +153,15 @@ public class Items extends Application {
 		
 		lm.writeLog(sd, sId, request.getRemoteUser(), "view", "View Results");
 	
+		tz = (tz == null) ? "UTC" : tz;
+		
 		Tables tables = new Tables(sId);
 		boolean hasRbacRowFilter = false;
+		StringBuffer message = new StringBuffer("");
 		
 		if(fId > 0) {
 			
-			Connection connection = null;
+			Connection cResults = null;
 			PreparedStatement pstmt = null;
 			PreparedStatement pstmtSSC = null;
 			PreparedStatement pstmtFDetails = null;
@@ -156,19 +169,21 @@ public class Items extends Application {
 			int parent = 0;
 			String tName = null;
 			String formName = null;
+			int totalCount = 0;
 			 
 			try {
 				
 				// Get the users locale
-				Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(sd, request.getRemoteUser()));
+				Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(sd, request, request.getRemoteUser()));
 				ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
 				
+				int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser());
 				// Connect to the results database
-				connection = ResultsDataSource.getConnection("surveyKPI-Items");	
+				cResults = ResultsDataSource.getConnection(connectionString);	
 				
 				// Prepare the statement to get the form details
-				String sqlFDetails = "select f.table_name, f.parentform, name from question q, form f " +
-					" where f.f_id = ?; ";
+				String sqlFDetails = "select table_name, parentform, name from form " +
+					" where f_id = ?";
 				pstmtFDetails = sd.prepareStatement(sqlFDetails);
 				
 				// Get the table details
@@ -193,42 +208,51 @@ public class Items extends Application {
 				// Get the number of records
 				String sql = "SELECT count(*) FROM " + tName + ";";
 				log.info("Get the number of records: " + sql);	
-				pstmt = connection.prepareStatement(sql);	 			
+				pstmt = cResults.prepareStatement(sql);	 			
 				ResultSet resultSet = pstmt.executeQuery();
 				if(resultSet.next()) {
-					jTotals.put("total_count", resultSet.getInt(1));
+					totalCount = resultSet.getInt(1);
+					jTotals.put("total_count", totalCount);
 				}
 				
 				// Get the number of bad records
 				sql = "SELECT count(*) FROM " + tName + " where _bad = 'true';";
 				log.info("Get the number of bad records: " + sql);
 				if(pstmt != null) try {pstmt.close();} catch(Exception e) {};
-				pstmt = connection.prepareStatement(sql);	 			
+				pstmt = cResults.prepareStatement(sql);	 			
 				resultSet = pstmt.executeQuery();
 				if(resultSet.next()) {
 					jTotals.put("bad_count", resultSet.getInt(1));
 				}
-	
 				
+				String surveyIdent = GeneralUtilityMethods.getSurveyIdent(sd, sId);
+				ArrayList<SqlParam> params = new ArrayList<SqlParam>();
 				ArrayList<TableColumn> columnList = GeneralUtilityMethods.getColumnsInForm(
 						sd,
-						connection,
+						cResults,
+						localisation,
+						language,
 						sId,
+						surveyIdent,
 						request.getRemoteUser(),
+						null,	// Roles to apply
 						parent,
 						fId,
 						tName,
-						false,	// Don't include Read only
+						true,	// Don't include Read only
 						true,	// Include parent key
 						true,	// Include "bad"
 						true,	// Include instanceId
+						true,	// Include prikey
 						true,	// Include other meta data
 						true,	// Include preloads
 						true,	// Include instance names
 						false,	// Include survey duration
 						superUser,
 						false,		// HXL only include with XLS exports
-						false		// Don't include audit data
+						false,		// Don't include audit data
+						tz,
+						false		// mgmt
 						);		
 				
 				// Construct a new query that retrieves a geometry object as geoJson
@@ -236,6 +260,7 @@ public class Items extends Application {
 				String geomType = null;
 				int newColIdx = 0;
 				JSONArray columns = new JSONArray();
+				JSONArray types = new JSONArray();
 				ArrayList<String> sscList = new ArrayList<String> ();
 				
 				for(TableColumn c : columnList) {
@@ -247,25 +272,46 @@ public class Items extends Application {
 							|| c.type.equals("geoshape")) {
 						
 						geomIdx = newColIdx;
-						cols.append("ST_AsGeoJSON(" + tName + "." + c.name + ") ");
+						cols.append("ST_AsGeoJSON(" + tName + "." + c.column_name + ") ");
 						geomType = c.type;
 						newColIdx++;
 					
-					} else if(c.type.equals("image") || c.type.equals("audio") || c.type.equals("video")) {
-							cols.append("'" + urlprefix + "' || " + tName + "." + c.name + " as " + c.name);
+					} else if(GeneralUtilityMethods.isAttachmentType(c.type)) {
+							cols.append("'" + urlprefix + "' || " + tName + "." + c.column_name + " as " + c.column_name);
 				
-					} else if(c.name.equals("prikey") || c.name.equals("parkey") 
-							|| c.name.equals("_bad") || c.name.equals("_bad_reason")) {
-						cols.append(tName + "." + c.name + " as " +  c.name);
+					} else if(c.column_name.equals("prikey") || c.column_name.equals("parkey") 
+							|| c.column_name.equals("_bad") || c.column_name.equals("_bad_reason")) {
+						cols.append(tName + "." + c.column_name + " as " +  c.column_name);
+					
+					} else if(c.type != null && c.type.equals("dateTime")) {
+						cols.append("timezone(?, ").append(tName).append(".").append(c.column_name).append(") as " +  c.column_name);
+						params.add(new SqlParam("string", tz));
 						
-					}  else {
-						cols.append(tName + "." + c.name + " as " +  c.name);
+					}  else if(c.type != null && c.type.equals("date")) {
+						cols.append(tName).append(".").append(c.column_name).append(" as ").append(c.column_name);
+						
+					} else {
+						cols.append(tName + "." + c.column_name + " as " +  c.column_name);
 						
 					}
 					
-					colNames.add(c.humanName);
-					columns.put(c.humanName);
+					colNames.add(c.column_name);
+					if(c.column_name.equals("prikey")) {
+						columns.put(c.column_name);		// For backward compatability (temporary)
+					} else {
+						columns.put(c.displayName);
+					}
+					types.put(c.type);
 					newColIdx++;
+				}
+				
+				boolean hasImportSourceColumn = GeneralUtilityMethods.hasColumn(cResults, tName, "_import_source");
+				if(hasImportSourceColumn) {
+					// add a hidden import source column
+					if(newColIdx > 0) {
+						cols.append(",");
+					}
+					cols.append(tName + "._import_source as _import_source");
 				}
 				
 				/*
@@ -320,7 +366,7 @@ public class Items extends Application {
 				
 				String sqlFilter = "";
 				if(start_key > 0) {
-					sqlFilter = tName + ".prikey > " +  start_key;
+					sqlFilter = tName + ".prikey < " +  start_key;
 					if(!bBad) {
 						sqlFilter += " and " + tName + "._bad = 'false'";
 					}
@@ -340,6 +386,10 @@ public class Items extends Application {
 					Gson gson=  new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
 					filter = gson.fromJson(sFilter, type);
 					
+					if(filter.value != null) {
+						filter.value = filter.value.replace("'", "''");	// Escape apostrophes
+					}
+					
 					QuestionInfo fQ = new QuestionInfo(sId, filter.qId, sd);	
 					tables.add(fQ.getTableName(), fQ.getFId(), fQ.getParentFId());
 					log.info("Filter expression: " + fQ.getFilterExpression(filter.value, null));
@@ -352,9 +402,47 @@ public class Items extends Application {
 				}
 				
 				/*
+				 * Validate the advanced filter and convert to an SQL Fragment
+				 */
+				SqlFrag advancedFilterFrag = null;
+				if(advanced_filter != null && advanced_filter.length() > 0) {
+
+					advancedFilterFrag = new SqlFrag();
+					advancedFilterFrag.addSqlFragment(advanced_filter, false, localisation);
+
+					for(String filterCol : advancedFilterFrag.humanNames) {
+						if(GeneralUtilityMethods.getColumnName(sd, sId, filterCol) == null) {
+							String msg = localisation.getString("inv_qn_misc");
+							msg = msg.replace("%s1", filterCol);
+							throw new ApplicationException(msg);
+						}
+					}
+				}
+				// Add the advanced filter fragment
+				if(advancedFilterFrag != null) {
+					if(sqlFilter.length() > 0) {
+						sqlFilter += " and " + "(" + advancedFilterFrag.sql + ")";
+					} else {
+						sqlFilter = "(" + advancedFilterFrag.sql + ")";
+					}	
+					
+					for(int i = 0; i < advancedFilterFrag.columns.size(); i++) {
+						int rqId = GeneralUtilityMethods.getQuestionIdFromName(sd, sId, advancedFilterFrag.humanNames.get(i));
+						if(rqId > 0) {
+							QuestionInfo qaf = new QuestionInfo(sId, rqId, sd);
+							tables.add(qaf.getTableName(), qaf.getFId(), qaf.getParentFId());
+						} else {
+							// assume meta and hence include main table
+							Form tlf = GeneralUtilityMethods.getTopLevelForm(sd, sId);
+							tables.add(tlf.tableName, tlf.id, tlf.parentform);
+						}
+					}
+				}
+				
+				/*
 				 * Add row filtering performed by RBAC
 				 */
-				RoleManager rm = new RoleManager();
+				RoleManager rm = new RoleManager(localisation);
 				ArrayList<SqlFrag> rfArray = null;
 				if(!superUser) {
 					rfArray = rm.getSurveyRowFilter(sd, sId, request.getRemoteUser());
@@ -363,9 +451,15 @@ public class Items extends Application {
 						for(SqlFrag rf : rfArray) {
 							if(rf.columns.size() > 0) {
 								for(int i = 0; i < rf.columns.size(); i++) {
-									int rqId = GeneralUtilityMethods.getQuestionIdFromName(sd, sId, rf.columns.get(i));
-									QuestionInfo fRbac = new QuestionInfo(sId, rqId, sd);
-									tables.add(fRbac.getTableName(), fRbac.getFId(), fRbac.getParentFId());
+									int rqId = GeneralUtilityMethods.getQuestionIdFromName(sd, sId, rf.humanNames.get(i));
+									if(rqId > 0) {
+										QuestionInfo fRbac = new QuestionInfo(sId, rqId, sd);
+										tables.add(fRbac.getTableName(), fRbac.getFId(), fRbac.getParentFId());
+									} else {
+										// Assume meta and get top level table
+										Form tlf = GeneralUtilityMethods.getTopLevelForm(sd, sId);
+										tables.add(tlf.tableName, tlf.id, tlf.parentform);
+									}
 								}
 								if(rfString.length() > 0) {
 									rfString += " or";
@@ -374,10 +468,12 @@ public class Items extends Application {
 								hasRbacRowFilter = true;
 							}
 						}
-						if(sqlFilter.length() > 0) {
-							sqlFilter += " and " + "(" + rfString + ")";
-						} else {
-							sqlFilter = "(" + rfString + ")";
+						if(rfString.trim().length() > 0) {
+							if(sqlFilter.length() > 0) {
+								sqlFilter += " and " + "(" + rfString + ")";
+							} else {
+								sqlFilter = "(" + rfString + ")";
+							}
 						}
 					}
 				}
@@ -388,7 +484,7 @@ public class Items extends Application {
 				// Get date column information
 				QuestionInfo date = null;
 				if((dateId != 0) && (startDate != null || endDate != null)) {
-					date = new QuestionInfo(sId, dateId, sd, false, "", urlprefix);	// Not interested in label any language will do
+					date = new QuestionInfo(localisation, tz, sId, dateId, sd, cResults, request.getRemoteUser(), false, "", urlprefix, oId);	// Not interested in label any language will do
 					tables.add(date.getTableName(), date.getFId(), date.getParentFId());
 					log.info("Date name: " + date.getColumnName() + " Date Table: " + date.getTableName());
 				}
@@ -399,12 +495,15 @@ public class Items extends Application {
 				jTotals.put("rec_limit", rec_limit);
 				String sqlLimit = "";
 				if(rec_limit > 0) {
-					sqlLimit = "LIMIT " + rec_limit;
+					sqlLimit = "limit " + rec_limit;
 				}
-				StringBuffer sql2 = new StringBuffer("select ");
+				StringBuffer sql2 = new StringBuffer("select distinct ");		// Add distinct as filter by values in a subform would otherwise result in duplicate tables
+				StringBuffer sqlFC = new StringBuffer("select count(*) ");	
 				sql2.append(cols);
 				sql2.append(" from ");
+				sqlFC.append(" from ");
 				sql2.append(tables.getTablesSQL());
+				sqlFC.append(tables.getTablesSQL());
 				
 				String sqlTableJoin = tables.getTableJoinSQL();
 				boolean doneWhere = false;
@@ -423,6 +522,7 @@ public class Items extends Application {
 					}
 					whereClause += sqlFilter;
 				}
+				
 				if(date != null) {
 					String sqlRestrictToDateRange = GeneralUtilityMethods.getDateRange(startDate, endDate, date.getColumnName());
 					if(sqlRestrictToDateRange.trim().length() > 0) {
@@ -436,46 +536,80 @@ public class Items extends Application {
 					}
 				}
 				sql2.append(whereClause);
-				sql2.append(" order by " + tName + ".prikey " + sqlLimit +";");
+				sqlFC.append(whereClause);
+				sql2.append(" order by ").append(tName).append(".parkey desc, ").append(tName).append(".prikey desc ").append(sqlLimit);
+				
+				// Get the number of filtered records			
+				if(sqlFC.length() > 0) {
+					sql = sqlFC.toString();
+					
+					if(pstmt != null) try {pstmt.close();} catch(Exception e) {};
+					pstmt = cResults.prepareStatement(sql);
+					
+					int attribIdx = 1;	
+					
+					if(advancedFilterFrag != null) {
+						attribIdx = GeneralUtilityMethods.setFragParams(pstmt, advancedFilterFrag, attribIdx, tz);
+					}		
+					// RBAC row filter
+					if(hasRbacRowFilter) {
+						attribIdx = GeneralUtilityMethods.setArrayFragParams(pstmt, rfArray, attribIdx, tz);
+					}				
+					// dates
+					if(dateId != 0) {
+						if(startDate != null) {
+							pstmt.setTimestamp(attribIdx++, GeneralUtilityMethods.startOfDay(startDate, tz));
+						}
+						if(endDate != null) {
+							pstmt.setTimestamp(attribIdx++, GeneralUtilityMethods.endOfDay(endDate, tz));
+						}
+					}
+					log.info("Get the number of filtered records: " + pstmt.toString());
+					resultSet = pstmt.executeQuery();
+					if(resultSet.next()) {
+						jTotals.put("filtered_count", resultSet.getInt(1));
+					} else {
+						jTotals.put("filtered_count", 0);
+					}
+				} else {
+					jTotals.put("filtered_count", totalCount);
+				}
+
 				
 				try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
-				pstmt = connection.prepareStatement(sql2.toString());
+				pstmt = cResults.prepareStatement(sql2.toString());
 				
 				/*
 				 * Set prepared statement values
 				 */
 				int attribIdx = 1;
 				
+				// Add any parameters in the select
+				attribIdx = GeneralUtilityMethods.addSqlParams(pstmt, attribIdx, params);
+				
+				if(advancedFilterFrag != null) {
+					attribIdx = GeneralUtilityMethods.setFragParams(pstmt, advancedFilterFrag, attribIdx, tz);
+				}
+				
 				// RBAC row filter
 				if(hasRbacRowFilter) {
-					for(SqlFrag rf : rfArray) {
-						for(int i = 0; i < rf.params.size(); i++) {
-							SqlFragParam p = rf.params.get(i);
-							if(p.type.equals("text")) {
-								pstmt.setString(attribIdx++, p.sValue);
-							} else if(p.type.equals("integer")) {
-								pstmt.setInt(attribIdx++,  p.iValue);
-							} else if(p.type.equals("double")) {
-								pstmt.setDouble(attribIdx++,  p.dValue);
-							}
-						}
-					}
+					attribIdx = GeneralUtilityMethods.setArrayFragParams(pstmt, rfArray, attribIdx, tz);
 				}
 				
 				// dates
 				if(dateId != 0) {
 					if(startDate != null) {
-						pstmt.setDate(attribIdx++, startDate);
+						pstmt.setTimestamp(attribIdx++, GeneralUtilityMethods.startOfDay(startDate, tz));
 					}
 					if(endDate != null) {
-						pstmt.setTimestamp(attribIdx++, GeneralUtilityMethods.endOfDay(endDate));
+						pstmt.setTimestamp(attribIdx++, GeneralUtilityMethods.endOfDay(endDate, tz));
 					}
 				}
 				
 				// Request the data
 				log.info("Get Item Data: " + pstmt.toString());
 				resultSet = pstmt.executeQuery();
-	
+				
 				JSONArray ja = new JSONArray();
 				while (resultSet.next()) {
 					JSONObject jr = new JSONObject();
@@ -484,7 +618,7 @@ public class Items extends Application {
 					
 					jr.put("type", "Feature");
 
-					for(int i = 0; i < colNames.size(); i++) {		
+					for(int i = 0; i < colNames.size(); i++) {	
 						
 						if(i == geomIdx) {							
 							// Add Geometry (assume one geometry type per table)
@@ -496,6 +630,7 @@ public class Items extends Application {
 							
 							//String name = rsMetaData.getColumnName(i);	
 							String name = colNames.get(i);
+							String headerName = columns.getString(i);
 							String value = resultSet.getString(i + 1);	
 							if(value == null) {
 								value = "";
@@ -506,16 +641,26 @@ public class Items extends Application {
 								jp.put("prikeys", prikeys);
 								prikeys.put(resultSet.getString("prikey"));
 								maxRec = resultSet.getInt("prikey");
-							} else if(name.equals("Survey Name")) {
+							} else if(name.equals(SmapServerMeta.SURVEY_ID_NAME)) {
 								// Get the display name
-								String displayName = surveyNames.get(value);
-								if(displayName == null && value.length() > 0) {
-									displayName = GeneralUtilityMethods.getSurveyName(sd, Integer.parseInt(value));
-									surveyNames.put(value, displayName);
+								String displayName = "";
+								if(value.length() > 0 && !value.equals("0")) {
+									displayName = surveyNames.get(value);
+									if(displayName == null) {
+										displayName = GeneralUtilityMethods.getSurveyName(sd, Integer.parseInt(value));
+										surveyNames.put(value, displayName);
+									}
+								} else {
+									if(hasImportSourceColumn) {
+										displayName = resultSet.getString("_import_source");
+										if(displayName == null) {
+											displayName = "";
+										}
+									} 
 								}
-								jp.put(name, displayName);
+								jp.put(headerName, displayName);
 							} else {
-								jp.put(name, value);
+								jp.put(headerName, value);
 							}
 						}
 					} 
@@ -542,38 +687,32 @@ public class Items extends Application {
 				
 				String maxRecordWhere = "";
 				if(whereClause.equals("")) {
-					maxRecordWhere = " where " + tName + ".prikey > " + maxRec;
+					maxRecordWhere = " where " + tName + ".prikey < " + maxRec;
 				} else {
-					maxRecordWhere = whereClause + " and " + tName + ".prikey > " + maxRec;
+					maxRecordWhere = whereClause + " and " + tName + ".prikey < " + maxRec;
 				}
 				// Determine if there are more records to be returned
 				sql = "SELECT count(*) FROM " + tables.getTablesSQL() + maxRecordWhere + ";";
 				try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
-				pstmt = connection.prepareStatement(sql);	
+				pstmt = cResults.prepareStatement(sql);	
 				
 				// Apply the parameters again
 				attribIdx = 1;
+				
+				if(advancedFilterFrag != null) {
+					attribIdx = GeneralUtilityMethods.setFragParams(pstmt, advancedFilterFrag, attribIdx, tz);
+				}
+				
 				// RBAC row filter
 				if(hasRbacRowFilter) {
-					for(SqlFrag rf : rfArray) {
-						for(int i = 0; i < rf.params.size(); i++) {
-							SqlFragParam p = rf.params.get(i);
-							if(p.type.equals("text")) {
-								pstmt.setString(attribIdx++, p.sValue);
-							} else if(p.type.equals("integer")) {
-								pstmt.setInt(attribIdx++,  p.iValue);
-							} else if(p.type.equals("double")) {
-								pstmt.setDouble(attribIdx++,  p.dValue);
-							}
-						}
-					}
+					attribIdx = GeneralUtilityMethods.setArrayFragParams(pstmt, rfArray, attribIdx, tz);
 				}
 				if(dateId != 0) {
 					if(startDate != null) {
-						pstmt.setDate(attribIdx++, startDate);
+						pstmt.setTimestamp(attribIdx++, GeneralUtilityMethods.startOfDay(startDate, tz));
 					}
 					if(endDate != null) {
-						pstmt.setTimestamp(attribIdx++, GeneralUtilityMethods.endOfDay(endDate));
+						pstmt.setTimestamp(attribIdx++, GeneralUtilityMethods.endOfDay(endDate, tz));
 					}
 				}
 				
@@ -588,37 +727,288 @@ public class Items extends Application {
 				 jo.put("type", "FeatureCollection");
 				 jo.put("features", ja);
 				 jo.put("cols", columns);
+				 jo.put("types", types);
 				 jo.put("formName", formName);
 				
 			} catch (SQLException e) {
-			    log.info("Did not get items for table - " + tName + ", Message=" + e.getMessage());
+			    
 				String msg = e.getMessage();
-				if(!msg.contains("does not exist") || msg.contains("column")) {	// Don't do a stack dump if the table did not exist that just means no one has submitted results yet
-					log.log(Level.SEVERE,"SQL Error", e);
+				if(msg.contains("does not exist") && !msg.contains("column")) {	// Don't do a stack dump if the table did not exist that just means no one has submitted results yet
+					// Don't do a stack dump if the table did not exist that just means no one has submitted results yet
+				} else {
+					message.append(msg);
+					log.log(Level.SEVERE, message.toString(), e);
 				}
-			} catch (JSONException e) {
-				log.log(Level.SEVERE,"JSON Error", e);
+				
 			} catch (Exception e) {
-				log.log(Level.SEVERE,"Error", e);
+				log.log(Level.SEVERE, message.toString(), e);
+				message.append(e.getMessage());
 			} finally {
 				
 				try {if (pstmt != null) {pstmt.close();	}} catch (SQLException e) {	}
 				try {if (pstmtSSC != null) {pstmtSSC.close();	}} catch (SQLException e) {	}
 				try {if (pstmtFDetails != null) {pstmtFDetails.close();	}} catch (SQLException e) {	}
 				
-				SDDataSource.closeConnection("surveyKPI-Items", sd);
-				ResultsDataSource.closeConnection("surveyKPI-Items", connection);	
+				SDDataSource.closeConnection(connectionString, sd);
+				ResultsDataSource.closeConnection(connectionString, cResults);	
 			}
 		}
 
+		try {
+			jo.put("message", message);
+		} catch (Exception e) {
+		}
 		return jo.toString();
 	}
 	
 	/*
-	 * Update the settings
+	 * Get the user activity
+	 */
+	@GET
+	@Path("/user/{user}")
+	@Produces("application/json")
+	public String getUserActivity(@Context HttpServletRequest request,
+			@PathParam("user") int uId, 
+			@QueryParam("start_key") int start_key,
+			@QueryParam("rec_limit") int rec_limit,
+			@QueryParam("startDate") Date startDate,
+			@QueryParam("dateId") int dateId,
+			@QueryParam("endDate") Date endDate,
+			@QueryParam("tz") String tz) { 
+		
+		String connectionString = "surveyKPI-Items-Users";
+		JSONObject jo = new JSONObject();
+		JSONArray columns = new JSONArray();
+		JSONArray types = new JSONArray();
+		
+		int maxRec = 0;
+		int recCount = 0;	
+	
+		// Authorisation - Access
+		Connection sd = SDDataSource.getConnection(connectionString);		
+		a.isAuthorised(sd, request.getRemoteUser());
+		a.isValidUser(sd, request.getRemoteUser(), uId);
+		// End Authorisation
+		
+		lm.writeLog(sd, 0, request.getRemoteUser(), "view", "User Activity for " + uId);
+	
+		tz = (tz == null) ? "UTC" : tz;
+		
+		StringBuffer message = new StringBuffer("");
+		
+		if(uId > 0) {
+			
+			PreparedStatement pstmt = null;
+			
+			int totalCount = 0;
+			 
+			try {
+				
+				int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser());
+				
+				/*
+				 * View data users can only see usage data on themselves
+				 */
+				if(GeneralUtilityMethods.isOnlyViewData(sd, request.getRemoteUser())) {
+					uId = GeneralUtilityMethods.getUserId(sd, request.getRemoteUser());
+				}
+				
+				// Get the users locale
+				Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(sd, request, request.getRemoteUser()));
+				ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
+				
+				String user = GeneralUtilityMethods.getUserIdent(sd, uId);	
+				
+				JSONObject jTotals = new JSONObject();
+				jo.put("totals", jTotals);
+				jTotals.put("start_key", start_key);
+				
+				// Get the number of records
+				String sql = "select count(*) from upload_event where user_name = ?";
+				
+				pstmt = sd.prepareStatement(sql);	
+				pstmt.setString(1, user);
+				log.info("Get the number of records: " + pstmt.toString());	
+				ResultSet resultSet = pstmt.executeQuery();
+				if(resultSet.next()) {
+					totalCount = resultSet.getInt(1);
+					jTotals.put("total_count", totalCount);
+				}
+				jTotals.put("rec_limit", rec_limit);
+				
+
+				SubmissionsManager subMgr = new SubmissionsManager(localisation, tz);
+				String whereClause = subMgr.getWhereClause(user, oId, dateId, startDate, endDate, 0);			
+		
+				// Get count of available records
+				StringBuffer sqlFC = new StringBuffer("select count(*) from upload_event ue ");				
+				sqlFC.append(whereClause);			
+				
+				// Get the number of filtered records			
+				if(sqlFC.length() > 0) {
+				
+					if(pstmt != null) try {pstmt.close();} catch(Exception e) {};
+					pstmt = sd.prepareStatement(sqlFC.toString());
+					
+					int attribIdx = 1;	
+					
+					// Add user and organisation
+					pstmt.setInt(attribIdx++, oId);
+					pstmt.setString(attribIdx++, user);
+
+					pstmt.setString(attribIdx++, request.getRemoteUser());		// For RBAC
+						
+					// dates
+					if(dateId > 0 && dateId < 5) {
+						if(startDate != null) {
+							pstmt.setTimestamp(attribIdx++, GeneralUtilityMethods.startOfDay(startDate, tz));
+						}
+						if(endDate != null) {
+							pstmt.setTimestamp(attribIdx++, GeneralUtilityMethods.endOfDay(endDate, tz));
+						}
+					}
+
+					log.info("Get the number of filtered records for user activity: " + pstmt.toString());
+					resultSet = pstmt.executeQuery();
+					if(resultSet.next()) {
+						jTotals.put("filtered_count", resultSet.getInt(1));
+					} else {
+						jTotals.put("filtered_count", 0);
+					}
+				} else {
+					jTotals.put("filtered_count", totalCount);
+				}
+
+				// Get the prepared statement to retrieve data
+				try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+				pstmt = subMgr.getSubmissionsStatement(sd, rec_limit, start_key, 
+						whereClause,
+						user,
+						oId,
+						request.getRemoteUser(),
+						dateId,
+						startDate,
+						endDate,
+						0);
+				
+				// Request the data
+				log.info("Get Usage Data: " + pstmt.toString());
+				resultSet = pstmt.executeQuery();
+	
+				JSONArray ja = new JSONArray();
+				while (resultSet.next()) {
+					
+					JSONObject jr = subMgr.getRecord(resultSet, true, true, false, false, null);
+					maxRec = resultSet.getInt("ue_id");	
+					ja.put(jr);
+					recCount++;
+
+				 }
+				
+				/*
+				 * Add columns and types
+				 */
+				columns.put("prikey");
+				columns.put(localisation.getString("a_name"));
+				columns.put(localisation.getString("a_device"));
+				columns.put(localisation.getString("ar_project"));
+				columns.put(localisation.getString("a_ut"));
+				columns.put(localisation.getString("a_l"));
+				columns.put(localisation.getString("a_sn"));
+				columns.put(localisation.getString("a_in"));
+				columns.put(localisation.getString("a_st"));
+				columns.put(localisation.getString("a_et"));
+				columns.put(localisation.getString("a_sched"));
+					
+				types.put("integer");
+				types.put("string");
+				types.put("string");
+				types.put("string");
+				types.put("dateTime");
+				types.put("string");	
+				types.put("string");	
+				types.put("string");	
+				types.put("dateTime");
+				types.put("dateTime");
+				types.put("dateTime");
+				
+				String maxRecordWhere = "";
+				if(whereClause.length() == 0) {
+					maxRecordWhere = " where ue_id < " + maxRec;
+				} else {
+					maxRecordWhere = whereClause + " and ue_id < " + maxRec;
+				}
+				
+				// Determine if there are more records to be returned
+				sql = "select count(*) from upload_event ue " + maxRecordWhere + ";";
+				try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+				pstmt = sd.prepareStatement(sql);	
+				
+				// Apply the parameters again
+				int attribIdx = 1;
+				
+				// Add user and organisation
+				pstmt.setInt(attribIdx++, oId);
+				pstmt.setString(attribIdx++, user);
+				pstmt.setString(attribIdx++, request.getRemoteUser());		// For RBAC
+			
+				// dates
+				if(dateId > 0 && dateId < 5) {
+					if(startDate != null) {
+						pstmt.setTimestamp(attribIdx++, GeneralUtilityMethods.startOfDay(startDate, tz));
+					}
+					if(endDate != null) {
+						pstmt.setTimestamp(attribIdx++, GeneralUtilityMethods.endOfDay(endDate, tz));
+					}
+				}
+				
+				log.info("Check for more records: " + pstmt.toString());
+				resultSet = pstmt.executeQuery();
+				if(resultSet.next()) {
+					jTotals.put("more_recs", resultSet.getInt(1));
+				}
+				 jTotals.put("max_rec", maxRec);
+				 jTotals.put("returned_count", recCount);
+				 
+				 jo.put("type", "FeatureCollection");
+				 jo.put("features", ja);
+				 jo.put("cols", columns);
+				 jo.put("types", types);
+				 jo.put("formName", "Usage");
+				
+			} catch (SQLException e) {
+			    
+				String msg = e.getMessage();
+				if(msg.contains("does not exist") && !msg.contains("column")) {	// Don't do a stack dump if the table did not exist that just means no one has submitted results yet
+					// Don't do a stack dump if the table did not exist that just means no one has submitted results yet
+				} else {
+					message.append(msg);
+					log.log(Level.SEVERE, message.toString(), e);
+				}
+				
+			} catch (Exception e) {
+				log.log(Level.SEVERE, message.toString(), e);
+				message.append(e.getMessage());
+			} finally {
+				
+				try {if (pstmt != null) {pstmt.close();	}} catch (SQLException e) {	}
+				
+				SDDataSource.closeConnection(connectionString, sd);
+			}
+		}
+
+		try {
+			jo.put("message", message);
+		} catch (Exception e) {
+		}
+		return jo.toString();
+	}
+	
+	/*
+	 * Update the bad record status
 	 */
 	@POST
-	@Path("/bad/{key}")
+	@Path("/{form}/bad/{key}")
 	@Consumes("application/json")
 	public Response toggleBad(@Context HttpServletRequest request,
 			@PathParam("form") int fId,
@@ -629,37 +1019,36 @@ public class Items extends Application {
 			) { 
 		
 		Response response = null;
-		
-		try {
-		    Class.forName("org.postgresql.Driver");	 
-		} catch (ClassNotFoundException e) {
-			log.log(Level.SEVERE,"Error: Can't find PostgreSQL JDBC Driver", e);
-			response = Response.serverError().build();
-		    return response;
-		}
-		
+		String connectionString = "surveyKPI-Items-bad";
+	
 		// Authorisation - Access
-		Connection connectionSD = SDDataSource.getConnection("surveyKPI-Items");
+		Connection sd = SDDataSource.getConnection(connectionString);
 		boolean superUser = false;
 		try {
-			superUser = GeneralUtilityMethods.isSuperUser(connectionSD, request.getRemoteUser());
+			superUser = GeneralUtilityMethods.isSuperUser(sd, request.getRemoteUser());
 		} catch (Exception e) {
 		}
-		a.isAuthorised(connectionSD, request.getRemoteUser());
-		a.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false, superUser);
+		
+		aUpdate.isAuthorised(sd, request.getRemoteUser());
+		aUpdate.isValidSurvey(sd, request.getRemoteUser(), sId, false, superUser);
 		// End Authorisation
 
 		Connection cRel = null; 
 		PreparedStatement pstmt = null;
 		try {
+			Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(sd, request, request.getRemoteUser()));
+			ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
+			
+			String tz = "UTC";
+			
 			log.info("New toggle bad");
 			cRel = ResultsDataSource.getConnection("surveyKPI-Items");
 			
 			// Get the table name
-			String sql = "SELECT DISTINCT table_name, parentform FROM form f " +
+			String sql = "select distinct table_name, parentform from form f " +
 					" where f.s_id = ?" + 
 					" and f.f_id = ?;";
-			pstmt = connectionSD.prepareStatement(sql);
+			pstmt = sd.prepareStatement(sql);
 			pstmt.setInt(1, sId);
 			pstmt.setInt(2, fId);
 			log.info("Get table name: " + pstmt.toString());
@@ -669,7 +1058,8 @@ public class Items extends Application {
 				String tName = tableSet.getString(1);
 				int pId = tableSet.getInt(2);
 				boolean isChild = pId > 0;
-				UtilityMethodsEmail.markRecord(cRel, connectionSD, tName, value, reason, key, sId, fId, false, isChild);
+				UtilityMethodsEmail.markRecord(cRel, sd, localisation, tName, value, 
+						reason, key, sId, fId, false, isChild, request.getRemoteUser(), true, tz, true);
 			} else {
 				throw new Exception("Could not get form id");
 			}
@@ -686,7 +1076,7 @@ public class Items extends Application {
 			}
 		} finally {
 			
-			SDDataSource.closeConnection("surveyKPI-Items", connectionSD);
+			SDDataSource.closeConnection(connectionString, sd);
 			ResultsDataSource.closeConnection("surveyKPI-Items", cRel);
 		}
 		

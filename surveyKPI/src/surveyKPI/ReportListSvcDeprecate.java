@@ -35,6 +35,8 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Locale;
+import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.UUID;
 import java.util.logging.Level;
@@ -65,8 +67,9 @@ import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
+import org.smap.sdal.Utilities.UtilityMethodsEmail;
+import org.smap.sdal.model.Organisation;
 
-import utilities.CSVReader;
 import utilities.Geo;
 
 import model.Report;
@@ -75,6 +78,7 @@ import model.Settings;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
+import com.opencsv.CSVReader;
 
 /*
  * Manage creation and supply of reports
@@ -91,6 +95,8 @@ public class ReportListSvcDeprecate extends Application {
 		int width = 0;
 		int height = 0;
 	}
+	
+	private ResourceBundle localisationx = null;
 	
 	private static int largest_width = 800;
 	private static int largest_height = 600;
@@ -170,7 +176,7 @@ public class ReportListSvcDeprecate extends Application {
 							"style=\"width: 500px; height: 360px; border-width: 1px; border-style: solid; border-color: rgb(180, 180, 180); max-width: 99%; min-width: 200px; padding: 0px; \" " +
 							"src=\"" + url + "?format=embed\">" +
 							"</iframe>";
-					response = getResponse(report, "json", reportIdent);
+					response = getResponse(report, "json", reportIdent, localisationx);
 				}
 			} else {
 				response = Response.status(Status.NOT_FOUND).entity("Invalid url: " + url).build();
@@ -208,7 +214,7 @@ public class ReportListSvcDeprecate extends Application {
 		if(report == null) {
 			return Response.status(Status.NOT_FOUND).entity("Report " + reportIdent + " not found").build();
 		} else {
-			return getResponse(report, format, reportIdent);
+			return getResponse(report, format, reportIdent, localisationx);
 		}
 	}
 	
@@ -225,13 +231,6 @@ public class ReportListSvcDeprecate extends Application {
 			@PathParam("projectId") int projectId) {
 		Response response = null;
 		
-		try {
-		    Class.forName("org.postgresql.Driver");	 
-		} catch (ClassNotFoundException e) {
-			log.log(Level.SEVERE,"Error: Can't find PostgreSQL JDBC Driver", e);
-		    response = Response.serverError().entity("Survey: Error: Can't find PostgreSQL JDBC Driver").build();
-		    return response;
-		}
 		String user = request.getRemoteUser();
 		// Authorisation - Access
 		Connection connectionSD = SDDataSource.getConnection("surveyKPI-ReportListSvc");
@@ -266,6 +265,12 @@ public class ReportListSvcDeprecate extends Application {
 				} 
 			
 			connection = ResultsDataSource.getConnection("surveyKPI-ReportListSvc");
+			
+			// Localisation
+			Organisation organisation = UtilityMethodsEmail.getOrganisationDefaults(connectionSD, null, request.getRemoteUser());
+			Locale locale = new Locale(organisation.locale);
+			ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
+			
 			String sql;
 			if(toDate > 0 || geomValue != null) {
 				if(geomValue == null) {		// Default to the whole world
@@ -280,14 +285,13 @@ public class ReportListSvcDeprecate extends Application {
 				pstmt.setLong(2, fromDate);
 				pstmt.setLong(3, toDate);
 				pstmt.setString(4, geomValue);
-				log.info(sql + " : " + projectId + " : " + fromDate + " : " + toDate);
 			} else {
 				sql = sqlReport + sqlReportList;
 				pstmt = connection.prepareStatement(sql);	
 				pstmt.setInt(1, projectId);
-				log.info(sql + " : " + projectId);
 			}
 			
+			log.info(pstmt.toString());
 			resultSet = pstmt.executeQuery();
 
 			while (resultSet.next()) {		
@@ -326,13 +330,6 @@ public class ReportListSvcDeprecate extends Application {
 			@FormParam("report") String reportString) { 
 		
 		Response response = null;
-		try {
-		    Class.forName("org.postgresql.Driver");	 
-		} catch (ClassNotFoundException e) {
-			log.log(Level.SEVERE,"Error: Can't find PostgreSQL JDBC Driver", e);
-			response = Response.serverError().build();
-		    return response;
-		}
 		
 		String user = request.getRemoteUser();
 		// Authorisation - Access
@@ -378,7 +375,7 @@ public class ReportListSvcDeprecate extends Application {
 		if(aReport.smap.ident == null) {
 			log.info("saving image to file system: " + itemType + " : " + ident);
 			try {
-				if(reportType.equals("photo") || reportType.equals("video") || reportType.equals("audio")) {
+				if(GeneralUtilityMethods.isAttachmentType(reportType)) {
 					// Existing image, hence copy to the report folder
 					// Get the file path from the image url
 
@@ -390,8 +387,10 @@ public class ReportListSvcDeprecate extends Application {
 					outImageURL = "attachments/report/" + ident + "_" + imageName;
 					if(reportType.equals("photo") || reportType.equals("video")) {
 						outThumbURL = "attachments/report/thumbs/" + ident + "_" + thumbName;
-					} else {
+					} else if (reportType.equals("audio")){
 						outThumbURL = "fieldAnalysis/img/audio-icon.png";
+					} else {
+					    outThumbURL = "fieldAnalysis/img/link.png";
 					}
 					
 					copyImageFile(inImageURL, ident + "_" + imageName, serverName, basePath);
@@ -686,15 +685,6 @@ public class ReportListSvcDeprecate extends Application {
 		
 		Response response;
 		
-		try {
-		    Class.forName("org.postgresql.Driver");	 
-		} catch (ClassNotFoundException e) {
-			log.log(Level.SEVERE,"Can't find PostgreSQL JDBC Driver", e);
-			response = Response.serverError().entity("Survey: Error: Can't find PostgreSQL JDBC Driver").build();
-		    return response;
-		}
-		
-		
 		String basePath = GeneralUtilityMethods.getBasePath(request);
 		
 		if(ident != null) {
@@ -749,7 +739,7 @@ public class ReportListSvcDeprecate extends Application {
 	 * --------------- Support functions ----------------
 	 * Convert a report object into a Response object in the required format
 	 */
-	private Response getResponse(Report report, String format, String ident) {
+	private Response getResponse(Report report, String format, String ident, ResourceBundle localisation) {
 		String filename = "";
 		ResponseBuilder builder = Response.ok();
 		
@@ -771,7 +761,7 @@ public class ReportListSvcDeprecate extends Application {
 				filename = filename.replace(' ', '_');     // Remove spaces 
 			}	
 
-			StringBuffer respBuf = getOutput(format, report, ident);
+			StringBuffer respBuf = getOutput(format, report, ident, localisation);
 			
 			if(format.equals("word")) {
 				builder.header("Content-type","application/vnd.ms-word; charset=UTF-8");
@@ -792,7 +782,7 @@ public class ReportListSvcDeprecate extends Application {
 	/*
 	 * Get the output text for a response
 	 */
-	private StringBuffer getOutput(String format, Report report, String ident) {
+	private StringBuffer getOutput(String format, Report report, String ident, ResourceBundle localisation) {
 		
 		StringBuffer respBuf = new StringBuffer();
 		
@@ -1123,20 +1113,20 @@ public class ReportListSvcDeprecate extends Application {
 	private Report getReportDetails(HttpServletRequest request, String ident, int maxwidth, int maxheight) {
 
 		Report aReport = new Report ();
-		
-		try {
-		    Class.forName("org.postgresql.Driver");	 
-		} catch (ClassNotFoundException e) {
-			log.log(Level.SEVERE,"Error: Can't find PostgreSQL JDBC Driver", e);
-		    return null;
-		}
 
 		Connection connection = null; 
+		Connection connectionSD = null; 
 		PreparedStatement pstmt = null;
 		ResultSet resultSet = null;
 		try {
+			connectionSD = SDDataSource.getConnection("surveyKPI-ReportListSvc");
 			connection = ResultsDataSource.getConnection("surveyKPI-ReportListSvc");
 			String sql = sqlReport + sqlReportSpecific;
+			
+			// Localisation
+			Organisation organisation = UtilityMethodsEmail.getOrganisationDefaults(connectionSD, null, request.getRemoteUser());
+			Locale locale = new Locale(organisation.locale);
+			localisationx = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
 			
 			log.info(sql + " : " + ident);
 			pstmt = connection.prepareStatement(sql);
@@ -1157,6 +1147,7 @@ public class ReportListSvcDeprecate extends Application {
 			
 			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 			
+			SDDataSource.closeConnection("surveyKPI-ReportListSvc", connectionSD);
 			ResultsDataSource.closeConnection("surveyKPI-ReportListSvc", connection);
 		}
 		
@@ -1279,6 +1270,8 @@ public class ReportListSvcDeprecate extends Application {
 				aReport.type = "rich";
 			} else if(item_type.equals("video")) {
 				aReport.type = "video";
+			} else if(item_type.equals("file")) {
+				aReport.type = "file";
 			}
 		}
 		

@@ -19,7 +19,10 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 import java.sql.Connection;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Locale;
+import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -51,12 +54,19 @@ import org.smap.sdal.managers.SpssManager;
 @Path("/spss/{sId}")
 public class CreateSPSS extends Application {
 	
-	Authorise a = new Authorise(null, Authorise.ANALYST);
+	Authorise a = null;
 	
 	private static Logger log =
 			 Logger.getLogger(CreateSPSS.class.getName());
 	
 	LogManager lm = new LogManager();		// Application log
+	
+	public CreateSPSS() {
+		ArrayList<String> authorisations = new ArrayList<String> ();	
+		authorisations.add(Authorise.ANALYST);
+		authorisations.add(Authorise.VIEW_DATA);
+		a = new Authorise(authorisations, null);	
+	}
 	
 	@GET
 	@Produces("application/x-download")
@@ -83,7 +93,11 @@ public class CreateSPSS extends Application {
 		Response response = null;
 		
 		try {
-			SpssManager spssm = new SpssManager();  
+			// Get the users locale
+			Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(connectionSD, request, request.getRemoteUser()));
+			ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
+			
+			SpssManager spssm = new SpssManager(localisation);  
 			String sps = spssm.createSPS(
 					connectionSD,
 					request.getRemoteUser(),

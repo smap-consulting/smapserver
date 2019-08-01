@@ -44,8 +44,6 @@ import java.util.logging.Logger;
  */
 @Path("/myProjectList")
 public class MyProjectList extends Application {
-	
-	//Authorise a = new Authorise(Authorise.ANALYST);
 
 	private static Logger log =
 			 Logger.getLogger(MyProjectList.class.getName());
@@ -55,14 +53,6 @@ public class MyProjectList extends Application {
 	public Response getMyProjects(@Context HttpServletRequest request) { 
 
 		Response response = null;
-		
-		try {
-		    Class.forName("org.postgresql.Driver");	 
-		} catch (ClassNotFoundException e) {
-			log.log(Level.SEVERE, "Can't find PostgreSQL JDBC Driver", e);
-			response = Response.serverError().build();
-		    return response;
-		}
 		
 		// Authorisation - Authorisation is not required only the users project will be returned
 		Connection connectionSD = SDDataSource.getConnection("surveyKPI-MyProjectList");

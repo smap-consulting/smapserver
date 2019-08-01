@@ -64,6 +64,7 @@ public class Regions extends Application {
 		
 		ArrayList<String> authorisations = new ArrayList<String> ();	
 		authorisations.add(Authorise.ANALYST);
+		authorisations.add(Authorise.VIEW_DATA);
 		authorisations.add(Authorise.ADMIN);
 		a = new Authorise(authorisations, null);
 		
@@ -73,12 +74,6 @@ public class Regions extends Application {
 	@GET
 	@Produces("application/json")
 	public String getEvents(@Context HttpServletRequest request) { 
-		
-		try {
-		    Class.forName("org.postgresql.Driver");	 
-		} catch (ClassNotFoundException e) {
-		    log.log(Level.SEVERE,"Error: Can't find PostgreSQL JDBC Driver: ", e);
-		}
 		
 		// Authorisation - Access
 		Connection connectionSD = SDDataSource.getConnection("surveyKPI-Regions");
@@ -135,13 +130,6 @@ public class Regions extends Application {
 			@FormParam("settings") String settings) { 
 		
 		Response response = null;
-		try {
-		    Class.forName("org.postgresql.Driver");	 
-		} catch (ClassNotFoundException e) {
-			log.log(Level.SEVERE,"Error: Can't find PostgreSQL JDBC Driver", e);
-			response = Response.serverError().build();
-		    return response;
-		}
 		
 		// Authorisation - Access
 		Connection connectionSD = SDDataSource.getConnection("surveyKPI-Regions");
@@ -285,14 +273,6 @@ public class Regions extends Application {
 			@PathParam("region") String region) { 
 		
 		Response response = null;
-		
-		try {
-		    Class.forName("org.postgresql.Driver");	 
-		} catch (ClassNotFoundException e) {
-			log.log(Level.SEVERE,"Error: Can't find PostgreSQL JDBC Driver", e);
-			response = Response.serverError().build();
-		    return response;
-		}
 		
 		// Authorisation - Access
 		Connection connectionSD = SDDataSource.getConnection("surveyKPI-Regions");

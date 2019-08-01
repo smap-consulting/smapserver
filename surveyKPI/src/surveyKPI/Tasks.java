@@ -21,12 +21,10 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 import java.io.IOException;
 import java.sql.Connection;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.ResourceBundle;
-import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -50,6 +48,7 @@ import org.apache.commons.fileupload.disk.DiskFileItemFactory;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
+import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.Utilities.UtilityMethodsEmail;
 import org.smap.sdal.managers.LogManager;
@@ -58,9 +57,12 @@ import org.smap.sdal.managers.TaskManager;
 import org.smap.sdal.model.Location;
 import org.smap.sdal.model.Organisation;
 import org.smap.sdal.model.TaskBulkAction;
+import org.smap.sdal.model.TaskEmailDetails;
 import org.smap.sdal.model.TaskFeature;
 import org.smap.sdal.model.TaskGroup;
 import org.smap.sdal.model.TaskListGeoJson;
+import org.smap.sdal.model.TaskServerDefn;
+
 import utilities.XLSTaskManager;
 
 import com.google.gson.Gson;
@@ -98,7 +100,7 @@ public class Tasks extends Application {
 			@PathParam("projectId") int projectId 
 			) throws IOException {
 		
-		GeneralUtilityMethods.assertBusinessServer(request.getServerName());
+		//GeneralUtilityMethods.assertBusinessServer(request.getServerName());
 		
 		Response response = null;
 		Connection sd = null; 
@@ -111,8 +113,13 @@ public class Tasks extends Application {
 	
 		try {
 			
+			Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(sd, request, request.getRemoteUser()));
+			ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
+			
+			String tz = "UTC";	// Set default for timezone
+			
 			// Get task groups
-			TaskManager tm = new TaskManager();
+			TaskManager tm = new TaskManager(localisation, tz);
 			ArrayList<TaskGroup> taskgroups = tm.getTaskGroups(sd, projectId);		
 			
 			// Return groups to calling program
@@ -139,11 +146,9 @@ public class Tasks extends Application {
 	public Response getTasks(
 			@Context HttpServletRequest request,
 			@PathParam("tgId") int tgId,
-			@QueryParam("completed") boolean completed,
-			@QueryParam("user") int userId
+			@QueryParam("user") int userId,
+			@QueryParam("period") String period
 			) throws IOException {
-		
-		GeneralUtilityMethods.assertBusinessServer(request.getServerName());
 		
 		Response response = null;
 		Connection sd = null; 
@@ -151,14 +156,32 @@ public class Tasks extends Application {
 		// Authorisation - Access
 		sd = SDDataSource.getConnection("surveyKPI - Tasks - getTasks");
 		a.isAuthorised(sd, request.getRemoteUser());
-		a.isValidTaskGroup(sd, request.getRemoteUser(), tgId, false);
+		a.isValidTaskGroup(sd, request.getRemoteUser(), tgId);
 		// End authorisation
 	
 		try {
+			Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(sd, request, request.getRemoteUser()));
+			ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
+			
+			String tz = "UTC";	// Set default for timezone
+			
 			
 			// Get assignments
-			TaskManager tm = new TaskManager();
-			TaskListGeoJson t = tm.getTasks(sd, tgId, completed, userId);		
+			String urlprefix = request.getScheme() + "://" + request.getServerName();
+			TaskManager tm = new TaskManager(localisation, tz);
+			TaskListGeoJson t = tm.getTasks(
+					sd, 
+					urlprefix,
+					0, 
+					tgId,
+					0,		// task id
+					true, 
+					userId, 
+					null, 
+					period, 
+					0, 
+					0,
+					"scheduled", "desc");		
 			
 			// Return groups to calling program
 			Gson gson = new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
@@ -176,17 +199,16 @@ public class Tasks extends Application {
 	}
 	
 	/*
-	 * Get the task group definition
+	 * Get the task locations
 	 */
 	@GET
 	@Produces("application/json")
-	@Path("/definition/{tgId}")
+	@Path("/locations")
 	public Response getLocations(
-			@PathParam("tgId") int tgId,
 			@Context HttpServletRequest request
 			) throws IOException {
 		
-		GeneralUtilityMethods.assertBusinessServer(request.getServerName());
+		//GeneralUtilityMethods.assertBusinessServer(request.getServerName());
 		
 		Response response = null;
 		Connection sd = null; 
@@ -198,9 +220,14 @@ public class Tasks extends Application {
 	
 		try {
 			
+			Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(sd, request, request.getRemoteUser()));
+			ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
+			
+			String tz = "UTC";	// Set default for timezone
+			
 			// Get locations
-			int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser(), 0);
-			TaskManager tm = new TaskManager();
+			int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser());
+			TaskManager tm = new TaskManager(localisation, tz);
 			ArrayList<Location> locations = tm.getLocations(sd, oId);
 			
 			
@@ -219,54 +246,9 @@ public class Tasks extends Application {
 		return response;
 	}
 	
-	/*
-	 * Get the task group definition
-	 */
-	@GET
-	@Produces("application/json")
-	@Path("/defi")
-	public Response getLocations(
-			@Context HttpServletRequest request
-			) throws IOException {
-		
-		GeneralUtilityMethods.assertBusinessServer(request.getServerName());
-		
-		Response response = null;
-		Connection sd = null; 
-		
-		// Authorisation - Access
-		sd = SDDataSource.getConnection("surveyKPI - Tasks - getLocations");
-		a.isAuthorised(sd, request.getRemoteUser());
-		// End authorisation
-	
-		try {
-			
-			// Get locations
-			int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser(), 0);
-			TaskManager tm = new TaskManager();
-			ArrayList<Location> locations = tm.getLocations(sd, oId);
-			
-			
-			// Return tags to calling program
-			Gson gson = new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
-			String resp = gson.toJson(locations);	
-			response = Response.ok(resp).build();	
-			
-		} catch(Exception ex) {
-			log.log(Level.SEVERE,ex.getMessage(), ex);
-			response = Response.serverError().entity(ex.getMessage()).build();
-		} finally {
-			SDDataSource.closeConnection("surveyKPI - Tasks - getLocations",sd);
-		}
-		
-		return response;
-	}
 	
 	/*
-	 * Upload locations used in task assignment from an XLS file
-	 * A location can be:
-	 *   An NFC tag
-	 *   A geofence
+	 * Upload locations and nfc tags used in task assignment from an XLS file
 	 */
 	@POST
 	@Produces("application/json")
@@ -278,14 +260,20 @@ public class Tasks extends Application {
 		
 		DiskFileItemFactory  fileItemFactory = new DiskFileItemFactory ();		
 		
-		GeneralUtilityMethods.assertBusinessServer(request.getServerName());
+		//GeneralUtilityMethods.assertBusinessServer(request.getServerName());
 
 		fileItemFactory.setSizeThreshold(5*1024*1024); //1 MB TODO handle this with exception and redirect to an error page
 		ServletFileUpload uploadHandler = new ServletFileUpload(fileItemFactory);
 	
 		Connection sd = null; 
+		
+		// Authorisation - Access
+		sd = SDDataSource.getConnection("surveyKPI - Tasks - getLocations");
+		a.isAuthorised(sd, request.getRemoteUser());
+		// End authorisation
 
 		try {
+			
 			/*
 			 * Parse the request
 			 */
@@ -295,6 +283,11 @@ public class Tasks extends Application {
 			FileItem fileItem = null;
 			String filetype = null;
 
+			Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(sd, request, request.getRemoteUser()));
+			ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
+			
+			String tz = "UTC";	// Set default for timezone
+			
 			while(itr.hasNext()) {
 				
 				FileItem item = (FileItem) itr.next();
@@ -312,7 +305,7 @@ public class Tasks extends Application {
 					fileName = item.getName();
 					fileItem = item;
 					
-					if(fileName.endsWith("xlsx")) {
+					if(fileName.endsWith("xlsx") || fileName.endsWith("xlsm")) {
 						filetype = "xlsx";
 					} else if(fileName.endsWith("xls")) {
 						filetype = "xls";
@@ -327,10 +320,6 @@ public class Tasks extends Application {
 			}
 			
 			if(fileName != null) {
-				// Authorisation - Access
-				sd = SDDataSource.getConnection("Tasks-LocationUpload");
-				a.isAuthorised(sd, request.getRemoteUser());
-				// End authorisation
 				
 				// Process xls file
 				XLSTaskManager xf = new XLSTaskManager();
@@ -342,9 +331,9 @@ public class Tasks extends Application {
 				 */
 				if(locations.size() > 0) {
 					// Save locations to disk
-					int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser(), 0);
+					int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser());
 					log.info("userevent: " + request.getRemoteUser() + " : upload locations from xls file: " + fileName + " for organisation: " + oId);
-					TaskManager tm = new TaskManager();
+					TaskManager tm = new TaskManager(localisation, tz);
 					tm.saveLocations(sd, locations, oId);
 					lm.writeLog(sd, 0, request.getRemoteUser(), "resources", locations.size() + " locations / NFC tags uploaded from file " + fileName);
 					// Return tags to calling program
@@ -375,31 +364,22 @@ public class Tasks extends Application {
 		return response;
 	}
 	
+
 	/*
-	 * Download locations into an XLS file
+	 * Download nfc identifiers into an XLS file
 	 */
 	@GET
 	@Path ("/locations/download")
 	@Produces("application/x-download")
-	public Response getXLSLocationsService (@Context HttpServletRequest request, 
+	public Response getXLSNfcService (@Context HttpServletRequest request, 
 			@Context HttpServletResponse response,
 			@QueryParam("filetype") String filetype) throws Exception {
-
-		try {
-		    Class.forName("org.postgresql.Driver");	 
-		} catch (ClassNotFoundException e) {
-			log.log(Level.SEVERE, "Can't find PostgreSQL JDBC Driver", e);
-		    throw new Exception("Can't find PostgreSQL JDBC Driver");
-		}
-				
-		Connection sd = SDDataSource.getConnection("createXLSTasks");	
+	
+		String connectionString = "Download Locations";
+		Connection sd = SDDataSource.getConnection(connectionString);	
 		// Authorisation - Access
 		a.isAuthorised(sd, request.getRemoteUser());
 		// End authorisation
-		
-		TaskManager tm = new TaskManager();
-		
-		String basePath = GeneralUtilityMethods.getBasePath(request);
 		
 		// Set file type to "xlsx" unless "xls" has been specified
 		if(filetype == null || !filetype.equals("xls")) {
@@ -407,20 +387,23 @@ public class Tasks extends Application {
 		}
 		
 		try {
-			
-			// Localisation
-			Organisation organisation = UtilityMethodsEmail.getOrganisationDefaults(sd, null, request.getRemoteUser());
-			Locale locale = new Locale(organisation.locale);
+			Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(sd, request, request.getRemoteUser()));
 			ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
+			
+			Organisation organisation = UtilityMethodsEmail.getOrganisationDefaults(sd, null, request.getRemoteUser());			
+			
+			String tz = "UTC";	// Set default for timezone
+			
+			TaskManager tm = new TaskManager(localisation, tz);
 			
 			// Get the current locations
 			ArrayList<Location> locations = tm.getLocations(sd, organisation.id);
 			
 			// Set file name
-			GeneralUtilityMethods.setFilenameInResponse("locations." + filetype, response);
+			GeneralUtilityMethods.setFilenameInResponse(localisation.getString("res_locations") + "." + filetype, response);
 			
 			// Create XLSTasks File
-			XLSTaskManager xf = new XLSTaskManager(filetype);
+			XLSTaskManager xf = new XLSTaskManager(filetype, request.getScheme(), request.getServerName());
 			xf.createXLSLocationsFile(response.getOutputStream(), locations, localisation);
 			
 		}  catch (Exception e) {
@@ -428,12 +411,11 @@ public class Tasks extends Application {
 			throw new Exception("Exception: " + e.getMessage());
 		} finally {
 			
-			SDDataSource.closeConnection("createXLSTasks", sd);	
+			SDDataSource.closeConnection(connectionString, sd);	
 			
 		}
 		return Response.ok("").build();
 	}
-	
 	
 	/*
 	 * Export Tasks for a task group in an XLS file
@@ -445,23 +427,19 @@ public class Tasks extends Application {
 			@Context HttpServletResponse response,
 			@PathParam("tgId") int tgId,
 			@QueryParam("tz") String tz,
-			@QueryParam("filetype") String filetype) throws Exception {
+			@QueryParam("filetype") String filetype,
+			@QueryParam("inc_status") String incStatus,
+			@QueryParam("period") String period) throws Exception {
 
-		try {
-		    Class.forName("org.postgresql.Driver");	 
-		} catch (ClassNotFoundException e) {
-			log.log(Level.SEVERE, "Can't find PostgreSQL JDBC Driver", e);
-		    throw new Exception("Can't find PostgreSQL JDBC Driver");
-		}
-				
-		Connection sd = SDDataSource.getConnection("createXLSTasks");	
+		String connectionString = "Download Tasks";
+		Connection sd = SDDataSource.getConnection(connectionString);	
 		// Authorisation - Access
 
 		a.isAuthorised(sd, request.getRemoteUser());		
-		a.isValidTaskGroup(sd, request.getRemoteUser(), tgId, false);
+		if(tgId > 0) {
+			a.isValidTaskGroup(sd, request.getRemoteUser(), tgId);
+		}
 		// End Authorisation 
-		
-		TaskManager tm = new TaskManager();
 		
 		String basePath = GeneralUtilityMethods.getBasePath(request);
 		
@@ -471,7 +449,7 @@ public class Tasks extends Application {
 		}
 		
 		if(tz == null) {
-			tz = "GMT";
+			tz = "UTC";
 		}
 		
 		log.info("Exporting tasks with timzone: " + tz);
@@ -483,13 +461,33 @@ public class Tasks extends Application {
 			Locale locale = new Locale(organisation.locale);
 			ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
 			
+			TaskManager tm = new TaskManager(localisation, tz);
 			
-			TaskGroup tg = tm.getTaskGroupDetails(sd, tgId);		// Get the task group name
-			TaskListGeoJson tl = tm.getTasks(sd, tgId, true, 0);	// Get the task list
-			GeneralUtilityMethods.setFilenameInResponse(tg.name + "." + filetype, response); // Set file name
+			String filename = null;
+			if(tgId > 0) {
+				TaskGroup tg = tm.getTaskGroupDetails(sd, tgId);		// Get the task group name
+				filename = tg.name + "." + filetype;
+			} else {
+				filename = organisation.name + " - " + localisation.getString("c_tasks") + "." + filetype;
+			}
+			GeneralUtilityMethods.setFilenameInResponse(filename, response); // Set file name
+			
+			if(period == null) {
+				period = "week";
+			}
+			
+			String urlprefix = request.getScheme() + "://" + request.getServerName();
+			
+			TaskListGeoJson tl = tm.getTasks(
+					sd, 
+					urlprefix,
+					organisation.id, tgId, 
+					0,		// task id
+					true, 0, incStatus, period, 0, 0,
+					"scheduled", "desc");	// Get the task list
 			
 			// Create XLSTasks File
-			XLSTaskManager xf = new XLSTaskManager(filetype);
+			XLSTaskManager xf = new XLSTaskManager(filetype, request.getScheme(), request.getServerName());
 			xf.createXLSTaskFile(response.getOutputStream(), tl, localisation, tz);
 			
 		}  catch (Exception e) {
@@ -497,7 +495,7 @@ public class Tasks extends Application {
 			throw new Exception("Exception: " + e.getMessage());
 		} finally {
 			
-			SDDataSource.closeConnection("createXLSTasks", sd);	
+			SDDataSource.closeConnection(connectionString, sd);	
 			
 		}
 		return Response.ok("").build();
@@ -523,22 +521,27 @@ public class Tasks extends Application {
 
 		log.info("userevent: " + request.getRemoteUser() + " : upload tasks from xls file for project: " + pId);
 		
-		GeneralUtilityMethods.assertBusinessServer(request.getServerName());
+		//GeneralUtilityMethods.assertBusinessServer(request.getServerName());
 
 		fileItemFactory.setSizeThreshold(5*1024*1024); //1 MB TODO handle this with exception and redirect to an error page
 		ServletFileUpload uploadHandler = new ServletFileUpload(fileItemFactory);
 	
 		Connection sd = null; 
+		Connection cResults = null;
 		String fileName = null;
 		String filetype = null;
 		FileItem file = null;
 
+		String requester = "Tasks-TaskUpload";
+		
 		try {
 			
-			sd = SDDataSource.getConnection("Tasks-TaskUpload");
-			
-			Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(sd, request.getRemoteUser()));
+			sd = SDDataSource.getConnection(requester);
+			cResults = ResultsDataSource.getConnection(requester);
+			Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(sd, request, request.getRemoteUser()));
 			ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
+			
+			String tz = "UTC";	// Set default for timezone
 			
 			/*
 			 * Parse the request
@@ -571,7 +574,7 @@ public class Tasks extends Application {
 						", File Size = "+item.getSize());
 					
 					fileName = item.getName();
-					if(fileName.endsWith("xlsx")) {
+					if(fileName.endsWith("xlsx") || fileName.endsWith("xlsm")) {
 						filetype = "xlsx";
 					} else if(fileName.endsWith("xls")) {
 						filetype = "xls";
@@ -588,22 +591,27 @@ public class Tasks extends Application {
 				// Authorisation - Access
 				a.isAuthorised(sd, request.getRemoteUser());
 				a.isValidProject(sd, request.getRemoteUser(), pId);
-				a.isValidTaskGroup(sd, request.getRemoteUser(), tgId, false);
+				a.isValidTaskGroup(sd, request.getRemoteUser(), tgId);
 				// End authorisation
 
-				int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser(), 0);
+				int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser());
 				
 				// Process xls file
 				XLSTaskManager xf = new XLSTaskManager();
-				TaskListGeoJson tl = xf.getXLSTaskList(filetype, file.getInputStream(), localisation);
+				ArrayList<TaskServerDefn> tArray = xf.getXLSTaskList(filetype, file.getInputStream(), localisation, tz);
 				
 				// Save tasks to the database
-				TaskManager tm = new TaskManager();
+				TaskManager tm = new TaskManager(localisation, tz);
 				
 				if(tgClear) {
 					tm.deleteTasksInTaskGroup(sd, tgId);
 				}
-				tm.writeTaskList(sd, tl, pId, tgId, request.getScheme() + "://" + request.getServerName(), true, oId);
+				tm.writeTaskList(sd, cResults, tArray, tgId, 
+						request.getScheme() + "://" + request.getServerName(), 
+						true, 		// update resources
+						oId, 
+						false, 
+						request.getRemoteUser());
 				
 				/*
 				 * Get the tasks out of the database
@@ -611,7 +619,15 @@ public class Tasks extends Application {
 				 *  from latitude and longitude
 				 *  Also we may not want to return complete tasks
 				 */
-				tl = tm.getTasks(sd, tgId, true, userId);	// TODO set "complete" flag from passed in parameter
+				String urlprefix = request.getScheme() + "://" + request.getServerName();
+				TaskListGeoJson tl = tm.getTasks(
+						sd, 
+						urlprefix,
+						0, 
+						tgId, 
+						0,	// task id 
+						true, userId, null, "all", 0, 0,
+						"scheduled", "desc");	// TODO set "complete" flag from passed in parameter
 				Gson gson = new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
 				String resp = gson.toJson(tl);
 				
@@ -631,66 +647,13 @@ public class Tasks extends Application {
 			response = Response.serverError().entity(ex.getMessage()).build();
 		} finally {
 	
-			SDDataSource.closeConnection("Tasks-TaskUpload", sd);
+			SDDataSource.closeConnection(requester, sd);
+			ResultsDataSource.closeConnection(requester, sd);
 			
 		}
 		
 		return response;
 		
-	}
-	
-	/*
-	 * Modify a task or create a new task
-	 */
-	@POST
-	@Path("/task/{pId}/{tgId}")
-	@Consumes("application/json")
-	public Response updateTask(
-			@Context HttpServletRequest request,
-			@PathParam("pId") int pId,
-			@PathParam("tgId") int tgId,
-			@FormParam("task") String task
-			) { 
-		
-		Response response = null;
-
-		try {
-		    Class.forName("org.postgresql.Driver");	 
-		} catch (ClassNotFoundException e) {
-			log.log(Level.SEVERE,"Error: Can't find PostgreSQL JDBC Driver", e);
-			response = Response.serverError().build();
-		    return response;
-		}
-		
-		String user = request.getRemoteUser();
-		log.info("TaskFeature:" + task);
-		
-		// Authorisation - Access
-		Connection sd = SDDataSource.getConnection("surveyKPI-tasks");
-		a.isAuthorised(sd, user);
-		a.isValidProject(sd, user, pId);
-		// End Authorisation
-		
-		
-		Gson gson=  new GsonBuilder().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
-		TaskFeature tf = gson.fromJson(task, TaskFeature.class);
-		TaskManager tm = new TaskManager();
-		
-		try {
-			int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser(), 0);
-			tm.writeTask(sd, pId, tgId, tf, request.getServerName(), false, oId);
-			response = Response.ok().build();
-		
-		} catch (Exception e) {
-			log.log(Level.SEVERE,e.getMessage(), e);
-			response = Response.serverError().entity(e.getMessage()).build();
-		} finally {
-	
-			SDDataSource.closeConnection("surveyKPI-tasks", sd);
-			
-		}
-		
-		return response;
 	}
 	
 	/*
@@ -708,14 +671,6 @@ public class Tasks extends Application {
 		
 		Response response = null;
 
-		try {
-		    Class.forName("org.postgresql.Driver");	 
-		} catch (ClassNotFoundException e) {
-			log.log(Level.SEVERE,"Error: Can't find PostgreSQL JDBC Driver", e);
-			response = Response.serverError().build();
-		    return response;
-		}
-		
 		String user = request.getRemoteUser();
 		log.info("Update task start: " + task);
 		
@@ -727,9 +682,14 @@ public class Tasks extends Application {
 		
 		Gson gson=  new GsonBuilder().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
 		TaskFeature tf = gson.fromJson(task, TaskFeature.class);
-		TaskManager tm = new TaskManager();
 		
 		try {
+			Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(sd, request, request.getRemoteUser()));
+			ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
+			
+			String tz = "UTC";	// Set default for timezone
+			
+			TaskManager tm = new TaskManager(localisation, tz);
 			tm.updateWhen(sd, pId, tf.properties.id, tf.properties.from, tf.properties.to);
 			response = Response.ok().build();
 		
@@ -759,46 +719,41 @@ public class Tasks extends Application {
 			) { 
 		
 		Response response = null;
-
-		try {
-		    Class.forName("org.postgresql.Driver");	 
-		} catch (ClassNotFoundException e) {
-			log.log(Level.SEVERE,"Error: Can't find PostgreSQL JDBC Driver", e);
-			response = Response.serverError().build();
-		    return response;
-		}
-		
+		String connectionString = "surveyKPI-tasks-bulk";
 		String user = request.getRemoteUser();
 		
 		// Authorisation - Access
-		Connection sd = SDDataSource.getConnection("surveyKPI-tasks");
+		Connection sd = SDDataSource.getConnection(connectionString);
 		a.isAuthorised(sd, user);
 		a.isValidProject(sd, user, pId);
 		// End Authorisation
 		
 		Gson gson=  new GsonBuilder().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
 		TaskBulkAction bulkAction = gson.fromJson(tasks, TaskBulkAction.class);
-		TaskManager tm = new TaskManager();
+	
 		
 		log.info("userevent: " + request.getRemoteUser() + " : bulk action for : " + tgId + " " 
-					+ bulkAction.action + " : assign user: " + bulkAction.userId + " : " + bulkAction.taskIds.toString());
+					+ bulkAction.action + " : assign user: " + bulkAction.userId + " : " + bulkAction.tasks.toString());
 		
 		try {
-			tm.applyBulkAction(sd, pId, bulkAction);
+			Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(sd, request, request.getRemoteUser()));
+			ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
+			
+			String tz = "UTC";	// Set default for timezone
+			
+			TaskManager tm = new TaskManager(localisation, tz);
+			tm.applyBulkAction(request, sd, tgId, pId, bulkAction);
 			response = Response.ok().build();
 		
 		} catch (Exception e) {
 			log.log(Level.SEVERE,e.getMessage(), e);
 			response = Response.serverError().entity(e.getMessage()).build();
-		} finally {
-			
-			SDDataSource.closeConnection("surveyKPI-tasks", sd);
-			
+		} finally {			
+			SDDataSource.closeConnection(connectionString, sd);			
 		}
 		
 		return response;
 	}
-	
 	
 	/*
 	 * Get a PDF of tasks
@@ -813,10 +768,12 @@ public class Tasks extends Application {
 		
 		log.info("Create PDF for task group:" + tgId + " for task group: " + tgId);
 		
+		String connectionString = "surveyKPI-tasks-createPdf";
+		
 		// Authorisation - Access
-		Connection sd = SDDataSource.getConnection("createPDF");	
+		Connection sd = SDDataSource.getConnection(connectionString);	
 		a.isAuthorised(sd, request.getRemoteUser());		
-		a.isValidTaskGroup(sd, request.getRemoteUser(), tgId, false);
+		a.isValidTaskGroup(sd, request.getRemoteUser(), tgId);
 		// End Authorisation 
 		
 		// Get the base path
@@ -824,12 +781,17 @@ public class Tasks extends Application {
 	
 		
 		try {
-			MiscPDFManager pm = new MiscPDFManager();  
+			Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(sd, request, request.getRemoteUser()));
+			ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
 			
+			String tz = "UTC";	// Set default for timezone
+			
+			MiscPDFManager pm = new MiscPDFManager(localisation, tz);  			
 			pm.createTasksPdf(
 					sd,
 					response.getOutputStream(),
 					basePath, 
+					request,
 					response,
 					tgId);
 			
@@ -838,10 +800,59 @@ public class Tasks extends Application {
 			throw new Exception("Exception: " + e.getMessage());
 		} finally {
 			
-			SDDataSource.closeConnection("createPDF", sd);	
+			SDDataSource.closeConnection(connectionString, sd);	
 			
 		}
 		return Response.ok("").build();
+	}
+	
+	/*
+	 * Update an email details
+	 */
+	@POST
+	@Path("/emaildetails/{pId}/{tgId}")
+	@Consumes("application/json")
+	public Response updateEmailDetailsTask(
+			@Context HttpServletRequest request,
+			@PathParam("pId") int pId,
+			@PathParam("tgId") int tgId,
+			@FormParam("emaildetails") String emaildetails
+			) { 
+		
+		Response response = null;
+
+		String user = request.getRemoteUser();
+		
+		// Authorisation - Access
+		Connection sd = SDDataSource.getConnection("surveyKPI-tasks");
+		a.isAuthorised(sd, user);
+		a.isValidProject(sd, user, pId);
+		a.isValidTaskGroup(sd, request.getRemoteUser(), tgId);
+		// End Authorisation
+		
+		Gson gson=  new GsonBuilder().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
+		TaskEmailDetails ted = gson.fromJson(emaildetails, TaskEmailDetails.class);	
+		
+		try {
+			Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(sd, request, request.getRemoteUser()));
+			ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
+			
+			String tz = "UTC";	// Set default for timezone
+			
+			TaskManager tm = new TaskManager(localisation, tz);
+			tm.updateEmailDetails(sd, pId, tgId, ted);
+			response = Response.ok().build();
+		
+		} catch (Exception e) {
+			log.log(Level.SEVERE,e.getMessage(), e);
+			response = Response.serverError().entity(e.getMessage()).build();
+		} finally {
+	
+			SDDataSource.closeConnection("surveyKPI-tasks", sd);
+			
+		}
+		
+		return response;
 	}
 
 }

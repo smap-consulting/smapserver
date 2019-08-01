@@ -31,6 +31,7 @@ import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 
+import org.smap.model.SurveyTemplate;
 import org.smap.model.TableManager;
 import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
@@ -51,13 +52,9 @@ import org.smap.sdal.model.SurveyViewDefn;
 import org.smap.sdal.model.TableColumn;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.reflect.TypeToken;
-
-import java.lang.reflect.Type;
 import java.sql.*;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 import java.util.ResourceBundle;
 import java.util.logging.Level;
@@ -71,6 +68,7 @@ public class ManagedForms extends Application {
 	
 	Authorise a = null;
 	Authorise aSuper = new Authorise(null, Authorise.ANALYST);
+	Authorise aAdmin = new Authorise(null, Authorise.ADMIN);
 	
 	private static Logger log =
 			 Logger.getLogger(Review.class.getName());
@@ -102,7 +100,12 @@ public class ManagedForms extends Application {
 		Gson gson=  new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd").create();
 		try {
 			
-			SurveyViewManager mf = new SurveyViewManager();
+			Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(sd, request, request.getRemoteUser()));
+			ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
+			
+			String tz = "UTC";
+			
+			SurveyViewManager mf = new SurveyViewManager(localisation, tz);
 			ArrayList<ManagedFormItem> items = mf.getManagedForms(sd, pId);
 			response = Response.ok(gson.toJson(items)).build();
 		
@@ -132,7 +135,7 @@ public class ManagedForms extends Application {
 			) { 
 		
 		Response response = null;
-		String requester = "surveyMobileAPI-UpdateManagedRecord";
+		String requester = "surveyKPI-UpdateManagedRecord";
 		
 		// Authorisation - Access
 		Connection sd = SDDataSource.getConnection(requester);
@@ -148,8 +151,257 @@ public class ManagedForms extends Application {
 		Connection cResults = ResultsDataSource.getConnection(requester);
 		
 		try {
-			ActionManager am = new ActionManager();
+			// Localisation			
+			Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(sd, request, request.getRemoteUser()));
+			ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
+			
+			String tz = "UTC";
+			
+			ActionManager am = new ActionManager(localisation, tz);
 			response = am.processUpdate(request, sd, cResults, request.getRemoteUser(), sId, managedId, settings);
+		} catch (Exception e) {
+			log.log(Level.SEVERE, e.getMessage(), e);   // log the error but otherwise ignore
+		} finally {
+			
+			SDDataSource.closeConnection(requester, sd);
+			ResultsDataSource.closeConnection(requester, cResults);
+			
+		}
+		
+		return response;
+
+	}
+	
+	/*
+	 * Update a managed record from the managed forms page
+	 */
+	@POST
+	@Produces("text/html")
+	@Consumes("application/json")
+	@Path("/update_gs/{sId}/{groupSurvey}")
+	public Response updateManagedRecordGroupSurvey(
+			@Context HttpServletRequest request, 
+			@PathParam("sId") int sId,
+			@PathParam("groupSurvey") String groupSurvey,
+			@FormParam("settings") String settings
+			) { 
+		
+		Response response = null;
+		String requester = "surveyKPI-UpdateManagedRecord";
+		
+		// Authorisation - Access
+		Connection sd = SDDataSource.getConnection(requester);
+		boolean superUser = false;
+		try {
+			superUser = GeneralUtilityMethods.isSuperUser(sd, request.getRemoteUser());
+		} catch (Exception e) {
+		}
+		a.isAuthorised(sd, request.getRemoteUser());
+		a.isValidSurvey(sd, request.getRemoteUser(), sId, false, superUser);
+		a.isValidGroupSurvey(sd, request.getRemoteUser(), sId, groupSurvey);
+		// End Authorisation
+
+		Connection cResults = ResultsDataSource.getConnection(requester);
+		
+		try {
+			// Localisation			
+			Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(sd, request, request.getRemoteUser()));
+			ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
+			
+			String tz = "UTC";
+			
+			ActionManager am = new ActionManager(localisation, tz);
+			response = am.processUpdateGroupSurvey(request, sd, cResults, request.getRemoteUser(), sId, groupSurvey, settings);
+		} catch (Exception e) {
+			log.log(Level.SEVERE, e.getMessage(), e);   // log the error but otherwise ignore
+		} finally {
+			
+			SDDataSource.closeConnection(requester, sd);
+			ResultsDataSource.closeConnection(requester, cResults);
+			
+		}
+		
+		return response;
+
+	}
+	
+	/*
+	 * Lock a record for editing
+	 */
+	@POST
+	@Produces("text/html")
+	@Consumes("application/json")
+	@Path("/lock/{sId}")
+	public Response lockManagedRecord(
+			@Context HttpServletRequest request, 
+			@PathParam("sId") int sId,
+			@FormParam("record") String instanceId
+			) { 
+		
+		Response response = null;
+		String requester = "surveyKPI - lockManagedRecord";
+		
+		// Authorisation - Access
+		Connection sd = SDDataSource.getConnection(requester);
+		boolean superUser = false;
+		try {
+			superUser = GeneralUtilityMethods.isSuperUser(sd, request.getRemoteUser());
+		} catch (Exception e) {
+		}
+		a.isAuthorised(sd, request.getRemoteUser());
+		a.isValidSurvey(sd, request.getRemoteUser(), sId, false, superUser);
+		// End Authorisation
+		
+		Connection cResults = ResultsDataSource.getConnection(requester);
+		try {
+			// Localisation			
+			Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(sd, request, request.getRemoteUser()));
+			ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
+			
+			String tz = "UTC";
+			
+			String tableName = GeneralUtilityMethods.getMainResultsTable(sd, cResults, sId);
+			if(tableName != null) {
+				if(!GeneralUtilityMethods.hasColumn(cResults, tableName, SurveyViewManager.ASSIGNED_COLUMN)) {
+					GeneralUtilityMethods.addColumn(cResults, tableName, SurveyViewManager.ASSIGNED_COLUMN, "text");
+				}
+				int count = GeneralUtilityMethods.lockRecord(cResults, tableName, instanceId, request.getRemoteUser());
+				if(count == 0) {
+					response = Response.serverError().entity(localisation.getString("mf_aa")).build();
+				} else {
+					response = Response.ok().build();
+				}
+			} else {
+				response = Response.serverError().entity(localisation.getString("mf_nf")).build();
+			}
+		} catch (Exception e) {
+			response = Response.serverError().entity(e.getMessage()).build();
+			log.log(Level.SEVERE, e.getMessage(), e);   
+		} finally {
+			
+			SDDataSource.closeConnection(requester, sd);
+			ResultsDataSource.closeConnection(requester, cResults);
+			
+		}
+		
+		return response;
+
+	}
+	
+	/*
+	 * Assign a user
+	 */
+	@POST
+	@Produces("text/html")
+	@Consumes("application/json")
+	@Path("/assign/{sId}/{user}")
+	public Response assignManagedRecord(
+			@Context HttpServletRequest request, 
+			@PathParam("sId") int sId,
+			@PathParam("user") String uIdent,
+			@FormParam("record") String instanceId
+			) { 
+		
+		Response response = null;
+		String requester = "surveyKPI - assignManagedRecord";
+		
+		// Authorisation - Access
+		Connection sd = SDDataSource.getConnection(requester);
+		boolean superUser = false;
+		try {
+			superUser = GeneralUtilityMethods.isSuperUser(sd, request.getRemoteUser());
+		} catch (Exception e) {
+		}
+		
+		aAdmin.isAuthorised(sd, request.getRemoteUser());
+		a.isValidSurvey(sd, request.getRemoteUser(), sId, false, superUser);
+		// End Authorisation
+		
+		Connection cResults = ResultsDataSource.getConnection(requester);
+		try {
+			// Localisation			
+			Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(sd, request, request.getRemoteUser()));
+			ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
+			
+			String tz = "UTC";
+			
+			String tableName = GeneralUtilityMethods.getMainResultsTable(sd, cResults, sId);
+			if(tableName != null) {
+				if(!GeneralUtilityMethods.hasColumn(cResults, tableName, SurveyViewManager.ASSIGNED_COLUMN)) {
+					GeneralUtilityMethods.addColumn(cResults, tableName, SurveyViewManager.ASSIGNED_COLUMN, "text");
+				}
+				int count = GeneralUtilityMethods.assignRecord(cResults, tableName, instanceId, uIdent);
+				if(count == 0) {
+					response = Response.serverError().entity(localisation.getString("mf_nf")).build();
+				} else {
+					response = Response.ok().build();
+				}
+			} else {
+				response = Response.serverError().entity(localisation.getString("mf_nf")).build();
+			}
+		} catch (Exception e) {
+			response = Response.serverError().entity(e.getMessage()).build();
+			log.log(Level.SEVERE, e.getMessage(), e);   
+		} finally {
+			
+			SDDataSource.closeConnection(requester, sd);
+			ResultsDataSource.closeConnection(requester, cResults);
+			
+		}
+		
+		return response;
+
+	}
+	
+	/*
+	 * Release a record
+	 */
+	@POST
+	@Produces("text/html")
+	@Consumes("application/json")
+	@Path("/release/{sId}")
+	public Response releaseManagedRecord(
+			@Context HttpServletRequest request, 
+			@PathParam("sId") int sId,
+			@FormParam("record") String instanceId
+			) { 
+		
+		Response response = null;
+		String requester = "surveyKPI - lockManagedRecord";
+		
+		// Authorisation - Access
+		Connection sd = SDDataSource.getConnection(requester);
+		boolean superUser = false;
+		try {
+			superUser = GeneralUtilityMethods.isSuperUser(sd, request.getRemoteUser());
+		} catch (Exception e) {
+		}
+		a.isAuthorised(sd, request.getRemoteUser());
+		a.isValidSurvey(sd, request.getRemoteUser(), sId, false, superUser);
+		// End Authorisation
+		
+		Connection cResults = ResultsDataSource.getConnection(requester);
+		try {
+			// Localisation			
+			Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(sd, request, request.getRemoteUser()));
+			ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
+			
+			String tz = "UTC";
+			
+			String tableName = GeneralUtilityMethods.getMainResultsTable(sd, cResults, sId);
+			if(tableName != null) {
+				int count = GeneralUtilityMethods.releaseRecord(cResults, tableName, instanceId, request.getRemoteUser());
+				if(count == 0) {
+					response = Response.serverError().entity(localisation.getString("mf_nf")).build();
+				} else {
+					response = Response.ok().build();
+				}
+			} else {
+				response = Response.serverError().entity(localisation.getString("mf_nf")).build();
+			}
+		} catch (Exception e) {
+			response = Response.serverError().entity(e.getMessage()).build();
+			log.log(Level.SEVERE, e.getMessage(), e);   
 		} finally {
 			
 			SDDataSource.closeConnection(requester, sd);
@@ -202,31 +454,43 @@ public class ManagedForms extends Application {
 		
 		try {
 			
-			int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser(), 0);
+			int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser());
 
 			// Get the users locale
-			Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(sd, request.getRemoteUser()));
+			Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(sd, request, request.getRemoteUser()));
 			ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
 			
+			String tz = "UTC";
+			
 			Form f = GeneralUtilityMethods.getTopLevelForm(sd, am.sId);	// Get the table name of the top level form
-			TableManager tm = new TableManager();
+			TableManager tm = new TableManager(localisation, tz);
 			
 			// 0. Ensure that the form data columns are fully published, don't add managed columns at this stage
-			String sIdent = null;
+			String sIdent = GeneralUtilityMethods.getSurveyIdent(sd, am.sId);
+			SurveyTemplate template = new SurveyTemplate(localisation);
+			template.readDatabase(sd, sIdent, false);	
 			if(am.manageId > 0) {
-				sIdent = GeneralUtilityMethods.getSurveyIdent(sd, am.sId);
-				boolean tableChanged = tm.createTable(cResults, sd, f.tableName, sIdent, am.sId, 0);
+			
+				tm.writeAllTableStructures(sd, cResults, am.sId, template,  0);
+				
+				// Apply any updates that have been made to the table structure since the last submission
+				boolean tableChanged = tm.applyTableChanges(sd, cResults, am.sId);
+				
+				//boolean tableChanged = tm.createTable(cResults, sd, f.tableName, sIdent, am.sId, 0);
 				// Add any previously unpublished columns not in a changeset (Occurs if this is a new survey sharing an existing table)
-				boolean tablePublished = tm.addUnpublishedColumns(sd, cResults, am.sId);			
+				boolean tablePublished = tm.addUnpublishedColumns(sd, cResults, am.sId, f.tableName);			
 				if(tableChanged || tablePublished) {
-					tm.markPublished(sd, am.sId);		// only mark published if there have been changes made
+					List<org.smap.server.entities.Form> forms = template.getAllForms();	
+					for(org.smap.server.entities.Form form : forms) {
+						tm.markPublished(sd, form.getId(), am.sId);		// only mark published if there have been changes made
+					}
 				}
 			}
 			
 			// 1. Check that the managed form is compatible with the survey
 			if(am.manageId > 0) {
-				String compatibleMsg = compatibleManagedForm(sd, localisation, am.sId, 
-						am.manageId, request.getRemoteUser(), oId, superUser);
+				String compatibleMsg = compatibleManagedForm(sd, cResults, localisation, am.sId, 
+						am.manageId, request.getRemoteUser(), oId, superUser, tz);
 				if(compatibleMsg != null) {
 					throw new Exception(localisation.getString("mf_nc") + " " + compatibleMsg);
 				}
@@ -241,13 +505,15 @@ public class ManagedForms extends Application {
 			
 			// 3. Create results tables if they do not exist
 			if(am.manageId > 0) {
-				sIdent = GeneralUtilityMethods.getSurveyIdent(sd, am.sId);
-				boolean tableChanged = tm.createTable(cResults, sd, f.tableName, sIdent, am.sId, am.manageId);
+				
+				tm.writeAllTableStructures(sd, cResults, am.sId, template,  am.manageId);
+				
+				//boolean tableChanged = tm.createTable(cResults, sd, f.tableName, sName, am.sId, am.manageId);
 				// Add any previously unpublished columns not in a changeset (Occurs if this is a new survey sharing an existing table)
-				boolean tablePublished = tm.addUnpublishedColumns(sd, cResults, am.sId);			
-				if(tableChanged || tablePublished) {
-					tm.markPublished(sd, am.sId);		// only mark published if there have been changes made
-				}
+				//boolean tablePublished = tm.addUnpublishedColumns(sd, cResults, am.sId, f.tableName);			
+				//if(tableChanged || tablePublished) {
+				//	tm.markPublished(sd, am.sId);		// only mark published if there have been changes made
+				//}
 			}
 			
 			// 4. Clear the auto update indicators if the managed form is being removed
@@ -279,41 +545,51 @@ public class ManagedForms extends Application {
 	 *  Also add details on the auto updates to the survey so that they can be readily applied on changes to that
 	 *  survey.
 	 */
-	private String compatibleManagedForm(Connection sd, ResourceBundle localisation, int sId, 
+	private String compatibleManagedForm(Connection sd, Connection cResults, ResourceBundle localisation, int sId, 
 			int managedId,
 			String user,
 			int oId,
-			boolean superUser) {
+			boolean superUser,
+			String tz) {
 		
 		StringBuffer compatibleMsg = new StringBuffer("");
 		ArrayList<AutoUpdate> autoUpdates = new ArrayList<AutoUpdate> ();
+		String language = "none";
 			
 		if(managedId > 0 && sId > 0) {
 				
 			try {	
 				SurveyViewDefn svd = new SurveyViewDefn();
-				SurveyViewManager qm = new SurveyViewManager();
+				SurveyViewManager qm = new SurveyViewManager(localisation, tz);
 				qm.getDataProcessingConfig(sd, managedId, svd, null, oId);
 					
 				org.smap.sdal.model.Form f = GeneralUtilityMethods.getTopLevelForm(sd, sId);	// Get the table name of the top level form		
+				String surveyIdent = GeneralUtilityMethods.getSurveyIdent(sd, sId);
 				ArrayList<TableColumn> formColumns = GeneralUtilityMethods.getColumnsInForm(sd, 
-						null,
+						cResults,
+						localisation,
+						language,
 						sId,
+						surveyIdent,
 						user,
+						null,	// Roles to apply
 						0,
 						f.id, 
-						null, 
+						f.tableName, 
 						false, 
 						false, 
 						false, 
-						false, 
-						false,	// Don't include other meta data
+						true, 	// include instance id
+						true,	// Include prikey
+						true,	// Include other meta data
 						true,	// Include preloads
 						true,	// Include instancename
 						false,	// Include survey duration
 						superUser,
 						false,		// HXL only include with XLS exports
-						false		// Don't include audit data
+						false,		// Don't include audit data
+						tz,
+						false		// mgmt
 						);
 				
 				for(TableColumn mc : svd.columns) {
@@ -336,7 +612,7 @@ public class ManagedForms extends Application {
 							AutoUpdate au = new AutoUpdate("imagelabel");
 							au.labelColType = "text";
 							au.sourceColName = refColumn;
-							au.targetColName = mc.name;
+							au.targetColName = mc.column_name;
 							au.tableName =f.tableName;
 							autoUpdates.add(au);
 						}
@@ -379,7 +655,7 @@ public class ManagedForms extends Application {
 		
 		// Check to see if the referenced column is in the managed form
 		for(TableColumn mc2 : svd.columns) {
-			if(refColumn.equals(mc2.name)) {
+			if(refColumn.equals(mc2.column_name)) {
 				refDetails.type = mc2.type;
 				referenceExists = true;
 				break;
@@ -389,7 +665,7 @@ public class ManagedForms extends Application {
 		// Check to see if the referenced column is in the form that is being attached to
 		if(!referenceExists) {
 			for(TableColumn fc2 : formColumns) {
-				if(refColumn.equals(fc2.name)) {
+				if(refColumn.equals(fc2.question_name)) {
 					refDetails.type = fc2.type;
 					referenceExists = true;
 					break;
@@ -442,10 +718,12 @@ public class ManagedForms extends Application {
 		try {
 
 			// Get the users locale
-			Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(sd, request.getRemoteUser()));
+			Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(sd, request, request.getRemoteUser()));
 			ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
 			
-			int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser(), 0);
+			String tz = "UTC";
+			
+			int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser());
 			int pId = 0;
 			
 			/*
@@ -461,7 +739,7 @@ public class ManagedForms extends Application {
 			if(pId == 0) {
 				throw new Exception(localisation.getString("mf_blocked"));
 			}
-			ActionManager am = new ActionManager();
+			ActionManager am = new ActionManager(localisation, tz);
 			Action action = new Action("respond");
 			action.sId = sId;
 			action.managedId = managedId;
@@ -490,7 +768,7 @@ public class ManagedForms extends Application {
 			al.link = request.getScheme() +
 					"://" +
 					request.getServerName() + 
-					am.getLink(sd, action, oId);
+					am.getLink(sd, action, oId, true);	// Single submission user
 			
 			Gson gson=  new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
 			String resp = gson.toJson(al, ActionLink.class);

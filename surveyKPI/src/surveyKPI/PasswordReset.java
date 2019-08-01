@@ -30,10 +30,12 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
+import org.smap.sdal.Utilities.ApplicationException;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.Utilities.UtilityMethodsEmail;
 import org.smap.sdal.managers.EmailManager;
 import org.smap.sdal.managers.LogManager;
+import org.smap.sdal.managers.PeopleManager;
 import org.smap.sdal.model.EmailServer;
 import org.smap.sdal.model.Organisation;
 
@@ -67,22 +69,11 @@ public class PasswordReset extends Application {
 	@Path("/{email}")
 	public Response oneTimeLogon(@Context HttpServletRequest request,
 			@PathParam("email") String email		 
-			) { 
+			) throws ApplicationException { 
 	
 		Response response = null;
 
-				
-		// Get the Postgres driver
-		try {
-		    Class.forName("org.postgresql.Driver");	 
-		} catch (ClassNotFoundException e) {
-			String msg = "Error: Can't find PostgreSQL JDBC Driver";
-			log.log(Level.SEVERE, msg, e);
-			response = Response.status(Status.INTERNAL_SERVER_ERROR).entity(msg).build();
-		    return response;
-		}
-
-		Connection connectionSD = SDDataSource.getConnection("surveyKPI-onetimelogon");
+		Connection sd = SDDataSource.getConnection("surveyKPI-onetimelogon");
 		PreparedStatement pstmt = null;
 
 		try {
@@ -97,28 +88,42 @@ public class PasswordReset extends Application {
 				Locale locale = new Locale(loc_code);
 				ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
 				
+				boolean emailSent = UtilityMethodsEmail.hasOnetimePasswordBeenSent(sd, pstmt, email, "3000 seconds");
+				if(emailSent) {
+					// Potential spam
+					log.info("warning: email: " + email + " multiple password reset requests");
+					throw new ApplicationException(localisation.getString("email_pas"));
+				}
 				
 				/*
 				 * If the "email" does not have an "@" then it may be a user ident
 				 *  This is a hacky attempt to support legacy idents that were not emails
 				 */
 				if(!email.contains("@")) {
-					email = UtilityMethodsEmail.getEmailFromIdent(connectionSD, pstmt, email);
+					email = UtilityMethodsEmail.getEmailFromIdent(sd, pstmt, email);
 				}
 				
 				String interval = "1 hour";
-				String uuid = UtilityMethodsEmail.setOnetimePassword(connectionSD, pstmt, email, interval);
+				String uuid = UtilityMethodsEmail.setOnetimePassword(sd, pstmt, email, interval);
 				
 				if(uuid != null) {
 					// Update succeeded
 					log.info("Sending email");
 					
-					EmailServer emailServer = UtilityMethodsEmail.getSmtpHost(connectionSD, email, request.getRemoteUser());
+					EmailServer emailServer = UtilityMethodsEmail.getSmtpHost(sd, email, request.getRemoteUser());
 					
+					PeopleManager pm = new PeopleManager(localisation);
+					String emailKey = pm.getEmailKey(sd, 0, email);
+					if(emailKey == null) {
+						// Person has unsubscribed
+						String msg = localisation.getString("email_us");
+						msg = msg.replaceFirst("%s1", email);
+						throw new ApplicationException(msg);
+					}
 					
 					if(emailServer.smtpHost != null) {
 						
-						ArrayList<String> idents = UtilityMethodsEmail.getIdentsFromEmail(connectionSD, pstmt, email);
+						ArrayList<String> idents = UtilityMethodsEmail.getIdentsFromEmail(sd, pstmt, email);
 					    String sender = "reset";
 					    
 					    String subject = localisation.getString("c_r_p");
@@ -127,7 +132,9 @@ public class PasswordReset extends Application {
 					    		idents, null, null, null, null, emailServer, 
 					    		request.getScheme(),
 					    		request.getServerName(),
-					    		localisation);
+					    		emailKey,
+					    		localisation,
+					    		null);
 					    response = Response.ok().build();
 					} else {
 						String msg = "Error password reset.  Email not enabled on this server.";
@@ -158,6 +165,8 @@ public class PasswordReset extends Application {
 			}	
 			response = Response.status(Status.NOT_FOUND).entity(respMsg).build();
 	
+		} catch (ApplicationException e) {
+			throw e;
 		} catch (Exception e) {
 			log.log(Level.SEVERE,"Exception", e);
 			response = Response.status(Status.INTERNAL_SERVER_ERROR).entity("System Error").build();
@@ -165,7 +174,7 @@ public class PasswordReset extends Application {
 				
 			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 				
-			SDDataSource.closeConnection("surveyKPI-onetimelogon", connectionSD);
+			SDDataSource.closeConnection("surveyKPI-onetimelogon", sd);
 		} 
 
 		return response;
@@ -184,15 +193,8 @@ public class PasswordReset extends Application {
 			@FormParam("passwordDetails") String passwordDetails) { 
 
 		Response response = null;
-		try {
-		    Class.forName("org.postgresql.Driver");	 
-		} catch (ClassNotFoundException e) {
-		    e.printStackTrace();
-			response = Response.serverError().build();
-		    return response;
-		}
-		
-		Connection connectionSD = SDDataSource.getConnection("surveyKPI-setPassword");
+	
+		Connection sd = SDDataSource.getConnection("surveyKPI-setPassword");
 		
 		PasswordDetails pd = new Gson().fromJson(passwordDetails, PasswordDetails.class);
 		
@@ -201,11 +203,11 @@ public class PasswordReset extends Application {
 		PreparedStatement pstmtUpdate = null;
 		try {
 			
-			connectionSD.setAutoCommit(false);
+			sd.setAutoCommit(false);
 			
 			// Get the user ident just for logging, also check that there is a valid onetime token
 			String sql = "select ident, name from users where one_time_password = ? and one_time_password_expiry > timestamp 'now'"; 
-			pstmt = connectionSD.prepareStatement(sql);
+			pstmt = sd.prepareStatement(sql);
 			pstmt.setString(1, pd.onetime);
 			log.info("SQL set password: " + pstmt.toString());
 			
@@ -218,7 +220,7 @@ public class PasswordReset extends Application {
 				log.info("Updating password for user " + name + " with ident " + ident);
 				
 				sql = "update users set password = md5(?), password_reset = 'true' where one_time_password = ? and ident = ?;";
-				pstmtUpdate = connectionSD.prepareStatement(sql);
+				pstmtUpdate = sd.prepareStatement(sql);
 				String pwdString = ident + ":smap:" + pd.password;
 				pstmtUpdate.setString(1, pwdString);
 				pstmtUpdate.setString(2, pd.onetime);
@@ -230,13 +232,13 @@ public class PasswordReset extends Application {
 				count++;
 				
 				log.info("userevent: " + ident + "reset password / forgot password");
-				lm.writeLog(connectionSD, -1, ident, "user details", "reset password / forgot password");
+				lm.writeLog(sd, -1, ident, "user details", "reset password / forgot password");
 			} 
 			
 			if(count == 0) {
 				// Clean up an expired token
 				sql = "update users set one_time_password = null, one_time_password_expiry = null where one_time_password = ?";
-				pstmtDel = connectionSD.prepareStatement(sql);
+				pstmtDel = sd.prepareStatement(sql);
 				pstmtDel.setString(1, pd.onetime);
 				int nbrUpdated = pstmtDel.executeUpdate();
 				if(nbrUpdated > 0) {
@@ -247,22 +249,22 @@ public class PasswordReset extends Application {
 				
 			}
 
-			connectionSD.commit();
+			sd.commit();
 	
 				
 		} catch (Exception e) {		
 			response = Response.serverError().build();
 		    e.printStackTrace();
-		    try { connectionSD.rollback();} catch (Exception ex){log.log(Level.SEVERE,"", ex);}
+		    try { sd.rollback();} catch (Exception ex){log.log(Level.SEVERE,"", ex);}
 		} finally {
 			
 			try {if ( pstmt != null ) { pstmt.close(); }} catch (Exception e) {}
 			try {if ( pstmtDel != null ) { pstmtDel.close(); }} catch (Exception e) {}
 			try {if ( pstmtUpdate != null ) { pstmtUpdate.close(); }} catch (Exception e) {}
 			try {
-				if (connectionSD != null) {
-					connectionSD.setAutoCommit(true);
-					connectionSD.close();
+				if (sd != null) {
+					sd.setAutoCommit(true);
+					sd.close();
 				}
 			} catch (SQLException e) {
 				log.info("Failed to close connection");

@@ -1,13 +1,13 @@
 package surveyKPI;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.sql.Connection;
 import java.util.ArrayList;
+import java.util.Locale;
+import java.util.ResourceBundle;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 import javax.servlet.http.HttpServletRequest;
@@ -15,6 +15,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
@@ -55,25 +56,15 @@ public class SurveyExchange extends Application {
 			@Context HttpServletRequest request, 
 			@Context HttpServletResponse response,
 			@PathParam("sId") int sId,
-			@PathParam("filename") String filename
+			@PathParam("filename") String filename,
+			@QueryParam("media") boolean media
 			) {
-		
-		try {
-		    Class.forName("org.postgresql.Driver");	 
-		} catch (ClassNotFoundException e) {
-			log.log(Level.SEVERE, "Can't find PostgreSQL JDBC Driver", e);
-		    try {
-		    	response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
-		    		"Survey: Error: Can't find PostgreSQL JDBC Driver");
-		    } catch (Exception ex) {
-		    	log.log(Level.SEVERE, "Exception", ex);
-		    }
-		}
 		
 		Response responseVal = null;
 		
+		String connectionName = "surveyKPI-ExportSurveyTransfer";
 		// Authorisation - Access
-		Connection sd = SDDataSource.getConnection("surveyKPI-ExportSurveyTransfer");
+		Connection sd = SDDataSource.getConnection(connectionName);
 		boolean superUser = false;
 		try {
 			superUser = GeneralUtilityMethods.isSuperUser(sd, request.getRemoteUser());
@@ -87,9 +78,14 @@ public class SurveyExchange extends Application {
 		
 		try {
 
+			Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(sd, request, request.getRemoteUser()));
+			ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
+			
+			String tz = "UTC";
+			
 			lm.writeLog(sd, sId, request.getRemoteUser(), "view", "Export all Survey Data");
 			
-			connectionResults = ResultsDataSource.getConnection("surveyKPI-ExportSurveyTransfer");
+			connectionResults = ResultsDataSource.getConnection(connectionName);
 			
 			GeneralUtilityMethods.setFilenameInResponse(filename + ".zip", response);
 			response.setHeader("Content-type",  "application/octet-stream; charset=UTF-8");
@@ -101,12 +97,17 @@ public class SurveyExchange extends Application {
 			String filePath = basePath + "/temp/" + String.valueOf(UUID.randomUUID());	// Use a random sequence to keep survey name unique
 			File folder = new File(filePath);
 			folder.mkdir();
-
+	
+			// restore the media files as probably they have been archived off to S3
+			if(media) {
+				String sIdent = GeneralUtilityMethods.getSurveyIdent(sd, sId);
+				GeneralUtilityMethods.restoreUploadedFiles(sIdent, "attachments");
+			}
 			
 			/*
 			 * Save the XLS export into the folder
 			 */
-			ExchangeManager xm = new ExchangeManager();
+			ExchangeManager xm = new ExchangeManager(localisation, tz);
 			ArrayList<FileDescription> files = xm.createExchangeFiles(
 					sd, 
 					connectionResults,
@@ -114,11 +115,10 @@ public class SurveyExchange extends Application {
 					sId, 
 					request,
 					filePath,
-					superUser);
-			
-			System.out.println("Created "+ files.size() + "  exchange files");
-			
-			GeneralUtilityMethods.writeFilesToZipOutputStream(response, files);			
+					superUser,
+					media);
+						
+			GeneralUtilityMethods.writeFilesToZipOutputStream(new ZipOutputStream(response.getOutputStream()), files);			
 			responseVal = Response.ok("").build();
 			
 		}  catch (Exception e) {
@@ -127,8 +127,8 @@ public class SurveyExchange extends Application {
 			responseVal = Response.status(Status.OK).entity("Error: " + e.getMessage()).build();
 		} finally {
 			
-			SDDataSource.closeConnection("surveyKPI-ExportSurveyTransfer", sd);	
-			ResultsDataSource.closeConnection("surveyKPI-ExportSurveyTransfer", connectionResults);
+			SDDataSource.closeConnection(connectionName, sd);	
+			ResultsDataSource.closeConnection(connectionName, connectionResults);
 			
 		}
 		

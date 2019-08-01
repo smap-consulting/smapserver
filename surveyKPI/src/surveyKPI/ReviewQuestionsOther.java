@@ -94,15 +94,6 @@ public class ReviewQuestionsOther extends Application {
 	public Response getQuestions(@Context HttpServletRequest request,
 			@PathParam("sId") int sId,
 			@PathParam("language") String language) { 
-
-		try {
-		    Class.forName("org.postgresql.Driver");	 
-		} catch (ClassNotFoundException e) {
-		    log.info("Error: Can't find PostgreSQL JDBC Driver");
-		    e.printStackTrace();
-		    return Response.serverError().entity(e.getMessage()).build();
-
-		}
 		
 		// Authorisation - Access
 		Connection connectionSD = SDDataSource.getConnection("surveyKPI-QuestionList");

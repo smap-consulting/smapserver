@@ -27,9 +27,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -43,40 +40,27 @@ import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.hssf.usermodel.HSSFDateUtil;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
-import org.smap.sdal.managers.CustomReportsManager;
-import org.smap.sdal.managers.SurveyViewManager;
 import org.smap.sdal.model.Action;
-import org.smap.sdal.model.CustomReportItem;
 import org.smap.sdal.model.KeyValue;
 import org.smap.sdal.model.LQAS;
 import org.smap.sdal.model.LQASGroup;
 import org.smap.sdal.model.LQASItem;
 import org.smap.sdal.model.LQASdataItem;
 import org.smap.sdal.model.ReportConfig;
-import org.smap.sdal.model.SurveyViewDefn;
 import org.smap.sdal.model.SqlFrag;
 import org.smap.sdal.model.TableColumn;
 import org.smap.sdal.model.TableColumnMarkup;
-import org.smap.sdal.model.TaskFeature;
-import org.smap.sdal.model.TaskListGeoJson;
 import org.smap.sdal.model.TaskProperties;
 import org.smap.sdal.model.Role;
-
-import model.LotCell;
-import model.LotRow;
 
 public class XLSCustomReportsManager {
 	
 	
 	private class Column {
 		String name;
-		String human_name;
-		int colNumber;
 		
 		public Column(ResourceBundle localisation, int col, String n) {
-			colNumber = col;
 			name = n;
-			human_name = n;
 		}
 		
 		// Return the width of this column
@@ -110,9 +94,9 @@ public class XLSCustomReportsManager {
 			} else if(name.equals("data type")) {
 				value = props.type;
 			} else if(name.equals("name")) {
-				value = props.name;
+				value = props.column_name;
 			} else if(name.equals("display name")) {
-				value = props.humanName;
+				value = props.displayName;
 			} else if(name.equals("hide")) {
 				value = props.readonly ? "yes" : "no";
 			} else if(name.equals("filter")) {
@@ -132,13 +116,15 @@ public class XLSCustomReportsManager {
 			} else if(name.equals("parameters")) {
 				value = "";
 				int count = 0;
-				for(String k : props.parameters.keySet()) {
-					if(count++ > 0) {
-						value += " ";
+				if(props.parameters != null) {
+					for(String k : props.parameters.keySet()) {
+						if(count++ > 0) {
+							value += " ";
+						}
+						value += k;
+						value += "=";
+						value += props.parameters.get(k);
 					}
-					value += k;
-					value += "=";
-					value += props.parameters.get(k);
 				}
 			}
 			
@@ -232,319 +218,328 @@ public class XLSCustomReportsManager {
 			}
 		}
 		if(sheet.getPhysicalNumberOfRows() > 0) {
-			
+
 			lastRowNum = sheet.getLastRowNum();
 			boolean needHeader = true;
+			boolean foundData = false;
 			TableColumn currentCol = null;
 			boolean processingConditions = false;
 			PreparedStatement pstmtGetRoleId = null;
 			String sqlGetRoleId = "select id from role where o_id = ? and name = ?";
-			
-			try {
-				
-				// Get ready to process roles
-				pstmtGetRoleId = sd.prepareStatement(sqlGetRoleId);
-				pstmtGetRoleId.setInt(1,oId);
-				
-	            for(int j = 0; j <= lastRowNum; j++) {
-	                
-	            	row = sheet.getRow(j);
-	                
-	                if(row != null) {
-	                	
-	                    int lastCellNum = row.getLastCellNum();
-	                    
-	                	if(needHeader) {
-	                		header = getHeader(row, lastCellNum);
-	                		needHeader = false;
-	                	} else {
-	                		String rowType = getColumn(row, "row type", header, lastCellNum, null);
-	                		
-	                		if(rowType != null) {
-	                			rowType = rowType.trim().toLowerCase();
-	                			
-	                			// Close of any condition type calculations
-	                			if(processingConditions && !rowType.equals("condition")) {
-	                				processingConditions = false;
-	                				currentCol.calculation.add("END");
-	                			}
-	                			
-	                			// Process the row
-		                		if(rowType.equals("column")) {
-		                			currentCol = new TableColumn();
-		                			config.columns.add(currentCol);
-		                			
-		                			// Get data type
-		                			String dataType = getColumn(row, "data type", header, lastCellNum, null);
-		                			if(dataType != null) {
-		                				if(!dataType.equals("text") &&
-		                						!dataType.equals("date") &&
-		                						!dataType.equals("calculate") &&
-		                						!dataType.equals("decimal") &&
-		                						!dataType.equals("integer") &&
-		                						!dataType.equals("select_one")){
-		                					throw new Exception(localisation.getString("mf_idt") + ": " + dataType + 
-		                							" " + localisation.getString("mf_or") + ": " + (j + 1));
-		                				}
-		                				currentCol.type = dataType;
-		                			} else {
-		                				throw new Exception(localisation.getString("mf_mdt") + " " + localisation.getString("mf_or") + ": " + (j + 1));
-		                			}
-		                			
-		                			// Get column name
-		                			String colName = getColumn(row, "name", header, lastCellNum, null);
-		                			if(colName != null) {
-		                				colName = colName.trim().toLowerCase();
-		                				String modColName = colName.replaceAll("[^a-z0-9_]", "");
-		                				modColName = GeneralUtilityMethods.cleanName(modColName, true, true, true);
-		                				if(colName.length() != modColName.length()) {
-		                					throw new Exception(localisation.getString("mf_in") +
-		                							": " + colName + " " + localisation.getString("mf_or") + ": " + (j + 1));
-		                				} else if(colName.length() > 60) {
-		                					throw new Exception(localisation.getString("mf_ntl") + ": " + colName + 
-		                							" " + localisation.getString("mf_or") + ": " + (j + 1));
-		                				}
-		                				
-		                				currentCol.name = colName;
-		                			} else {
-		                				throw new Exception(localisation.getString("mf_mn") + 
-		                						localisation.getString("mf_or") + ": " + (j + 1));
-		                			}
-		                			
-		                			// Get display name
-		                			String dispName = getColumn(row, "display name", header, lastCellNum, null);
-		                			if(dispName != null) {
-		              	
-		                				currentCol.humanName = dispName;
-		                			} else {
-		                				throw new Exception(localisation.getString("mf_mdn") + 
-		                						" " + localisation.getString("mf_or") + ": " + (j + 1));
-		                			}
-		                			
-		                			// Get hide state
-		                			String hide = getColumn(row, "hide", header, lastCellNum, null);
-		                			currentCol.hide = false;
-		                			if(hide != null) {
-		                				hide = hide.toLowerCase().trim();
-		                				if(hide.equals("yes") || hide.equals("true")) {
-		                					currentCol.hide = true;
-		                				}
-		                			} 
-		                			
-		                			// Get readonly state
-		                			String readonly = getColumn(row, "readonly", header, lastCellNum, null);
-		                			currentCol.readonly = false;
-		                			if(readonly != null) {
-		                				readonly = readonly.toLowerCase().trim();
-		                				if(readonly.equals("yes") || readonly.equals("true")) {
-		                					currentCol.readonly = true;
-		                				}
-		                			}
-		                			
-		                			// Get filter state
-		                			String filter = getColumn(row, "filter", header, lastCellNum, null);
-		                			currentCol.filter = false;
-		                			if(filter != null) {
-		                				filter = filter.toLowerCase().trim();
-		                				if(filter.equals("yes") || filter.equals("true")) {
-		                					currentCol.filter = true;
-		                				}
-		                			}
-		                			
-		                			// Get parameters
-		                			try {
-		                				currentCol.parameters = getParamObj(getColumn(row, "parameters", header, lastCellNum, null));
-		                			} catch (Exception e) {
-		                				// Ignore errors if parameters are not found
-		                			}
-		                			
-		                			// Get calculation state
-		                			if(currentCol.type.equals("calculate")) {
-			                			String calculation = getColumn(row, "calculation", header, lastCellNum, null);
-			                			
-			                			if(calculation != null && calculation.length() > 0) {
-			                				calculation = calculation.trim();
-			                				if(calculation.equals("condition")) {
-			                					// Calculation set by condition rows
-			                					currentCol.isCondition = true;
-			                				} else if(calculation.length() > 0) {
-			                					currentCol.calculation = new SqlFrag();
-			                					currentCol.calculation.addSqlFragment(calculation, localisation, true);
-			                				} 
-			                			} else {
-			                				throw new Exception(localisation.getString("mf_mc") + 
-			                						" " + localisation.getString("mf_or") + ": " + (j + 1));
-			                			}
-		                			}
-		                		} else if(rowType.equals("choice")) {
-		                			if(currentCol != null && currentCol.type.equals("select_one")) {
-		                				String name = getColumn(row, "name", header, lastCellNum, null);
-		                				String dispName = getColumn(row, "display name", header, lastCellNum, null);
-		                				if(name == null) {
-		                					name = getColumn(row, "value", header, lastCellNum, null);	// Legacy implementation
-		                					dispName = name;
-		                				}
-	
-		                				if(name != null && dispName != null) {
-		                					if(currentCol.choices == null) {
-		                						currentCol.choices = new ArrayList<KeyValue> ();
-		                						currentCol.choices.add(new KeyValue("", ""));		// Add the not selected choice automatically as this has to be the default
-		                					}
-		                					currentCol.choices.add(new KeyValue(name, dispName));
-		                					currentCol.filter = true;
-		                					
-		                					// Add conditional color
-			                				String appearance = getColumn(row, "appearance", header, lastCellNum, null);
-			                				if(appearance != null) {
-			                					if(currentCol.markup == null) {
-			                						currentCol.markup = new ArrayList<TableColumnMarkup> ();
-			                					}
-			                					currentCol.markup.add(new TableColumnMarkup(name, getMarkup(appearance)));	
-			                				} 
-		                				} else {
-		                					throw new Exception(localisation.getString("mf_mv") + 
-			                						" " + localisation.getString("mf_or") + ": " + (j + 1));
-		                				}
-		                			} else {
-		                				throw new Exception(localisation.getString("mf_un_c") + 
-		                						" " + localisation.getString("mf_or") + ": " + (j + 1));
-		                			}
-		                			
-		                		} else if(rowType.equals("user_role")) {
-		                			if(currentCol != null && currentCol.type.equals("select_one")) {
-		                				String role = getColumn(row, "name", header, lastCellNum, null);
-		                				if(role != null) {
-		                					if(currentCol.choices == null) {
-		                						currentCol.choices = new ArrayList<KeyValue> ();
-		                						currentCol.choices.add(new KeyValue("", ""));		// Add the not selected choice automatically as this has to be the default
-		                					}
-		                					currentCol.choices.add(new KeyValue(role, role, true));
-		                					currentCol.filter = true;
-		                					
-		                				} else {
-		                					throw new Exception(localisation.getString("mf_mv_o") + 
-			                						" " + localisation.getString("mf_or") + ": " + (j + 1));
-		                				}
-		                			} else {
-		                				throw new Exception(localisation.getString("mf_un_u") + 
-		                						" " + localisation.getString("mf_or") + ": " + (j + 1));
-		                			}
-		                			
-		                		} else if(rowType.equals("action")) {
-		                			if(currentCol != null) {
-		                				String action = getColumn(row, "action", header, lastCellNum, null);
-		                				if(action != null) {
-		                					if(action.equals("respond")) {
-			                					if(currentCol.actions == null) {
-			                						currentCol.actions = new ArrayList<Action> ();
-			                					}
-		                					} else {
-		                						throw new Exception(localisation.getString("mf_ia") + 
-				                						" " + localisation.getString("mf_or") + ": " + (j + 1));
-		                					}
-		                					
-		                					// Get the action details
-		                					Action todo = new Action(action);
-		                					todo.notify_type = getColumn(row, "notify type", header, lastCellNum, null);
-		                					todo.notify_person = getColumn(row, "notify person", header, lastCellNum, null);
-		                					if(isSecurityManager) {
-		                						String roles = getColumn(row, "roles", header, lastCellNum, null);
-		                						if(roles != null) {
-		                							todo.roles = new ArrayList<Role> ();
-		                							String rArray [] = roles.split(",");
-		                							for(int i = 0; i < rArray.length; i++) {
-		                								pstmtGetRoleId.setString(2, rArray[i].trim());
-		                								ResultSet rs = pstmtGetRoleId.executeQuery();
-		                								if(rs.next()) {
-		                									todo.roles.add(new Role(rs.getInt(1), rArray[i].trim()));
-		                								}
-		                							}
-		                						}
-		                					}
-		                					// Checks for a valid notification
-		                					if(action.equals("respond") && todo.notify_type == null) {
-		                						throw new Exception(localisation.getString("mf_mnt") + 
-				                						" " + localisation.getString("mf_or") + ": " + (j + 1));
-		                					} 
-		                					
-		                					currentCol.actions.add(todo);
-		                					
-		                				} else {
-		                					throw new Exception(localisation.getString("mf_mv_a") + 
-			                						" " + localisation.getString("mf_or") + ": " + (j + 1));
-		                				}
-		                			} else {
-		                				throw new Exception(localisation.getString("mf_un_a") + 
-		                						" " + localisation.getString("mf_or") + ": " + (j + 1));
-		                			}
-		                		} else if(rowType.equals("condition")) {
-		                			
-		                			if(currentCol != null && currentCol.type.equals("calculate")) {
-		                				
-		                				processingConditions = true;
-		                				
-		                				String condition = getColumn(row, "condition", header, lastCellNum, null);
-		                				String value = getColumn(row, "value", header, lastCellNum, null);
-		                				
-		                				if(condition == null) {
-		                					throw new Exception("Missing \"condition\" on row: " + (j + 1));
-		                				} else {
-		                					if(currentCol.calculation == null) {
-		                						currentCol.calculation = new SqlFrag();
-		                						currentCol.calculation.add("CASE");
-		                					}
-		                					if(condition.toLowerCase().trim().equals("all")) {
-		                						currentCol.calculation.add("ELSE");
-		                						currentCol.calculation.addSqlFragment(value, localisation, false);
-		                						//currentCol.calculation.addText(value);
-		                					} else {
-		                						currentCol.calculation.add("WHEN");
-		                						currentCol.calculation.addSqlFragment(condition, localisation, true);
-		                						currentCol.calculation.add("THEN");
-		                						//currentCol.calculation.addText(value);
-		                						currentCol.calculation.addSqlFragment(value, localisation, false);
-		                					}
-		                				}
-		                				
-		                				
-		                				// Add conditional markup and save value for use in export of form
-		                				String appearance = getColumn(row, "appearance", header, lastCellNum, null);
-		                				if(currentCol.markup == null) {
-		                					currentCol.markup = new ArrayList<TableColumnMarkup> ();        					
-		                				} 
-		                				currentCol.markup.add(new TableColumnMarkup(value, getMarkup(appearance)));
-		
-		                			} else {
-		                				throw new Exception(localisation.getString("mf_uc") + 
-		                						" " + localisation.getString("mf_or") + ": " + (j + 1));
-		                			} 
-		                			
-		                		} else if(rowType.equals("settings")) {
-		                			config.settings = getParamObj(getColumn(row, "parameters", header, lastCellNum, null));
-		                		} else {
-		                			throw new Exception(localisation.getString("mf_ur") + 
-		                					" " + localisation.getString("mf_or") + ": " + (j + 1));
-		                		}
-	                		}	
-	                		
-	                	}
-	                	
-	                }
-	                
-	            }
-			} finally {
+
+			// Get ready to process roles
+			pstmtGetRoleId = sd.prepareStatement(sqlGetRoleId);
+			pstmtGetRoleId.setInt(1,oId);
+
+			for(int j = 0; j <= lastRowNum; j++) {
+
+				row = sheet.getRow(j);
+
+				if(row != null) {
+
+					int lastCellNum = row.getLastCellNum();
+
+					if(needHeader) {
+						header = XLSUtilities.getHeader(row, localisation, j, "definition");
+						needHeader = false;
+					} else {
+						String rowType = XLSUtilities.getColumn(row, "row type", header, lastCellNum, null);
+
+						if(rowType != null && rowType.trim().length() > 0) {
+							foundData = true;
+							rowType = rowType.trim().toLowerCase();
+
+							// Close of any condition type calculations
+							if(processingConditions && !rowType.equals("condition")) {
+								processingConditions = false;
+								currentCol.calculation.add("END");
+							}
+
+							// Process the row
+							if(rowType.equals("column")) {
+								currentCol = new TableColumn();
+								config.columns.add(currentCol);
+
+								// Get data type
+								String dataType = XLSUtilities.getColumn(row, "data type", header, lastCellNum, null);
+								if(dataType != null) {
+									if(!dataType.equals("text") &&
+											!dataType.equals("date") &&
+											!dataType.equals("calculate") &&
+											!dataType.equals("decimal") &&
+											!dataType.equals("integer") &&
+											!dataType.equals("select_one")){
+										throw new Exception(localisation.getString("mf_idt") + ": " + dataType + 
+												" " + localisation.getString("mf_or") + ": " + (j + 1));
+									}
+									currentCol.type = dataType;
+								} else {
+									throw new Exception(localisation.getString("mf_mdt") + " " + localisation.getString("mf_or") + ": " + (j + 1));
+								}
+
+								// Get column name
+								String colName = XLSUtilities.getColumn(row, "name", header, lastCellNum, null);
+								if(colName != null) {
+									colName = colName.trim().toLowerCase();
+									String modColName = colName.replaceAll("[^a-z0-9_]", "");
+									modColName = GeneralUtilityMethods.cleanName(modColName, true, true, true);
+									if(colName.length() != modColName.length()) {
+										throw new Exception(localisation.getString("mf_in") +
+												": " + colName + " " + localisation.getString("mf_or") + ": " + (j + 1));
+									} else if(colName.length() > 60) {
+										throw new Exception(localisation.getString("mf_ntl") + ": " + colName + 
+												" " + localisation.getString("mf_or") + ": " + (j + 1));
+									}
+
+									currentCol.column_name = colName;
+								} else {
+									throw new Exception(localisation.getString("mf_mn") + 
+											localisation.getString("mf_or") + ": " + (j + 1));
+								}
+
+								// Get display name
+								String dispName = XLSUtilities.getColumn(row, "display name", header, lastCellNum, null);
+								if(dispName != null) {
+
+									currentCol.displayName = dispName;
+								} else {
+									throw new Exception(localisation.getString("mf_mdn") + 
+											" " + localisation.getString("mf_or") + ": " + (j + 1));
+								}
+
+								// Get hide state
+								String hide = XLSUtilities.getColumn(row, "hide", header, lastCellNum, null);
+								currentCol.hide = false;
+								if(hide != null) {
+									hide = hide.toLowerCase().trim();
+									if(hide.equals("yes") || hide.equals("true")) {
+										currentCol.hide = true;
+									}
+								} 
+
+								// Get readonly state
+								String readonly = XLSUtilities.getColumn(row, "readonly", header, lastCellNum, null);
+								currentCol.readonly = false;
+								if(readonly != null) {
+									readonly = readonly.toLowerCase().trim();
+									if(readonly.equals("yes") || readonly.equals("true")) {
+										currentCol.readonly = true;
+									}
+								}
+
+								// Get filter state
+								String filter = XLSUtilities.getColumn(row, "filter", header, lastCellNum, null);
+								currentCol.filter = false;
+								if(filter != null) {
+									filter = filter.toLowerCase().trim();
+									if(filter.equals("yes") || filter.equals("true")) {
+										currentCol.filter = true;
+									}
+								}
+
+								// Get parameters
+								try {
+									currentCol.parameters = getParamObj(XLSUtilities.getColumn(row, "parameters", header, lastCellNum, null));
+								} catch (Exception e) {
+									// Ignore errors if parameters are not found
+								}
+
+								// Get calculation state
+								if(currentCol.type.equals("calculate")) {
+									String calculation = XLSUtilities.getColumn(row, "calculation", header, lastCellNum, null);
+
+									if(calculation != null && calculation.length() > 0) {
+										calculation = calculation.trim();
+										if(calculation.equals("condition")) {
+											// Calculation set by condition rows
+											currentCol.isCondition = true;
+										} else if(calculation.length() > 0) {
+											currentCol.calculation = new SqlFrag();
+											currentCol.calculation.addSqlFragment(calculation, true, localisation);
+										} 
+									} else {
+										throw new Exception(localisation.getString("mf_mc") + 
+												" " + localisation.getString("mf_or") + ": " + (j + 1));
+									}
+								}
+							} else if(rowType.equals("choice")) {
+								if(currentCol != null && currentCol.type.equals("select_one")) {
+									String name = XLSUtilities.getColumn(row, "name", header, lastCellNum, null);
+									String dispName = XLSUtilities.getColumn(row, "display name", header, lastCellNum, null);
+									if(name == null) {
+										name = XLSUtilities.getColumn(row, "value", header, lastCellNum, null);	// Legacy implementation
+										dispName = name;
+									}
+
+									if(name != null && dispName != null) {
+										if(currentCol.choices == null) {
+											currentCol.choices = new ArrayList<KeyValue> ();
+											currentCol.choices.add(new KeyValue("", ""));		// Add the not selected choice automatically as this has to be the default
+										}
+										currentCol.choices.add(new KeyValue(name, dispName));
+										currentCol.filter = true;
+
+										// Add conditional color
+										String appearance = XLSUtilities.getColumn(row, "appearance", header, lastCellNum, null);
+										if(appearance != null) {
+											if(currentCol.markup == null) {
+												currentCol.markup = new ArrayList<TableColumnMarkup> ();
+											}
+											currentCol.markup.add(new TableColumnMarkup(name, getMarkup(appearance)));	
+										} 
+									} else {
+										throw new Exception(localisation.getString("mf_mv") + 
+												" " + localisation.getString("mf_or") + ": " + (j + 1));
+									}
+								} else {
+									throw new Exception(localisation.getString("mf_un_c") + 
+											" " + localisation.getString("mf_or") + ": " + (j + 1));
+								}
+
+							} else if(rowType.equals("user_role")) {
+								if(currentCol != null && currentCol.type.equals("select_one")) {
+									String role = XLSUtilities.getColumn(row, "name", header, lastCellNum, null);
+									if(role != null) {
+										if(currentCol.choices == null) {
+											currentCol.choices = new ArrayList<KeyValue> ();
+											currentCol.choices.add(new KeyValue("", ""));		// Add the not selected choice automatically as this has to be the default
+										}
+										currentCol.choices.add(new KeyValue(role, role, true));
+										currentCol.filter = true;
+
+									} else {
+										throw new Exception(localisation.getString("mf_mv_o") + 
+												" " + localisation.getString("mf_or") + ": " + (j + 1));
+									}
+								} else {
+									throw new Exception(localisation.getString("mf_un_u") + 
+											" " + localisation.getString("mf_or") + ": " + (j + 1));
+								}
+
+							} else if(rowType.equals("action")) {
+								if(currentCol != null) {
+									String action = XLSUtilities.getColumn(row, "action", header, lastCellNum, null);
+									if(action != null) {
+										if(action.equals("respond")) {
+											if(currentCol.actions == null) {
+												currentCol.actions = new ArrayList<Action> ();
+											}
+										} else {
+											throw new Exception(localisation.getString("mf_ia") + 
+													" " + localisation.getString("mf_or") + ": " + (j + 1));
+										}
+
+										// Get the action details
+										Action todo = new Action(action);
+										todo.notify_type = XLSUtilities.getColumn(row, "notify type", header, lastCellNum, null);
+										todo.notify_person = XLSUtilities.getColumn(row, "notify person", header, lastCellNum, null);
+										if(isSecurityManager) {
+											String roles = XLSUtilities.getColumn(row, "roles", header, lastCellNum, null);
+											if(roles != null) {
+												todo.roles = new ArrayList<Role> ();
+												String rArray [] = roles.split(",");
+												for(int i = 0; i < rArray.length; i++) {
+													pstmtGetRoleId.setString(2, rArray[i].trim());
+													ResultSet rs = pstmtGetRoleId.executeQuery();
+													if(rs.next()) {
+														todo.roles.add(new Role(rs.getInt(1), rArray[i].trim()));
+													}
+												}
+											}
+										}
+										// Checks for a valid notification
+										if(action.equals("respond") && todo.notify_type == null) {
+											throw new Exception(localisation.getString("mf_mnt") + 
+													" " + localisation.getString("mf_or") + ": " + (j + 1));
+										} 
+
+										currentCol.actions.add(todo);
+
+									} else {
+										throw new Exception(localisation.getString("mf_mv_a") + 
+												" " + localisation.getString("mf_or") + ": " + (j + 1));
+									}
+								} else {
+									throw new Exception(localisation.getString("mf_un_a") + 
+											" " + localisation.getString("mf_or") + ": " + (j + 1));
+								}
+							} else if(rowType.equals("condition")) {
+
+								if(currentCol != null && currentCol.type.equals("calculate")) {
+
+									processingConditions = true;
+
+									String condition = XLSUtilities.getColumn(row, "condition", header, lastCellNum, null);
+									String value = XLSUtilities.getColumn(row, "value", header, lastCellNum, null);
+
+									if(condition == null) {
+										throw new Exception("Missing \"condition\" on row: " + (j + 1));
+									} else {
+										if(currentCol.calculation == null) {
+											currentCol.calculation = new SqlFrag();
+											currentCol.calculation.add("CASE");
+										}
+										if(condition.toLowerCase().trim().equals("all")) {
+											currentCol.calculation.add("ELSE");
+											currentCol.calculation.addSqlFragment(value, false, localisation);
+											//currentCol.calculation.addText(value);
+										} else {
+											currentCol.calculation.add("WHEN");
+											currentCol.calculation.addSqlFragment(condition, true, localisation);
+											currentCol.calculation.add("THEN");
+											//currentCol.calculation.addText(value);
+											currentCol.calculation.addSqlFragment(value, false, localisation);
+										}
+									}
+
+
+									// Add conditional markup and save value for use in export of form
+									String appearance = XLSUtilities.getColumn(row, "appearance", header, lastCellNum, null);
+									if(currentCol.markup == null) {
+										currentCol.markup = new ArrayList<TableColumnMarkup> ();        					
+									} 
+									currentCol.markup.add(new TableColumnMarkup(value, getMarkup(appearance)));
+
+								} else {
+									throw new Exception(localisation.getString("mf_uc") + 
+											" " + localisation.getString("mf_or") + ": " + (j + 1));
+								} 
+
+							} else if(rowType.equals("settings")) {
+								config.settings = getParamObj(XLSUtilities.getColumn(row, "parameters", header, lastCellNum, null));
+							} else {
+								throw new Exception(localisation.getString("mf_ur") + 
+										" " + localisation.getString("mf_or") + ": " + (j + 1));
+							}
+						}	
+
+
+					}
+				}
 			}
-            
-        	// Close of any condition type calculations
+			if(!foundData) {
+				throw new Exception(localisation.getString("mf_nd"));
+			}
+
+			// Close of any condition type calculations
 			if(processingConditions ) {
 				processingConditions = false;
 				currentCol.calculation.add("END");
 			}
 		}
+
+		// Final Validatation
+
+		for(TableColumn col : config.columns) {
+
+			// 1. Check for condition calculations without any corresponding contion entries
+			if(col.isCondition && col.calculation == null) {
+				throw new Exception(localisation.getString("mf_ncr") + ": " + col.column_name);
+			}
+		}
 	
 		return config;
-		
-		
+			
 	}
 	
 	
@@ -663,14 +658,14 @@ public class XLSCustomReportsManager {
                     int lastCellNum = row.getLastCellNum();
                     
                 	if(needHeader) {
-                		header = getHeader(row, lastCellNum);
+                		header = XLSUtilities.getHeader(row, localisation, j, "definition");
                 		needHeader = false;
                 	} else {
-                		String rowType = getColumn(row, "row type", header, lastCellNum, null);
+                		String rowType = XLSUtilities.getColumn(row, "row type", header, lastCellNum, null);
                 		
                 		if(rowType != null) {
                 			rowType = rowType.trim().toLowerCase();
-                			String name = getColumn(row, "name", header, lastCellNum, null);
+                			String name = XLSUtilities.getColumn(row, "name", header, lastCellNum, null);
                 			
                 			// Close of any condition type calculations
                 			if(processingConditions && !rowType.equals("condition")) {
@@ -680,7 +675,7 @@ public class XLSCustomReportsManager {
                 			
                 			// Process the row
 	                		if(rowType.equals("group")) {
-	                			String groupName = getColumn(row, "display name", header, lastCellNum, null);
+	                			String groupName = XLSUtilities.getColumn(row, "display name", header, lastCellNum, null);
 	                			currentGroup = new LQASGroup(groupName);
 	                			lqas.groups.add(currentGroup);
 	                		
@@ -690,7 +685,7 @@ public class XLSCustomReportsManager {
 	                			String[] sources = null; 
 	          			
 	                			// Get data type
-	                			String dataType = getColumn(row, "data type", header, lastCellNum, null);
+	                			String dataType = XLSUtilities.getColumn(row, "data type", header, lastCellNum, null);
 	                			if(dataType != null) {
 	                				if(!dataType.equals("text") &&
 	                						!dataType.equals("date") &&
@@ -706,7 +701,7 @@ public class XLSCustomReportsManager {
 	                			}
 	                			
 	                			// Get calculation state
-		                		String calculation = getColumn(row, "calculation", header, lastCellNum, null);		
+		                		String calculation = XLSUtilities.getColumn(row, "calculation", header, lastCellNum, null);		
 	                			if(calculation != null && calculation.length() > 0) {
 	                				calculation = calculation.trim();
 	                				if(calculation.equals("condition")) {
@@ -714,7 +709,7 @@ public class XLSCustomReportsManager {
 	                					
 	                				} else if(calculation.length() > 0) {
 	                					select = new SqlFrag();
-	                					select.addSqlFragment(calculation, localisation, false);
+	                					select.addSqlFragment(calculation, false, localisation);
 	                				} 
 	                			} else {
 	                				throw new Exception(localisation.getString("mf_mc") + 
@@ -730,7 +725,7 @@ public class XLSCustomReportsManager {
 	                		} else if(rowType.equals("item")) {
 	                	
 	                			// Get data type
-	                			String dataType = getColumn(row, "data type", header, lastCellNum, null);
+	                			String dataType = XLSUtilities.getColumn(row, "data type", header, lastCellNum, null);
 	                			if(dataType != null) {
 	                				if(!dataType.equals("text") &&
 	                						!dataType.equals("date") &&
@@ -745,11 +740,11 @@ public class XLSCustomReportsManager {
 	                				throw new Exception(localisation.getString("mf_mdt") + " " + localisation.getString("mf_or") + ": " + (j + 1));
 	                			}
 	                			
-	                			String targetResponseText = getColumn(row, "target response text", header, lastCellNum, null);
-	                			String displayName = getColumn(row, "display name", header, lastCellNum, null);
+	                			String targetResponseText = XLSUtilities.getColumn(row, "target response text", header, lastCellNum, null);
+	                			String displayName = XLSUtilities.getColumn(row, "display name", header, lastCellNum, null);
 
 	                			// Get calculation 
-		                		String calculation = getColumn(row, "calculation", header, lastCellNum, null);		
+		                		String calculation = XLSUtilities.getColumn(row, "calculation", header, lastCellNum, null);		
 	                			if(calculation != null && calculation.length() > 0) {
 	                				calculation = calculation.trim();
 	                			} else {
@@ -763,7 +758,7 @@ public class XLSCustomReportsManager {
 	                			
 	                		} else if(rowType.equals("footer")) {
 	                			
-	                			String displayName = getColumn(row, "display name", header, lastCellNum, null);
+	                			String displayName = XLSUtilities.getColumn(row, "display name", header, lastCellNum, null);
 	                			lqas.footer = new LQASItem("footer",  displayName, null, null,  null);
 	                			
 	                			
@@ -773,8 +768,8 @@ public class XLSCustomReportsManager {
 	                				
 	                				processingConditions = true;
 	                				
-	                				String condition = getColumn(row, "condition", header, lastCellNum, null);
-	                				String value = getColumn(row, "value", header, lastCellNum, null);
+	                				String condition = XLSUtilities.getColumn(row, "condition", header, lastCellNum, null);
+	                				String value = XLSUtilities.getColumn(row, "value", header, lastCellNum, null);
 	                				
 	                				if(condition == null) {
 	                					throw new Exception("Missing \"condition\" on row: " + (j + 1));
@@ -788,7 +783,7 @@ public class XLSCustomReportsManager {
 	                						currentDataItem.select.addText(value);
 	                					} else {
 	                						currentDataItem.select.add("WHEN");
-	                						currentDataItem.select.addSqlFragment(condition, localisation, true);
+	                						currentDataItem.select.addSqlFragment(condition, true, localisation);
 	                						currentDataItem.select.add("THEN");
 	                						currentDataItem.select.addText(value);
 	                					}
@@ -903,78 +898,8 @@ public class XLSCustomReportsManager {
 		
 		return appString.toString().trim();
 	}
-
 	
-	/*
-	 * Get a hashmap of column name and column index
-	 */
-	private HashMap<String, Integer> getHeader(Row row, int lastCellNum) {
-		HashMap<String, Integer> header = new HashMap<String, Integer> ();
-		
-		Cell cell = null;
-		String name = null;
-		
-        for(int i = 0; i <= lastCellNum; i++) {
-            cell = row.getCell(i);
-            if(cell != null) {
-                name = cell.getStringCellValue();
-                if(name != null && name.trim().length() > 0) {
-                	name = name.toLowerCase();
-                    header.put(name, i);
-                }
-            }
-        }
-            
-		return header;
-	}
-	
-	/*
-	 * Get the value of a cell at the specified column
-	 */
-	private String getColumn(Row row, String name, HashMap<String, Integer> header, int lastCellNum, String def) throws Exception {
-		
-		Integer cellIndex;
-		int idx;
-		String value = null;
-		double dValue = 0.0;
-		Date dateValue = null;
-		SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm");
-	
-		cellIndex = header.get(name);
-		if(cellIndex != null) {
-			idx = cellIndex;
-			if(idx <= lastCellNum) {
-				Cell c = row.getCell(idx);
-				if(c != null) {
-					if(c.getCellType() == Cell.CELL_TYPE_NUMERIC) {
-						if (HSSFDateUtil.isCellDateFormatted(c)) {
-							dateValue = c.getDateCellValue();
-							value = dateFormat.format(dateValue);
-						} else {
-							dValue = c.getNumericCellValue();
-							value = String.valueOf(dValue);
-							if(value != null && value.endsWith(".0")) {
-								value = value.substring(0, value.lastIndexOf('.'));
-							}
-						}
-					} else if(c.getCellType() == Cell.CELL_TYPE_STRING) {
-						value = c.getStringCellValue();
-					} else {
-						value = null;
-					}
 
-				}
-			}
-		} else {
-			throw new Exception("Column " + name + " not found");
-		}
-
-		if(value == null) {		// Set to default value if null
-			value = def;
-		}
-		
-		return value;
-	}
 	
 	/*
 	 * Get the columns for the oversight form definition sheet
@@ -1127,6 +1052,8 @@ public class XLSCustomReportsManager {
 		
 		HashMap<String, String> paramObj = null;
 		
+		// Remove any white space around the equal signs
+		parameters = GeneralUtilityMethods.removeSurroundingWhiteSpace(parameters, '=');
 		if(parameters != null) {
 			paramObj = new HashMap<String, String> ();
 			String [] params = parameters.split(" ");

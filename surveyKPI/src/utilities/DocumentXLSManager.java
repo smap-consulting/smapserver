@@ -2,7 +2,7 @@ package utilities;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
+
 
 /*
 This file is part of SMAP.
@@ -22,16 +22,9 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 
 */
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.sql.Connection;
-import java.sql.Date;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
+
 
 //import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 //import org.apache.poi.ss.usermodel.Workbook;
@@ -39,40 +32,24 @@ import java.text.SimpleDateFormat;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Map;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import javax.servlet.http.HttpServletRequest;
-
-import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.apache.poi.xssf.usermodel.*;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.AreaReference;
 import org.apache.poi.ss.util.CellReference;
-import org.apache.commons.io.IOUtils;
-import org.apache.poi.hssf.usermodel.HSSFDataFormat;
-import org.apache.poi.hssf.usermodel.HSSFHyperlink;
-import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
-import org.smap.sdal.Utilities.ResultsDataSource;
-import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.managers.LogManager;
-import org.smap.sdal.managers.SurveyManager;
 import org.smap.sdal.model.KeyValue;
-import org.smap.sdal.model.TableColumn;
-import surveyKPI.ExportSurveyXls;
 
 public class DocumentXLSManager {
 	
 	private static Logger log =
-			 Logger.getLogger(ExportSurveyXls.class.getName());
+			 Logger.getLogger(DocumentXLSManager .class.getName());
 	
 	LogManager lm = new LogManager();		// Application log
 	
 	XSSFWorkbook wb = null;
-
-	
 	
 	public DocumentXLSManager() {
 	
@@ -97,6 +74,8 @@ public class DocumentXLSManager {
 			templateIS = new FileInputStream(templateFile);
 		} catch (Exception e) {
 			throw e;
+		} finally {
+			templateIS.close();
 		}
 		wb = new XSSFWorkbook(templateIS);
 		templateIS.close();
@@ -106,7 +85,7 @@ public class DocumentXLSManager {
 			int namedCellIdx = wb.getNameIndex(kv.k);
 		    Name aNamedCell = wb.getNameAt(namedCellIdx);
 
-		    AreaReference aref = new AreaReference(aNamedCell.getRefersToFormula());
+		    AreaReference aref = new AreaReference(aNamedCell.getRefersToFormula(), null);
 		    CellReference[] crefs = aref.getAllReferencedCells();
 		  
 		    for (int i = 0; i < crefs.length; i++) {

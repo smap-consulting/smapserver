@@ -21,12 +21,9 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.FormParam;
-import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
@@ -35,9 +32,10 @@ import javax.ws.rs.core.Response.Status;
 import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.fileupload.disk.DiskFileItemFactory;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
-import org.codehaus.jettison.json.JSONArray;
-import org.codehaus.jettison.json.JSONObject;
-import org.smap.model.TableManager;
+import org.apache.commons.io.FileUtils;
+import org.apache.poi.openxml4j.opc.OPCPackage;
+import org.apache.poi.openxml4j.opc.PackageAccess;
+import org.smap.model.FormDesc;
 import org.smap.sdal.Utilities.AuthorisationException;
 import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
@@ -46,28 +44,30 @@ import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.managers.LogManager;
 import org.smap.sdal.managers.MessagingManager;
+import org.smap.sdal.managers.SurveyManager;
 import org.smap.sdal.managers.TaskManager;
 import org.smap.sdal.model.AssignFromSurvey;
 import org.smap.sdal.model.Assignment;
-import org.smap.sdal.model.Features;
-import org.smap.sdal.model.Geometry;
+import org.smap.sdal.model.FileDescription;
+import org.smap.sdal.model.MetaItem;
+import org.smap.sdal.model.Question;
+import org.smap.sdal.model.SqlFrag;
 import org.smap.sdal.model.TaskAddressSettings;
+import org.smap.server.utilities.UtilityMethods;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 
-import model.FormDesc;
 import taskModel.TaskAddress;
-import utilities.CSVReader;
 import utilities.ExchangeManager;
 import utilities.QuestionInfo;
+import utilities.XLSXEventParser;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.InputStreamReader;
+import java.io.IOException;
 import java.lang.reflect.Type;
 import java.sql.*;
 import java.text.SimpleDateFormat;
@@ -78,11 +78,13 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.ResourceBundle;
+import java.util.TimeZone;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
+import java.util.zip.ZipOutputStream;
 
 /*
  * Used by an administrator or analyst to view task status and make updates
@@ -105,219 +107,6 @@ public class AllAssignments extends Application {
 		a = new Authorise(authorisations, null);		
 	}
 
-
-	/*
-	 * Return the existing assignments
-	 */
-	@GET
-	@Path("/{projectId}")
-	@Produces("application/json")
-	public Response getAssignments(@Context HttpServletRequest request,
-			@PathParam("projectId") int projectId, 
-			@QueryParam("user") int user_filter
-			) {
-
-		Response response = null;
-
-		// Authorisation - Access
-		Connection connectionSD = SDDataSource.getConnection("surveyKPI-AllAssignments");
-		a.isAuthorised(connectionSD, request.getRemoteUser());
-		a.isValidProject(connectionSD, request.getRemoteUser(), projectId);
-		// End Authorisation
-
-		JSONObject jo = new JSONObject();
-		JSONArray ja = new JSONArray();
-		JSONObject task_groups = new JSONObject();	// Array of task groups
-		PreparedStatement pstmt = null;
-		PreparedStatement pstmtSurvey = null;
-		PreparedStatement pstmtGeo = null;
-		try {
-
-			// Get the assignments
-			String sql1 = "SELECT " +
-					"t.id as task_id," +
-					"t.type," +
-					"t.title," +
-					"t.url," +
-					"t.form_id," +
-					"t.initial_data," +
-					"t.schedule_at," +
-					"t.location_trigger," +
-					"t.repeat," +
-					"a.status as assignment_status," +
-					"a.id as assignment_id, " +
-					"t.address as address, " +
-					"t.geo_type as geo_type, " +
-					"u.id as user_id, " +
-					"u.ident as ident, " +
-					"u.name as user_name, " + 
-					"tg.tg_id as task_group_id, " +
-					"tg.name as task_group_name " +
-					"from task_group tg " +
-					"left outer join tasks t on tg.tg_id = t.tg_id " +
-					"left outer join assignments a " +
-					" on a.task_id = t.id " + 
-					" and a.status != 'deleted' " +
-					"left outer join users u on a.assignee = u.id " +
-					" where tg.p_id = t.p_id " +
-					" and tg.p_id = ? ";
-
-			String sql2 = null;
-			if(user_filter == 0) {					// All users (default)	
-				sql2 = "";							
-			} else if(user_filter == -1) {			// Unassigned users
-				sql2 = " and u.id is null";
-			} else {								// The specified user
-				sql2 = " and u.id = ? ";		
-			}
-
-			String sql3 = " order by tg.tg_id, t.form_id, t.id;";
-
-			pstmt = connectionSD.prepareStatement(sql1 + sql2 + sql3);	
-			pstmt.setInt(1, projectId);
-			if(user_filter > 0) {
-				pstmt.setInt(2, user_filter);
-			}
-			log.info("SQL get tasks: " + pstmt.toString());
-
-			// Statement to get survey name
-			String sqlSurvey = "select display_name from survey where s_id = ?";
-			pstmtSurvey = connectionSD.prepareStatement(sqlSurvey);
-
-			ResultSet resultSet = pstmt.executeQuery();
-			int t_id = 0;
-			int tg_id = 0;	// Task group id
-
-			while (resultSet.next()) {
-				JSONObject jr = new JSONObject();
-				JSONObject jp = new JSONObject();
-				JSONObject jg = null;
-
-				jr.put("type", "Feature");
-
-				// Create the new Task Assignment Objects
-
-				// Populate the new Task Assignment
-				t_id = resultSet.getInt("task_id");
-				tg_id = resultSet.getInt("task_group_id");
-				jp.put("task_id", t_id);
-				jp.put("task_group_id", tg_id);
-
-				String tg_name = resultSet.getString("task_group_name");
-				if(tg_name == null || tg_name.trim().length() == 0) {
-					jp.put("task_group_name", tg_id);
-				} else {
-					jp.put("task_group_name", tg_name);
-				}
-
-				String taskType = resultSet.getString("type");
-				jp.put("type", taskType);
-				if(taskType != null && taskType.equals("xform")) {
-					int s_id = resultSet.getInt("form_id");
-					pstmtSurvey.setInt(1, s_id);
-					ResultSet sRs = pstmtSurvey.executeQuery();
-					if(sRs.next()) {
-						jp.put("survey_name", sRs.getString(1));
-					}
-
-				}
-
-				jp.put("assignment_id", resultSet.getInt("assignment_id"));
-				String assStatus = resultSet.getString("assignment_status");
-				if(assStatus == null) {
-					assStatus = "new";
-				}
-				jp.put("assignment_status", assStatus);
-
-				jp.put("user_id", resultSet.getInt("user_id"));
-				jp.put("user_ident", resultSet.getString("ident"));
-				String user_name = resultSet.getString("user_name");
-				if(user_name == null) {
-					user_name = "";
-				}
-				jp.put("user_name", user_name);
-				jp.put("title", resultSet.getString("title"));
-				jp.put("address", resultSet.getString("address"));
-				jp.put("repeat", resultSet.getBoolean("repeat"));
-				jp.put("scheduleAt", resultSet.getTimestamp("schedule_at"));
-				jp.put("location_trigger", resultSet.getString("location_trigger"));
-
-				String geo_type = resultSet.getString("geo_type");
-				// Get the coordinates
-				if(geo_type != null) {
-					// Add the coordinates
-					jp.put("geo_type", geo_type);
-
-					String sql = null;
-					if(geo_type.equals("POINT")) {
-						sql = "select ST_AsGeoJSON(geo_point) from tasks where id = ?;";
-					} else if (geo_type.equals("POLYGON")) {
-						sql = "select ST_AsGeoJSON(geo_polygon) from tasks where id = ?;";
-					} else if (geo_type.equals("LINESTRING")) {
-						sql = "select ST_AsGeoJSON(geo_linestring) from tasks where id = ?;";
-					}
-					if(pstmtGeo != null) {pstmtGeo.close();};
-					pstmtGeo = connectionSD.prepareStatement(sql);
-					pstmtGeo.setInt(1, t_id);
-					ResultSet resultSetGeo = pstmtGeo.executeQuery();
-					if(resultSetGeo.next()) {
-						String geoString = resultSetGeo.getString(1);
-						if(geoString != null) {
-							jg = new JSONObject(geoString);	
-							jr.put("geometry", jg);
-						}
-					}
-
-				}
-				jr.put("properties", jp);
-				ja.put(jr);
-
-			}
-
-			jo.put("type", "FeatureCollection");
-			jo.put("features", ja);
-
-			/*
-			 * Add task group details to the response
-			 */
-			String sql = "select tg_id, name, address_params from task_group where p_id = ? order by tg_id;";
-			if(pstmt != null) {pstmt.close();};
-			pstmt = connectionSD.prepareStatement(sql);
-			pstmt.setInt(1, projectId);
-
-			log.info("SQL Get task groups: " + pstmt.toString());
-			ResultSet tgrs = pstmt.executeQuery();
-
-			while (tgrs.next()) {
-				JSONObject tg = new JSONObject();
-				tg.put("tg_id", tgrs.getInt(1));
-				tg.put("tg_name", tgrs.getString(2));
-				tg.put("tg_address_params", tgrs.getString(3));
-				task_groups.put(tgrs.getString(1), tg);
-			}
-			jo.put("task_groups", task_groups);
-
-			response = Response.ok(jo.toString()).build();			
-
-		} catch (SQLException e) {
-
-			log.log(Level.SEVERE,"", e);
-			response = Response.serverError().build();
-		} catch (Exception e) {
-
-			log.log(Level.SEVERE,"", e);
-			response = Response.serverError().build();
-		} finally {
-			if (pstmt != null) try {pstmt.close();} catch (SQLException e) {};
-			if (pstmtSurvey != null) try {pstmtSurvey.close();} catch (SQLException e) {};
-			if (pstmtGeo != null) try {pstmtGeo.close();} catch (SQLException e) {};		
-
-			SDDataSource.closeConnection("surveyKPI-AllAssignments", connectionSD);
-		}
-
-		return response;
-	}
-
 	/*
 	 * Add a task for every survey
 	 * Add a task for the array of locations passed in the input parameters
@@ -332,173 +121,111 @@ public class AllAssignments extends Application {
 
 		Response response = null;
 		ArrayList<TaskAddress> addressArray = null;
+		String projectName = null;
 
-		try {
-			Class.forName("org.postgresql.Driver");	 
-		} catch (ClassNotFoundException e) {
-			e.printStackTrace();
-			response = Response.serverError().build();
-			return response;
-		}
 
 		log.info("++++++++++++++++++++++++++++++++++++++ Assignment:" + settings);
-		AssignFromSurvey as = new Gson().fromJson(settings, AssignFromSurvey.class);
-
-		log.info("User id: " + as.user_id);
+		Gson gson = new GsonBuilder().disableHtmlEscaping().create();
+		AssignFromSurvey as = gson.fromJson(settings, AssignFromSurvey.class);
 
 		String userName = request.getRemoteUser();
 		int sId = as.source_survey_id;								// Source survey id (optional)
 
 		// Authorisation - Access
-		Connection connectionSD = SDDataSource.getConnection("surveyKPI-AllAssignments");
+		Connection sd = SDDataSource.getConnection("surveyKPI-AllAssignments");
 		boolean superUser = false;
 		try {
-			superUser = GeneralUtilityMethods.isSuperUser(connectionSD, request.getRemoteUser());
+			superUser = GeneralUtilityMethods.isSuperUser(sd, request.getRemoteUser());
 		} catch (Exception e) {
 		}
-		a.isAuthorised(connectionSD, request.getRemoteUser());
-		a.isValidProject(connectionSD, request.getRemoteUser(), projectId);
+		a.isAuthorised(sd, request.getRemoteUser());
+		a.isValidProject(sd, request.getRemoteUser(), projectId);
 		if(sId > 0) {
-			a.isValidSurvey(connectionSD, userName, sId, false, superUser);	// Validate that the user can access this survey
+			a.isValidSurvey(sd, userName, sId, false, superUser);	// Validate that the user can access this survey
 		}
 		// End Authorisation
 
 		if(sId > 0) {
-			lm.writeLog(connectionSD, sId, request.getRemoteUser(), "create tasks", "Create tasks from survey data");
+			lm.writeLog(sd, sId, request.getRemoteUser(), "create tasks", "Create tasks from survey data");
 		}
 
-		Connection connectionRel = null; 
+		Connection cResults = null; 
 		PreparedStatement pstmt = null;
-		PreparedStatement pstmtInsert = null;
-		PreparedStatement pstmtAssign = null;
 		PreparedStatement pstmtCheckGeom = null;
-		PreparedStatement pstmtTaskGroup = null;
+		
 		PreparedStatement pstmtGetSurveyIdent = null;
-		PreparedStatement pstmtUniqueTg = null;
 
+		int taskGroupId = -1;
 		try {
-			connectionRel = ResultsDataSource.getConnection("surveyKPI-AllAssignments");
-			connectionSD.setAutoCommit(false);
+			cResults = ResultsDataSource.getConnection("surveyKPI-AllAssignments");
+			log.info("Set autocommit sd false");
 
-			/*
-			 * Create the task group if an existing task group was not specified
-			 */
-			int taskGroupId = -1;
-			Gson gson = new GsonBuilder().disableHtmlEscaping().create();
-			ResultSet keys = null;
+			// Localisation			
+			Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(sd, request, request.getRemoteUser()));
+			ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
+			
+			String target_survey_ident = GeneralUtilityMethods.getSurveyIdent(sd, as.target_survey_id);
+			
+			projectName = GeneralUtilityMethods.getProjectName(sd, projectId);
+			SurveyManager sm = new SurveyManager(localisation, "UTC");
+			org.smap.sdal.model.Survey survey = null;
+			String basePath = GeneralUtilityMethods.getBasePath(request);
+			survey = sm.getById(sd, cResults, request.getRemoteUser(), sId, 
+					true, 		// full
+					basePath, 
+					null, false, false, false, false, false, "real", false, false, superUser, "geojson",
+					false,		// child surveys
+					false		// onlyGetLaunched
+					);	
+			
+			sd.setAutoCommit(false);
+			
+			int oId = GeneralUtilityMethods.getOrganisationId(sd, userName);
+			String tz = GeneralUtilityMethods.getOrganisationTZ(sd, oId);
+			TaskManager tm = new TaskManager(localisation, tz);
+			
+			// Create the task group if an existing task group was not specified
 			if(as.task_group_id <= 0) {
-
-				/*
-				 * Check that a task group of this name does not already exist
-				 * This would be better implemented as a constraint on the database but existing customers probably have task
-				 *  groups with duplicate names
-				 */
-				String checkUniqeTg = "select count(*) from task_group where name = ? and p_id = ?;";
-				pstmtUniqueTg = connectionSD.prepareStatement(checkUniqeTg);
-				pstmtUniqueTg.setString(1, as.task_group_name);
-				pstmtUniqueTg.setInt(2, projectId);
-				log.info("Check uniqueness of task group name in project: " + pstmtUniqueTg.toString());
-				ResultSet rs = pstmtUniqueTg.executeQuery();
-
-				if(rs.next()) {
-					if(rs.getInt(1) > 0) {
-						throw new Exception("Task Group Name " + as.task_group_name + " already Exists");
-					}
-				}
-
-				String addressParams = gson.toJson(as.address_columns); 	
-				String tgSql = "insert into task_group ( "
-						+ "name, "
-						+ "p_id, "
-						+ "address_params,"
-						+ "rule,"
-						+ "source_s_id) "
-						+ "values (?, ?, ?, ?, ?);";
-
-				pstmtTaskGroup = connectionSD.prepareStatement(tgSql, Statement.RETURN_GENERATED_KEYS);
-				pstmtTaskGroup.setString(1, as.task_group_name);
-				pstmtTaskGroup.setInt(2, projectId);
-				pstmtTaskGroup.setString(3, addressParams);
-				pstmtTaskGroup.setString(4, settings);
-				pstmtTaskGroup.setInt(5, as.source_survey_id);
-				log.info("Insert into task group: " + pstmtTaskGroup.toString());
-				pstmtTaskGroup.execute();
-
-				connectionSD.commit();		// Success as TG is created, even if there are no existing tasks ready to go this is good
-
-				keys = pstmtTaskGroup.getGeneratedKeys();
-				if(keys.next()) {
-					taskGroupId = keys.getInt(1);
-				}
+				taskGroupId = tm.createTaskGroup(sd, as.task_group_name, 
+						projectId,
+						gson.toJson(as.address_columns),
+						settings,
+						as.source_survey_id,
+						as.target_survey_id,
+						as.dl_dist,
+						false		// don't use an existing task group of the same name
+						);	
 			} else {
 				taskGroupId = as.task_group_id;
 			}
+			sd.commit();		// Success as TG is created, even if there are no existing tasks ready to go this is good
 
+			/*
+			 * Set the task email details
+			 */
+			tm.updateEmailDetails(sd, projectId, taskGroupId, as.emailDetails);
+			
 			/*
 			 * Create the tasks unless no tasks have been specified
 			 */
-			if(as.target_survey_id > 0) {
+			if(as.target_survey_id > 0 && as.add_current) {
 				String sql = null;
 				ResultSet resultSet = null;
-				String insertSql1 = "insert into tasks (" +
-						"p_id, " +
-						"tg_id, " +
-						"type, " +
-						"title, " +
-						"form_id, " +
-						"url, " +
-						"geo_type, ";
-
-				String insertSql2 =	
-						"initial_data, " +
-								"update_id," +
-								"address," +
-								"schedule_at," +
-								"location_trigger) " +
-								"values (" +
-								"?, " + 
-								"?, " + 
-								"'xform', " +
-								"?, " +
-								"?, " +
-								"?, " +
-								"?, " +	
-								"ST_GeomFromText(?, 4326), " +
-								"?, " +
-								"?, " +
-								"?," +
-								"now() + interval '7 days'," +  // Schedule for 1 week (TODO allow user to set)
-								"?);";		
-
-				String assignSQL = "insert into assignments (assignee, status, task_id) values (?, ?, ?);";
-				pstmtAssign = connectionSD.prepareStatement(assignSQL);
 
 				String checkGeomSQL = "select count(*) from information_schema.columns where table_name = ? and column_name = 'the_geom'";
-				pstmtCheckGeom = connectionRel.prepareStatement(checkGeomSQL);
+				pstmtCheckGeom = cResults.prepareStatement(checkGeomSQL);
 
 				String getSurveyIdentSQL = "select ident from survey where s_id = ?;";
-				pstmtGetSurveyIdent = connectionSD.prepareStatement(getSurveyIdentSQL);
+				pstmtGetSurveyIdent = sd.prepareStatement(getSurveyIdentSQL);
 
 				String hostname = request.getServerName();
 
 				pstmtGetSurveyIdent.setInt(1, as.target_survey_id);
 				resultSet = pstmtGetSurveyIdent.executeQuery();
-				String initial_data_url = null;
 				String instanceId = null;
-				String locationTrigger = null;
-				String target_survey_url = null;
-				String target_survey_ident = null;
-				if(resultSet.next()) {
-					target_survey_ident = resultSet.getString(1);
-					target_survey_url = "http://" + hostname + "/formXML?key=" + target_survey_ident;
-				} else {
-					throw new Exception("Form identifier not found for form id: " + as.target_survey_id);
-				}
 
-				/*
-				 * Get the tasks from the passed in source survey if this has been set
-				 */
 				if(sId != -1) {
+					
 					/*
 					 * Get Forms and row counts in this survey
 					 */
@@ -506,24 +233,46 @@ public class AllAssignments extends Application {
 							"where f.s_id = ? " + 
 							"order by f.table_name;";		
 
-					pstmt = connectionSD.prepareStatement(sql);	 
+					pstmt = sd.prepareStatement(sql);	 
 					pstmt.setInt(1, sId);
 
 					log.info("Get forms: " + pstmt.toString());
 					resultSet = pstmt.executeQuery();
 
+					/*
+					 * Get all the source records
+					 */
 					while (resultSet.next()) {
+						
 						String tableName2 = null;
 						String tableName = resultSet.getString(1);
 						String p_id = resultSet.getString(2);
 						if(p_id == null || p_id.equals("0")) {	// The top level form
-
+							
+							/*
+							 * Check the filters
+							 * Advanced filter takes precedence
+							 * If that is not set then check simple filter
+							 */
 							QuestionInfo filterQuestion = null;
 							String filterSql = null;
-							if(as.filter != null && as.filter.qId > 0) {
+							if(as.filter != null && as.filter.advanced != null && as.filter.advanced.length() > 0) {
+								log.info("+++++ Using advanced filter: " + as.filter.advanced);
+								
+								StringBuffer filterQuery = new StringBuffer(tableName);
+								filterQuery.append(".instanceid in ");
+								filterQuery.append(GeneralUtilityMethods.getFilterCheck(sd, 
+										localisation, survey, as.filter.advanced, tz));
+								filterSql = filterQuery.toString();
+								
+								log.info("Query clause: " + filterSql);
+								
+							} else if(as.filter != null && as.filter.qId > 0) {
 								String fValue = null;
 								String fValue2 = null;
-								filterQuestion = new QuestionInfo(sId, as.filter.qId, connectionSD, false, as.filter.lang, urlprefix);
+								filterQuestion = new QuestionInfo(localisation, tz, sId, as.filter.qId, sd, 
+										cResults, request.getRemoteUser(),
+										false, as.filter.lang, urlprefix, oId);
 								log.info("Filter question type: " + as.filter.qType);
 								if(as.filter.qType != null) {
 									if(as.filter.qType.startsWith("select")) {
@@ -544,6 +293,15 @@ public class AllAssignments extends Application {
 								filterSql = filterQuestion.getFilterExpression(fValue, fValue2);		
 								log.info("filter: " + filterSql);
 							}
+							
+							// Check to see if we need to assign the task based on retrieved data
+							String assignSql = null;
+							if(as.assign_data != null && as.assign_data.trim().length() > 0) {
+								SqlFrag frag = new SqlFrag();
+								frag.addSqlFragment(as.assign_data, false, localisation);
+								assignSql = frag.sql.toString();
+							}
+							
 							// Check to see if this form has geometry columns
 							boolean hasGeom = false;
 							pstmtCheckGeom.setString(1, tableName);
@@ -556,25 +314,29 @@ public class AllAssignments extends Application {
 							}
 
 							// Get the primary key, location and address columns from this top level table
-							String getTaskSql = null;
-							String getTaskSqlWhere = null;
-							String getTaskSqlEnd = null;
-							boolean hasInstanceName = GeneralUtilityMethods.hasColumn(connectionRel, tableName, "instancename");
+							StringBuffer getTaskSql = new StringBuffer("");
+							StringBuffer getTaskSqlWhere = new StringBuffer("");
+							StringBuffer getTaskSqlEnd = new StringBuffer("");
+							boolean hasInstanceName = GeneralUtilityMethods.hasColumn(cResults, tableName, "instancename");
 
 							if(hasGeom) {
 								log.info("Has geometry");
-								getTaskSql = "select " + tableName +".prikey, ST_AsText(" + tableName + ".the_geom) as the_geom," +
-										tableName + ".instanceid";
+								getTaskSql.append("select ").append(tableName)
+										.append(".prikey, ST_AsGeoJson(").append(tableName).append(".the_geom) as the_geom,")
+										.append(tableName).append(".instanceid");
+								
 								if(hasInstanceName) {
-									getTaskSql += ", " + tableName + ".instancename";
+									getTaskSql.append(", ").append(tableName).append(".instancename");
 								}
-								getTaskSqlWhere = " from " + tableName + " where " + tableName + "._bad = 'false'";	
-								getTaskSqlEnd = ";";
+								
+								getTaskSqlWhere.append(" from ").append(tableName).append(" where ")
+										.append(tableName).append("._bad = 'false'");	
+
 							} else {
 								log.info("No geom found");
 								// Get a subform that has geometry
 
-								PreparedStatement pstmt2 = connectionSD.prepareStatement(sql);	 
+								PreparedStatement pstmt2 = sd.prepareStatement(sql);	 
 								pstmt2.setInt(1, sId);
 
 								log.info("Get subform with geometry: " + pstmt2.toString());
@@ -594,135 +356,120 @@ public class AllAssignments extends Application {
 								}
 								pstmt2.close();
 								resultSet2.close();
-								getTaskSql = "select " + tableName + 
-										".prikey, ST_AsText(ST_MakeLine(" + tableName2 + ".the_geom)) as the_geom, " +
-										tableName + ".instanceid";
+								getTaskSql.append("select ").append(tableName) 
+										.append(".prikey, ST_AsText(ST_MakeLine(").append(tableName2)
+										.append(".the_geom)) as the_geom, ").append(tableName).append(".instanceid");
+								
 								if(hasInstanceName) {
-									getTaskSql += ", " + tableName + ".instancename";
+									getTaskSql.append(", ").append(tableName).append(".instancename");
 								}
 
-								getTaskSqlWhere = " from " + tableName + " left outer join " + tableName2 + 
-										" on " + tableName + ".prikey = " + tableName2 + ".parkey " +
-										" where " + tableName + "._bad = 'false'";							
-								getTaskSqlEnd = "group by " + tableName + ".prikey ";
+								getTaskSqlWhere.append(" from ").append(tableName).append(" left outer join ")
+										.append(tableName2).append(" on ").append(tableName).append(".prikey = ")
+										.append(tableName2).append(".parkey ")
+										.append(" where ").append(tableName).append("._bad = 'false'");	
+								
+								getTaskSqlEnd.append("group by ").append(tableName).append(".prikey ");
 							}
 
 							// Finally if we still haven't found a geometry column then set all locations to 0, 0
 							if(!hasGeom) {
 								log.info("No geometry columns found");
+								
+								getTaskSql = new StringBuffer("");
+								getTaskSqlWhere = new StringBuffer("");
+								getTaskSqlEnd = new StringBuffer("");
 
-								getTaskSql = "select " + tableName + ".prikey, 'POINT(0 0)' as the_geom, " +
-										tableName + ".instanceid";
+								getTaskSql.append("select ").append(tableName).append(".prikey, 'POINT(0 0)' as the_geom, ")
+											.append(tableName).append(".instanceid");
+								
 								if(hasInstanceName) {
-									getTaskSql += ", " + tableName + ".instancename";
+									getTaskSql.append(", ").append(tableName).append(".instancename");
 								}
-								getTaskSqlWhere = " from " + tableName + " where " + tableName + "._bad = 'false'";	
-								getTaskSqlEnd = ";";
+								getTaskSqlWhere.append(" from ").append(tableName).append(" where ").append(tableName)
+										.append("._bad = 'false'");	
 
 							}
 
+							if(assignSql != null) {
+								getTaskSql.append(",").append(assignSql).append(" as _assign_key");
+							}
 
+							// Add address columns
 							if(as.address_columns != null) {
 								for(int i = 0; i < as.address_columns.size(); i++) {
 									TaskAddressSettings add = as.address_columns.get(i);
 									if(add.selected) {
-										getTaskSql += "," + tableName + "." + add.name;
+										if(GeneralUtilityMethods.hasColumn(cResults, tableName, add.name)) {
+											getTaskSql.append(",").append(tableName).append(".").append(add.name);
+										} else {
+											add.selected = false;
+										}
+										
 									}
 								}
 							}
-
-							/*
-							 * Get the source form ident
-							 */
-							pstmtGetSurveyIdent.setInt(1, as.source_survey_id);
-							if(resultSet != null) try {resultSet.close();} catch(Exception e) {};
-
-							log.info("SQL get survey ident: " + pstmt.toString());
-							resultSet = pstmtGetSurveyIdent.executeQuery();
-							String source_survey_ident = null;
-							if(resultSet.next()) {
-								source_survey_ident = resultSet.getString(1);
-							} else {
-								throw new Exception("Form identifier not found for form id: " + as.source_survey_id);
+							
+							// Add start date column
+							if(as.taskStart != -1) {
+								String name = null;
+								if(as.taskStart > 0) {
+									Question q = GeneralUtilityMethods.getQuestion(sd, as.taskStart);
+									name = q.name;
+									as.taskStartType = q.type;
+								} else {
+									MetaItem mi = GeneralUtilityMethods.getPreloadDetails(sd, sId, as.taskStart);
+									name = mi.columnName;
+									as.taskStartType = mi.type;
+								}
+								getTaskSql.append(",").append(tableName).append(".").append(name).append(" as taskstart");
 							}
-							getTaskSql += getTaskSqlWhere;
+	
+							getTaskSql.append(getTaskSqlWhere);
 							if(filterSql != null && filterSql.trim().length() > 0) {
-								getTaskSql += " and " + filterSql;
+								getTaskSql.append(" and ").append(filterSql);
 							}
-							getTaskSql += getTaskSqlEnd;
+							getTaskSql.append(getTaskSqlEnd);
 
 							if(pstmt != null) try {pstmt.close();} catch(Exception e) {};
-							pstmt = connectionRel.prepareStatement(getTaskSql);	
+							pstmt = cResults.prepareStatement(getTaskSql.toString());	
+							
 							log.info("SQL Get Tasks: ----------------------- " + pstmt.toString());
+							if(resultSet != null) try {resultSet.close();} catch(Exception e) {};
 							resultSet = pstmt.executeQuery();
 							while (resultSet.next()) {
-
-								/*
-								 * The original URL for instance data only allowed searching via primary key
-								 *  the prikey was the last part of the path.
-								 *  This use is now deprecated and a more flexible approach is used where the key
-								 *  is passed as an attribute.  
-								 *  The old path value of primary key is ignored with this new format
-								 *  and is set to zero here.
-								 */ 
-								if(as.update_results /*&& (as.source_survey_id == as.form_id)*/) {
-									initial_data_url = "http://" + hostname + "/instanceXML/" + 
-											target_survey_ident + "/0?key=prikey&keyval=" + resultSet.getString(1);		// deprecated
-									instanceId = resultSet.getString("instanceid");										// New way to identify existing records to be updated
+								
+								// Get the task data from each survey record
+								TaskManager.TaskInstanceData tid = tm.new TaskInstanceData();
+								tid.prikey = resultSet.getInt("prikey");
+								
+								// Add location trigger
+								tid.locationTrigger = null;		// Not currently set from existing data
+								
+								// Add dynamic assignment based on data
+								if(assignSql != null) {
+									tid.ident = resultSet.getString("_assign_key");
+								}
+								
+								// instanceId (writeTask)
+								if(as.update_results || as.prepopulate) {
+									instanceId = resultSet.getString("instanceid");
 								}
 
-								String location = null;
-								log.info("Has geom: " +hasGeom);
+								// location (tid)
 								if(hasGeom) {
-									location = resultSet.getString("the_geom");
+									tid.location = resultSet.getString("the_geom");
 								} 
-								String instanceName = null;
+
+								// instanceName (tid)
 								if(hasInstanceName) {
-									instanceName = resultSet.getString("instancename");
+									tid.instanceName = resultSet.getString("instancename");
 								}
-								if(location == null) {
-									location = "POINT(0 0)";
-								} else if(location.startsWith("LINESTRING")) {
-									log.info("Starts with linestring: " + location.split(" ").length);
-									if(location.split(" ").length < 3) {	// Convert to point if there is only one location in the line
-										location = location.replaceFirst("LINESTRING", "POINT");
-									}
-								}	 
-
-								log.info("Location: " + location);
-
-								String geoType = null;
-								if(pstmtInsert != null) {pstmtInsert.close();};
-								if(location.startsWith("POINT")) {
-									pstmtInsert = connectionSD.prepareStatement(insertSql1 + "geo_point," + insertSql2, Statement.RETURN_GENERATED_KEYS);
-									geoType = "POINT";
-								} else if(location.startsWith("POLYGON")) {
-									pstmtInsert = connectionSD.prepareStatement(insertSql1 + "geo_polygon," + insertSql2, Statement.RETURN_GENERATED_KEYS);
-									geoType = "POLYGON";
-								} else if(location.startsWith("LINESTRING")) {
-									pstmtInsert = connectionSD.prepareStatement(insertSql1 + "geo_linestring," + insertSql2, Statement.RETURN_GENERATED_KEYS);
-									geoType = "LINESTRING";
-								} else {
-									log.log(Level.SEVERE, "Unknown location type: " + location);
-								}
-								pstmtInsert.setInt(1, projectId);
-								pstmtInsert.setInt(2, taskGroupId);
-								if(instanceName == null || instanceName.trim().length() == 0) {
-									pstmtInsert.setString(3, as.project_name + " : " + as.survey_name + " : " + resultSet.getString(1));
-								} else {
-									pstmtInsert.setString(3, instanceName);
-								}
-								pstmtInsert.setInt(4, as.target_survey_id);
-								pstmtInsert.setString(5, target_survey_url);	
-								pstmtInsert.setString(6, geoType);
-								pstmtInsert.setString(7, location);
-								pstmtInsert.setString(8, initial_data_url);			// Initial data deprecated
-								pstmtInsert.setString(9, instanceId);				// Initial data
-
-								/*
-								 * Create address JSON string
-								 */
-								String addressString = null;
+								if(tid.instanceName == null || tid.instanceName.trim().length() == 0) {
+									tid.instanceName = as.project_name + " : " + as.survey_name + " : " + resultSet.getString(1);
+								} 
+								
+								// Address (tid)
 								if(as.address_columns != null) {
 
 									addressArray = new ArrayList<TaskAddress> ();
@@ -740,37 +487,35 @@ public class AllAssignments extends Application {
 										}
 									}
 									gson = new GsonBuilder().disableHtmlEscaping().create();
-									addressString = gson.toJson(addressArray); 
+									tid.address = gson.toJson(addressArray); 
 								}
-
-								pstmtInsert.setString(10, addressString);			// Address
-								pstmtInsert.setString(11, locationTrigger);			// Location that will start task
-
-								log.info("Insert Task: " + pstmtInsert.toString());
-
-								int count = pstmtInsert.executeUpdate();
-								if(count != 1) {
-									log.info("Error: Failed to insert task");
-								} else {
-									if(as.user_id > 0) {	// Assign the user to the new task
-
-										keys = pstmtInsert.getGeneratedKeys();
-										if(keys.next()) {
-											int taskId = keys.getInt(1);
-
-											pstmtAssign.setInt(1, as.user_id);
-											pstmtAssign.setString(2, "accepted");
-											pstmtAssign.setInt(3, taskId);
-
-											log.info("Assign user to task:" + pstmtAssign.toString());
-
-											pstmtAssign.executeUpdate();
-										}
-										if(keys != null) try{ keys.close(); } catch(SQLException e) {};
-
-
+								
+								// Start time (tid)
+								if(as.taskStart != -1) {	
+									if(as.taskStartType.equals("date")) {
+										tid.taskStart = resultSet.getTimestamp("taskstart", Calendar.getInstance(TimeZone.getTimeZone(tz)));
+									} else {
+										tid.taskStart = resultSet.getTimestamp("taskstart");
 									}
 								}
+								
+								// Write the task to the database
+								tm.writeTaskCreatedFromSurveyResults(
+										sd, 
+										cResults,
+										as, 
+										hostname, 
+										taskGroupId, 
+										as.task_group_name, 
+										projectId, 
+										projectName, 
+										survey, 
+										target_survey_ident, 
+										tid, 
+										instanceId,
+										false,
+										request.getRemoteUser()); 
+								
 							}
 
 							break;
@@ -779,89 +524,14 @@ public class AllAssignments extends Application {
 						}
 					}
 				}
-
-				/*
-				 * Set the tasks from the passed in task list
-				 */
-				if(as.new_tasks != null) {
-					log.info("Creating " + as.new_tasks.features.length + " Ad-Hoc tasks");
-
-					// Assume POINT location, TODO POLYGON, LINESTRING
-					if(pstmtInsert != null) {pstmtInsert.close();};
-					String geoType = "POINT";
-					pstmtInsert = connectionSD.prepareStatement(insertSql1 + "geo_point," + insertSql2, Statement.RETURN_GENERATED_KEYS);
-
-					// Create a dummy location if this task does not have one
-					if(as.new_tasks.features.length == 0) {
-						Features f = new Features();
-						f.geometry = new Geometry();
-						f.geometry.coordinates = new String[2];
-						f.geometry.coordinates[0] = "0.0";
-						f.geometry.coordinates[1] = "0.0";
-						as.new_tasks.features = new Features[1];
-						as.new_tasks.features[0] = f;
-					}
-					// Tasks have locations
-					for(int i = 0; i < as.new_tasks.features.length; i++) {
-						Features f = as.new_tasks.features[i];
-						log.info("Creating task at " + f.geometry.coordinates[0] + " : " + f.geometry.coordinates[1]);
-
-						pstmtInsert.setInt(1, projectId);
-						pstmtInsert.setInt(2, taskGroupId);
-						String title = null;
-						if(f.properties != null && f.properties.title != null && !f.properties.title.equals("null")) {
-							title = as.project_name + " : " + as.survey_name + " : " + f.properties.title;
-						} else {
-							title = as.project_name + " : " + as.survey_name;
-						}
-						pstmtInsert.setString(3, title);
-						pstmtInsert.setInt(4, as.target_survey_id);
-						pstmtInsert.setString(5, target_survey_url);	
-						pstmtInsert.setString(6, "POINT");
-						pstmtInsert.setString(7, "POINT(" + f.geometry.coordinates[0] + " " + f.geometry.coordinates[1] + ")");	// The location
-						pstmtInsert.setString(8, null);			// Initial data url
-						pstmtInsert.setString(9, instanceId);
-						pstmtInsert.setString(10, null);		// Address TBD
-						pstmtInsert.setString(11, locationTrigger);
-
-						log.info("Insert task: " + pstmtInsert.toString()); 
-						int count = pstmtInsert.executeUpdate();
-						if(count != 1) {
-							log.info("Error: Failed to insert task");
-						} else if((f.properties != null && f.properties.userId > 0) || as.user_id > 0) {	// Assign the user to the new task
-
-							keys = pstmtInsert.getGeneratedKeys();
-							if(keys.next()) {
-								int taskId = keys.getInt(1);
-
-								if(f.properties != null && f.properties.userId > 0) {
-									pstmtAssign.setInt(1, f.properties.userId);
-									pstmtAssign.setString(2, f.properties.assignment_status);
-								} else {
-									pstmtAssign.setInt(1, as.user_id);
-									pstmtAssign.setString(2, "accepted");
-								}
-
-								pstmtAssign.setInt(3, taskId);
-
-								log.info("Assign status: " + pstmtAssign.toString());
-								pstmtAssign.executeUpdate();
-							}
-							if(keys != null) try{ keys.close(); } catch(SQLException e) {};
-
-						}
-					}
-
-				}
 				
 				// Create a notification for the updated user
 				if(as.user_id > 0) {
-					String userIdent = GeneralUtilityMethods.getUserIdent(connectionSD, as.user_id);
+					String userIdent = GeneralUtilityMethods.getUserIdent(sd, as.user_id);
 					MessagingManager mm = new MessagingManager();
-					mm.userChange(connectionSD, userIdent);
+					mm.userChange(sd, userIdent);
 				}
 			}
-			connectionSD.commit();
 
 			log.info("Returning task group id:" + taskGroupId);
 			response = Response.ok().entity("{\"tg_id\": " + taskGroupId + "}").build();
@@ -872,26 +542,117 @@ public class AllAssignments extends Application {
 				String msg = "The survey results do not have coordinates " + as.source_survey_name;
 				response = Response.status(Status.NO_CONTENT).entity(msg).build();
 			} else if(e.getMessage() != null && e.getMessage().contains("does not exist")) {
-				response = Response.ok("{\"tg_id\": 0}").build();	// No problem
+				response = Response.ok("{\"tg_id\": " + taskGroupId + "}").build();	// No problem
 			} else {
 				response = Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
 				log.log(Level.SEVERE,"", e);
 			}	
 
-			try { connectionSD.rollback();} catch (Exception ex){log.log(Level.SEVERE,"", ex);}
+			try { sd.rollback();} catch (Exception ex){log.log(Level.SEVERE,"", ex);}
 
 		} finally {
 
 			if(pstmt != null) try {	pstmt.close(); } catch(SQLException e) {};
-			if(pstmtInsert != null) try {	pstmtInsert.close(); } catch(SQLException e) {};
-			if(pstmtAssign != null) try {	pstmtAssign.close(); } catch(SQLException e) {};
-			if(pstmtTaskGroup != null) try {	pstmtTaskGroup.close(); } catch(SQLException e) {};
 			if(pstmtGetSurveyIdent != null) try {	pstmtGetSurveyIdent.close(); } catch(SQLException e) {};
-			if(pstmtUniqueTg != null) try {	pstmtUniqueTg.close(); } catch(SQLException e) {};
 
-			SDDataSource.closeConnection("surveyKPI-AllAssignments", connectionSD);
-			ResultsDataSource.closeConnection("surveyKPI-AllAssignments", connectionRel);
+			SDDataSource.closeConnection("surveyKPI-AllAssignments", sd);
+			ResultsDataSource.closeConnection("surveyKPI-AllAssignments", cResults);
 
+		}
+
+		return response;
+	}
+	
+	/*
+	 * Update a task group
+	 */
+	@POST
+	@Path("/updatetaskgroup/{projectId}/{tgId}")
+	public Response updateTaskGroup(@Context HttpServletRequest request, 
+			@PathParam("projectId") int projectId,
+			@PathParam("tgId") int tgId,
+			@FormParam("settings") String settings) { 
+
+		Response response = null;
+
+		Gson gson = new GsonBuilder().disableHtmlEscaping().create();
+		AssignFromSurvey as = gson.fromJson(settings, AssignFromSurvey.class);
+
+		String userName = request.getRemoteUser();
+		int sId = as.source_survey_id;								// Source survey id (optional)
+
+		// Authorisation - Access
+		Connection sd = SDDataSource.getConnection("surveyKPI-AllAssignments");
+		boolean superUser = false;
+		try {
+			superUser = GeneralUtilityMethods.isSuperUser(sd, request.getRemoteUser());
+		} catch (Exception e) {
+		}
+		a.isAuthorised(sd, request.getRemoteUser());
+		a.isValidProject(sd, request.getRemoteUser(), projectId);
+		a.isValidTaskGroup(sd, request.getRemoteUser(), tgId);
+		if(sId > 0) {
+			a.isValidSurvey(sd, userName, sId, false, superUser);	// Validate that the user can access this survey
+		}
+		// End Authorisation
+		
+		PreparedStatement pstmtTaskGroup = null;
+
+		String tz = "UTC";	// set default timezone
+		
+		try {
+			log.info("Set autocommit sd false");
+
+			// Localisation			
+			Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(sd, request, request.getRemoteUser()));
+			ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
+
+			/*
+			 * Update the task group
+			 */
+			if(tgId > 0) {
+
+				String addressParams = gson.toJson(as.address_columns); 	
+				String tgSql = "update task_group set "
+						+ "name = ?, "
+						+ "p_id = ?, "
+						+ "address_params = ?,"
+						+ "rule = ?,"
+						+ "source_s_id = ?,"
+						+ "target_s_id = ?,"
+						+ "dl_dist = ? "
+						+ "where tg_id = ?";
+
+				pstmtTaskGroup = sd.prepareStatement(tgSql);
+				pstmtTaskGroup.setString(1, as.task_group_name);
+				pstmtTaskGroup.setInt(2, projectId);
+				pstmtTaskGroup.setString(3, addressParams);
+				pstmtTaskGroup.setString(4, settings);
+				pstmtTaskGroup.setInt(5, as.source_survey_id);
+				pstmtTaskGroup.setInt(6, as.target_survey_id);
+				pstmtTaskGroup.setInt(7, as.dl_dist);
+				pstmtTaskGroup.setInt(8,  tgId);
+				log.info("Update task group: " + pstmtTaskGroup.toString());
+				pstmtTaskGroup.execute();
+
+			} 
+
+			TaskManager tm = new TaskManager(localisation, tz);
+			tm.updateEmailDetails(sd, projectId, tgId, as.emailDetails);
+			
+			response = Response.ok().entity("{\"tg_id\": " + tgId + "}").build();
+
+		} catch (Exception e) {
+			log.info("Error: " + e.getMessage());
+			
+			response = Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
+			log.log(Level.SEVERE,"", e);
+
+		} finally {
+
+			if(pstmtTaskGroup != null) try {	pstmtTaskGroup.close(); } catch(SQLException e) {};
+		
+			SDDataSource.closeConnection("surveyKPI-AllAssignments", sd);
 		}
 
 		return response;
@@ -905,20 +666,10 @@ public class AllAssignments extends Application {
 			@FormParam("settings") String settings) { 
 
 		Response response = null;
-		try {
-			Class.forName("org.postgresql.Driver");	 
-		} catch (ClassNotFoundException e) {
-			log.info("Error: Can't find PostgreSQL JDBC Driver");
-			e.printStackTrace();
-			response = Response.serverError().build();
-			return response;
-		}
 
 		log.info("Assignment:" + settings);
 		Type type = new TypeToken<ArrayList<Assignment>>(){}.getType();		
-		ArrayList<Assignment> aArray = new Gson().fromJson(settings, type);
-
-		String userName = request.getRemoteUser();	
+		ArrayList<Assignment> aArray = new Gson().fromJson(settings, type);	
 
 		// Authorisation - Access
 		Connection connectionSD = SDDataSource.getConnection("surveyKPI-AllAssignments");
@@ -950,6 +701,7 @@ public class AllAssignments extends Application {
 			pstmtInsert = connectionSD.prepareStatement(insertSQL);
 			pstmtUpdate = connectionSD.prepareStatement(updateSQL);
 			pstmtDelete = connectionSD.prepareStatement(deleteSQL);
+			log.info("Set autocommit sd false");
 			connectionSD.setAutoCommit(false);
 
 			for(int i = 0; i < aArray.size(); i++) {
@@ -1009,15 +761,6 @@ public class AllAssignments extends Application {
 
 		Response response = null;
 
-		try {
-			Class.forName("org.postgresql.Driver");	 
-		} catch (ClassNotFoundException e) {
-			log.info("Error: Can't find PostgreSQL JDBC Driver");
-			e.printStackTrace();
-			response = Response.serverError().build();
-			return response;
-		}
-
 		log.info("Load results from file");
 
 		// Authorisation - Access
@@ -1037,37 +780,65 @@ public class AllAssignments extends Application {
 				+ "and source is not null "
 				+ "and not soft_deleted";
 		PreparedStatement pstmtGetCol = null;
+		
+		// Alternate SQL for data downloaded from google sheets - This will have all underscores stripped out
+		String sqlGetColGS = "select q_id, qname, column_name, qtype "
+				+ "from question "
+				+ "where f_id = ? "
+				+ "and replace(lower(qname), '_','') = ? "
+				+ "and source is not null "
+				+ "and not soft_deleted";
+		PreparedStatement pstmtGetColGS = null;
 
 		// SQL to get choices for a select question
 		String sqlGetChoices = "select o.ovalue, o.column_name from option o, question q where q.q_id = ? and o.l_id = q.l_id";
 		PreparedStatement pstmtGetChoices = null;
 
 		PreparedStatement pstmtDeleteExisting = null;
+		
+		// SQL to clear entries in linked_forms that controls csv regeneration
+		String sqlDelLinks = "delete from linked_forms where linked_s_id = ? ";
+		PreparedStatement pstmtDelLinks = null;
 
 		String uploadedFileName = null;
+		String sourceFormName = null;
 		String fileName = null;
 		String filePath = null;
 		File savedFile = null;									// The uploaded file
 		ArrayList<File> dataFiles = new ArrayList<File> ();		// Uploaded data files - There may be multiple of these in a zip file
-		HashMap<String, String> formFile = new HashMap<String, String> ();	// Mapping between form and the file that contains the data to populate it
+		File zipFolder = null;									// Temporary folder created using the contents of a zip
 		String contentType = null;
+		String importSource = "file";		// default to file
 		int sId = 0;
+		int sourceSurveyId = 0;
 		String sIdent = null;		// Survey Ident
-		String sName = null;		// Survey Name
+		String sName = null;			// Survey Name
+		ArrayList<MetaItem> preloads = null;
 		boolean clear_existing = false;
 		HashMap<String, File> mediaFiles = new HashMap<String, File> ();
 		HashMap<String, File> formFileMap = null;
 		ArrayList<String> responseMsg = new ArrayList<String> ();
 		int recordsWritten = 0;
+		String validateSurvey = null;
+		
+		Calendar cal = Calendar.getInstance();
+		Timestamp importTime = new Timestamp(cal.getTime().getTime());
 
 		Connection results = ResultsDataSource.getConnection("surveyKPI-AllAssignments-LoadTasks From File");
 		boolean superUser = false;
+		ResourceBundle localisation = null;
 		try {
 
 			// Get the users locale
-			Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(sd, request.getRemoteUser()));
-			ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
+			Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(sd, request, request.getRemoteUser()));
+			localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
 
+			try {
+				superUser = GeneralUtilityMethods.isSuperUser(sd, request.getRemoteUser());
+			} catch (Exception e) {
+			}
+			
+			String tz = "UTC";	// get default timezone
 			// Get the base path
 			String basePath = GeneralUtilityMethods.getBasePath(request);
 
@@ -1079,21 +850,31 @@ public class AllAssignments extends Application {
 
 				if(item.isFormField()) {
 					log.info("Form field:" + item.getFieldName() + " - " + item.getString());
-
 					if(item.getFieldName().equals("survey")) {
 						sId = Integer.parseInt(item.getString());
-						try {
-							superUser = GeneralUtilityMethods.isSuperUser(sd, request.getRemoteUser());
-						} catch (Exception e) {
+						
+						if(sId > 0) {
+							validateSurvey = "target";
+							a.isValidSurvey(sd, request.getRemoteUser(), sId, false, superUser);
+							a.canLoadTasks(sd, sId);
+	
+							sIdent = GeneralUtilityMethods.getSurveyIdent(sd, sId);
+							sName = GeneralUtilityMethods.getSurveyName(sd, sId);
 						}
-						a.isValidSurvey(sd, request.getRemoteUser(), sId, false, superUser);
-						a.canLoadTasks(sd, sId);
-
-						sIdent = GeneralUtilityMethods.getSurveyIdent(sd, sId);
-						sName = GeneralUtilityMethods.getSurveyName(sd, sId);
+						preloads = GeneralUtilityMethods.getPreloads(sd, sId);
 					} else if(item.getFieldName().equals("clear_existing")) {
 						clear_existing = true;
-					}
+					} else if(item.getFieldName().equals("import_source")) {
+						importSource = item.getString();
+					} else if(item.getFieldName().equals("import_form")) {
+						sourceSurveyId = Integer.parseInt(item.getString());
+						if(sourceSurveyId > 0) {
+							validateSurvey = "source";
+							a.isValidSurvey(sd, request.getRemoteUser(), sourceSurveyId, false, superUser);
+							
+							sourceFormName = GeneralUtilityMethods.getSurveyName(sd, sourceSurveyId);
+						}
+					} 
 
 
 				} else if(!item.isFormField()) {
@@ -1125,25 +906,58 @@ public class AllAssignments extends Application {
 				}
 
 			}
+			
 			log.info("Content Type: " + contentType);
-			if(contentType == null) {
-				throw new Exception("Missing file");
+			if(importSource.equals("file") && contentType == null) {
+				throw new Exception(localisation.getString("mf_mf"));
+			} else if(importSource.equals("form") && sourceSurveyId < 1) {
+				throw new Exception(localisation.getString("mf_ms"));
+			} else if(importSource.equals("form") && sourceSurveyId > 0) {
+				// download the survey
+				
+				String folderPath = basePath + "/temp/" + String.valueOf(UUID.randomUUID());	// Use a random sequence to keep survey name unique
+				File folder = new File(folderPath);
+				folder.mkdir();
+		
+				/*
+				 * Save the XLS export into the folder
+				 */
+				ExchangeManager xm = new ExchangeManager(localisation, tz);
+				ArrayList<FileDescription> files = xm.createExchangeFiles(
+						sd, 
+						results,
+						request.getRemoteUser(),
+						sourceSurveyId, 
+						request,
+						folderPath,
+						superUser,
+						true);
+				
+				fileName = String.valueOf(UUID.randomUUID()) + ".zip";
+				filePath = basePath + "/temp/" + fileName;
+				savedFile = new File(filePath);
+				GeneralUtilityMethods.writeFilesToZipOutputStream(new ZipOutputStream(new FileOutputStream(savedFile)), files);	
+				folder.delete();		// Clean up
+				
+				// Set the uploaded file name to the source form name
+				uploadedFileName = sourceFormName;
 			}
 
 			/*
 			 * Get the forms for this survey 
 			 */
-			ExchangeManager xm = new ExchangeManager();
+			ExchangeManager xm = new ExchangeManager(localisation, tz);
 			ArrayList <FormDesc> formList = xm.getFormList(sd, sId);		
 
 			pstmtGetCol = sd.prepareStatement(sqlGetCol);  			// Prepare the statement to get the column names in the survey that are to be updated
+			pstmtGetColGS = sd.prepareStatement(sqlGetColGS); 
 			pstmtGetChoices = sd.prepareStatement(sqlGetChoices);  // Prepare the statement to get select choices
 
 			// If this is a zip file extract the contents and set the path to the expanded data file that should be inside
 			// Refer to http://www.mkyong.com/java/how-to-decompress-files-from-a-zip-file/
 			if(savedFile.getName().endsWith(".zip")) {
 				String zipFolderPath = savedFile.getAbsolutePath() + ".dir";
-				File zipFolder = new File(zipFolderPath);
+				zipFolder = new File(zipFolderPath);
 				if(!zipFolder.exists()) {
 					zipFolder.mkdir();
 				}
@@ -1187,10 +1001,10 @@ public class AllAssignments extends Application {
 					zis.closeEntry();
 				}
 				zis.close();
+				savedFile.delete();		// clean up
 			} else {
 				dataFiles.add(savedFile);
 			} 
-
 
 			/*
 			 * Get a mapping between form name and file name
@@ -1200,24 +1014,9 @@ public class AllAssignments extends Application {
 			formFileMap = getFormFileMap(xm, dataFiles, formList);
 
 			/*
-			 * Create the results tables if they do not exist
+			 * Create the results tables for the survey if they do not exist
 			 */
-			TableManager tm = new TableManager();
-			FormDesc topForm = formList.get(0);
-			boolean tableCreated = tm.createTable(results, sd, topForm.table_name, sIdent, sId, 0);
-			boolean tableChanged = false;
-			boolean tablePublished = false;
-
-			// Apply any updates that have been made to the table structure since the last submission
-			if(!tableCreated) {
-				tableChanged = tm.applyTableChanges(sd, results, sId);
-
-				// Add any previously unpublished columns not in a changeset (Occurs if this is a new survey sharing an existing table)
-				tablePublished = tm.addUnpublishedColumns(sd, results, sId);			
-				if(tableChanged || tablePublished) {
-					tm.markPublished(sd, sId);		// only mark published if there have been changes made
-				}
-			}
+			UtilityMethods.createSurveyTables(sd, results, localisation, sId, formList, sIdent, tz);
 
 			/*
 			 * Delete the existing data if requested
@@ -1232,6 +1031,20 @@ public class AllAssignments extends Application {
 
 					log.info("Clearing results: " + pstmtDeleteExisting.toString());
 					pstmtDeleteExisting.executeUpdate();
+					
+				}
+				
+				/*
+				 * Delete any attachments
+				 * TODO this will delete the attachments even if the new upload fails
+				 */
+				String fileFolder = basePath + "/attachments/" + sIdent;
+				File folder = new File(fileFolder);
+				try {
+					log.info("Deleting attachments folder: " + fileFolder);
+					FileUtils.deleteDirectory(folder);
+				} catch (IOException e) {
+					log.info("Error deleting attachments directory:" + fileFolder + " : " + e.getMessage());
 				}
 			}
 
@@ -1240,29 +1053,57 @@ public class AllAssignments extends Application {
 			 *   Identify forms
 			 *   Identify columns in forms
 			 */
+			SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 			for(int formIdx = 0; formIdx < formList.size(); formIdx++) {
 
 				FormDesc formDesc = formList.get(formIdx);
 
 				File f = formFileMap.get(formDesc.name);
-
+				
 				if(f != null) {
 					boolean isCSV = false;
 					if(f.getName().endsWith(".csv")) {
 						isCSV = true;
 					}
 
-					int count = xm.loadFormDataFromFile(results, 
+					int count = 0;
+					if(isCSV) {
+						count = xm.loadFormDataFromCsvFile(results, 
 							pstmtGetCol, 
+							pstmtGetColGS,
 							pstmtGetChoices, 
 							f, 
 							formDesc, 
 							sIdent,
 							mediaFiles,
-							isCSV,
 							responseMsg,
 							basePath,
-							localisation);
+							localisation,
+							preloads,
+							uploadedFileName,
+							importTime,
+							request.getServerName(),
+							sdf);
+					} else {
+						 try (OPCPackage p = OPCPackage.open(f.getPath(), PackageAccess.READ)) {
+					            XLSXEventParser ep = new XLSXEventParser(p);
+					            count = ep.processSheet(results, 
+					            		pstmtGetCol,
+					            		pstmtGetChoices,
+					            		pstmtGetColGS,
+					            		responseMsg,
+					            		formDesc,
+					            		preloads,
+					            		xm,
+					            		importSource,
+					            		importTime,
+					            		request.getServerName(),
+					            		basePath,
+					            		sIdent,
+					            		mediaFiles,
+					            		sdf);				           
+					        }
+					}
 
 					if(formIdx == 0) {
 						recordsWritten = count;
@@ -1272,37 +1113,76 @@ public class AllAssignments extends Application {
 					responseMsg.add(localisation.getString("imp_no_file") + ": " + formDesc.name);
 					log.info("No file of data for form: " + formDesc.name);
 				}
-			}				
+			}		
+			
+			/*
+			 * Clear any entries in linked_forms for this survey so that CSV files will be regenerated
+			 */
+			pstmtDelLinks = sd.prepareStatement(sqlDelLinks);
+			pstmtDelLinks.setInt(1, sId);
+			pstmtDelLinks.executeUpdate();
 
 			results.commit();
 
-			StringBuffer logMessage = new StringBuffer("");
-			logMessage.append(recordsWritten);
-			logMessage.append(" "); 
-			logMessage.append(localisation.getString("imp_frm"));
-			logMessage.append(" "); 
-			logMessage.append(uploadedFileName);
-			logMessage.append(" "); 
-			logMessage.append(localisation.getString("imp_fs"));
-			logMessage.append(" "); 
-			logMessage.append(sName);
-			logMessage.append(" "); 
-			logMessage.append(localisation.getString("imp_pr"));
-			logMessage.append(" "); 
-			logMessage.append((clear_existing ? localisation.getString("imp_del") : localisation.getString("imp_pres")));
+			String logMessage = null;
+			if (importSource.equals("file")) {
+				logMessage = localisation.getString("imp_file");
+			} else {
+				logMessage = localisation.getString("imp_form");
+			}
+			logMessage = logMessage.replace("%s1", String.valueOf(recordsWritten));
+			logMessage = logMessage.replace("%s2", uploadedFileName);
+			logMessage = logMessage.replace("%s3", sName);
+			logMessage += ". ";
+			if(clear_existing) {
+				logMessage += localisation.getString("imp_pr_del");
+			} else {
+				logMessage += localisation.getString("imp_pr_pres");
+			}
+			
+			String tMessage = localisation.getString("imp_time");
+			tMessage = tMessage.replace("%s1", String.valueOf(importTime));
 
-			lm.writeLog(sd, sId, request.getRemoteUser(), "import data", logMessage.toString());
+			logMessage += ". " + tMessage;
+			
+			lm.writeLog(sd, sId, request.getRemoteUser(), "import data", logMessage);
 			log.info("userevent: " + request.getRemoteUser() + " : loading file into survey: " + sId + " Previous contents are" + (clear_existing ? " deleted" : " preserved"));  // Write user event in english only
 
 			Gson gson = new GsonBuilder().disableHtmlEscaping().create();
 
+			/*
+			 * Remove any temporary files created
+			 */
+			for(File f : dataFiles) {
+				f.delete();
+			}
+			for(String path : mediaFiles.keySet()) {
+				File f = mediaFiles.get(path);
+				f.delete();
+			}
+			if(zipFolder != null) {
+				zipFolder.delete();
+			}
+			
+			/*
+			 * Return results
+			 */
 			responseMsg.add(localisation.getString("imp_c"));
 			response = Response.status(Status.OK).entity(gson.toJson(responseMsg)).build();
 
 		} catch (AuthorisationException e) {
 			log.log(Level.SEVERE,"", e);
 			try { results.rollback();} catch (Exception ex){}
-			response = Response.status(Status.FORBIDDEN).entity("Cannot load tasks from a file to this form. You need to enable loading tasks for this form in the form settings in the editor page.").build();
+			
+			String msg = "";
+			if(validateSurvey != null && validateSurvey.equals("target")) {
+				msg = localisation.getString("msg_load_file");
+				msg = msg.replace("%s1", String.valueOf(sId));
+			} else {
+				msg = localisation.getString("msg_load_form");
+				msg = msg.replace("%s1", String.valueOf(sourceSurveyId));
+			}
+			response = Response.status(Status.FORBIDDEN).entity(msg).build();
 
 		} catch (NotFoundException e) {
 			log.log(Level.SEVERE,"", e);
@@ -1311,9 +1191,9 @@ public class AllAssignments extends Application {
 
 		} catch (Exception e) {
 			String msg = e.getMessage();
-			if(msg != null && msg.startsWith("org.postgresql.util.PSQLException: Zero bytes")) {
-				msg = "Invalid file format. Only zip and csv files accepted";
-				log.info("Error: " + msg + " : " + e.getMessage());
+			if(msg != null && (msg.startsWith("org.postgresql.util.PSQLException: Zero bytes") 
+					|| msg.equals("java.lang.reflect.InvocationTargetException"))) {
+				msg = localisation.getString("msg_load_format");
 			} else {
 				log.log(Level.SEVERE,"", e);
 			}
@@ -1323,8 +1203,10 @@ public class AllAssignments extends Application {
 
 		} finally {
 			try {if (pstmtGetCol != null) {pstmtGetCol.close();}} catch (SQLException e) {}
+			try {if (pstmtGetColGS != null) {pstmtGetColGS.close();}} catch (SQLException e) {}
 			try {if (pstmtGetChoices != null) {pstmtGetChoices.close();}} catch (SQLException e) {}
 			try {if (pstmtDeleteExisting != null) {pstmtDeleteExisting.close();}} catch (SQLException e) {}
+			try {if (pstmtDelLinks != null) {pstmtDelLinks.close();}} catch (SQLException e) {}
 
 			try {results.setAutoCommit(true);} catch (SQLException e) {}
 
@@ -1349,15 +1231,6 @@ public class AllAssignments extends Application {
 
 		Response response = null;
 		String dbConnectionTitle = "surveyKPI-AllAssignments- Update task properties";
-
-		try {
-			Class.forName("org.postgresql.Driver");	 
-		} catch (ClassNotFoundException e) {
-			log.info("Error: Can't find PostgreSQL JDBC Driver");
-			e.printStackTrace();
-			response = Response.serverError().build();
-			return response;
-		}
 
 		log.info("Updating task properties");	
 
@@ -1417,7 +1290,10 @@ public class AllAssignments extends Application {
 
 			}
 
-			String sqlUpdate = "update tasks set repeat = ?, schedule_at = ?, location_trigger = ?,  title = ? where id = ?;";
+			String sqlUpdate = "update tasks set repeat = ?, "
+					+ "schedule_at = ?, "
+					+ "location_trigger = ?,  "
+					+ "title = ? where id = ?;";
 			pstmtUpdate = connectionSD.prepareStatement(sqlUpdate);
 			pstmtUpdate.setBoolean(1, repeat);
 			pstmtUpdate.setTimestamp(2, scheduleAt);
@@ -1449,111 +1325,7 @@ public class AllAssignments extends Application {
 
 		return response;
 	}
-
-
-
-	/*
-	 * Delete tasks
-	 */
-	@DELETE
-	public Response deleteTasks(@Context HttpServletRequest request,
-			@FormParam("settings") String settings) { 
-
-		Response response = null;
-		try {
-			Class.forName("org.postgresql.Driver");	 
-		} catch (ClassNotFoundException e) {
-			log.info("Error: Can't find PostgreSQL JDBC Driver");
-			e.printStackTrace();
-			response = Response.serverError().build();
-			return response;
-		}
-
-		log.info("Assignment:" + settings);
-		Type type = new TypeToken<ArrayList<Assignment>>(){}.getType();		
-		ArrayList<Assignment> aArray = new Gson().fromJson(settings, type);
-
-		// Authorisation - Access
-		Connection connectionSD = SDDataSource.getConnection("surveyKPI-AllAssignments");
-		a.isAuthorised(connectionSD, request.getRemoteUser());
-		for(int i = 0; i < aArray.size(); i++) {
-
-			Assignment ass = aArray.get(i);		
-			a.isValidTask(connectionSD, request.getRemoteUser(), ass.task_id);
-
-		}
-		// End Authorisation
-
-		PreparedStatement pstmtCount = null;
-		PreparedStatement pstmtUpdate = null;
-		PreparedStatement pstmtDelete = null;
-		PreparedStatement pstmtDeleteEmptyGroup = null;
-
-		try {
-			//connectionSD.setAutoCommit(false);
-			//String countSQL = "select count(*) from tasks t, assignments a " +
-			//		"where t.id = a.task_id " +
-			//		"and t.id = ?";
-			//pstmtCount = connectionSD.prepareStatement(countSQL);
-
-			//String updateSQL = "update assignments set status = 'cancelled' where task_id = ? " +
-			//		"and (status = 'new' " +
-			//		"or status = 'accepted' " + 
-			//		"or status = 'pending'); "; 
-			//pstmtUpdate = connectionSD.prepareStatement(updateSQL);
-
-			String deleteSQL = "delete from tasks where id = ?; "; 
-			pstmtDelete = connectionSD.prepareStatement(deleteSQL);
-
-			//String deleteEmptyGroupSQL = "delete from task_group tg where not exists (select 1 from tasks t where t.tg_id = tg.tg_id);";
-			//pstmtDeleteEmptyGroup = connectionSD.prepareStatement(deleteEmptyGroupSQL);
-
-			for(int i = 0; i < aArray.size(); i++) {
-
-				Assignment a = aArray.get(i);
-
-				// Check to see if the task has any assignments
-				//pstmtCount.setInt(1, a.task_id);
-				//ResultSet rs = pstmtCount.executeQuery();
-				//int countAss = 0;
-				//if(rs.next()) {
-				//	countAss = rs.getInt(1);
-				//}
-
-				//if(countAss > 0) {
-				//	log.info(updateSQL + " : " + a.task_id);
-				//	pstmtUpdate.setInt(1, a.task_id);
-				//	pstmtUpdate.execute();
-				//} else {
-
-				pstmtDelete.setInt(1, a.task_id);
-				log.info("SQL: " + pstmtDelete.toString());
-				pstmtDelete.execute();
-				//}
-			}
-
-			// Delete any task groups that have no tasks
-			//pstmtDeleteEmptyGroup.execute();
-			//connectionSD.commit();
-
-		} catch (Exception e) {
-			response = Response.serverError().build();
-			log.log(Level.SEVERE,"", e);
-
-			try { connectionSD.rollback();} catch (Exception ex){log.log(Level.SEVERE,"", ex);}
-
-		} finally {
-			if (pstmtCount != null) try {pstmtCount.close();} catch (SQLException e) {};
-			if (pstmtUpdate != null) try {pstmtUpdate.close();} catch (SQLException e) {};
-			if (pstmtDelete != null) try {pstmtDelete.close();} catch (SQLException e) {};
-			if (pstmtDeleteEmptyGroup != null) try {pstmtDeleteEmptyGroup.close();} catch (SQLException e) {};
-
-			SDDataSource.closeConnection("surveyKPI-AllAssignments", connectionSD);
-		}
-
-		return response;
-	}
-
+	
 	/*
 	 * Delete task group
 	 * This web service takes no account of tasks that have already been assigned
@@ -1564,109 +1336,58 @@ public class AllAssignments extends Application {
 			@PathParam("taskGroupId") int tg_id) { 
 
 		Response response = null;
-		try {
-			Class.forName("org.postgresql.Driver");	 
-		} catch (ClassNotFoundException e) {
-			log.info("Error: Can't find PostgreSQL JDBC Driver");
-			e.printStackTrace();
-			response = Response.serverError().build();
-			return response;
-		}
 
 		// Authorisation - Access
-		Connection connectionSD = SDDataSource.getConnection("surveyKPI-AllAssignments");
-		a.isAuthorised(connectionSD, request.getRemoteUser());
+		Connection sd = SDDataSource.getConnection("surveyKPI-AllAssignments");
+		a.isAuthorised(sd, request.getRemoteUser());
+		a.isValidTaskGroup(sd, request.getRemoteUser(), tg_id);
 		// End Authorisation
 
 		PreparedStatement pstmtDelete = null;
 
 		try {
+			
+			// Localisation			
+			Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(sd, request, request.getRemoteUser()));
+			ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
 
-			TaskManager tm = new TaskManager();
-			tm.deleteTasksInTaskGroup(connectionSD, tg_id);		// Note can't rely on cascading delete as temporary users need to be deleted
-			String deleteSQL = "delete from task_group where tg_id = ?; "; 
-			pstmtDelete = connectionSD.prepareStatement(deleteSQL);
+			String tz = "UTC";	// get default timezone
+			String tgName = GeneralUtilityMethods.getTaskGroupName(sd, tg_id);
+			
+			// Delete the tasks
+			TaskManager tm = new TaskManager(localisation, tz);
+			tm.deleteTasksInTaskGroup(sd, tg_id);		// Note can't rely on cascading delete as temporary users need to be deleted
 
+			// Delete the task group
+			String deleteSQL = "delete from task_group where tg_id = ?"; 
+			pstmtDelete = sd.prepareStatement(deleteSQL);
 			pstmtDelete.setInt(1, tg_id);
 			log.info("SQL: " + pstmtDelete.toString());
 			pstmtDelete.execute();
-
-
-		} catch (Exception e) {
-			response = Response.serverError().build();
-			log.log(Level.SEVERE,"", e);
-
-			try { connectionSD.rollback();} catch (Exception ex){log.log(Level.SEVERE,"", ex);}
-
-		} finally {
-
-			if (pstmtDelete != null) try {pstmtDelete.close();} catch (SQLException e) {};
-
-			SDDataSource.closeConnection("surveyKPI-AllAssignments", connectionSD);
-		}
-
-		return response;
-	}
-
-	/*
-	 * Mark cancelled tasks as deleted
-	 * This may be required if tasks are allocated to a user who never updates them
-	 */
-	@Path("/cancelled/{projectId}")
-	@DELETE
-	public Response forceRemoveCancelledTasks(@Context HttpServletRequest request,
-			@PathParam("projectId") int projectId
-			) { 
-
-		Response response = null;
-		try {
-			Class.forName("org.postgresql.Driver");	 
-		} catch (ClassNotFoundException e) {
-			log.info("Error: Can't find PostgreSQL JDBC Driver");
-			e.printStackTrace();
-			response = Response.serverError().build();
-			return response;
-		}
-
-		// Authorisation - Access
-		Connection connectionSD = SDDataSource.getConnection("surveyKPI-AllAssignments");
-		a.isAuthorised(connectionSD, request.getRemoteUser());
-		a.isValidProject(connectionSD, request.getRemoteUser(), projectId);
-		// End Authorisation
-
-		PreparedStatement pstmtDelete = null;
-
-		try {
-
-			String deleteSQL = "delete from tasks t " +
-					" where t.p_id = ? " +
-					" and t.id in (select task_id from assignments a " +
-					" where a.status = 'cancelled' or a.status = 'rejected'); "; 
-
-			pstmtDelete = connectionSD.prepareStatement(deleteSQL);
-
-			log.info(deleteSQL + " : " + projectId);
-			pstmtDelete.setInt(1, projectId);
+			
+			// Delete any reminder notifications
+			deleteSQL = "delete from forward where tg_id = ?"; 
+			if (pstmtDelete != null) try {pstmtDelete.close();}catch(Exception e) {}
+			pstmtDelete = sd.prepareStatement(deleteSQL);
+			pstmtDelete.setInt(1, tg_id);
+			log.info("SQL: " + pstmtDelete.toString());
 			pstmtDelete.execute();
-
+			
+			// Log the delete event
+			String logMessage = localisation.getString("lm_del_task_group");
+			logMessage = logMessage.replaceAll("%s1", tgName);
+			lm.writeLog(sd, 0, request.getRemoteUser(), LogManager.DELETE, logMessage);
 
 		} catch (Exception e) {
 			response = Response.serverError().build();
 			log.log(Level.SEVERE,"", e);
-			try {
-				connectionSD.rollback();
-			} catch (Exception ex) {
-
-			}
 		} finally {
 			if (pstmtDelete != null) try {pstmtDelete.close();} catch (SQLException e) {};
-
-			SDDataSource.closeConnection("surveyKPI-AllAssignments", connectionSD);
+			SDDataSource.closeConnection("surveyKPI-AllAssignments", sd);
 		}
 
 		return response;
 	}
-
 
 	private HashMap<String, File> getFormFileMap(ExchangeManager xm, ArrayList<File> files, ArrayList<FormDesc> forms) throws Exception {
 		HashMap<String, File> formFileMap = new HashMap<String, File> ();
@@ -1697,11 +1418,14 @@ public class AllAssignments extends Application {
 					String formName = filename.substring(0, idx);
 					formFileMap.put(formName, file);
 				} else {
-					FileInputStream fis = new FileInputStream(file);
-					ArrayList<String> formNames = xm.getFormsFromXLSX(fis);
-					for(int j = 0; j < formNames.size(); j++) {
-						formFileMap.put(formNames.get(j), file);
-					}
+					// The package open is instantaneous, as it should be.
+			        try (OPCPackage p = OPCPackage.open(file.getPath(), PackageAccess.READ)) {
+			            XLSXEventParser ep = new XLSXEventParser(p);
+			            ArrayList<String> formNames = ep.getSheetNames();
+			            for(int j = 0; j < formNames.size(); j++) {
+							formFileMap.put(formNames.get(j), file);
+						}
+			        }
 				}
 			}
 		}

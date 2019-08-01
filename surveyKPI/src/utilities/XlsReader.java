@@ -1,15 +1,15 @@
 package utilities;
 
-import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.DataFormatter;
+import org.apache.poi.ss.usermodel.DateUtil;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.openxmlformats.schemas.spreadsheetml.x2006.main.CTSheet;
@@ -40,29 +40,66 @@ public class XlsReader {
 		lastRowNum = sheet.getLastRowNum();
 	}
 	
-	public String [] readNext() {
-		ArrayList<String> values = new ArrayList<String> ();
-
-		if(rowNum++ >= lastRowNum) {
-			return null;
-		}
+	public String [] readNext(boolean header) {
+		ArrayList<String> values = null;
 		
-		String value;
+		String value = null;
 		Cell cell = null;
-		Row row = sheet.getRow(rowNum);
-		int lastCellNum = row.getLastCellNum();
+		boolean isNullRow = true;
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 		DataFormatter df = new DataFormatter();
+		while(isNullRow) {
+			values = new ArrayList<String> ();
+			
+			if(rowNum++ >= lastRowNum) {
+				return null;
+			}
+			Row row = sheet.getRow(rowNum);
+				
+			for(int i = 0; i <= row.getLastCellNum(); i++) {
+	            cell = row.getCell(i);
+	            
+	            if(cell != null) {
+	            		boolean ignore = false;
+	            		try {
+	            			value = df.formatCellValue(cell);	// Default
+	            		} catch (Exception e) {
+	            			String msg = e.getMessage();
+	            			if(msg != null && msg.contains("Specified named range 'Inf")) {  // Divide by zero in a calculate
+	            				value = "";
+	            				ignore = true;	// Don't try an get a formatted value for this one
+	            			} else {
+	            				throw e;
+	            			}
+	            		}
+	            		
+	            		if(!header && !ignore) {
+		            		switch (cell.getCellType()) {
+		            		case NUMERIC: 
+		            			if(DateUtil.isCellDateFormatted(cell)) {
+		            				try {
+			            				Date dv = cell.getDateCellValue();
+			    		                value = sdf.format(dv);
+		            				} catch (Exception e) {
+		            					
+		            				}
+		            			} 
+		            			break;
+		            		default:
+		            			break;
+		            		}
+	            		}
+	            		
 	
-		for(int i = 0; i <= lastCellNum; i++) {
-            cell = row.getCell(i);
-            if(cell != null) {
-                value = df.formatCellValue(cell);
-                if(value == null) {
-                	value = "";
-                }
-                values.add(value);
-            }
-        }
+	            } else {
+	            		value = "";
+	            }
+	            if(value != null && value.trim().length() > 0) {
+	            		isNullRow = false;
+	            }
+	            values.add(value);
+	        }
+		}
 		
 		String[] vArray = new String[values.size()];
 		

@@ -63,6 +63,7 @@ public class Region extends Application {
 		Connection connectionSD = SDDataSource.getConnection("surveyKPI-Region");
 		ArrayList<String> authorisations = new ArrayList<String> ();
 		authorisations.add(Authorise.ANALYST);
+		authorisations.add(Authorise.VIEW_DATA);
 		authorisations.add(Authorise.ADMIN);
 		Authorise a = new Authorise(authorisations, null);
 		a.isAuthorised(connectionSD, request.getRemoteUser());

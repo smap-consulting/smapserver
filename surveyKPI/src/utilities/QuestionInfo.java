@@ -23,13 +23,18 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.ResourceBundle;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.UtilityMethodsEmail;
+import org.smap.sdal.constants.SmapServerMeta;
 import org.smap.sdal.managers.SurveyManager;
 import org.smap.sdal.model.Form;
+import org.smap.sdal.model.LanguageItem;
+import org.smap.sdal.model.MetaItem;
+import org.smap.sdal.model.Option;
 
 public class QuestionInfo {
 	
@@ -48,6 +53,7 @@ public class QuestionInfo {
 	private String qType;
 	private String qCalculate = null;
 	private String qAppearance = null;
+	private boolean compressed = false;
 	private boolean qExternalChoices = false;
 	private boolean isCalc;
 	private String fn = null;
@@ -55,23 +61,33 @@ public class QuestionInfo {
 	private String urlprefix = null;		// Added to attachments to complete url
 	private ArrayList<OptionInfo> o = null;	// Option array if this is a select / select1 question
 	
+	private ResourceBundle localisation;
+	
 	/*
 	 * Normal complete constructor
 	 */
-	public QuestionInfo(int surveyId, 
+	public QuestionInfo(
+			ResourceBundle l,
+			String tz,
+			int surveyId, 
 			int questionId, 
-			Connection connection, 
+			Connection sd, 
+			Connection cResults,
+			String user,
 			boolean isGeomDeprecated, 
 			String lang, 
-			String urlprefix) throws Exception {	
+			String urlprefix,
+			int oId) throws Exception {	
 		
 		//this.isGeom = isGeom;			Don't rely on isGeom parameter
 		this.urlprefix = urlprefix;
 		qId = questionId;
 		sId = surveyId;
+		localisation = l;
 		
 		
-		String sql = "SELECT f.table_name, f.f_id, f.parentform, q.qname, q.column_name, q.qtype, t.value, q.calculate, q.appearance" + 
+		String sql = "SELECT f.table_name, f.f_id, f.parentform, q.qname, q.column_name, q.qtype, t.value, q.calculate, "
+				+ "q.appearance, q.compressed" + 
 				" FROM survey s " +
 				" INNER JOIN form f " +
 				" ON s.s_id = f.s_id" +
@@ -88,7 +104,7 @@ public class QuestionInfo {
 		
 		try {
 			if(questionId > 0) {	// Question defined in survey
-				pstmt = connection.prepareStatement(sql);	
+				pstmt = sd.prepareStatement(sql);	
 				pstmt.setString(1, lang);
 				pstmt.setInt(2, sId);
 				pstmt.setInt(3, qId);
@@ -106,6 +122,7 @@ public class QuestionInfo {
 					qLabel = resultSet.getString(7);
 					qCalculate = resultSet.getString(8);
 					qAppearance = resultSet.getString(9);		// Used to determine if choices come from external file
+					compressed = resultSet.getBoolean(10);
 					
 					log.info("Table:"  + tableName + ":" + fId + ":" + parentFId + ":" + qName + ":" + qType + " : " + 
 							qLabel + ":" + qCalculate + ":" + qAppearance );
@@ -142,29 +159,56 @@ public class QuestionInfo {
 								" AND o.externalfile = ?" +
 								" ORDER BY o.seq";
 						
-						if(pstmt != null) try {pstmt.close();} catch(Exception e) {};
-						pstmt = connection.prepareStatement(sql);
-						pstmt.setInt(1,  qId);
-						pstmt.setString(2, lang);
-						pstmt.setInt(3, sId);
-						pstmt.setBoolean(4,  qExternalChoices);
-						
-						log.info("Getting options for question: " + pstmt.toString());
-						resultSet = pstmt.executeQuery();
-						
-						boolean select = false;
-						if(qType.equals("select")) {
-							select = true;
-						}
-						while(resultSet.next()) {
-							String value = resultSet.getString(1);
-							String label = resultSet.getString(2);
-							String type = resultSet.getString(3);
-							String oColumnName = resultSet.getString(4);
-							if(select) {
-								oColumnName = columnName + "__" + oColumnName;
-							} 
-							o.add(new OptionInfo(value, label, type, oColumnName));
+						if(!qExternalChoices) {
+							if(pstmt != null) try {pstmt.close();} catch(Exception e) {};
+							pstmt = sd.prepareStatement(sql);
+							pstmt.setInt(1,  qId);
+							pstmt.setString(2, lang);
+							pstmt.setInt(3, sId);
+							pstmt.setBoolean(4,  qExternalChoices);
+							
+							log.info("Getting options for question: " + pstmt.toString());
+							resultSet = pstmt.executeQuery();
+							
+							boolean select = false;
+							if(qType.equals("select")) {
+								select = true;
+							}
+							while(resultSet.next()) {
+								String value = resultSet.getString(1);
+								String label = resultSet.getString(2);
+								String type = resultSet.getString(3);
+								String oColumnName = resultSet.getString(4);
+								if(select) {
+									oColumnName = columnName + "__" + oColumnName;
+								} 
+								o.add(new OptionInfo(value, label, type, oColumnName));
+							}
+						} else {
+							// External
+							String surveyIdent = GeneralUtilityMethods.getSurveyIdent(sd, sId);
+							ArrayList<Option> options = GeneralUtilityMethods.getExternalChoices(sd, 
+									cResults, localisation, user, oId, sId, qId, null, surveyIdent, tz);
+							int idx = 0;
+							int languageIdx = 0;
+							
+							for(Option oex : options) {
+								// Get the label for the passed in language
+								String label = null;
+								if(idx++ == 0) {		// Get the language index - only need to do this for the first choice					
+									for(LanguageItem item : oex.externalLabel) {
+										if(lang == null || lang.equals("none") || lang.equals(item.language)) {
+											break;
+										} else {
+											languageIdx++;
+										}
+									}
+								} 
+								if(oex.labels != null && oex.labels.size() > languageIdx) {
+									label = oex.labels.get(languageIdx).text;
+								}
+								o.add(new OptionInfo(oex.value, label, "none", oex.value));
+							}
 						}
 					}
 					
@@ -172,7 +216,7 @@ public class QuestionInfo {
 					log.info("Error (QuetionInfo.java) retrieving question data for survey: " + surveyId + " and question: " + questionId);
 				}
 			} else if (questionId < 0) {
-				setForPreDefinedQuestion(connection, sId, questionId);		
+				setForPreDefinedQuestion(sd, sId, questionId);		
 			} 
 		} catch (SQLException e) {
 			log.log(Level.SEVERE,"Error", e);
@@ -243,6 +287,7 @@ public class QuestionInfo {
 								" AND o.l_id = q.l_id" +
 								" ORDER BY o.seq";
 						
+						if(pstmt != null) try {pstmt.close();} catch(Exception e) {};
 						pstmt = connection.prepareStatement(sql);
 						pstmt.setInt(1,  qId);
 						log.info("Getting options for question " + pstmt.toString());
@@ -426,7 +471,7 @@ public class QuestionInfo {
 		if(o != null){
 			for(int i = 0; i < o.size(); i++) {
 				OptionInfo aO = o.get(i);
-				if(aO.getColumnName().equals(name)) {
+				if(aO.getValue().equals(name)) {
 					return aO.getLabel();
 				}
 			}
@@ -442,6 +487,10 @@ public class QuestionInfo {
 		} else {
 			return qType;
 		} 
+	}
+	
+	public boolean isCompressed() {
+		return compressed;
 	}
 	
 	public ArrayList<OptionInfo> getOptions() {
@@ -482,7 +531,7 @@ public class QuestionInfo {
 				return tableName + "." + columnName;
 			}
 		} else {
-			if(qType != null && (qType.equals("image") || qType.equals("audio") || qType.equals("video"))) {
+			if(qType != null && (GeneralUtilityMethods.isAttachmentType(qType))) {
 				return "'" + urlprefix + "' || " + tableName + "." + columnName;
 			}
 			return tableName + "." + columnName;
@@ -505,7 +554,7 @@ public class QuestionInfo {
 						break;
 					}
 				}
-			} else if(qType.equals("select1") || qType.equals("string")) {
+			} else if(qType.equals("select1") || qType.equals("string") || qType.equals("calculate")) {
 				filter = tableName + "." + columnName + " =  '" + value1 + "' ";
 			} else if(value2 != null && (qType.equals("date") || qType.equals("dateTime"))) {
 				filter = tableName + "." + columnName + " between  '" + value1 + "' and  '" + value2 + "' ";
@@ -521,7 +570,7 @@ public class QuestionInfo {
 	public String getSelect() {
 		String sqlFrag = "";
 		log.info("get select: " + tableName + ":" + columnName + ":" + qType + " : " + qType);
-		if(qType != null && qType.equals("select")) {
+		if(qType != null && qType.equals("select") && !compressed) {
 			// Add primary key with each question, assume only one question per query
 			sqlFrag = tableName + ".prikey as prikey";
 			for(int i = 0; i < o.size(); i++) {
@@ -544,6 +593,8 @@ public class QuestionInfo {
 	/*
 	 * Set the values for predefined data values that are not included in survey definitions
 	 * For example the upload time
+	 * 
+	 * Also check for preloads
 	 */
 	private void setForPreDefinedQuestion(Connection connection, int sId, int qId) throws Exception {
 		Form f = GeneralUtilityMethods.getTopLevelForm(connection, sId);
@@ -551,11 +602,32 @@ public class QuestionInfo {
 		fId = f.id;
 		parentFId = 0;
 		
-		if(qId == SurveyManager.UPLOAD_TIME_ID) {
-			qName = "_upload_time";
-			columnName = "_upload_time";
+		if(qId == SmapServerMeta.UPLOAD_TIME_ID) {
+			qName = SmapServerMeta.UPLOAD_TIME_NAME;
+			columnName = SmapServerMeta.UPLOAD_TIME_NAME;
 			qType = "dateTime";
 			qLabel = "Upload Time";
+		} else if(qId == SmapServerMeta.SCHEDULED_START_ID) {
+			qName = SmapServerMeta.SCHEDULED_START_NAME;
+			columnName = SmapServerMeta.SCHEDULED_START_NAME;
+			qType = "dateTime";
+			qLabel = "Upload Time";
+		} else if (qId <= 1000) {
+			// preloads
+			ArrayList<MetaItem> items = GeneralUtilityMethods.getPreloads(connection, sId);	
+			int metaId = -1000;
+			for(MetaItem mi : items) {
+				if(mi.id > -1000 ) {
+					mi.id = metaId--;		// Backward compatability
+				}
+				if(mi.id == qId) {
+					qName = mi.name;
+					columnName = mi.columnName;
+					qType = mi.type;
+					qLabel = mi.display_name;
+					break;
+				}
+			}
 		} else {
 			throw new Exception("Invalid question id: " + qId);
 		}

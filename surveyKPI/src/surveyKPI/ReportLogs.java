@@ -103,13 +103,6 @@ public class ReportLogs extends Application {
 			String userName) { 
 
 		Response response = null;
-		try {
-		    Class.forName("org.postgresql.Driver");	 
-		} catch (ClassNotFoundException e) {
-			log.log(Level.SEVERE,"Can't find Postgres JDBC driver", e);
-			response = Response.serverError().build();
-		    return response;
-		}
 		
 		String requester = "surveyKPI-ReportLogs";
 		Connection connectionSD = SDDataSource.getConnection(requester);

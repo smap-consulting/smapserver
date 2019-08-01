@@ -43,14 +43,7 @@ public class Version extends Application {
 	@GET
 	@Produces("application/json")
 	public Response getVersion() { 
-		
-		try {
-		    Class.forName("org.postgresql.Driver");	 
-		} catch (ClassNotFoundException e) {
-			log.log(Level.SEVERE, "Can't find PostgreSQL JDBC Driver", e);
-		    return Response.serverError().build();
-		}
-		
+
 		Response response = null;
 		Connection sd = SDDataSource.getConnection("SurveyKPI - version");
 		String sql = "select version from server;";

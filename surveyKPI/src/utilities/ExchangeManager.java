@@ -3,6 +3,7 @@ package utilities;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 
 /*
 This file is part of SMAP.
@@ -24,7 +25,6 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.sql.Connection;
 import java.sql.Date;
@@ -45,7 +45,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.UUID;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.servlet.http.HttpServletRequest;
@@ -54,46 +53,52 @@ import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.apache.commons.io.FileUtils;
 import org.apache.poi.ss.usermodel.*;
+import org.smap.model.FormDesc;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
+import org.smap.sdal.constants.SmapServerMeta;
 import org.smap.sdal.managers.LogManager;
 import org.smap.sdal.model.FileDescription;
+import org.smap.sdal.model.MetaItem;
 import org.smap.sdal.model.Option;
 import org.smap.sdal.model.TableColumn;
 
-import model.FormDesc;
-import surveyKPI.ExportSurveyXls;
+import com.opencsv.CSVReader;
 
+import model.ExchangeColumn;
+import model.ExchangeHeader;
+
+/*
+ * Handle import export of files
+ * Handle the formats created by Smap Exports
+ *     Worksheets containing form data are called "d_" formname
+ *     Column containing a unique key for each record is called "prikey"
+ *     Column linking to the unique key of a parent record is called "parkey"
+ * Attempt to handle exports of Aggregate data from Google sheets    
+ *     The names of worksheets will need to be changed before importing
+ *          The main worksheet needs to be called "d_main"
+ *          The other worksheets need "d_" prepended
+ *     Column containing a unique key for each record is called "metainstanceid"
+ *         Column linking to the unique key of a parent record is called "parentuid"
+ */
 public class ExchangeManager {
 	
 	private static Logger log =
-			 Logger.getLogger(ExportSurveyXls.class.getName());
+			 Logger.getLogger(ExchangeManager.class.getName());
 	
 	LogManager lm = new LogManager();		// Application log
+	
+	private ResourceBundle localisation;
+	private String tz;
 	
 	Workbook wb = null;
 	boolean isXLSX = false;
 	
-	private class Column {
-		String humanName;
-		
-		int index;
-		String name;
-		String columnName;
-		String type;
-		String geomCol;
-		ArrayList<Option> choices = null;
-		boolean write = true;
-		
-		Column(String h) {
-			humanName = h;
+	public ExchangeManager(ResourceBundle l, String tz) {
+		localisation = l;
+		if(tz == null) {
+			tz = "UTC";
 		}
-		
-		Column() {
-
-		}
-	}
-	
-	public ExchangeManager() {
+		this.tz = tz;
 	}
 	
 	HashMap<String, String> surveyNames = null;
@@ -105,7 +110,8 @@ public class ExchangeManager {
 			int sId,
 			HttpServletRequest request,
 			String dirPath,
-			boolean superUser) throws Exception {
+			boolean superUser,
+			boolean incMedia) throws Exception {
 		
 		wb = new SXSSFWorkbook(10);
 		Sheet sheet = null;
@@ -122,6 +128,7 @@ public class ExchangeManager {
 		Map<String, CellStyle> styles = XLSUtilities.createStyles(wb);
 		surveyNames = new HashMap<String, String> ();
 		String basePath = null;
+		String language = "none";
 		
 		String dateName = null;
 		int dateForm = 0;
@@ -155,12 +162,12 @@ public class ExchangeManager {
 				/*
 				 * Create a work sheet for each form
 				 */
+				String surveyIdent = GeneralUtilityMethods.getSurveyIdent(sd, sId);
 				for(FormDesc f : formList) {
 					
 					sheet = wb.createSheet("d_" + f.name);	
 					
 					TableColumn c;
-					String geomType = null;
 					int parentId = 0;
 					if(f.parent > 0) {
 						parentId = f.parent;
@@ -171,8 +178,12 @@ public class ExchangeManager {
 					f.columnList = GeneralUtilityMethods.getColumnsInForm(
 							sd,
 							connectionResults,
+							localisation,
+							language,
 							sId,
+							surveyIdent,
 							user,
+							null,		// Roles to apply
 							parentId,
 							f.f_id,
 							f.table_name,
@@ -180,59 +191,57 @@ public class ExchangeManager {
 							true,		// Include parent key
 							false,		// Don't include "bad" columns
 							false,		// Don't include instance id
+							true,		// Include prikey
 							true,		// Include other meta data
-							true,		// Incude preloads
+							true,		// Include preloads
 							true,		// instancename
 							false,		// Survey duration
 							superUser,
 							false,
-							false		// Don't include audit data
+							false,		// Don't include audit data
+							tz,
+							false		// mgmt
 							);
 						
 					// Get the list of spreadsheet columns
-					ArrayList<Column> cols = new ArrayList<Column> ();
+					ArrayList<ExchangeColumn> cols = new ArrayList<> ();
 					for(int j = 0; j < f.columnList.size(); j++) {
 
 						c = f.columnList.get(j);
-						String name = c.name;
+						//String name = c.column_name;
 						String qType = c.type;
-						String humanName = c.humanName;
-						boolean isSelectMultiple = false;
-						String selectMultipleQuestionName = null;
+						String questionName;
 						String optionName = null;
 						
+						// Hack for meta values use the column name as the question name may have been translated
+						if(c.isMeta) {
+							questionName = c.column_name;
+						} else {
+							questionName = c.question_name;
+						} 
+						
 						if(qType.equals("select")) {
-							isSelectMultiple = true;
-							selectMultipleQuestionName = c.question_name;
 							optionName = c.option_name;
-						}
-						
-						boolean skipSelectMultipleOption = false;
-						if(isSelectMultiple) {
-							humanName = selectMultipleQuestionName;
-							selMultChoiceNames.put(name, optionName);		// Add the name of sql column to a look up table for the get data stage
-							String n = selectMultipleColumnNames.get(humanName);
-							if(n != null) {
-								skipSelectMultipleOption = true;
-							} else {
-								selectMultipleColumnNames.put(humanName, humanName);		// Record that we have this select multiple
+
+							selMultChoiceNames.put(c.column_name, optionName);		// Add the name of sql column to a look up table for the get data stage
+							String n = selectMultipleColumnNames.get(questionName);
+							if(n == null) {
+								// New Select multiple
+								selectMultipleColumnNames.put(questionName, questionName);		// Record that we have this select multiple
+								addToHeader(sd, cols, "none", questionName, c.column_name, qType, sId, f,true);
 							}
+						} else {
+							addToHeader(sd, cols, "none", questionName, c.column_name, qType, sId, f,true);
 						}
-						
-						if(!skipSelectMultipleOption) {
-							addToHeader(sd, cols, "none", humanName, name, qType, sId, f,true);
-						}
-								
 						
 						// Set the sql selection text for this column
 						String selName = null;
 						if(c.isGeometry()) {
-							selName = "ST_AsTEXT(" + name + ") ";
-							geomType = c.type;
+							selName = "ST_AsTEXT(" + c.column_name + ") ";
 						} else if(qType.equals("dateTime")) {	// Return all timestamps at UTC with no time zone
-							selName = "timezone('UTC', " + name + ") as " + name;	
+							selName = "timezone('UTC', " + c.column_name + ") as " + c.column_name;	
 						} else {
-							selName = name;
+							selName = c.column_name;
 						}
 						
 						if(f.columns == null) {
@@ -244,22 +253,36 @@ public class ExchangeManager {
 					
 					createHeader(cols, sheet, styles);
 					
-					getData(sd, 
-							connectionResults, 
-							formList, 
-							f, 
-							selMultChoiceNames,
-							cols,
-							sheet,
-							styles,
-							sId,
-							null, 
-							null, 
-							dateName,
-							dateForm,
-							basePath,
-							dirPath,
-							files);
+					try {
+						getData(sd, 
+								connectionResults, 
+								formList, 
+								f, 
+								selMultChoiceNames,
+								cols,
+								sheet,
+								styles,
+								sId,
+								null, 
+								null, 
+								dateName,
+								dateForm,
+								basePath,
+								dirPath,
+								files,
+								incMedia);
+					} catch(Exception e) {
+						// Ignore errors if the only problem is that the tables have not been created yet
+						if(e.getMessage() != null) {
+							if(e.getMessage().contains("ERROR: relation") && e.getMessage().contains("does not exist")) {
+								// all good
+							} else {
+								throw e;
+							}
+						} else {
+							throw e;
+						}
+					}
 					
 				}
  
@@ -335,358 +358,91 @@ public class ExchangeManager {
 	/*
 	 * Load data from a file into the form
 	 */
-	public int loadFormDataFromFile(
+	public int loadFormDataFromCsvFile(
 			Connection results,
 			PreparedStatement pstmtGetCol, 
+			PreparedStatement pstmtGetColGS,
 			PreparedStatement pstmtGetChoices,
 			File file,
 			FormDesc form,
 			String sIdent,
 			HashMap<String, File> mediaFiles,
-			boolean isCSV,
 			ArrayList<String> responseMsg,
 			String basePath,
-			ResourceBundle localisation
+			ResourceBundle localisation,
+			ArrayList<MetaItem> preloads,
+			String importSource,
+			Timestamp importTime,
+			String serverName,
+			SimpleDateFormat sdf
 			) throws Exception {
 		
 		CSVReader reader = null;
 		XlsReader xlsReader = null;
-		boolean hasGeopoint = false;
-		int lonIndex = -1;			// Column containing longitude
-		int latIndex = -1;			// Column containing latitude
-		SimpleDateFormat dateFormatDT = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+		//FileInputStream fis = null;
+		
 		int recordsWritten = 0;
 		
-		PreparedStatement pstmtInsert = null;
 		PreparedStatement pstmtDeleteExisting = null;
+		ExchangeHeader eh = new ExchangeHeader();
 		
 		try {
 			
-			form.keyMap = new HashMap<Integer, Integer> ();
+			form.keyMap = new HashMap<String, String> ();
 			pstmtGetCol.setInt(1, form.f_id);		// Prepare the statement to get column names for the form
+			pstmtGetColGS.setInt(1, form.f_id);		// Prepare the statement to get column names for the form
 			
 			String [] line;
-			if(isCSV) {
-				reader = new CSVReader(new InputStreamReader(new FileInputStream(file)));
+			//if(isCSV) {
+				reader = new CSVReader(new FileReader(file));
 				line = reader.readNext();
-			} else {
-				xlsReader = new XlsReader(new FileInputStream(file), form.name);
-				line = xlsReader.readNext();
-			}
+			//} else {
+			//	fis = new FileInputStream(file);
+			//	xlsReader = new XlsReader(fis, form.name);
+			//	line = xlsReader.readNext(true);
+			//}
 			
-			ArrayList<Column> columns = new ArrayList<Column> ();
 			if(line != null && line.length > 0) {
 				
-				/*
-				 * Get the columns in the file that are also in the form
-				 * Assume first line is the header
-				 */
-				for(int i = 0; i < line.length; i++) {
-					String colName = line[i].replace("'", "''");	// Escape apostrophes
-					
-					// If this column is in the survey then add it to the list of columns to be processed
-					Column col = getColumn(pstmtGetCol, pstmtGetChoices, colName, columns, responseMsg, localisation);
-					if(col != null) {
-						col.index = i;
-						if(col.geomCol != null) {
-							// Do not add the geom columns to the list of columns to be parsed
-							if(col.geomCol.equals("lon")) {
-								lonIndex = i;
-							} else if(col.geomCol.equals("lat")) {
-								latIndex = i;
-							}
-						} else {
-							columns.add(col);
-						}
-					} else {
-						responseMsg.add(
-								localisation.getString("imp_qn") +
-								" " + colName + " " +
-								localisation.getString("imp_nfi") +
-								": " + form.name);  
-					}
-
-				}
+				processHeader(results, 
+						pstmtGetCol, 
+						pstmtGetChoices,
+						pstmtGetColGS,
+						responseMsg,
+						preloads,
+						eh, 
+						line, 
+						form);	
 				
-				log.info("Loading data from " + columns.size() + " columns out of " + line.length + " columns in the data file");
-				
-				if(columns.size() > 0 || (lonIndex >= 0 && latIndex >= 0)) {
-								
-					/*
-					 * Create the insert statement
-					 */		
-					boolean addedCol = false;
-					StringBuffer sqlInsert = new StringBuffer("insert into " + form.table_name + "(");
-					if(form.parent == 0) {
-						sqlInsert.append("instanceid");
-						addedCol = true;
-					}
-					
-					for(int i = 0; i < columns.size(); i++) {
-						
-						Column col = columns.get(i);
-						
-						if(col.write) {
-							if(col.type.equals("select")) {
-								for(int j = 0; j < col.choices.size(); j++) {
-									if(addedCol) {
-										sqlInsert.append(",");
-									}
-									sqlInsert.append(col.columnName + "__" + col.choices.get(j).columnName);
-									addedCol = true;
-								}
-							} else {
-								if(addedCol) {
-									sqlInsert.append(",");
-								}
-								sqlInsert.append(col.columnName);
-								addedCol = true;
-							}
-						}
-	
-					}
-					
-					// Add the geopoint column if latitude and longitude were provided in the data file
-					if(lonIndex >= 0 && latIndex >= 0 ) {
-						if(addedCol) {
-							sqlInsert.append(",");
-						}
-						hasGeopoint = true;
-						sqlInsert.append("the_geom");
-					}
-					
-					/*
-					 * Add place holders for the data
-					 */
-					addedCol = false;
-					sqlInsert.append(") values("); 
-					if(form.parent == 0) {
-						sqlInsert.append("?");		// instanceid
-						addedCol = true;
-					}
-					
-					
-					for(int i = 0; i < columns.size(); i++) {
-						
-						Column col = columns.get(i);
-						
-						if(col.write) {
-							if(col.type.equals("select")) {
-								
-								for(int j = 0; j < col.choices.size(); j++) {
-									if(addedCol) {
-										sqlInsert.append(",");
-									}	
-									sqlInsert.append("?");
-									addedCol = true;
-								}
-							} else if(col.type.equals("geoshape")) {
-								if(addedCol) {
-									sqlInsert.append(",");
-								}
-								sqlInsert.append("ST_GeomFromText('POLYGON((' || ? || '))', 4326)");
-								addedCol = true;
-								
-							} else if(col.type.equals("geotrace")) {
-								if(addedCol) {
-									sqlInsert.append(",");
-								}
-								sqlInsert.append("ST_GeomFromText('LINESTRING(' || ? || ')', 4326)");
-								addedCol = true;
-							} else {
-								if(addedCol) {
-									sqlInsert.append(",");
-								}
-								sqlInsert.append("?");
-								addedCol = true;
-							}
-						}
-					}
-					
-					// Add the geopoint value
-					if(hasGeopoint) {
-						if(addedCol) {
-							sqlInsert.append(",");
-						}
-						sqlInsert.append("ST_GeomFromText('POINT(' || ? || ' ' || ? ||')', 4326)");
-					}
-					sqlInsert.append(");");
-					
-					pstmtInsert = results.prepareStatement(sqlInsert.toString(), Statement.RETURN_GENERATED_KEYS);
+				if(eh.columns.size() > 0 || (eh.lonIndex >= 0 && eh.latIndex >= 0)) {
 					
 					/*
 					 * Get the data
 					 */
 					while (true) {
 						
-						if(isCSV) {
+						//if(isCSV) {
 							line = reader.readNext();
-						} else {
-							line = xlsReader.readNext();
-						}
+						//} else {
+						//	line = xlsReader.readNext(false);
+						//}
 						if(line == null) {
 							break;
 						}
 						
-						int index = 1;
-						int prikey = -1;
-						boolean writeRecord = true;
-						if(form.parent == 0) {
-							pstmtInsert.setString(index++, "uuid:" + String.valueOf(UUID.randomUUID()));
-						} 
-						
-						for(int i = 0; i < columns.size(); i++) {
-							Column col = columns.get(i);
-							
-							// ignore empty columns at end of line
-							if(col.index >= line.length) {
-								String v;
-								if(col.index == lonIndex || col.index == latIndex) {
-									v = "0.0";
-								} else {
-									v = null;
-								}
-								pstmtInsert.setString(index++, v);
-								continue;
-							}
-							
-							String value = line[col.index].trim();	
-	
-							if(col.name.equals("prikey")) {
-								try { prikey = Integer.parseInt(value);} catch (Exception e) {}
-							} else if(col.name.equals("parkey")) {
-								if(form.parent == 0) {
-									pstmtInsert.setInt(index++, 0);
-								} else {
-									int parkey = -1;
-									try { parkey = Integer.parseInt(value);} catch (Exception e) {}
-									Integer newParKey = form.parentForm.keyMap.get(parkey);
-									if(newParKey == null) {
-										responseMsg.add(
-												localisation.getString("pk_nf") +
-												" " + parkey + " " +
-												localisation.getString("pk_if") +
-												" " + form.name);
-										writeRecord = false;
-									} else {
-										pstmtInsert.setInt(index++, newParKey);
-									}
-								}
-							} else if(col.type.equals("audio") || col.type.equals("video") || col.type.equals("image")) {
-								
-								// If the data references a media file then process the attachment
-								File srcPathFile = mediaFiles.get(value);
-								if(srcPathFile != null) {
-									value = GeneralUtilityMethods.createAttachments(
-										value, 
-										srcPathFile, 
-										basePath, 
-										sIdent);
-								}
-								if(value != null && value.trim().length() == 0) {
-									value = null;
-								}
-								pstmtInsert.setString(index++, value);
-							} else if(col.type.equals("select")) {
-								String [] choices = value.split("\\s");
-								for(int k = 0; k < col.choices.size(); k++) {
-									Option cVal = col.choices.get(k);
-									boolean hasChoice = false;
-									for(int l = 0; l < choices.length; l++) {
-										if(cVal.value.equals(choices[l])) {
-											hasChoice = true;
-											break;
-										}
-									}
-									if(hasChoice) {
-										pstmtInsert.setInt(index++, 1);
-									} else {
-										pstmtInsert.setInt(index++, 0);
-									}
-									
-								}
-							} else if(col.type.equals("int")) {
-								int iVal = 0;
-								try { iVal = Integer.parseInt(value);} catch (Exception e) {}
-								pstmtInsert.setInt(index++, iVal);
-							} else if(col.type.equals("decimal")) {
-								double dVal = 0.0;
-								try { dVal = Double.parseDouble(value);} catch (Exception e) {}
-								pstmtInsert.setDouble(index++, dVal);
-							} else if(col.type.equals("boolean")) {
-								boolean bVal = false;
-								try { bVal = Boolean.parseBoolean(value);} catch (Exception e) {}
-								pstmtInsert.setBoolean(index++, bVal);
-							} else if(col.type.equals("date")) {
-								Date dateVal = null;
-								try {
-									dateVal = Date.valueOf(value); 
-								} catch (Exception e) {
-									log.info("Error parsing date: " + col.columnName + " : " + value + " : " + e.getMessage());
-								}
-								pstmtInsert.setDate(index++, dateVal);
-							} else if(col.type.equals("dateTime")) {
-								Timestamp tsVal = null;
-								try {
-									java.util.Date uDate = dateFormatDT.parse(value);
-									tsVal = new Timestamp(uDate.getTime());
-								} catch (Exception e) {
-									log.info("Error parsing datetime: " + value + " : " + e.getMessage());
-								}
-								
-								pstmtInsert.setTimestamp(index++, tsVal);
-							} else if(col.type.equals("time")) {
-								
-								int hour = 0;
-								int minute = 0;
-								int second = 0;
-								try {
-									String [] tVals = value.split(":");
-									if(tVals.length > 0) {
-										hour = Integer.parseInt(tVals[0]);
-									}
-									if(tVals.length > 1) {
-										minute = Integer.parseInt(tVals[1]);
-									}
-									if(tVals.length > 2) {
-										second = Integer.parseInt(tVals[2]);
-									}
-								} catch (Exception e) {
-									log.info("Error parsing datetime: " + value + " : " + e.getMessage());
-								}
-								
-								Time tVal = new Time(hour, minute, second);
-								pstmtInsert.setTime(index++, tVal);
-							} else {
-								pstmtInsert.setString(index++, value);
-							}
-							
-						}
-						
-						// Add the geopoint value if it exists
-						if(hasGeopoint) {
-							String lon = line[lonIndex];
-							String lat = line[latIndex];
-							if(lon == null || lon.length() == 0) {
-								lon = "0.0";
-							}
-							if(lat == null || lat.length() == 0) {
-								lat = "0.0";
-							}
-							pstmtInsert.setString(index++, lon);
-							pstmtInsert.setString(index++, lat);
+						recordsWritten += processRecord(eh, 
+								line, 
+								form, 
+								importSource, 
+								importTime, 
+								responseMsg,
+								serverName,
+								basePath,
+								sIdent,
+								mediaFiles,
+								sdf,
+								recordsWritten);
 
-						}
-						
-						if(writeRecord) {
-							log.info("Inserting row: " + pstmtInsert.toString());
-							pstmtInsert.executeUpdate();
-							ResultSet rs = pstmtInsert.getGeneratedKeys();
-							if(rs.next()) {
-								form.keyMap.put(prikey, rs.getInt(1));
-							}
-							recordsWritten++;
-						}
 												
 				    }
 					results.commit();
@@ -699,13 +455,15 @@ public class ExchangeManager {
 			}
 		} finally {
 			
-			xlsReader = null;
-			
+			try{if(xlsReader != null) {xlsReader.close();}} catch (Exception e) {}
+			//try{if(fis != null) {fis.close();}} catch (Exception e) {}
 			try {if (reader != null) {reader.close();}} catch (Exception e) {}
 			
-			try {if (pstmtInsert != null) {pstmtInsert.close();}} catch (Exception e) {}
+			try {if (eh.pstmtInsert != null) {eh.pstmtInsert.close();}} catch (Exception e) {}
 			try {if (pstmtDeleteExisting != null) {pstmtDeleteExisting.close();}} catch (Exception e) {}
 		}
+		
+		log.info("Records written: " + recordsWritten);
 		
 		return recordsWritten;
 	}
@@ -719,8 +477,11 @@ public class ExchangeManager {
 			int sheetCount = wb.getNumberOfSheets();
 			for(int i = 0; i < sheetCount; i++) {
 				String name = wb.getSheetName(i);
-				if(name.startsWith("d_"));
-				forms.add(name.substring(2));
+				if(name.startsWith("d_")) {
+					// Legacy forms remove prefix added by older results exports  30th January 2018
+					name = name.substring(2);
+				}
+				forms.add(name);
 			}
 		} finally {
 			try{wb.close();} catch(Exception e) {}
@@ -732,7 +493,7 @@ public class ExchangeManager {
 	 * Create a header row and set column widths
 	 */
 	private void createHeader(
-			ArrayList<Column> cols, 
+			ArrayList<ExchangeColumn> cols, 
 			Sheet sheet, 
 			Map<String, CellStyle> styles) {
 				
@@ -740,7 +501,7 @@ public class ExchangeManager {
 		Row headerRow = sheet.createRow(0);
 		CellStyle headerStyle = styles.get("header");
 		for(int i = 0; i < cols.size(); i++) {
-			Column col = cols.get(i);
+			ExchangeColumn col = cols.get(i);
 			
             Cell cell = headerRow.createCell(i);
             cell.setCellStyle(headerStyle);
@@ -753,7 +514,7 @@ public class ExchangeManager {
 	 * Add to the header
 	 */
 	private void addToHeader(Connection sd, 
-			ArrayList<Column> cols, 
+			ArrayList<ExchangeColumn> cols, 
 			String language, 
 			String human_name, 
 			String colName, 
@@ -763,10 +524,10 @@ public class ExchangeManager {
 			boolean merge_select_multiple) throws SQLException {
 		
 		if(qType != null && qType.equals("geopoint")) {
-			cols.add(new Column("lat"));
-			cols.add(new Column("lon"));
+			cols.add(new ExchangeColumn("lat"));
+			cols.add(new ExchangeColumn("lon"));
 		} else {
-			Column col = new Column(human_name);
+			ExchangeColumn col = new ExchangeColumn(human_name);
 			if(qType.equals("image")) {
 			}
 			cols.add(col);
@@ -811,6 +572,13 @@ public class ExchangeManager {
 		
 	}
 	
+	private boolean notEmpty(String v) {
+		if(v == null || v.trim().length() == 0) {
+			return false;
+		} else {
+			return true;
+		}
+	}
 	/*
 	 * Write out the data
 	 */
@@ -819,7 +587,7 @@ public class ExchangeManager {
 			ArrayList<FormDesc> formList, 
 			FormDesc f,
 			HashMap<String, String> choiceNames,
-			ArrayList<Column> cols, 
+			ArrayList<ExchangeColumn> cols, 
 			Sheet sheet, 
 			Map<String, CellStyle> styles,
 			int sId,
@@ -829,7 +597,8 @@ public class ExchangeManager {
 			int dateForm,
 			String basePath,
 			String dirPath,
-			ArrayList<FileDescription> files) throws Exception {
+			ArrayList<FileDescription> files,
+			boolean incMedia) throws Exception {
 		
 		StringBuffer sql = new StringBuffer();
 		PreparedStatement pstmt = null;
@@ -860,7 +629,7 @@ public class ExchangeManager {
 					
 					TableColumn c = f.columnList.get(i);
 
-					String columnName = c.name;
+					String columnName = c.column_name;
 					String columnType = c.type;
 					String value = resultSet.getString(i + 1);
 					boolean writeValue = true;
@@ -909,33 +678,35 @@ public class ExchangeManager {
 						multipleChoiceValue = null;
 						currentSelectMultipleQuestionName = null;
 					}
-
 					
 					if(c.isAttachment() && value != null && value.trim().length() > 0) {
 						
-						// Path to attachment
-						String attachmentPath = basePath + "/" + value;
+						if(incMedia) {
+							// Path to attachment
+							String attachmentPath = basePath + "/" + value;
 						
-						// Get name
-						int idx = value.lastIndexOf('/');
-						if(idx > -1) {
-							value = value.substring(idx + 1);
-						}
-						
-						// Copy file to temporary zip folder
-						File source = new File(attachmentPath);
-						if (source.exists()) {
-							String newPath = dirPath + "/" + value;
-							File dest = new File(newPath);
-							try {
-								FileUtils.copyFile(source, dest);				
-								files.add(new FileDescription(value, newPath));
-							} catch (Exception e) {
-								log.info("Error: Failed to add file " + source + " to exchange export. " + e.getMessage());
+							// Get name
+							int idx = value.lastIndexOf('/');
+							if(idx > -1) {
+								value = value.substring(idx + 1);
 							}
-						} else {
-							log.info("Error: media file does not exist: " + attachmentPath);
-						}
+						
+							// Copy file to temporary zip folder
+
+							File source = new File(attachmentPath);
+							if (source.exists()) {
+								String newPath = dirPath + "/" + value;
+								File dest = new File(newPath);
+								try {
+									FileUtils.copyFile(source, dest);				
+									files.add(new FileDescription(value, newPath));
+								} catch (Exception e) {
+									log.info("Error: Failed to add file " + source + " to exchange export. " + e.getMessage());
+								}
+							} else {
+								log.info("Error: media file does not exist: " + attachmentPath);
+							}
+						} 
 						
 					}
 					
@@ -947,17 +718,12 @@ public class ExchangeManager {
 					}
 				}
 				rowIndex++;
-
 				
 			}
 			
 		} finally {
-			try{
-				if(resultSet != null) {resultSet.close();};
-				if(pstmt != null) {pstmt.close();};
-			} catch (Exception ex) {
-				log.log(Level.SEVERE, "Unable to close resultSet or prepared statement");
-			}
+			if(resultSet != null) try {resultSet.close();} catch(Exception e) {};
+			if(pstmt != null) try {pstmt.close();} catch(Exception e) {}
 		}
 		
 	}
@@ -1027,7 +793,7 @@ public class ExchangeManager {
 		} else if(columnName.equals("_complete")) {
 			out.add(value.equals("f") ? "No" : "Yes"); 
 				
-		} else if(columnName.equals("_s_id")) {
+		} else if(columnName.equals(SmapServerMeta.SURVEY_ID_NAME)) {
 			String displayName = surveyNames.get(out);
 			if(displayName == null) {
 				try {
@@ -1056,27 +822,31 @@ public class ExchangeManager {
 	/*
 	 * Check to see if a question is in a form
 	 */
-	private Column getColumn(
+	private ExchangeColumn getColumn(
+			Connection cResults,
+			String tableName,
 			PreparedStatement pstmtGetCol, 
 			PreparedStatement pstmtGetChoices, 
 			String qName,
-			ArrayList<Column> columns,
+			ArrayList<ExchangeColumn> columns,
 			ArrayList<String> responseMsg,
-			ResourceBundle localisation
+			ResourceBundle localisation,
+			ArrayList<MetaItem> preloads
 			) throws SQLException {
 		
-		Column col = null;
+		ExchangeColumn col = null;
 		String geomCol = null;
 		
 		// Cater for lat, lon columns which map to a geopoint
-		if(qName.equals("lat") || qName.equals("lon")) {
+		if(qName.equals("lat") || qName.equals("lon") 
+				|| qName.equals("plotgpsLatitude") || qName.equals("plotgpsLongitude")) {
 			geomCol = qName;
 			qName = "the_geom";
 		} 
 		
 		// Only add this question if it has not previously been added, questions can only be updated once in a single transaction
 		boolean questionExists = false;
-		for(Column haveColumn : columns) {
+		for(ExchangeColumn haveColumn : columns) {
 			if(haveColumn.name.equals(qName)) {
 				questionExists = true;
 				break;
@@ -1084,67 +854,95 @@ public class ExchangeManager {
 		}
 		
 		if(!questionExists) {
-			if(qName.equals("prikey")) {
-				col = new Column();
+			if(qName.equals("prikey") || qName.equals("metainstanceid")) {
+				col = new ExchangeColumn();
 				col.name = qName;
 				col.columnName = "prikey";
 				col.type = "int";
 				col.write = false;					// Don't write the primary key a new one will be generated
-			} else if(qName.equals("parkey")) {
-				col = new Column();
+			} else if(qName.equals("parkey") || qName.equals("parentuid")) {
+				col = new ExchangeColumn();
 				col.name = qName;
 				col.columnName = "parkey";
 				col.type = "int";
-			} else if(qName.equals("Key")) {
-				col = new Column();
+			} else if(qName.equals("Key") || qName.equals("_hrk")) {
+				col = new ExchangeColumn();
 				col.name = qName;
 				col.columnName = "_hrk";
 				col.type = "string";
-			} else if(qName.equals("User")) {
-				col = new Column();
+				if(!GeneralUtilityMethods.hasColumn(cResults, tableName, col.columnName)) {			// Add this column if it is not already in the table
+					GeneralUtilityMethods.addColumn(cResults, tableName, col.columnName, "text");
+				}
+			} else if(qName.equals("User") || qName.equals("_user")) {
+				col = new ExchangeColumn();
 				col.name = qName;
 				col.columnName = "_user";
 				col.type = "string";
-			} else if(qName.equals("Survey Name")) {
-				col = new Column();
+			} else if(qName.equals("Survey Name") || qName.equals(SmapServerMeta.SURVEY_ID_NAME)) {
+				col = new ExchangeColumn();
 				col.name = qName;
-				col.columnName = "_s_id";
+				col.columnName = SmapServerMeta.SURVEY_ID_NAME;
 				col.type = "int";
-			} else if(qName.equals("Survey Notes")) {
-				col = new Column();
+			} else if(qName.equals("Survey Notes") || qName.equals("_survey_notes")) {
+				col = new ExchangeColumn();
 				col.name = qName;
 				col.columnName = "_survey_notes";
 				col.type = "int";
-			} else if(qName.equals("Location Trigger")) {
-				col = new Column();
+			} else if(qName.equals("Location Trigger") || qName.equals("_location_trigger")) {
+				col = new ExchangeColumn();
 				col.name = qName;
 				col.columnName = "_location_trigger";
 				col.type = "int";
-			} else if(qName.equals("Upload Time")) {
-				col = new Column();
+			} else if(qName.equals("Upload Time") || qName.equals(SmapServerMeta.UPLOAD_TIME_NAME) || qName.equals("metasubmissiondate")) {
+				col = new ExchangeColumn();
 				col.name = qName;
-				col.columnName = "_upload_time";
+				col.columnName = SmapServerMeta.UPLOAD_TIME_NAME;
 				col.type = "dateTime";
-			} else if(qName.equals("Version")) {
-				col = new Column();
+			} else if(qName.equals(SmapServerMeta.SCHEDULED_START_NAME)) {
+				col = new ExchangeColumn();
+				col.name = qName;
+				col.columnName = SmapServerMeta.SCHEDULED_START_NAME;
+				col.type = "dateTime";
+				if(!GeneralUtilityMethods.hasColumn(cResults, tableName, col.columnName)) {			// Add this column if it is not already in the table
+					GeneralUtilityMethods.addColumn(cResults, tableName, col.columnName, "timestamp with time zone");
+				}
+			} else if(qName.equals("Version") || qName.equals("_version")) {
+				col = new ExchangeColumn();
 				col.name = qName;
 				col.columnName = "_version";
 				col.type = "int";
-			} else if(qName.equals("Complete")) {
-				col = new Column();
+			} else if(qName.equals("Complete") || qName.equals("_complete") || qName.equals("metaiscomplete")) {
+				col = new ExchangeColumn();
 				col.name = qName;
 				col.columnName = "_complete";
 				col.type = "boolean";
+			} else if(qName.equals("Instance Name") || qName.equals("instancename")) {
+				col = new ExchangeColumn();
+				col.name = qName;
+				col.columnName = "instancename";
+				col.type = "string";
+			} else if(qName.toLowerCase().equals("instanceid")) {
+				// Don't add a column, instanceid is added by default, however record the column for this data
+			} else if(qName.equals("plotgpsAltitude")) {
+				col = new ExchangeColumn();
+				col.name = qName;
+				col.columnName = "the_geom_alt";
+				col.type = "decimal";
+			} else if(qName.equals("plotgpsAccuracy")) {
+				col = new ExchangeColumn();
+				col.name = qName;
+				col.columnName = "the_geom_acc";
+				col.type = "decimal";
 			} else {
 				pstmtGetCol.setString(2, qName.toLowerCase());		// Search for a question
 				log.info("Get column: " + pstmtGetCol.toString());
 				ResultSet rs = pstmtGetCol.executeQuery();
 				if(rs.next()) {
 					// This column name is in the survey
-					col = new Column();
+					col = new ExchangeColumn();
 					col.name = qName;
 					col.columnName = rs.getString("column_name");
-					col.geomCol = geomCol;				// This column holds the latitude or the longitude or neither
+					col.geomCol = geomCol;				// This column holds the latitude, longitude, Altitude, Accuracy or none of these
 					col.type = rs.getString("qtype");
 					
 					if(col.type.startsWith("select")) {
@@ -1163,6 +961,20 @@ public class ExchangeManager {
 							col.choices.add(o);
 						}
 					}
+				} else {
+					// Check to see if it is a preload
+					
+					for(MetaItem mi : preloads) {
+						if(mi.isPreload) {
+							if(mi.name.equals(qName)) {
+								col = new ExchangeColumn();
+								col.name = qName;
+								col.columnName = mi.columnName;
+								col.type = mi.type;
+								break;
+							}
+						}
+					}
 				}
 			}
 		} else {
@@ -1175,5 +987,363 @@ public class ExchangeManager {
 		
 		return col;
 	}
+	
+	public void processHeader(
+			Connection results,
+			PreparedStatement pstmtGetCol,
+			PreparedStatement pstmtGetChoices,
+			PreparedStatement pstmtGetColGS,
+			ArrayList<String> responseMsg,
+			ArrayList<MetaItem> preloads,
+			ExchangeHeader eh, 
+			String [] line, 
+			FormDesc form) throws SQLException {
+		/*
+		 * Get the columns in the file that are also in the form
+		 * Assume first line is the header
+		 */
+		for(int i = 0; i < line.length; i++) {
+			String colName = line[i].replace("'", "''");	// Escape apostrophes
+			
+			if(colName.trim().length() > 0) {
+				if(colName.toLowerCase().equals("instanceid")) {
+					eh.instanceIdColumn = i;
+				}
+				// If this column is in the survey then add it to the list of columns to be processed
+				// Do this test for a load from excel
+				ExchangeColumn col = getColumn(results, form.table_name, pstmtGetCol, 
+						pstmtGetChoices, colName, eh.columns, 
+						responseMsg, localisation, preloads);
+				if(col != null) {
+					col.index = i;
+					if(col.geomCol != null) {
+						// Do not add the geom columns to the list of columns to be parsed
+						if(col.geomCol.equals("lon") || col.geomCol.equals("plotgpsLongitude")) {
+							eh.lonIndex = i;
+						} else if(col.geomCol.equals("lat") || col.geomCol.equals("plotgpsLatitude")) {
+							eh.latIndex = i;
+						} 
+					} else {
+						eh.columns.add(col);
+					}
+				} else {
+					// Perform test for a load from a google sheets export
+					col = getColumn(results, form.table_name, pstmtGetColGS, pstmtGetChoices, colName, eh.columns, responseMsg, localisation, preloads);
+					if(col != null) {
+						col.index = i;
+						if(col.geomCol != null) {
+							// Do not add the geom columns to the list of columns to be parsed
+							if(col.geomCol.equals("lon") || col.geomCol.equals("plotgpsLongitude")) {
+								eh.lonIndex = i;
+							} else if(col.geomCol.equals("lat") || col.geomCol.equals("plotgpsLatitude")) {
+								eh.latIndex = i;
+							} 
+						} else {
+							eh.columns.add(col);
+						}
+					} else {
+						responseMsg.add(
+								localisation.getString("imp_qn") +
+								" " + colName + " " +
+								localisation.getString("imp_nfi") +
+								": " + form.name);  
+					}
+				}
+			}
 
+		}
+		
+		log.info("Loading data from " + eh.columns.size() + " columns out of " + line.length + " columns in the data file");
+		
+		if(eh.columns.size() > 0 || (eh.lonIndex >= 0 && eh.latIndex >= 0)) {
+				
+			/*
+			 * Add the source column if it is not already in the results table
+			 */
+			if(!GeneralUtilityMethods.hasColumn(results, form.table_name, "_import_source")) {
+				GeneralUtilityMethods.addColumn(results, form.table_name, "_import_source", "text");
+			}
+			if(!GeneralUtilityMethods.hasColumn(results, form.table_name, "_import_time")) {
+				GeneralUtilityMethods.addColumn(results, form.table_name, "_import_time", "timestamp with time zone");
+			}
+			/*
+			 * Create the insert statement
+			 */		
+			StringBuffer sqlInsert = new StringBuffer("insert into " + form.table_name + "(");
+			sqlInsert.append("_import_source, _import_time");
+			if(form.parent == 0) {
+				sqlInsert.append(",instanceid");
+			}
+			
+			for(int i = 0; i < eh.columns.size(); i++) {						
+				ExchangeColumn col = eh.columns.get(i);						
+				if(col.write) {
+					sqlInsert.append(",").append(col.columnName);
+				} 
+			}
+			
+			// Add the geopoint column if latitude and longitude were provided in the data file
+			if(eh.lonIndex >= 0 && eh.latIndex >= 0 ) {
+				sqlInsert.append(",").append("the_geom");;
+				eh.hasGeopoint = true;
+			}
+			
+			/*
+			 * Add place holders for the data
+			 */
+			sqlInsert.append(") values("); 
+			sqlInsert.append("?, ?");			// _import_source and _import_time
+			if(form.parent == 0) {
+				sqlInsert.append(",?");		// instanceid
+			}
+			
+			
+			for(int i = 0; i < eh.columns.size(); i++) {
+				
+				ExchangeColumn col = eh.columns.get(i);
+				
+				if(col.write) {
+					if(col.type.equals("geoshape")) {
+						sqlInsert.append(",").append("ST_GeomFromText('POLYGON((' || ? || '))', 4326)");
+						
+					} else if(col.type.equals("geotrace")) {
+						sqlInsert.append(",").append("ST_GeomFromText('LINESTRING(' || ? || ')', 4326)");
+					} else {
+						sqlInsert.append(",").append("?");
+					}
+				}
+			}
+			
+			// Add the geopoint value
+			if(eh.hasGeopoint) {
+				sqlInsert.append(",").append("ST_GeomFromText('POINT(' || ? || ' ' || ? ||')', 4326)");
+			}
+			sqlInsert.append(")");
+			
+			eh.pstmtInsert = results.prepareStatement(sqlInsert.toString(), Statement.RETURN_GENERATED_KEYS);
+		}
+	}
+
+	public int processRecord(ExchangeHeader eh, 
+			String [] line, 
+			FormDesc form,
+			String importSource,
+			Timestamp importTime,
+			ArrayList<String> responseMsg,
+			String serverName,
+			String basePath,
+			String sIdent,
+			HashMap<String, File> mediaFiles,
+			SimpleDateFormat sdf,
+			int recordsWritten) throws SQLException {
+		
+		int index = 1;
+		int count = 0;
+		String prikey = null;
+		boolean writeRecord = true;
+		eh.pstmtInsert.setString(index++, importSource);
+		eh.pstmtInsert.setTimestamp(index++, importTime);
+		if(form.parent == 0) {
+			String instanceId = null;
+			if(eh.instanceIdColumn >= 0) {
+				instanceId = line[eh.instanceIdColumn].trim();
+			}
+			if(instanceId == null || instanceId.trim().length() == 0) {
+				instanceId = "uuid:" + String.valueOf(UUID.randomUUID());
+			}
+			eh.pstmtInsert.setString(index++, instanceId);
+		} 
+		
+		for(int i = 0; i < eh.columns.size(); i++) {
+			ExchangeColumn col = eh.columns.get(i);
+			
+			// ignore empty columns at end of line
+			if(col.index >= line.length) {
+				
+				if(col.type.equals("int")) {
+					eh.pstmtInsert.setInt(index++, 0);
+				} else if(col.type.equals("decimal")) {
+					eh.pstmtInsert.setDouble(index++, 0.0);
+				} else if(col.type.equals("date")) {
+					eh.pstmtInsert.setDate(index++, null);
+				} else if(col.type.equals("dateTime")) {
+					eh.pstmtInsert.setTimestamp(index++, null);
+				} else if(col.type.equals("time")) {
+					eh.pstmtInsert.setTime(index++, null);
+				} else {
+					eh.pstmtInsert.setString(index++, null);
+				}
+				continue;
+			}
+			
+			String value = line[col.index].trim();	
+
+			if(col.name.equals("prikey") || col.name.equals("metainstanceid")) {
+				prikey = value;
+			} else if(col.name.equals("parkey") || col.name.equals("parentuid")) {
+				if(form.parent == 0) {
+					eh.pstmtInsert.setInt(index++, 0);
+				} else {
+					String parkey = value;
+					String newParKey = form.parentForm.keyMap.get(parkey);
+					int iParKey = -1;
+					try {iParKey = Integer.parseInt(newParKey); } catch (Exception e) {}
+					if(newParKey == null || iParKey == -1) {
+						responseMsg.add(
+								localisation.getString("pk_nf") +
+								" " + parkey + " " +
+								localisation.getString("pk_if") +
+								" " + form.name);
+						writeRecord = false;
+					} else {
+						eh.pstmtInsert.setInt(index++, iParKey);
+					}
+				}
+			} else if(GeneralUtilityMethods.isAttachmentType(col.type)) {
+				
+				// If the data references a media file then process the attachment
+				File srcPathFile = null;
+				String srcUrl = null;
+				if(value != null && (value.trim().startsWith("https://") || value.trim().startsWith("http://"))) {
+					
+					// If the link is to a file on the same server (or this is localhost) do not duplicate the media
+					value = value.trim();
+					String serverHttpsUrl = "https://" + serverName + "/";
+					String serverHttpUrl = "http://" + serverName + "/";
+					if(serverName.equals("localhost") || value.startsWith(serverHttpUrl) || value.startsWith(serverHttpsUrl)) {
+						int idx = value.indexOf(serverName) + serverName.length();
+						value = value.substring(idx);
+					} else {
+						// Get the attachment from the link so it can be loaded
+						srcUrl = value;
+						value = UUID.randomUUID().toString();	// Create a random name for the initial download
+					}
+				} else {
+					// Attachment should have been loaded with the zip file
+					srcPathFile = mediaFiles.get(value);
+				}
+				
+				// Copy the attachments to the target location and get the new name
+				if(srcPathFile != null || srcUrl != null) {
+					value = GeneralUtilityMethods.createAttachments(
+						value, 
+						srcPathFile, 
+						basePath, 
+						sIdent,
+						srcUrl);
+				}
+				if(value != null && value.trim().length() == 0) {
+					value = null;
+				}
+				eh.pstmtInsert.setString(index++, value);
+			} else if(col.type.equals("int")) {
+				int iVal = 0;
+				if(notEmpty(value)) {
+					try { iVal = Integer.parseInt(value);} catch (Exception e) {}
+				}
+				eh.pstmtInsert.setInt(index++, iVal);
+			} else if(col.type.equals("decimal") || col.type.equals("range")) {
+				double dVal = 0.0;
+				if(notEmpty(value)) {
+					try { dVal = Double.parseDouble(value);} catch (Exception e) {}
+				}
+				eh.pstmtInsert.setDouble(index++, dVal);
+			} else if(col.type.equals("boolean")) {
+				boolean bVal = false;
+				if(notEmpty(value)) {
+					try { bVal = Boolean.parseBoolean(value);} catch (Exception e) {}
+				}
+				eh.pstmtInsert.setBoolean(index++, bVal);
+			} else if(col.type.equals("date")) {
+				Date dateVal = null;
+				if(notEmpty(value)) {
+					try {
+						dateVal = Date.valueOf(value); 
+						
+					} catch (Exception e) {
+						try {
+							java.util.Date uDate = sdf.parse(value);		
+							dateVal = new Date(uDate.getTime());
+						} catch (Exception ex) {
+							log.info("Error parsing date: " + col.columnName + " : " + value + " : " + e.getMessage());
+						}
+					}
+				}
+				eh.pstmtInsert.setDate(index++, dateVal);
+			} else if(col.type.equals("dateTime")) {
+				Timestamp tsVal = null;
+				if(notEmpty(value)) {
+					try {
+						java.util.Date uDate = sdf.parse(value);
+						tsVal = new Timestamp(uDate.getTime());
+					} catch (Exception e) {
+						try {
+							java.util.Date uDate = sdf.parse(value);		
+							tsVal = new Timestamp(uDate.getTime());
+						} catch (Exception ex) {
+							log.info("Error parsing datetime: " + value + " : " + e.getMessage());
+						}
+					}
+				}
+				
+				eh.pstmtInsert.setTimestamp(index++, tsVal);
+			} else if(col.type.equals("time")) {
+				
+				int hour = 0;
+				int minute = 0;
+				int second = 0;
+				if(notEmpty(value)) {
+					try {
+						String [] tVals = value.split(":");
+						if(tVals.length > 0) {
+							hour = Integer.parseInt(tVals[0]);
+						}
+						if(tVals.length > 1) {
+							minute = Integer.parseInt(tVals[1]);
+						}
+						if(tVals.length > 2) {
+							second = Integer.parseInt(tVals[2]);
+						}
+					} catch (Exception e) {
+						log.info("Error parsing datetime: " + value + " : " + e.getMessage());
+					}
+				}
+				
+				Time tVal = new Time(hour, minute, second);
+				eh.pstmtInsert.setTime(index++, tVal);
+			} else {
+				eh.pstmtInsert.setString(index++, value);
+			}
+			
+		}
+		
+		// Add the geopoint value if it exists
+		if(eh.hasGeopoint) {
+			String lon = line[eh.lonIndex];
+			String lat = line[eh.latIndex];
+			if(lon == null || lon.length() == 0) {
+				lon = "0.0";
+			}
+			if(lat == null || lat.length() == 0) {
+				lat = "0.0";
+			}
+			eh.pstmtInsert.setString(index++, lon);
+			eh.pstmtInsert.setString(index++, lat);
+
+		}
+		
+		if(writeRecord) {
+			if(recordsWritten == 0) {
+				log.info("Inserting first record: " + eh.pstmtInsert.toString());
+			}
+			eh.pstmtInsert.executeUpdate();
+			ResultSet rs = eh.pstmtInsert.getGeneratedKeys();
+			if(rs.next()) {
+				form.keyMap.put(prikey, rs.getString(1));
+			}
+			count++;
+		}
+		
+		return count;
+	}
 }

@@ -64,13 +64,19 @@ import utilities.QuestionInfo;
 @Path("/exportSurveyMedia/{sId}/{filename}")
 public class ExportSurveyMedia extends Application {
 	
-	Authorise a = new Authorise(null, Authorise.ANALYST);
+	Authorise a = null;
 	
 	private static Logger log =
 			 Logger.getLogger(ExportSurveyMedia.class.getName());
 	
 	LogManager lm = new LogManager();		// Application log
 	
+	public ExportSurveyMedia() {
+		ArrayList<String> authorisations = new ArrayList<String> ();	
+		authorisations.add(Authorise.ANALYST);
+		authorisations.add(Authorise.VIEW_DATA);
+		a = new Authorise(authorisations, null);
+	}
 	
 	/*
 	 * Export media in a zip file
@@ -85,6 +91,7 @@ public class ExportSurveyMedia extends Application {
 			@QueryParam("to") Date endDate,
 			@QueryParam("dateId") int dateId,
 			@QueryParam("forms") String forms,
+			@QueryParam("filter") String filter,
 			@Context HttpServletResponse response
 			) {
 
@@ -98,16 +105,7 @@ public class ExportSurveyMedia extends Application {
 		
 		String urlprefix = request.getScheme() + "://" + request.getServerName() + "/";		
 		
-		try {
-		    Class.forName("org.postgresql.Driver");	 
-		} catch (ClassNotFoundException e) {
-			log.log(Level.SEVERE, "Can't find PostgreSQL JDBC Driver", e);
-		    try {
-		    	responseVal = Response.serverError().entity("Survey: Error: Can't find PostgreSQL JDBC Driver").build();
-		    } catch (Exception ex) {
-		    	log.log(Level.SEVERE, "Exception", ex);
-		    }
-		}
+		String tz = "UTC";		// Default to UTC
 		
 		/*
 		 * Get the list of forms and surveys to be exported
@@ -122,28 +120,28 @@ public class ExportSurveyMedia extends Application {
 		}
 		
 		// Authorisation - Access
-		Connection connectionSD = SDDataSource.getConnection("surveyKPI-ExportSurvey");
+		Connection sd = SDDataSource.getConnection("surveyKPI-ExportSurvey");
 		boolean superUser = false;
 		try {
-			superUser = GeneralUtilityMethods.isSuperUser(connectionSD, request.getRemoteUser());
+			superUser = GeneralUtilityMethods.isSuperUser(sd, request.getRemoteUser());
 		} catch (Exception e) {
 		}
-		a.isAuthorised(connectionSD, request.getRemoteUser());
+		a.isAuthorised(sd, request.getRemoteUser());
 		if(queryList != null) {
 			HashMap<Integer, String> checkedSurveys = new HashMap<Integer, String> ();
 			for(int i = 0; i < queryList.size(); i++) {
 				int survey = queryList.get(i).survey;
 				if(checkedSurveys.get(new Integer(survey)) == null) {
-					a.isValidSurvey(connectionSD, request.getRemoteUser(), queryList.get(i).survey, false, superUser);
+					a.isValidSurvey(sd, request.getRemoteUser(), queryList.get(i).survey, false, superUser);
 					checkedSurveys.put(new Integer(survey), "checked");
 				}
 			}
 		} else {
-			a.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false, superUser);
+			a.isValidSurvey(sd, request.getRemoteUser(), sId, false, superUser);
 		}
 		// End Authorisation
 
-		lm.writeLog(connectionSD, sId, request.getRemoteUser(), "view", "Export Media from a survey");
+		lm.writeLog(sd, sId, request.getRemoteUser(), "view", "Export Media from a survey");
 		
 		String escapedFileName = null;
 		try {
@@ -159,21 +157,23 @@ public class ExportSurveyMedia extends Application {
 
 		if(sId != 0) {
 			
-			Connection connectionResults = null;
+			Connection cResults = null;
 			PreparedStatement pstmtGetData = null;
 			PreparedStatement pstmtIdent = null;
 			
 			try {
 		
 				// Get the users locale
-				Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(connectionSD, request.getRemoteUser()));
+				Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(sd, request, request.getRemoteUser()));
 				localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
+				
+				int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser());
 				
 				/*
 				 * Get the name of the database
 				 */
-				connectionResults = ResultsDataSource.getConnection("surveyKPI-ExportSurvey");
-				DatabaseMetaData databaseMetaData = connectionResults.getMetaData();
+				cResults = ResultsDataSource.getConnection("surveyKPI-ExportSurvey");
+				DatabaseMetaData databaseMetaData = cResults.getMetaData();
 				String dbUrl = databaseMetaData.getURL();
 				String database_name = dbUrl.substring(dbUrl.lastIndexOf('/') + 1);
 
@@ -182,7 +182,9 @@ public class ExportSurveyMedia extends Application {
 				/*
 				 * Get the question names
 				 */
-				QuestionInfo mediaQInfo = new QuestionInfo(sId, mediaQuestion, connectionSD, false, language, urlprefix);	
+				QuestionInfo mediaQInfo = new QuestionInfo(localisation, tz, sId, mediaQuestion, sd, 
+						cResults, request.getRemoteUser(),
+						false, language, urlprefix, oId);	
 				String media_name = mediaQInfo.getColumnName();
 				ArrayList<String> namedQuestions = new ArrayList<String> ();
 				ArrayList<String> requiredColumns = new ArrayList<String> ();
@@ -193,7 +195,9 @@ public class ExportSurveyMedia extends Application {
 					if(nameQ.length > 0) {
 						for(int i = 0; i < nameQ.length; i++) {
 							int nameQId = Integer.parseInt(nameQ[i]);
-							QuestionInfo qi = new QuestionInfo(sId, nameQId, connectionSD, false, language, urlprefix);
+							QuestionInfo qi = new QuestionInfo(localisation, tz, sId, nameQId, sd, 
+									cResults, request.getRemoteUser(),
+									false, language, urlprefix, oId);
 							if(qi.getColumnName() != null) {
 								namedQuestions.add(qi.getColumnName());
 								requiredColumns.add(qi.getColumnName());
@@ -207,15 +211,16 @@ public class ExportSurveyMedia extends Application {
 				 */
 				QueryManager qm = new QueryManager();
 				if(queryList == null) {
-					queryList = qm.getFormList(connectionSD, sId, mediaQInfo.getFId());
+					queryList = qm.getFormList(sd, sId, mediaQInfo.getFId());
 				} else {
-					qm.extendFormList(connectionSD, queryList);
+					qm.extendFormList(sd, queryList);
 				}
-				QueryForm startingForm = qm.getQueryTree(connectionSD, queryList);	// Convert the query list into a tree
+				QueryForm startingForm = qm.getQueryTree(sd, queryList);	// Convert the query list into a tree
 				
 				// Get the SQL for this query
-				SqlDesc sqlDesc = QueryGenerator.gen(connectionSD, 
-						connectionResults,
+				SqlDesc sqlDesc = QueryGenerator.gen(sd, 
+						cResults,
+						localisation,
 						sId,
 						mediaQInfo.getFId(),
 						language, 
@@ -234,8 +239,13 @@ public class ExportSurveyMedia extends Application {
 						startDate,
 						endDate,
 						dateId,
-						superUser,
-						startingForm);
+						false,		// superUser - Always apply filters
+						startingForm,
+						filter,
+						null,			// transform
+						true,
+						false,
+						tz);		// Get all columns (not just instanceid)
 				
 				/*
 				 * 1. Create the target folder
@@ -250,7 +260,7 @@ public class ExportSurveyMedia extends Application {
 				/*
 				 * 2. Copy files to the folder, renaming them as per the export request
 				 */
-				pstmtGetData = connectionResults.prepareStatement(sqlDesc.sql); 
+				pstmtGetData = cResults.prepareStatement(sqlDesc.sql); 
 				log.info("Generated SQL:" + pstmtGetData.toString());
 				ResultSet rs = pstmtGetData.executeQuery();
 				while(rs.next()) {
@@ -358,64 +368,13 @@ public class ExportSurveyMedia extends Application {
 				try {if (pstmtIdent != null) {pstmtIdent.close();}} catch (SQLException e) {}
 				
 				
-				SDDataSource.closeConnection("surveyKPI-ExportSurvey", connectionSD);
-				ResultsDataSource.closeConnection("surveyKPI-ExportSurvey", connectionResults);
+				SDDataSource.closeConnection("surveyKPI-ExportSurvey", sd);
+				ResultsDataSource.closeConnection("surveyKPI-ExportSurvey", cResults);
 			}
 		}
 		
 		return responseVal;
 		
 	}
-	
-	/*
-	 * Generate Stata do file commands to convert date/time/geometry fields to stata format
-	 */
-	void writeStataDataConversion(PrintWriter w, ColDesc cd) {
-		 if(cd.qType != null && cd.qType.equals("date")) {
-			w.println("generate double `temp' = date(" + cd.name + ", \"YMD\")");		// Convert to double
-			w.println("format %-tdCCYY-NN-DD `temp'");
-		} else if(cd.qType != null && cd.qType.equals("time")) {
-			w.println("generate double `temp' = clock(" + cd.name + ", \"hms\")");		// Convert to double
-			w.println("format %-tcHH:MM:SS `temp'");
-		} else if(cd.qType != null && cd.qType.equals("dateTime")) {
-			w.println("generate double `temp' = clock(" + cd.name + ", \"YMDhms\")");		// Convert to double
-			w.println("format %-tcCCYY-NN-DD_HH:MM:SS `temp'");
-		} else if(cd.db_type.equals("timestamptz")) {
-			w.println("generate double `temp' = clock(" + cd.name + ", \"YMDhms\")");	// Convert to double
-			w.println("format %-tcCCYY-NN-DD_HH:MM:SS `temp'");							// Set the display format
-
-		} else {
-			return;		// Not a date / time / geometry question
-		}
-	 	
-		// rename the temp file created by the date functions 
-		w.println("move `temp' " + cd.name);										// Move to the location of the variable
-		w.println("drop " + cd.name);												// Remove the old variable
-		w.println("rename `temp' " + cd.name);										// Rename the temporary variable
-	}
-	
-	void writeStataEncodeString(PrintWriter w, ColDesc cd, String valueLabel) {
-		w.println("capture {");			// Capture errors as if there is no data then there will be a type mismatch
-		for(int i = 0; i < cd.optionLabels.size(); i++) {
-			OptionDesc od = cd.optionLabels.get(i);
-			w.println("replace " + cd.name + " = \"" + od.label + "\" if (" + cd.name + " == \"" + od.value + "\")");	// Replace values with labels
-		}
-		w.println("encode " + cd.name + ", generate(`temp') label(" + valueLabel + ")");			// Encode the variable
-		w.println("drop " + cd.name);												// Remove the old variable
-		w.println("rename `temp' " + cd.name);										// Rename the temporary variable
-		w.println("}");
-	}
-	
-	void writeStataQuestionLabel(PrintWriter w, ColDesc cd) {
-		if(cd.label != null) {
-			w.println("label variable " + cd.name + " \"" + cd.label + "\"");			// Set the label
-		}
-	}
-	
-	
-
-
-
-	
 
 }

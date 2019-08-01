@@ -32,35 +32,47 @@ import javax.ws.rs.core.Response;
 
 import model.MediaResponse;
 import utilities.XLSCustomReportsManager;
+import utilities.XLSTemplateUploadManager;
+import utilities.XLSUtilities;
+
 import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.fileupload.FileUploadException;
 import org.apache.commons.fileupload.disk.DiskFileItemFactory;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
+import org.apache.commons.io.FileUtils;
+import org.smap.model.SurveyTemplate;
+import org.smap.sdal.Utilities.ApplicationException;
+import org.smap.sdal.Utilities.ApplicationWarning;
 import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.MediaInfo;
 import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.Utilities.UtilityMethodsEmail;
+import org.smap.sdal.managers.CsvTableManager;
 import org.smap.sdal.managers.CustomReportsManager;
 import org.smap.sdal.managers.LogManager;
-import org.smap.sdal.managers.QuestionManager;
+import org.smap.sdal.managers.MessagingManager;
 import org.smap.sdal.managers.SurveyManager;
-import org.smap.sdal.model.ChangeSet;
+import org.smap.sdal.model.ChangeElement;
+import org.smap.sdal.model.ChangeItem;
 import org.smap.sdal.model.CustomReportItem;
+import org.smap.sdal.model.FormLength;
 import org.smap.sdal.model.LQAS;
 import org.smap.sdal.model.ReportConfig;
 import org.smap.sdal.model.Survey;
+import org.smap.server.utilities.PutXForm;
+
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.CopyOption;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
@@ -86,8 +98,7 @@ public class UploadFiles extends Application {
 
 	private static Logger log =
 			Logger.getLogger(UploadFiles.class.getName());
-
-
+	
 	@POST
 	@Produces("application/json")
 	@Path("/media")
@@ -104,14 +115,37 @@ public class UploadFiles extends Application {
 
 		log.info("upload files - media -----------------------");
 
-		fileItemFactory.setSizeThreshold(5*1024*1024); //1 MB TODO handle this with exception and redirect to an error page
+		fileItemFactory.setSizeThreshold(5*1024*1024);
 		ServletFileUpload uploadHandler = new ServletFileUpload(fileItemFactory);
 
-		Connection connectionSD = null; 
-		Connection cResults = null;
+		int oId = 0;
+		Connection sd = null; 
 		boolean superUser = false;
-
+		String connectionString = "surveyKPI - uploadFiles - sendMedia";
+		
 		try {
+			
+			sd = SDDataSource.getConnection(connectionString);
+			
+			// Get the users locale
+			Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(sd, request, request.getRemoteUser()));
+			ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
+			
+			// Authorisation - Access
+			auth.isAuthorised(sd, request.getRemoteUser());	
+			if(sId > 0) {
+				try {
+					superUser = GeneralUtilityMethods.isSuperUser(sd, request.getRemoteUser());
+				} catch (Exception e) {
+				}
+				auth.isValidSurvey(sd, request.getRemoteUser(), sId, false, superUser);	// Validate that the user can access this survey
+			} 
+			// End authorisation
+
+			
+			String basePath = GeneralUtilityMethods.getBasePath(request);
+			MediaInfo mediaInfo = new MediaInfo();
+			
 			/*
 			 * Parse the request
 			 */
@@ -132,6 +166,14 @@ public class UploadFiles extends Application {
 
 						}
 					}
+					// Check authorisation for this survey id
+					if(sId > 0) {
+						try {
+							superUser = GeneralUtilityMethods.isSuperUser(sd, request.getRemoteUser());
+						} catch (Exception e) {
+						}
+						auth.isValidSurvey(sd, request.getRemoteUser(), sId, false, superUser);	// Validate that the user can access this survey
+					} 
 
 				} else if(!item.isFormField()) {
 					// Handle Uploaded files.
@@ -143,28 +185,12 @@ public class UploadFiles extends Application {
 					String fileName = item.getName();
 					fileName = fileName.replaceAll(" ", "_"); // Remove spaces from file name
 
-					// Authorisation - Access
-					connectionSD = SDDataSource.getConnection("surveyKPI - uploadFiles - sendMedia");
-					auth.isAuthorised(connectionSD, request.getRemoteUser());
 					if(sId > 0) {
-						try {
-							superUser = GeneralUtilityMethods.isSuperUser(connectionSD, request.getRemoteUser());
-						} catch (Exception e) {
-						}
-						auth.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false, superUser);	// Validate that the user can access this survey
-					} 
-					// End authorisation
-
-					cResults = ResultsDataSource.getConnection("surveyKPI - uploadFiles - sendMedia");
-
-					String basePath = GeneralUtilityMethods.getBasePath(request);
-
-					MediaInfo mediaInfo = new MediaInfo();
-					if(sId > 0) {
-						mediaInfo.setFolder(basePath, sId, null, connectionSD);
+						mediaInfo.setFolder(basePath, sId, null, sd);
 					} else {	
 						// Upload to organisations folder
-						mediaInfo.setFolder(basePath, user, null, connectionSD, false);				 
+						oId = GeneralUtilityMethods.getOrganisationId(sd, user);
+						mediaInfo.setFolder(basePath, user, oId, sd, false);				 
 					}
 					mediaInfo.setServer(request.getRequestURL().toString());
 
@@ -189,39 +215,43 @@ public class UploadFiles extends Application {
 						// Create thumbnails
 						UtilityMethodsEmail.createThumbnail(fileName, folderPath, savedFile);
 
-						// Apply changes from CSV files to survey definition
+						// Upload any CSV data into a table
 						if(contentType.equals("text/csv") || fileName.endsWith(".csv")) {
-							applyCSVChanges(connectionSD, cResults, user, sId, fileName, savedFile, oldFile, basePath, mediaInfo);
+							putCsvIntoTable(sd, localisation, user, sId, fileName, savedFile, oldFile, basePath, mediaInfo);
 						}
 
-						if(getlist) {
-							MediaResponse mResponse = new MediaResponse ();
-							mResponse.files = mediaInfo.get();			
-							Gson gson = new GsonBuilder().disableHtmlEscaping().create();
-							String resp = gson.toJson(mResponse);
-							log.info("Responding with " + mResponse.files.size() + " files");
-
-							response = Response.ok(resp).build();
+						// Create a message so that devices are notified of the change
+						MessagingManager mm = new MessagingManager();
+						if(sId > 0) {
+							mm.surveyChange(sd, sId, 0);
 						} else {
-							response = Response.ok().build();
+							mm.resourceChange(sd, oId, fileName);
 						}
 
 					} else {
 						log.log(Level.SEVERE, "Media folder not found");
 						response = Response.serverError().entity("Media folder not found").build();
 					}
-
-
 				}
+			}
+			
+			if(getlist) {
+				MediaResponse mResponse = new MediaResponse ();
+				mResponse.files = mediaInfo.get(sId);			
+				Gson gson = new GsonBuilder().disableHtmlEscaping().create();
+				String resp = gson.toJson(mResponse);
+				log.info("Responding with " + mResponse.files.size() + " files");
+
+				response = Response.ok(resp).build();
+			} else {
+				response = Response.ok().build();
 			}
 
 		} catch(Exception ex) {
 			log.log(Level.SEVERE,ex.getMessage(), ex);
 			response = Response.serverError().entity(ex.getMessage()).build();
 		} finally {
-
-			SDDataSource.closeConnection("surveyKPI - uploadFiles - sendMedia", connectionSD);
-			ResultsDataSource.closeConnection("surveyKPI - uploadFiles - sendMedia", cResults);
+			SDDataSource.closeConnection(connectionString, sd);
 		}
 
 		return response;
@@ -240,22 +270,32 @@ public class UploadFiles extends Application {
 		Response response = null;
 
 		// Authorisation - Access
-		Connection connectionSD = SDDataSource.getConnection("surveyKPI-UploadFiles");
-		auth.isAuthorised(connectionSD, request.getRemoteUser());
+		Connection sd = SDDataSource.getConnection("surveyKPI-UploadFiles");
+		auth.isAuthorised(sd, request.getRemoteUser());
+		auth.isValidOrganisation(sd, request.getRemoteUser(), oId);
 		// End Authorisation		
 
 		try {
+			// Get the users locale
+			Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(sd, request, request.getRemoteUser()));
+			ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
+			
 			String basePath = GeneralUtilityMethods.getBasePath(request);
 			String serverName = request.getServerName();
 
-			deleteFile(request, connectionSD, basePath, serverName, null, oId, filename, request.getRemoteUser());
-
+			deleteFile(request, sd, localisation, basePath, serverName, null, oId, filename, request.getRemoteUser());
+			if(filename.endsWith(".csv")) {
+				  // Delete the organisation shared resources - not necessary
+			    CsvTableManager tm = new CsvTableManager(sd, localisation);
+			    tm.delete(oId, 0, filename);		
+			}
+			
 			MediaInfo mediaInfo = new MediaInfo();
 			mediaInfo.setServer(request.getRequestURL().toString());
-			mediaInfo.setFolder(basePath, request.getRemoteUser(), null, connectionSD, false);				 
+			mediaInfo.setFolder(basePath, request.getRemoteUser(), oId, sd, false);				 
 
 			MediaResponse mResponse = new MediaResponse ();
-			mResponse.files = mediaInfo.get();			
+			mResponse.files = mediaInfo.get(0);			
 			Gson gson = new GsonBuilder().disableHtmlEscaping().create();
 			String resp = gson.toJson(mResponse);
 			response = Response.ok(resp).build();	
@@ -264,7 +304,7 @@ public class UploadFiles extends Application {
 			log.log(Level.SEVERE,e.getMessage(), e);
 			response = Response.serverError().build();
 		} finally {
-			SDDataSource.closeConnection("surveyKPI-UploadFiles", connectionSD);
+			SDDataSource.closeConnection("surveyKPI-UploadFiles", sd);
 		}
 
 		return response;
@@ -283,23 +323,33 @@ public class UploadFiles extends Application {
 		Response response = null;
 
 		// Authorisation - Access
-		Connection connectionSD = SDDataSource.getConnection("surveyKPI-UploadFiles");
-		auth.isAuthorised(connectionSD, request.getRemoteUser());
+		Connection sd = SDDataSource.getConnection("surveyKPI-UploadFiles");
+		auth.isAuthorised(sd, request.getRemoteUser());
 		// End Authorisation		
 
 		try {
-
+			// Get the users locale
+			Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(sd, request, request.getRemoteUser()));
+			ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
+			
 			String basePath = GeneralUtilityMethods.getBasePath(request);
 			String serverName = request.getServerName(); 
 
-			deleteFile(request, connectionSD, basePath, serverName, sIdent, 0, filename, request.getRemoteUser());
-
+			deleteFile(request, sd, localisation, basePath, serverName, sIdent, 0, filename, request.getRemoteUser());
+			if(filename.endsWith(".csv")) {
+				int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser());
+				int sId = GeneralUtilityMethods.getSurveyId(sd, sIdent);
+				  // Delete the organisation shared resources - not necessary
+			    CsvTableManager tm = new CsvTableManager(sd, localisation);
+			    tm.delete(oId, sId, null);		
+			}
+			
 			MediaInfo mediaInfo = new MediaInfo();
 			mediaInfo.setServer(request.getRequestURL().toString());
-			mediaInfo.setFolder(basePath, 0, sIdent, connectionSD);
+			mediaInfo.setFolder(basePath, 0, sIdent, sd);
 
 			MediaResponse mResponse = new MediaResponse ();
-			mResponse.files = mediaInfo.get();			
+			mResponse.files = mediaInfo.get(0);			
 			Gson gson = new GsonBuilder().disableHtmlEscaping().create();
 			String resp = gson.toJson(mResponse);
 			response = Response.ok(resp).build();	
@@ -308,12 +358,13 @@ public class UploadFiles extends Application {
 			log.log(Level.SEVERE,e.getMessage(), e);
 			response = Response.serverError().build();
 		} finally {
-			SDDataSource.closeConnection("surveyKPI-UploadFiles", connectionSD);
+			SDDataSource.closeConnection("surveyKPI-UploadFiles", sd);
 		}
 
 		return response;
 
 	}
+	
 	/*
 	 * Return available files
 	 */
@@ -335,16 +386,16 @@ public class UploadFiles extends Application {
 		 *  Else provide access to the media for the organisation
 		 */
 		// Authorisation - Access
-		Connection connectionSD = SDDataSource.getConnection("surveyKPI-UploadFiles");
+		Connection sd = SDDataSource.getConnection("surveyKPI-UploadFiles");
 		if(sId > 0) {
 			try {
-				superUser = GeneralUtilityMethods.isSuperUser(connectionSD, request.getRemoteUser());
+				superUser = GeneralUtilityMethods.isSuperUser(sd, request.getRemoteUser());
 			} catch (Exception e) {
 			}
-			auth.isAuthorised(connectionSD, request.getRemoteUser());
-			auth.isValidSurvey(connectionSD, request.getRemoteUser(), sId, false, superUser);	// Validate that the user can access this survey
+			auth.isAuthorised(sd, request.getRemoteUser());
+			auth.isValidSurvey(sd, request.getRemoteUser(), sId, false, superUser);	// Validate that the user can access this survey
 		} else {
-			auth.isAuthorised(connectionSD, request.getRemoteUser());
+			auth.isAuthorised(sd, request.getRemoteUser());
 		}
 		// End Authorisation		
 
@@ -358,18 +409,19 @@ public class UploadFiles extends Application {
 
 		PreparedStatement pstmt = null;		
 		try {
-
+			int oId = GeneralUtilityMethods.getOrganisationId(sd, user);
+			
 			// Get the path to the media folder	
 			if(sId > 0) {
-				mediaInfo.setFolder(basePath, sId, null, connectionSD);
+				mediaInfo.setFolder(basePath, sId, null, sd);
 			} else {		
-				mediaInfo.setFolder(basePath, user, null, connectionSD, false);				 
+				mediaInfo.setFolder(basePath, user, oId, sd, false);				 
 			}
 
 			log.info("Media query on: " + mediaInfo.getPath());
 
 			MediaResponse mResponse = new MediaResponse();
-			mResponse.files = mediaInfo.get();			
+			mResponse.files = mediaInfo.get(sId);			
 			Gson gson = new GsonBuilder().disableHtmlEscaping().create();
 			String resp = gson.toJson(mResponse);
 			response = Response.ok(resp).build();		
@@ -381,12 +433,421 @@ public class UploadFiles extends Application {
 
 			if (pstmt != null) { try {pstmt.close();} catch (SQLException e) {}}
 
-			SDDataSource.closeConnection("surveyKPI-UploadFiles", connectionSD);
+			SDDataSource.closeConnection("surveyKPI-UploadFiles", sd);
 		}
 
 		return response;		
 	}
 
+	private class Message {
+		@SuppressWarnings("unused")
+		String status;
+		@SuppressWarnings("unused")
+		String message;
+		@SuppressWarnings("unused")
+		String name;
+		
+		public Message(String status, String message, String name) {
+			this.status = status;
+			this.message = message;
+			this.name = name;
+		}
+	}
+	
+	/*
+	 * Upload a survey template
+	 * curl -u neil -i -X POST -H "Content-Type: multipart/form-data" -F "projectId=1" -F "templateName=age" -F "tname=@x.xls" http://localhost/surveyKPI/upload/surveytemplate
+	 */
+	@POST
+	@Produces("application/json")
+	@Path("/surveytemplate")
+	public Response uploadForm(
+			@Context HttpServletRequest request) {
+		
+		Response response = null;
+		
+		log.info("upload survey -----------------------");
+		
+		DiskFileItemFactory  fileItemFactory = new DiskFileItemFactory ();
+		String displayName = null;
+		int projectId = -1;
+		int surveyId = -1;
+		String fileName = null;
+		String type = null;			// xls or xlsx or xml
+		boolean isExcel;
+		FileItem fileItem = null;
+		String user = request.getRemoteUser();
+		String action = null;
+		int existingSurveyId = 0;	// The ID of a survey that is being replaced
+
+		fileItemFactory.setSizeThreshold(5*1024*1024); 
+		ServletFileUpload uploadHandler = new ServletFileUpload(fileItemFactory);
+	
+		Connection sd = SDDataSource.getConnection("CreateXLSForm-uploadForm"); 
+		Connection cResults = ResultsDataSource.getConnection("CreateXLSForm-uploadForm");
+		ArrayList<ApplicationWarning> warnings = new ArrayList<> ();
+
+		Gson gson = new GsonBuilder().disableHtmlEscaping().create();
+		PreparedStatement pstmtChangeLog = null;
+		PreparedStatement pstmtUpdateChangeLog = null;
+		
+		try {
+			
+			// Get the users locale
+			Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(sd, request, request.getRemoteUser()));
+			ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
+			
+			String tz = "UTC";
+			
+			int oId = GeneralUtilityMethods.getOrganisationId(sd, user);
+			
+			/*
+			 * Parse the request
+			 */
+			List<?> items = uploadHandler.parseRequest(request);
+			Iterator<?> itr = items.iterator();
+			while(itr.hasNext()) {
+				
+				FileItem item = (FileItem) itr.next();
+
+				if(item.isFormField()) {
+					if(item.getFieldName().equals("templateName")) {
+						displayName = item.getString("utf-8");
+						if(displayName != null) {
+							displayName = displayName.trim();
+						}
+						log.info("Template: " + displayName);
+						
+						
+					} else if(item.getFieldName().equals("projectId")) {
+						projectId = Integer.parseInt(item.getString());
+						log.info("Project: " + projectId);
+						
+						// Authorisation - Access
+						if(projectId < 0) {
+							throw new Exception("No project selected");
+						} else {
+							auth.isAuthorised(sd, request.getRemoteUser());
+							auth.isValidProject(sd, request.getRemoteUser(), projectId);
+						}
+						// End Authorisation
+						
+					} else if(item.getFieldName().equals("surveyId")) {
+						try {
+							surveyId = Integer.parseInt(item.getString());
+						} catch (Exception e) {
+							
+						}
+						log.info("Add to survey group: " + surveyId);
+						
+					} else if(item.getFieldName().equals("action")) {						
+						action = item.getString();
+						log.info("Action: " + action);
+						
+					} else {
+						log.info("Unknown field name = "+item.getFieldName()+", Value = "+item.getString());
+					}
+				} else {
+					fileItem = (FileItem) item;
+				}
+			} 
+			
+			boolean superUser = false;
+			try {
+				superUser = GeneralUtilityMethods.isSuperUser(sd, request.getRemoteUser());
+			} catch (Exception e) {
+			}
+			
+			// Get the file type from its extension
+			fileName = fileItem.getName();
+			if(fileName == null || fileName.trim().length() == 0) {
+				throw new ApplicationException(localisation.getString("tu_nfs"));
+			} else if(fileName.endsWith(".xlsx")) {
+				type = "xlsx";
+				isExcel = true;
+			} else if(fileName.endsWith(".xls")) {
+				type = "xls";
+				isExcel = true;
+			} else if(fileName.endsWith(".xml")) {
+				type = "xml";
+				isExcel = false;
+			} else {
+				throw new ApplicationException(localisation.getString("tu_uft"));
+			}
+			
+			SurveyManager sm = new SurveyManager(localisation, "UTC");
+			Survey existingSurvey = null;
+			String basePath = GeneralUtilityMethods.getBasePath(request);
+			
+			HashMap<String, String> groupForms = null;		// Maps form names to table names - When merging to an existing survey
+			HashMap<String, String> questionNames = null;	// Maps unabbreviated question names to abbreviated question names
+			HashMap<String, String> optionNames = null;		// Maps unabbreviated option names to abbreviated option names
+			int existingVersion = 1;							// Make the version of a survey that replaces an existing survey one greater
+			boolean merge = false;							// Set true if an existing survey is to be replaced or this survey is to be merged with an existing survey
+			
+			if(surveyId > 0) {
+				
+				// Hack.  Because the client is sending surveyId's instead of idents we need to get the latest
+				// survey id o we risk updating an old version
+				surveyId = GeneralUtilityMethods.getLatestSurveyId(sd, surveyId);
+				
+				merge = true;
+				groupForms = sm.getGroupForms(sd, surveyId);
+				questionNames = sm.getGroupQuestions(sd, surveyId);
+				optionNames = sm.getGroupOptions(sd, surveyId);
+			}
+			
+			if(action == null) {
+				action = "add";
+			} else if(action.equals("replace")) {
+				
+				existingSurvey = sm.getById(sd, cResults, user, surveyId, 
+						false, basePath, null, false, false, false, 
+						false, false, null, false, false, superUser, null, 
+						false,
+						false		// launched only
+						);
+				displayName = existingSurvey.displayName;
+				existingVersion = existingSurvey.version;
+				existingSurveyId = existingSurvey.id;
+			}
+
+			// If the survey display name already exists on this server, for this project, then throw an error		
+
+			if(!action.equals("replace") && sm.surveyExists(sd, displayName, projectId)) {
+				String msg = localisation.getString("tu_ae");
+				msg = msg.replaceAll("%s1", displayName);
+				throw new ApplicationException(msg);
+			}
+			
+			Survey s = null;					// Used for XLS uploads (The new way)
+			SurveyTemplate model = null;		// Used for XML uploads (The old way), Convert to Survey after loading
+			if(isExcel) {
+				XLSTemplateUploadManager tum = new XLSTemplateUploadManager(localisation, warnings);
+				s = tum.getSurvey(sd, 
+						oId, 
+						type, 
+						fileItem.getInputStream(), 
+						displayName,
+						projectId,
+						questionNames,
+						optionNames,
+						merge,
+						existingVersion);
+			} else if(type.equals("xml")) {
+
+				// Parse the form into an object model
+				PutXForm loader = new PutXForm(localisation);
+				model = loader.put(fileItem.getInputStream(), 
+						request.getRemoteUser(),
+						basePath);	// Load the XForm into the model
+				
+				// Set the survey name to the one entered by the user 
+				if(displayName != null && displayName.length() != 0) {
+					model.getSurvey().setDisplayName(displayName);
+				} else {
+					throw new Exception("No Suvey name");
+				}
+
+				// Set the project id to the one entered by the user 
+				if(projectId != -1) {
+					model.getSurvey().setProjectId(projectId);
+				} 
+				
+			} else {
+				throw new ApplicationException("Unsupported file type");
+			}
+				
+			/*
+			 * Get information on a survey group if this survey is to be added to one
+			 * TODO make XML uploads work with this
+			 */
+			if(surveyId > 0) {
+				if(!action.equals("replace")) {
+					s.groupSurveyId = surveyId;
+				} else {
+					// Set the group survey id to the same value as the original survey
+					s.groupSurveyId = existingSurvey.groupSurveyId;
+					s.publicLink = existingSurvey.publicLink;
+				}
+			}
+			
+			/*
+			 * Save the survey to the database
+			 */
+			if(isExcel) {
+				s.write(sd, cResults, localisation, request.getRemoteUser(), groupForms, existingSurveyId);
+			} else {
+				int sId = model.writeDatabase();
+				s = sm.getById(sd, cResults, user, sId, true, basePath, 
+						null,					// instance id 
+						false, 					// get results
+						false, 					// generate dummy values
+						true, 					// get property questions
+						false, 					// get soft deleted
+						false, 					// get HRK
+						"internal", 					// Get External options
+						false, 					// get change history
+						true, 					// get roles
+						superUser, 
+						null	,					// geom format
+						false,					// Include child surveys
+						false					// launched only
+						);
+			}
+			
+			/*
+			 * Validate the survey:
+			 * 	 using the JavaRosa API
+			 * 		Ignore invalid function errors for extended functions
+			 *    		lookup
+			 *    		lookup_image_labels
+			 *    Ensure that it fits within the limit of 1,600 columns
+			 */
+			boolean valid = true;
+			String errMsg = null;
+			try {
+				XLSUtilities.javaRosaSurveyValidation(localisation, s.id, request.getRemoteUser(), tz);
+			} catch (Exception e) {
+								
+				String msg = e.getMessage();
+				if(msg != null && !msg.contains("cannot handle function 'lookup'") &&
+						!msg.contains("cannot handle function 'lookup_image_labels'") &&
+						!msg.contains("cannot handle function 'get_media'")) {
+					// Error! Delete the survey we just created
+					log.log(Level.SEVERE, e.getMessage(), e);
+					valid = false;
+					errMsg = e.getMessage();
+							
+				} else if(msg == null) {
+					log.log(Level.SEVERE, e.getMessage(), e);
+				}
+			}
+			if(valid) {
+				ArrayList<FormLength> formLength = GeneralUtilityMethods.getFormLengths(sd, s.id);
+				for(FormLength fl : formLength) {
+					if(fl.isTooLong()) {
+						valid = false;
+						errMsg = localisation.getString("tu_tmq");
+						errMsg = errMsg.replaceAll("%s1", String.valueOf(fl.questionCount));
+						errMsg = errMsg.replaceAll("%s2", fl.name);
+						errMsg = errMsg.replaceAll("%s3", String.valueOf(FormLength.MAX_FORM_LENGTH));
+						errMsg = errMsg.replaceAll("%s4", fl.lastQuestionName);
+						break;	// Only show one form that is too long - This error should very rarely be encountered!
+					}
+				}
+			}
+			
+			if(!valid) {
+				sm.delete(sd, 
+						cResults, 
+						s.id, 
+						true,		// hard
+						false,		// Do not delete the data 
+						user, 
+						basePath,
+						"no",		// Do not delete the tables
+						0);		// New Survey Id for replacement 
+				throw new ApplicationException(errMsg);	// report the error
+			}
+					
+			if(action.equals("replace")) {
+				/*
+				 * Soft delete the old survey
+				 * Set task groups to use the new survey
+				 */
+				sm.delete(sd, 
+						cResults, 
+						surveyId, 
+						false,		// set soft 
+						false,		// Do not delete the data 
+						user, 
+						basePath,
+						"no",		// Do not delete the tables
+						s.id		   // New Survey Id for replacement 
+					);	
+				
+			}
+			
+			/*
+			 * Save the file to disk
+			 */
+			String fileFolder = basePath + "/templates/" + projectId +"/"; 
+			String targetName = GeneralUtilityMethods.getSafeTemplateName(displayName);
+			String filePath = fileFolder + targetName + "." + type;
+			
+			// 1. Create the project folder if it does not exist
+			File folder = new File(fileFolder);
+			FileUtils.forceMkdir(folder);
+
+			// 2. Save the file
+			File savedFile = new File(filePath);
+			fileItem.write(savedFile);	
+			
+			/*
+			 * Update the change history for the survey
+			 */
+			int newVersion = existingVersion;
+			if(action.equals("replace")) {
+				newVersion++;
+				String sqlUpdateChangeLog = "insert into survey_change "
+						+ "(s_id, version, changes, user_id, apply_results, visible, updated_time) "
+						+ "select "
+						+ s.id
+						+ ",version, changes, user_id, apply_results, visible, updated_time "
+						+ "from survey_change where s_id = ? "
+						+ "order by version asc";
+				pstmtUpdateChangeLog = sd.prepareStatement(sqlUpdateChangeLog);
+				pstmtUpdateChangeLog.setInt(1, existingSurveyId);
+				pstmtUpdateChangeLog.execute();
+			}
+			/*
+			 * Add a new entry to the change history
+			 */
+			String sqlChangeLog = "insert into survey_change " +
+					"(s_id, version, changes, user_id, apply_results, visible, updated_time) " +
+					"values(?, ?, ?, ?, 'true', ?, ?)";
+			pstmtChangeLog = sd.prepareStatement(sqlChangeLog);
+			ChangeItem ci = new ChangeItem();
+			ci.fileName = fileItem.getName();
+			ci.origSId = s.id;
+			pstmtChangeLog.setInt(1, s.id);
+			pstmtChangeLog.setInt(2, newVersion);
+			pstmtChangeLog.setString(3, gson.toJson(new ChangeElement(ci, "upload_template")));
+			pstmtChangeLog.setInt(4, GeneralUtilityMethods.getUserId(sd, user));	
+			pstmtChangeLog.setBoolean(5,true);	
+			pstmtChangeLog.setTimestamp(6, GeneralUtilityMethods.getTimeStamp());
+			pstmtChangeLog.execute();
+			
+			if(warnings.size() == 0) {
+				response = Response.ok(gson.toJson(new Message("success", "", displayName))).build();
+			} else {
+				StringBuilder msg = new StringBuilder("");
+				for(ApplicationWarning w : warnings) {
+					msg.append("<br/> - ").append(w.getMessage());
+				}
+				response = Response.ok(gson.toJson(new Message("warning", msg.toString(), displayName))).build();
+			}
+			
+		} catch(ApplicationException ex) {		
+			response = Response.ok(gson.toJson(new Message("error", ex.getMessage(), displayName))).build();
+		} catch(FileUploadException ex) {
+			log.log(Level.SEVERE,ex.getMessage(), ex);
+			response = Response.serverError().entity(ex.getMessage()).build();
+		} catch(Exception ex) {
+			log.log(Level.SEVERE,ex.getMessage(), ex);
+			response = Response.serverError().entity(ex.getMessage()).build();
+		} finally {
+			if(pstmtChangeLog != null) try {pstmtChangeLog.close();} catch (Exception e) {}
+			if(pstmtUpdateChangeLog != null) try {pstmtUpdateChangeLog.close();} catch (Exception e) {}
+			SDDataSource.closeConnection("CreateXLSForm-uploadForm", sd);
+			ResultsDataSource.closeConnection("CreateXLSForm-uploadForm", cResults);
+			
+		}
+		
+		return response;
+	}
+	
 	/*
 	 * Load oversight form
 	 */
@@ -401,15 +862,24 @@ public class UploadFiles extends Application {
 
 		DiskFileItemFactory  fileItemFactory = new DiskFileItemFactory ();		
 
-		GeneralUtilityMethods.assertBusinessServer(request.getServerName());
+		//GeneralUtilityMethods.assertBusinessServer(request.getServerName());
 
-		fileItemFactory.setSizeThreshold(5*1024*1024); //1 MB TODO handle this with exception and redirect to an error page
+		fileItemFactory.setSizeThreshold(5*1024*1024);
 		ServletFileUpload uploadHandler = new ServletFileUpload(fileItemFactory);
 
 		Connection sd = null; 
+		
+		// Authorisation - Access
+		sd = SDDataSource.getConnection("Tasks-LocationUpload");
+		auth.isAuthorised(sd, request.getRemoteUser());
+		// End authorisation
 
 		try {
-
+			
+			// Get the users locale
+			Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(sd, request, request.getRemoteUser()));
+			ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
+			
 			/*
 			 * Parse the request
 			 */
@@ -460,18 +930,9 @@ public class UploadFiles extends Application {
 				}
 			}
 
-			// Authorisation - Access
-			sd = SDDataSource.getConnection("Tasks-LocationUpload");
-			auth.isAuthorised(sd, request.getRemoteUser());
-			// End authorisation
-
 			boolean isSecurityManager = GeneralUtilityMethods.hasSecurityRole(sd, request.getRemoteUser());
 
-			// Get the users locale
-			Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(sd, request.getRemoteUser()));
-			ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
-
-			int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser(), 0);
+			int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser());
 
 			if(fileName != null) {
 
@@ -548,9 +1009,9 @@ public class UploadFiles extends Application {
 
 		DiskFileItemFactory  fileItemFactory = new DiskFileItemFactory ();		
 
-		GeneralUtilityMethods.assertBusinessServer(request.getServerName());
+		//GeneralUtilityMethods.assertBusinessServer(request.getServerName());
 
-		fileItemFactory.setSizeThreshold(5*1024*1024); //1 MB TODO handle this with exception and redirect to an error page
+		fileItemFactory.setSizeThreshold(5*1024*1024);
 		ServletFileUpload uploadHandler = new ServletFileUpload(fileItemFactory);
 
 		Connection sd = null; 
@@ -612,10 +1073,10 @@ public class UploadFiles extends Application {
 			// End authorisation
 
 			// Get the users locale
-			Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(sd, request.getRemoteUser()));
+			Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(sd, request, request.getRemoteUser()));
 			ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
 
-			int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser(), 0);
+			int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser());
 
 			if(fileName != null) {
 
@@ -672,114 +1133,34 @@ public class UploadFiles extends Application {
 		return response;
 
 	}
+	
 	/*
-	 * Update the survey with any changes resulting from the uploaded CSV file
+	 * Put the CSV file into a database table
 	 */
-	private void applyCSVChanges(Connection connectionSD, 
-			Connection cResults,
-			String user, 
-			int sId, 
-			String csvFileName, 
-			File csvFile,
-			File oldCsvFile,
-			String basePath,
-			MediaInfo mediaInfo) throws Exception {
-		/*
-		 * Find surveys that use this CSV file
-		 */
-		if(sId > 0) {  // TODO A specific survey has been requested
-
-			applyCSVChangesToSurvey(connectionSD, cResults, user, sId, csvFileName, csvFile, oldCsvFile);
-
-		} else {		// Organisational level
-
-			// Get all the surveys that reference this CSV file and are in the same organisation
-			SurveyManager sm = new SurveyManager();
-			ArrayList<Survey> surveys = sm.getByOrganisationAndExternalCSV(connectionSD, user,	csvFileName);
-			for(Survey s : surveys) {
-
-				// Check that there is not already a survey level file with the same name				
-				String surveyUrl = mediaInfo.getUrlForSurveyId(s.id, connectionSD);
-				if(surveyUrl != null) {
-					String surveyPath = basePath + surveyUrl + "/" + csvFileName;
-					File surveyFile = new File(surveyPath);
-					if(surveyFile.exists()) {
-						continue;	// This survey has a survey specific version of the CSV file
-					}
-				}
-
-				try {
-					applyCSVChangesToSurvey(connectionSD, cResults, user, s.id, csvFileName, csvFile, oldCsvFile);
-				} catch (Exception e) {
-					log.log(Level.SEVERE, e.getMessage(), e);
-					// Continue for other surveys
-				}
-			}
-		}
-	}
-
-
-
-	private void applyCSVChangesToSurvey(
-			Connection connectionSD, 
-			Connection cResults,
-			String user, 
-			int sId, 
-			String csvFileName,
-			File csvFile,
-			File oldCsvFile) throws Exception {
-
-		QuestionManager qm = new QuestionManager();
-		SurveyManager sm = new SurveyManager();
-		ArrayList<org.smap.sdal.model.Question> questions = qm.getByCSV(connectionSD, sId, csvFileName);
-		ArrayList<ChangeSet> changes = new ArrayList<ChangeSet> ();
+	private void putCsvIntoTable(
+		Connection sd, 
+		ResourceBundle localisation,
+		String user, 
+		int sId, 
+		String csvFileName, 
+		File csvFile,
+		File oldCsvFile,
+		String basePath,
+		MediaInfo mediaInfo) throws Exception {
 		
-		String sql = "delete from option where l_id = ? and externalfile = 'true'";
-		PreparedStatement pstmt = null;
-		pstmt = connectionSD.prepareStatement(sql);
-
-		try {
-			// Create one change set per question
-			for(org.smap.sdal.model.Question q : questions) {
-	
-				/*
-				 * Create a changeset
-				 */
-				if(csvFile != null) {
-					if(q.type.startsWith("select")) {		// Only add select multiples to ensure the column names are created
-						ChangeSet cs = qm.getCSVChangeSetForQuestion(connectionSD, csvFile, oldCsvFile, csvFileName, q);
-						if(cs.items.size() > 0) {
-							changes.add(cs);
-						}
-					}
-				} else {
-					// File is being deleted just remove the external options for this questions
-					pstmt.setInt(1, q.l_id);
-					log.info("REmove external options: " + pstmt.toString());
-					pstmt.executeUpdate();
-				}
-	
-			}
-	
-			// Apply the changes 
-			if(changes.size() > 0) {
-				sm.applyChangeSetArray(connectionSD, cResults, sId, user, changes, false);
-			} else {
-				// No changes to the survey definition but we will update the survey version so that it gets downloaded with the new CSV data (pulldata only surveys will follow this path)
-				GeneralUtilityMethods.updateVersion(connectionSD, sId);
-			}
-		} finally {
-			if(pstmt != null) try {pstmt.close();} catch(Exception e) {}
-		}
-
+		int oId = GeneralUtilityMethods.getOrganisationId(sd, user);
+		CsvTableManager csvMgr = new CsvTableManager(sd, localisation, oId, sId, csvFileName);
+		csvMgr.updateTable(csvFile, oldCsvFile);
+		
 	}
-
+	
 	/*
 	 * Delete the file
 	 */
 	private void deleteFile(
 			HttpServletRequest request, 
 			Connection sd, 
+			ResourceBundle localisation,
 			String basePath, 
 			String serverName, 
 			String sIdent, 
@@ -822,11 +1203,11 @@ public class UploadFiles extends Application {
 					mediaInfo.setFolder(basePath, sId, null, sd);
 				} else {	
 					// Upload to organisations folder
-					mediaInfo.setFolder(basePath, user, null, sd, false);				 
+					mediaInfo.setFolder(basePath, user, oId, sd, false);				 
 				}
 				mediaInfo.setServer(request.getRequestURL().toString());
 				
-				applyCSVChanges(sd, null, user, sId, fileName, null, null, basePath, mediaInfo);
+				//applyCSVChanges(sd, null, localisation, user, sId, fileName, null, null, basePath, mediaInfo);
 			}
 
 			f.delete();		
@@ -852,5 +1233,3 @@ public class UploadFiles extends Application {
 	}
 
 }
-
-

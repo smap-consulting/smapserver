@@ -23,19 +23,24 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Context;
 
-import org.codehaus.jettison.json.JSONArray;
-import org.codehaus.jettison.json.JSONException;
-import org.codehaus.jettison.json.JSONObject;
 import org.smap.sdal.Utilities.Authorise;
+import org.smap.sdal.Utilities.GeneralUtilityMethods;
+import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
+import org.smap.sdal.model.LanguageItem;
+import org.smap.sdal.model.Option;
+import org.smap.sdal.model.OptionLite;
+
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 import java.sql.*;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.Locale;
+import java.util.ResourceBundle;
 
 /*
  * Returns a list of all options for the specified question
@@ -43,7 +48,14 @@ import java.util.Set;
 @Path("/optionList/{sId}/{language}/{qId}")
 public class OptionList extends Application {
 
-	Authorise a = new Authorise(null, Authorise.ANALYST);
+	Authorise a = null;
+	
+	public OptionList() {
+		ArrayList<String> authorisations = new ArrayList<String> ();	
+		authorisations.add(Authorise.ANALYST);
+		authorisations.add(Authorise.VIEW_DATA);
+		a = new Authorise(authorisations, null);
+	}
 	
 	@GET
 	@Produces("application/json")
@@ -51,68 +63,101 @@ public class OptionList extends Application {
 			@PathParam("sId") int sId, 
 			@PathParam("language") String language,
 			@PathParam("qId") int qId) { 
-			
-		try {
-		    Class.forName("org.postgresql.Driver");	 
-		} catch (ClassNotFoundException e) {
-		    e.printStackTrace();
-		    return "Error: Can't find PostgreSQL JDBC Driver";
-		}
+	
+		String connectionString = "surveyKPI-OptionList";
 		
 		// Authorisation - Access
-		Connection connectionSD = SDDataSource.getConnection("surveyKPI-OptionList");
-		a.isAuthorised(connectionSD, request.getRemoteUser());
+		Connection sd = SDDataSource.getConnection(connectionString);
+		a.isAuthorised(sd, request.getRemoteUser());
+		a.isValidQuestion(sd, request.getRemoteUser(), sId, qId);
 		// End Authorisation
 		
-		JSONArray jaOptions = new JSONArray();
+		ArrayList<OptionLite> options = new ArrayList<> ();
+		Gson gson =  new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd").create();
 
+		Connection cResults = null;
 		PreparedStatement pstmt = null;
 		try {
-			String sql = null;
-			ResultSet resultSet = null;
+			// Get the users locale
+			Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(sd, request, request.getRemoteUser()));
+			ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
 			
-			/*
-			 * Get the options for this question
-			 * TODO support multiple languages
-			 */
-			sql = "SELECT o.o_id, o.ovalue, t.value " +
-					"FROM option o, translation t, question q " +  		
-					"WHERE o.label_id = t.text_id " +
-					"AND t.s_id =  ? " + 
-					"AND t.language = ? " +
-					"AND q.q_id = ? " +
-					"AND q.l_id = o.l_id " +
-					"ORDER BY o.seq;";			
+			String tz = "UTC";
 			
-			pstmt = connectionSD.prepareStatement(sql);	
-			pstmt.setInt(1, sId);
-			pstmt.setString(2, language);
-			pstmt.setInt(3, qId);
-			resultSet = pstmt.executeQuery(); 
-			while(resultSet.next()) {
-				String id = resultSet.getString(1);
-				String v = resultSet.getString(2);
-				String o = resultSet.getString(3);
-				JSONObject joOptions = new JSONObject();
+			cResults = ResultsDataSource.getConnection(connectionString);
+			boolean external = GeneralUtilityMethods.hasExternalChoices(sd, qId);
+			
+			if(external) {
+				String surveyIdent = GeneralUtilityMethods.getSurveyIdent(sd, sId);
+				int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser());
+				ArrayList<Option> oExternal = GeneralUtilityMethods.getExternalChoices(sd, 
+						cResults, localisation, request.getRemoteUser(), oId, sId, qId, null, surveyIdent, tz);
+				int idx = 0;
+				int languageIdx = 0;
+				for(Option o : oExternal) {
+					OptionLite ol = new OptionLite();
+					ol.id = o.id;
+					ol.value = o.value;
+					
+					// Get the label for the passed in language
+					if(idx++ == 0) {		// Get the language index - only need to do this for the first choice					
+						for(LanguageItem item : o.externalLabel) {
+							if(language == null || language.equals("none") || language.equals(item.language)) {
+								break;
+							} else {
+								languageIdx++;
+							}
+						}
+					} 
+					if(o.labels != null && o.labels.size() > languageIdx) {
+						ol.label = o.labels.get(languageIdx).text;
+					}
+					
+					options.add(ol);
+				}
+			} else {
+				String sql = null;
+				ResultSet resultSet = null;
 				
-				joOptions.put("id", id);
-				joOptions.put("label",o);
-				joOptions.put("value", v);
-				jaOptions.put(joOptions);			
+				/*
+				 * Get the internal options for this question
+				 */
+				sql = "SELECT o.o_id, o.ovalue, t.value " +
+						"FROM option o, translation t, question q " +  		
+						"WHERE o.label_id = t.text_id " +
+						"AND t.s_id =  ? " + 
+						"AND t.language = ? " +
+						"AND q.q_id = ? " +
+						"AND q.l_id = o.l_id " +
+						"ORDER BY o.seq;";			
+				
+				pstmt = sd.prepareStatement(sql);	
+				pstmt.setInt(1, sId);
+				pstmt.setString(2, language);
+				pstmt.setInt(3, qId);
+				resultSet = pstmt.executeQuery(); 
+				while(resultSet.next()) {
+					OptionLite o = new OptionLite();
+					
+					o.id = resultSet.getInt(1);
+					o.value = resultSet.getString(2);
+					o.label = resultSet.getString(3);
+	
+					options.add(o);			
+				}
 			}
 				
-		} catch (SQLException e) {
-		    e.printStackTrace();
-		} catch (JSONException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 		} finally {
 			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 			
-			SDDataSource.closeConnection("surveyKPI-OptionList", connectionSD);
+			SDDataSource.closeConnection(connectionString, sd);
+			ResultsDataSource.closeConnection(connectionString, cResults);
 		}
 
 
-		return jaOptions.toString();
+		return gson.toJson(options);
 	}
 
 }

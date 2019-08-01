@@ -40,8 +40,6 @@ import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.managers.CustomReportsManager;
 import org.smap.sdal.model.CustomReportItem;
 import org.smap.sdal.model.ReportConfig;
-import org.smap.sdal.model.TableColumn;
-
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
@@ -65,6 +63,7 @@ public class CustomReports extends Application {
 		
 		ArrayList<String> authorisations = new ArrayList<String> ();	
 		authorisations.add(Authorise.ANALYST);
+		authorisations.add(Authorise.VIEW_DATA);
 		authorisations.add(Authorise.ADMIN);
 		a = new Authorise(authorisations, null);		
 	}
@@ -86,7 +85,7 @@ public class CustomReports extends Application {
 		Response response = null;
 		Gson gson=  new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd").create();
 		try {
-			int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser(), 0);
+			int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser());
 			CustomReportsManager crm = new CustomReportsManager();
 			ArrayList<CustomReportItem> reports = crm.getList(sd, oId, type, negateType);
 			response = Response.ok(gson.toJson(reports)).build();
@@ -117,13 +116,6 @@ public class CustomReports extends Application {
 		
 		Response response = null;
 		
-		try {
-		    Class.forName("org.postgresql.Driver");	 
-		} catch (ClassNotFoundException e) {
-			log.log(Level.SEVERE,"Survey: Error: Can't find PostgreSQL JDBC Driver", e);
-		    response = Response.serverError().entity("Survey: Error: Can't find PostgreSQL JDBC Driver").build();
-		    return response;
-		}
 		
 		// Authorisation - Access
 		Connection sd = SDDataSource.getConnection("surveyKPI-CustomReports");
@@ -133,10 +125,10 @@ public class CustomReports extends Application {
 		try {
 			
 			// Get the users locale
-			Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(sd, request.getRemoteUser()));
+			Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(sd, request, request.getRemoteUser()));
 			ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
 			
-			int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser(), 0);
+			int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser());
 			CustomReportsManager crm = new CustomReportsManager();
 			crm.delete(sd, oId, id, localisation);
 			
@@ -178,18 +170,6 @@ public class CustomReports extends Application {
 		
 		Response responseVal = null;
 		
-		try {
-		    Class.forName("org.postgresql.Driver");	 
-		} catch (ClassNotFoundException e) {
-			log.log(Level.SEVERE,"Survey: Error: Can't find PostgreSQL JDBC Driver", e);
-			 try {
-			    	response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, 
-			    		"Survey: Error: Can't find PostgreSQL JDBC Driver");
-			  } catch (Exception ex) {
-			    	log.log(Level.SEVERE, "Exception", ex);
-			  }
-		}
-		
 		// Authorisation - Access
 		Connection sd = SDDataSource.getConnection("surveyKPI-ExportOversight");
 		a.isAuthorised(sd, request.getRemoteUser());
@@ -204,9 +184,9 @@ public class CustomReports extends Application {
 		
 		try {
 			
-			int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser(), 0);
+			int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser());
 			// Get the users locale
-			Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(sd, request.getRemoteUser()));
+			Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(sd, request, request.getRemoteUser()));
 			ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
 			
 			CustomReportsManager crm = new CustomReportsManager ();

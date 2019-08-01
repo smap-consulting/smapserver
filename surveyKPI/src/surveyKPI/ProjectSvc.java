@@ -60,14 +60,6 @@ public class ProjectSvc extends Application {
 		QuestionInfo geom = null;
 		ArrayList<QuestionInfo> q = new ArrayList<QuestionInfo> ();
 		
-		
-		// Get the Postgres driver
-		try {
-		    Class.forName("org.postgresql.Driver");	 
-		} catch (ClassNotFoundException e) {
-			log.log(Level.SEVERE, "Error: Can't find PostgreSQL JDBC Driver", e);
-		    return "Error: Can't find PostgreSQL JDBC Driver";
-		}
 		 
 		Connection dConnection = null;
 		PreparedStatement pstmt = null;

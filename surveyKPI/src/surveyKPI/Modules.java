@@ -59,15 +59,6 @@ public class Modules extends Application {
 			@PathParam("sId") String sId) { 
 		
 		Response response = null;	
-			
-		try {
-		    Class.forName("org.postgresql.Driver");	 
-		} catch (ClassNotFoundException e) {
-		    System.out.println("Error: Can't find PostgreSQL JDBC Driver");
-		    e.printStackTrace();
-			response = Response.serverError().build();
-		    return response;
-		}
 		
 		// Authorisation - Access
 		Connection connectionSD = SDDataSource.getConnection("surveyKPI-Modules");

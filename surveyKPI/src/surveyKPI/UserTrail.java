@@ -104,14 +104,7 @@ public class UserTrail extends Application {
 
 
 		Response response = null;
-		
-		try {
-		    Class.forName("org.postgresql.Driver");	 
-		} catch (ClassNotFoundException e) {
-			log.log(Level.SEVERE, "Class not found Exception", e);
-			response = Response.serverError().entity(e.getMessage()).build();
-		}
-		
+
 		Timestamp startDate = new Timestamp(start_t);
 		Timestamp endDate = new Timestamp(end_t);
 			
@@ -201,14 +194,7 @@ public class UserTrail extends Application {
 			@QueryParam("endDate") long end_t) {
 
 		Response response = null;
-		
-		try {
-		    Class.forName("org.postgresql.Driver");	 
-		} catch (ClassNotFoundException e) {
-			log.log(Level.SEVERE, "Class not found Exception", e);
-			response = Response.serverError().entity(e.getMessage()).build();
-		}
-		
+
 		log.info("Get Survey Locations: Project id:" + projectId);
 
 		String user = request.getRemoteUser();

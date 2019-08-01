@@ -33,6 +33,7 @@ import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.SDDataSource;
 
 import java.sql.*;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.logging.Level;
@@ -51,11 +52,17 @@ import java.util.logging.Logger;
 @Path("/question/{sId}/{lang}/{qId}")
 public class QuestionDetail extends Application {
 	
-	Authorise a = new Authorise(null, Authorise.ANALYST);
+	Authorise a = null;
 
 	private static Logger log =
 			 Logger.getLogger(QuestionDetail.class.getName());
 
+	public QuestionDetail() {
+		ArrayList<String> authorisations = new ArrayList<String> ();	
+		authorisations.add(Authorise.ANALYST);
+		authorisations.add(Authorise.VIEW_DATA);
+		a = new Authorise(authorisations, null);	
+	}
 	
 	@Path("/getMeta")
 	@GET
@@ -65,13 +72,6 @@ public class QuestionDetail extends Application {
 			@PathParam("sId") String sId, 
 			@PathParam("lang") String lang, 
 			@PathParam("qId") String qId) { 
-
-		try {
-		    Class.forName("org.postgresql.Driver");	 
-		} catch (ClassNotFoundException e) {
-			log.log(Level.SEVERE, "Error: Can't find PostgreSQL JDBC Driver", e);
-		    return "Error: Can't find PostgreSQL JDBC Driver";
-		}
 
 		// Authorisation - Access
 		Connection connectionSD = SDDataSource.getConnection("surveyKPI-Question");

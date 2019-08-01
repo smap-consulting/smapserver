@@ -91,6 +91,7 @@ public class Queries extends Application {
 	public Queries() {
 		ArrayList<String> authorisations = new ArrayList<String> ();	
 		authorisations.add(Authorise.ANALYST);
+		authorisations.add(Authorise.VIEW_DATA);
 		authorisations.add(Authorise.ADMIN);
 		a = new Authorise(authorisations, null);
 	}
@@ -105,7 +106,7 @@ public class Queries extends Application {
 			@Context HttpServletRequest request
 			) throws IOException {
 		
-		GeneralUtilityMethods.assertBusinessServer(request.getServerName());
+		//GeneralUtilityMethods.assertBusinessServer(request.getServerName());
 		
 		Response response = null;
 		Connection sd = SDDataSource.getConnection("surveyKPI-get query");
@@ -143,7 +144,7 @@ public class Queries extends Application {
 			@FormParam("query") String queryString,
 			@Context HttpServletRequest request) {
 		
-		GeneralUtilityMethods.assertBusinessServer(request.getServerName());
+		//GeneralUtilityMethods.assertBusinessServer(request.getServerName());
 		
 		Response response = null;
 		Connection sd = SDDataSource.getConnection("surveyKPI-save query");

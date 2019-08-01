@@ -41,10 +41,11 @@ import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
+import org.smap.sdal.constants.SmapServerMeta;
 import org.smap.sdal.managers.LogManager;
 import org.smap.sdal.managers.MessagingManager;
-import org.smap.sdal.managers.ServerManager;
 import org.smap.sdal.managers.SurveyManager;
+import org.smap.sdal.model.MetaItem;
 import org.smap.sdal.model.SurveyLinkDetails;
 import org.smap.server.utilities.GetXForm;
 
@@ -52,13 +53,11 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.sql.*;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.HashMap;
+import java.util.Locale;
+import java.util.ResourceBundle;
 import java.util.Stack;
-import java.util.TimeZone;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -93,6 +92,7 @@ public class Survey extends Application {
 
 		ArrayList<String> authorisations = new ArrayList<String> ();	
 		authorisations.add(Authorise.ANALYST);
+		authorisations.add(Authorise.VIEW_DATA);
 		authorisations.add(Authorise.ADMIN);
 		a = new Authorise(authorisations, null);
 
@@ -107,18 +107,17 @@ public class Survey extends Application {
 
 		ResponseBuilder builder = Response.ok();
 		Response response = null;
-
-		try {
-			Class.forName("org.postgresql.Driver");	 
-		} catch (ClassNotFoundException e) {
-			log.log(Level.SEVERE,"Survey: Error: Can't find PostgreSQL JDBC Driver", e);
-			response = Response.serverError().entity("Survey: Error: Can't find PostgreSQL JDBC Driver").build();
-			return response;
-		}
+		String connectionString = "surveyKPI-Survey-getSurveyDownload";
 
 		// Authorisation - Access
-		Connection connectionSD = SDDataSource.getConnection("surveyKPI-Survey-getSurveyDownload");
-		a.isAuthorised(connectionSD, request.getRemoteUser());
+		Connection sd = SDDataSource.getConnection(connectionString);
+		boolean superUser = false;
+		try {
+			superUser = GeneralUtilityMethods.isSuperUser(sd, request.getRemoteUser());
+		} catch (Exception e) {
+		}
+		a.isAuthorised(sd, request.getRemoteUser());
+		a.isValidDelSurvey(sd, request.getRemoteUser(), sId, superUser);
 		// End Authorisation
 
 		if(type == null) {
@@ -127,12 +126,18 @@ public class Survey extends Application {
 
 		PreparedStatement pstmt = null;
 		try {
+			
+			// Get the users locale
+			Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(sd, request, request.getRemoteUser()));
+			ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
+			
+			String tz = "UTC";	// Set default for timezone
+			
 			String sourceName = null;
 			String display_name = null;
 			String fileBasePath = null;		// File path excluding extensions
 			String folderPath = null;
 			String filename = null;
-			String filepath = null;
 			String sourceExt = null;
 			int projectId = 0;
 
@@ -146,7 +151,7 @@ public class Survey extends Application {
 					"FROM survey s " + 
 					"where s.s_id = ?;";
 
-			pstmt = connectionSD.prepareStatement(sql);
+			pstmt = sd.prepareStatement(sql);
 			pstmt.setInt(1, sId);
 			log.info("Get survey details: " + pstmt.toString());
 			resultSet = pstmt.executeQuery();
@@ -176,6 +181,13 @@ public class Survey extends Application {
 					sourceExt = "." + type;
 				}
 				sourceName = fileBasePath + sourceExt;
+				
+				String sourceNameXls = null;
+				String sourceNameXlsX = null;
+				if(type.equals("xls")) {
+					sourceNameXls = fileBasePath + ".xls";
+					sourceNameXlsX = fileBasePath + ".xlsx";
+				}
 
 				log.info("Source name: " + sourceName + " type: " + type);
 				/*
@@ -184,12 +196,12 @@ public class Survey extends Application {
 				if(type.equals("codebook") || type.equals("xml")) {
 
 					try {
-						SurveyTemplate template = new SurveyTemplate();
+						SurveyTemplate template = new SurveyTemplate(localisation);
 						template.readDatabase(sId, false);
-						GetXForm xForm = new GetXForm();
+						GetXForm xForm = new GetXForm(localisation, request.getRemoteUser(), tz);
 
 						boolean useNodesets = !type.equals("codebook");		// For codebooks do not create nodesets in the XML
-						String xmlForm = xForm.get(template, false, useNodesets, false);
+						String xmlForm = xForm.get(template, false, useNodesets, false, request.getRemoteUser());
 
 						// 1. Create the project folder if it does not exist
 						File folder = new File(folderPath);
@@ -215,23 +227,19 @@ public class Survey extends Application {
 
 				}
 
-				// Check for the existence of the source file, if it isn't at the standard location try obsolete locations
-				File sourceFile = new File(sourceName);
-				if(!sourceFile.exists()) {
-					// Probably this is an old survey that is missing the projectId path in the path
-					log.info("Locating old survey");
-
-					if(type.equals("xls")) {
-						fileBasePath = basePath + "/templates/xls/" + target_name; // Old xls files were in their own folder
-					} else {
-						fileBasePath = basePath + "/templates/" + target_name;
+				// Check for the existence of the source file
+				File outputFile = null;
+				if(type.equals("xls")) {
+					outputFile = new File(sourceNameXlsX);
+					if(!outputFile.exists()) {
+						outputFile = new File(sourceNameXls);
 					}
-					sourceName =  fileBasePath + sourceExt;	
+				} else {
+					String filepath = fileBasePath + ext;
+					outputFile = new File(filepath);
 				}
 
-				filepath = fileBasePath + ext;
 				filename = target_name + ext;
-
 				try {  		
 					int code = 0;
 					if(type.equals("codebook")) {
@@ -242,8 +250,7 @@ public class Survey extends Application {
 						log.info("Process exitValue: " + code);
 					}
 
-					File file = new File(filepath);
-					builder = Response.ok(file);
+					builder = Response.ok(outputFile);
 					if(type.equals("codebook")) {
 						builder.header("Content-type","application/pdf; charset=UTF-8");
 					} else if(type.equals("xls")) {
@@ -271,13 +278,131 @@ public class Survey extends Application {
 
 			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 
-			SDDataSource.closeConnection("surveyKPI-Survey-getSurveyDownload", connectionSD);
+			SDDataSource.closeConnection(connectionString, sd);
 
 		}
 
 		return response;
 	}
 
+	/*
+	 * Get a public link to a webform for this survey
+	 */
+	@Path("/link/")
+	@GET
+	@Produces("application/text")
+	public Response getLink(@Context HttpServletRequest request,
+			@PathParam("sId") int sId) { 
+
+		Response response = null;
+		
+		// Authorisation - Access
+		Connection sd = SDDataSource.getConnection("surveyKPI-Survey-getLink");
+		a.isAuthorised(sd, request.getRemoteUser());
+		boolean superUser = false;
+		try {
+			superUser = GeneralUtilityMethods.isSuperUser(sd, request.getRemoteUser());
+		} catch (Exception e) {
+		}
+		a.isValidSurvey(sd, request.getRemoteUser(), sId, false, superUser);
+		// End Authorisation
+		
+		String sql = "update survey set public_link = ? where s_id = ?";
+		PreparedStatement pstmt = null;
+		try {
+			// Localisation			
+			Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(sd, request, request.getRemoteUser()));
+			ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
+						
+			int oId = GeneralUtilityMethods.getOrganisationIdForSurvey(sd, sId);
+			int pId = GeneralUtilityMethods.getProjectId(sd, sId);
+			String sIdent = GeneralUtilityMethods.getSurveyIdent(sd, sId);
+			String tempUserId = GeneralUtilityMethods.createTempUser(
+					sd,
+					localisation,
+					oId,
+					null, 
+					"", 
+					pId,
+					null);
+			String link = GeneralUtilityMethods.getUrlPrefix(request) + "webForm/id/" + tempUserId + 
+					"/" + sIdent;
+			
+			// Store the link with the survey
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setString(1, link);
+			pstmt.setInt(2, sId);
+			pstmt.executeUpdate();
+			
+			response = Response.ok(link).build();
+			
+		} catch (Exception e) {
+			log.log(Level.SEVERE,e.getMessage(), e);
+			response = Response.serverError().entity(e.getMessage()).build();
+		} finally {
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+			SDDataSource.closeConnection("surveyKPI-Survey-getLink", sd);
+		}
+		
+		return response;
+	}
+	
+	/*
+	 * Delete a public link to a webform for this survey
+	 */
+	@Path("/deletelink/{ident}")
+	@DELETE
+	@Produces("application/text")
+	public Response deleteLink(@Context HttpServletRequest request,
+			@PathParam("sId") int sId,
+			@PathParam("ident") String ident) { 
+
+		Response response = null;
+		
+		// Authorisation - Access
+		Connection sd = SDDataSource.getConnection("surveyKPI-Survey-deleteLink");
+		a.isAuthorised(sd, request.getRemoteUser());
+		boolean superUser = false;
+		try {
+			superUser = GeneralUtilityMethods.isSuperUser(sd, request.getRemoteUser());
+		} catch (Exception e) {
+		}
+		a.isValidSurvey(sd, request.getRemoteUser(), sId, false, superUser);
+		// End Authorisation
+		
+
+		String sql = "update survey set public_link = null where s_id = ?";
+		PreparedStatement pstmt = null;;
+		try {
+			
+			// Localisation			
+			Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(sd, request, request.getRemoteUser()));
+			ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
+			
+			/*
+			 * Delete the temporary user
+			 */
+			int oId = GeneralUtilityMethods.getOrganisationIdForSurvey(sd, sId);
+			GeneralUtilityMethods.deleteTempUser(sd, localisation, oId, ident);
+			
+			// Delete the link from the survey
+			pstmt = sd.prepareStatement(sql);
+			pstmt.setInt(1, sId);
+			pstmt.executeUpdate();
+			
+			response = Response.ok("").build();
+			
+		} catch (Exception e) {
+			log.log(Level.SEVERE,e.getMessage(), e);
+			response = Response.serverError().entity(e.getMessage()).build();
+		} finally {
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+			SDDataSource.closeConnection("surveyKPI-Survey-deleteLink", sd);
+		}
+		
+		return response;
+	}
+	
 	/*
 	 * Get the Survey Meta data
 	 */
@@ -300,17 +425,9 @@ public class Survey extends Application {
 		Response response = null;
 		String topTableName = null;
 
-		try {
-			Class.forName("org.postgresql.Driver");	 
-		} catch (ClassNotFoundException e) {
-			log.log(Level.SEVERE,"Survey: Error: Can't find PostgreSQL JDBC Driver", e);
-			response = Response.serverError().entity("Survey: Error: Can't find PostgreSQL JDBC Driver").build();
-			return response;
-		}
-
 		// Authorisation - Access
-		Connection connectionSD = SDDataSource.getConnection("surveyKPI-Survey-getSurveyMeta");
-		a.isAuthorised(connectionSD, request.getRemoteUser());
+		Connection sd = SDDataSource.getConnection("surveyKPI-Survey-getSurveyMeta");
+		a.isAuthorised(sd, request.getRemoteUser());
 		// End Authorisation
 
 		JSONObject jo = new JSONObject();
@@ -326,9 +443,10 @@ public class Survey extends Application {
 			String sqlTables = "select "
 					+ "f.table_name, f.name, f_id, f.parentform "
 					+ "from form f "
-					+ "where f.s_id = ? " 
+					+ "where f.s_id = ? "
+					+ "and f.reference = 'false' " 
 					+ "order by f.table_name";		
-			pstmtTables = connectionSD.prepareStatement(sqlTables);	
+			pstmtTables = sd.prepareStatement(sqlTables);	
 
 			String sqlGeom = "select q.q_id "
 					+ "from form f, question q "
@@ -340,8 +458,11 @@ public class Survey extends Application {
 					+ "or q.qtype='geotrace') "
 					+ "and f.f_id = ? "
 					+ "and f.s_id = ?";
-			pstmtGeom = connectionSD.prepareStatement(sqlTables);	
+			pstmtGeom = sd.prepareStatement(sqlTables);	
 
+			// Get the preloads
+			ArrayList<MetaItem> preloads = GeneralUtilityMethods.getPreloads(sd, sId);
+			
 			// Add the sId to the response so that it is available in the survey meta object
 			jo.put("sId", sId);
 
@@ -384,7 +505,7 @@ public class Survey extends Application {
 				if(extended) {
 
 					// Get the surveys that link to this one
-					ArrayList<SurveyLinkDetails> sList = GeneralUtilityMethods.getLinkingSurveys(connectionSD, currentSurveyId);
+					ArrayList<SurveyLinkDetails> sList = GeneralUtilityMethods.getLinkingSurveys(sd, currentSurveyId);
 					if(sList.size() > 0) {
 						for(SurveyLinkDetails link : sList) {
 							completeLinks.put(link.getId(), link);
@@ -399,7 +520,7 @@ public class Survey extends Application {
 					}
 
 					// Get the surveys that this survey links to
-					sList = GeneralUtilityMethods.getLinkedSurveys(connectionSD, currentSurveyId);
+					sList = GeneralUtilityMethods.getLinkedSurveys(sd, currentSurveyId);
 					if(sList.size() > 0) {
 						for(SurveyLinkDetails link : sList) {
 							completeLinks.put(link.getId(), link);
@@ -415,6 +536,7 @@ public class Survey extends Application {
 				}
 
 				pstmtTables.setInt(1, currentSurveyId);
+				log.info("Get tables :" + pstmtTables.toString());
 				resultSet = pstmtTables.executeQuery();
 
 				while (resultSet.next()) {							
@@ -442,7 +564,7 @@ public class Survey extends Application {
 					}
 
 					// Get any geometry questions for this table
-					pstmtGeom = connectionSD.prepareStatement(sqlGeom);
+					pstmtGeom = sd.prepareStatement(sqlGeom);
 					pstmtGeom.setInt(1, fId);
 					pstmtGeom.setInt(2, sId);
 					resultSetTable = pstmtGeom.executeQuery();
@@ -531,7 +653,7 @@ public class Survey extends Application {
 
 				for(Integer surveyId : completedSurveys.keySet()) {
 					JSONObject js = new JSONObject();
-					String sName = GeneralUtilityMethods.getSurveyName(connectionSD, surveyId);
+					String sName = GeneralUtilityMethods.getSurveyName(sd, surveyId);
 					js.put("sId", surveyId);
 					js.put("name", sName);
 					jSurveys.put(js);
@@ -555,7 +677,7 @@ public class Survey extends Application {
 					+ "and f.s_id = ?"; 	
 
 
-			pstmt = connectionSD.prepareStatement(sql);
+			pstmt = sd.prepareStatement(sql);
 			pstmt.setInt(1, sId);
 			resultSet = pstmt.executeQuery();
 
@@ -568,13 +690,43 @@ public class Survey extends Application {
 				dateInfoList.add(di);
 			}	
 
-			if(GeneralUtilityMethods.columnType(connectionRel, topTableName, "_upload_time") != null) {
+			// Add upload time
+			if(GeneralUtilityMethods.columnType(connectionRel, topTableName, SmapServerMeta.UPLOAD_TIME_NAME) != null) {
 				DateInfo di = new DateInfo();
 
-				di.columnName = "_upload_time";
+				di.columnName = SmapServerMeta.UPLOAD_TIME_NAME;
 				di.name = "Upload Time";
-				di.qId = SurveyManager.UPLOAD_TIME_ID;
+				di.qId = SmapServerMeta.UPLOAD_TIME_ID;
 				dateInfoList.add(di);
+			}
+			
+			// Add scheduled start
+			if(GeneralUtilityMethods.columnType(connectionRel, topTableName, SmapServerMeta.SCHEDULED_START_NAME) != null) {
+				DateInfo di = new DateInfo();
+
+				di.columnName = SmapServerMeta.SCHEDULED_START_NAME;
+				di.name = "Scheduled Start";
+				di.qId = SmapServerMeta.SCHEDULED_START_ID;
+				dateInfoList.add(di);
+			}
+			
+			// Add preloads
+			int metaId = -1000;		// Backward compatability to when meta items did not have an id
+			for(MetaItem mi : preloads) {
+				if(mi.type.equals("dateTime") || mi.type.equals("date")) {
+					DateInfo di = new DateInfo();
+
+					int id = (mi.id <= -1000) ? mi.id : metaId--;
+					di.columnName = mi.columnName;
+					if(mi.display_name != null) {
+						di.name = mi.display_name;
+					} else {
+						di.name = mi.name;
+					}
+					
+					di.qId = id;
+					dateInfoList.add(di);
+				}
 			}
 
 			ja = new JSONArray();
@@ -619,7 +771,7 @@ public class Survey extends Application {
 					+ "where s.s_id = ?";
 
 			if(pstmt != null) try {pstmt.close();}catch(Exception e) {}
-			pstmt = connectionSD.prepareStatement(sql);
+			pstmt = sd.prepareStatement(sql);
 			pstmt.setInt(1, sId);
 			resultSet = pstmt.executeQuery();
 
@@ -649,7 +801,7 @@ public class Survey extends Application {
 			try {if (pstmtTables != null) {pstmtTables.close();}} catch (SQLException e) {}
 			try {if (pstmtGeom != null) {pstmtGeom.close();}} catch (SQLException e) {}
 
-			SDDataSource.closeConnection("surveyKPI-Survey-getSurveyMeta", connectionSD);
+			SDDataSource.closeConnection("surveyKPI-Survey-getSurveyMeta", sd);
 			ResultsDataSource.closeConnection("surveyKPI-Survey-getSurveyMeta", connectionRel);
 		}
 
@@ -893,160 +1045,48 @@ public class Survey extends Application {
 
 		log.info("Deleting template:" + sId);
 
+		Connection cResults = null;
 		// Authorisation - Access
-		Connection connectionSD = SDDataSource.getConnection("surveyKPI-Survey");
+		Connection sd = SDDataSource.getConnection("surveyKPI-Survey");
 		boolean superUser = false;
 		try {
-			superUser = GeneralUtilityMethods.isSuperUser(connectionSD, request.getRemoteUser());
+			superUser = GeneralUtilityMethods.isSuperUser(sd, request.getRemoteUser());
 		} catch (Exception e) {
 		}
-		a.isAuthorised(connectionSD, request.getRemoteUser());
+		a.isAuthorised(sd, request.getRemoteUser());
 		boolean surveyMustBeDeleted = undelete || hard;
-		a.isValidSurvey(connectionSD, request.getRemoteUser(), sId, surveyMustBeDeleted, superUser);  // Note if hard delete is set to true the survey should have already been soft deleted
+		a.isValidSurvey(sd, request.getRemoteUser(), sId, surveyMustBeDeleted, superUser);  // Note if hard delete is set to true the survey should have already been soft deleted
 		// End Authorisation
 
 		if(sId != 0) {
-
-			String sql = null;				
-			Connection connectionRel = null; 
-			PreparedStatement pstmt = null;
-			PreparedStatement pstmtDelTem = null;
-			PreparedStatement pstmtIdent = null;
-
+			
 			try {
-				if(undelete) {
-					/*
-					 * Restore the survey
-					 */
-					sql = "update survey set deleted='false', last_updated_time = now() where s_id = ?;";	
-					log.info(sql + " : " + sId);
-					pstmt = connectionSD.prepareStatement(sql);
-					pstmt.setInt(1, sId);
-					pstmt.executeUpdate();
-					lm.writeLog(connectionSD, sId, request.getRemoteUser(), "restore", "Restore survey ");
-					log.info("userevent: " + request.getRemoteUser() + " : un delete survey : " + sId);
-
+				// Get the users locale
+				Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(sd, request, request.getRemoteUser()));
+				ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
+				
+				SurveyManager mgr = new SurveyManager(localisation, "UTC");
+				
+				if(undelete) {				 
+					mgr.restore(sd, sId, request.getRemoteUser());	// Restore the survey
 				} else {
-
-					// Get the survey ident and name
-					String surveyIdent = null;
-					String surveyName = null;
-					String surveyDisplayName = null;
-					int projectId = 0;
-					sql = "SELECT s.name, s.ident, s.display_name, s.p_id " +
-							"FROM survey s " + 
-							"where s.s_id = ?;";
-
-					pstmtIdent = connectionSD.prepareStatement(sql);
-					pstmtIdent.setInt(1, sId);
-					log.info("Get survey name and ident: " + pstmtIdent.toString());
-					ResultSet resultSet = pstmtIdent.executeQuery();
-
-					if (resultSet.next()) {		
-						surveyName = resultSet.getString("name");
-						surveyIdent = resultSet.getString("ident");
-						surveyDisplayName = resultSet.getString("display_name");
-						projectId = resultSet.getInt("p_id");
-					}
-
-					/*
-					 * Delete the survey. Either a soft or a hard delete
-					 */
-					if(hard) {
-
-						connectionRel = ResultsDataSource.getConnection("surveyKPI-Survey");
-						String basePath = GeneralUtilityMethods.getBasePath(request);
-						ServerManager sm = new ServerManager();
-						sm.deleteSurvey(
-								connectionSD, 
-								connectionRel,
-								request.getRemoteUser(),
-								projectId,
-								sId,
-								surveyIdent,
-								surveyDisplayName,
-								basePath,
-								delData,
-								tables);
-
-					} else {
-
-						// Add date and time to the display name
-						DateFormat dateFormat = new SimpleDateFormat("yyyy_MM_dd HH:mm:ss");
-						dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
-						Calendar cal = Calendar.getInstance(TimeZone.getTimeZone("UTC"));		// Store all dates in UTC
-						String newDisplayName = surveyDisplayName + " (" + dateFormat.format(cal.getTime()) + ")";
-
-						// Update the "name"
-						String newName = null;
-						if(surveyName != null) {
-							int idx = surveyName.lastIndexOf('/');
-							newName = surveyName;
-							if(idx > 0) {
-								newName = surveyName.substring(0, idx + 1) + GeneralUtilityMethods.convertDisplayNameToFileName(newDisplayName) + ".xml";
-							}
-						}
-
-						// Update the survey definition to indicate that the survey has been deleted
-						// Add the current date and time to the name and display name to ensure the deleted survey has a unique name 
-						sql = "update survey set " +
-								" deleted='true', " +
-								" last_updated_time = now(), " +
-								" name = ?, " +
-								" display_name = ? " +
-								"where s_id = ?;";	
-
-						pstmt = connectionSD.prepareStatement(sql);
-						pstmt.setString(1, newName);
-						pstmt.setString(2, newDisplayName);
-						pstmt.setInt(3, sId);
-						log.info("Soft delete survey: " + pstmt.toString());
-						pstmt.executeUpdate();
-
-						lm.writeLog(connectionSD, sId, request.getRemoteUser(), "delete", "Soft Delete survey " + surveyDisplayName);
-						log.info("userevent: " + request.getRemoteUser() + " : soft delete survey : " + sId);
-
-						// Rename files
-						String basePath = GeneralUtilityMethods.getBasePath(request);
-						GeneralUtilityMethods.renameTemplateFiles(surveyDisplayName, newDisplayName, basePath, projectId, projectId);
-					}
-
-					/*
-					 * Delete any panels that reference this survey
-					 */
-					sql = "delete from dashboard_settings where ds_s_id = ?;";	
-					try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
-					pstmt = connectionSD.prepareStatement(sql);
-					pstmt.setInt(1, sId);
-					log.info("Delete dashboard panels: " + pstmt.toString());
-					pstmt.executeUpdate();
-
-
-					/*
-					 * Delete any survey views that reference this survey
-					 */
-					sql = "delete from survey_view where s_id = ?;";	
-					try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
-					pstmt = connectionSD.prepareStatement(sql);
-					pstmt.setInt(1, sId);
-					log.info("Delete survey views: " + pstmt.toString());
-					pstmt.executeUpdate();
-
-					/*
-					 * Delete any tasks that are to update this survey
-					 */
-					sql = "delete from tasks where form_id = ?;";	
-					try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
-					pstmt = connectionSD.prepareStatement(sql);
-					pstmt.setInt(1, sId);
-					log.info("Delete tasks: " + pstmt.toString());
-					pstmt.executeUpdate();
-
+					cResults = ResultsDataSource.getConnection("surveyKPI-Survey");
+					String basePath = GeneralUtilityMethods.getBasePath(request);
+					
+					mgr.delete(sd, 
+							cResults, 
+							sId, 
+							hard, 
+							delData, 
+							request.getRemoteUser(), 
+							basePath,
+							tables,
+							0);
 				}
 				
 				// Record the message so that devices can be notified
 				MessagingManager mm = new MessagingManager();
-				mm.surveyChange(connectionSD, sId, 0);
+				mm.surveyChange(sd, sId, 0);
 
 			} catch (SQLException e) {
 				log.log(Level.SEVERE, "SQL Error", e);
@@ -1057,12 +1097,9 @@ public class Survey extends Application {
 				return "Error: Failed to delete";
 
 			} finally {
-				try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
-				try {if (pstmtDelTem != null) {pstmtDelTem.close();}} catch (SQLException e) {}
-				try {if (pstmtIdent != null) {pstmtIdent.close();}} catch (SQLException e) {}
 
-				SDDataSource.closeConnection("surveyKPI-Survey", connectionSD);
-				ResultsDataSource.closeConnection("surveyKPI-Survey", connectionRel);
+				SDDataSource.closeConnection("surveyKPI-Survey", sd);
+				ResultsDataSource.closeConnection("surveyKPI-Survey", cResults);
 			}
 		}
 

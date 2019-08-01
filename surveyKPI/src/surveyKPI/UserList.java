@@ -36,13 +36,15 @@ import javax.ws.rs.core.Response.Status;
 import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.SDDataSource;
+import org.smap.sdal.managers.ActionManager;
 import org.smap.sdal.managers.LogManager;
 import org.smap.sdal.managers.MessagingManager;
+import org.smap.sdal.managers.SurveyTableManager;
 import org.smap.sdal.managers.UserManager;
-import org.smap.sdal.model.Project;
-import org.smap.sdal.model.Role;
 import org.smap.sdal.model.User;
 import org.smap.sdal.model.UserGroup;
+import org.smap.sdal.model.UserSimple;
+
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
@@ -64,6 +66,7 @@ public class UserList extends Application {
 	Authorise a = null;
 	Authorise aUpdate = null;
 	Authorise aSM = null;
+	Authorise aSimpleList = null;
 
 	private static Logger log =
 			 Logger.getLogger(UserList.class.getName());
@@ -79,6 +82,10 @@ public class UserList extends Application {
 		authorisations.add(Authorise.SECURITY);
 		authorisations.add(Authorise.ORG);
 		a = new Authorise(authorisations, null);
+		
+		// Also allow users with View rights to view the simple list of uses
+		authorisations.add(Authorise.VIEW_DATA);
+		aSimpleList = new Authorise(authorisations, null);
 		
 		// Only allow administrators, org administrators and security managers to update user list
 		authorisations = new ArrayList<String> ();	
@@ -98,135 +105,31 @@ public class UserList extends Application {
 	@GET
 	@Produces("application/json")
 	public Response getUsers(
-			@Context HttpServletRequest request,
-			@QueryParam("month") int month,			// 1 - 12
-			@QueryParam("year") int year
+			@Context HttpServletRequest request
 			) { 
 
 		Response response = null;
-		
-		try {
-		    Class.forName("org.postgresql.Driver");	 
-		} catch (ClassNotFoundException e) {
-			log.log(Level.SEVERE, "Can't find PostgreSQL JDBC Driver", e);
-			response = Response.serverError().build();
-		    return response;
-		}
+		String requestName = "surveyKPI-getUsers";
 		
 		// Authorisation - Access
-		Connection connectionSD = SDDataSource.getConnection("surveyKPI-UserList");
-		a.isAuthorised(connectionSD, request.getRemoteUser());
+		Connection sd = SDDataSource.getConnection(requestName);
+		a.isAuthorised(sd, request.getRemoteUser());
 		// End Authorisation
 		
-		String sql = "select id,"
-				+ "ident, "
-				+ "name, "
-				+ "email "
-				+ "from users "
-				+ "where users.o_id = ? "
-				+ "and not users.temporary "
-				+ "order by ident asc";
-		PreparedStatement pstmt = null;
-		
-		String sqlGroups = "select g.id,"
-				+ "g.name "
-				+ "from groups g,"
-				+ "user_group ug "
-				+ "where ug.u_id = ? "
-				+ "and ug.g_id = g.id "
-				+ "order by g.id asc";
-		PreparedStatement pstmtGroups = null;
-		
-		String sqlProjects = "select p.id,"
-				+ "p.name "
-				+ "from project p,"
-				+ "user_project up "
-				+ "where up.u_id = ? "
-				+ "and up.p_id = p.id "
-				+ "order by p.name asc";
-		PreparedStatement pstmtProjects = null;
-		
-		String sqlRoles = "select r.id,"
-				+ "r.name "
-				+ "from role r,"
-				+ "user_role ur "
-				+ "where ur.u_id = ? "
-				+ "and ur.r_id = r.id "
-				+ "order by r.name asc";
-		PreparedStatement pstmtRoles = null;
-				
-		ArrayList<User> users = new ArrayList<User> ();
+		ArrayList<User> users = null;
+		Gson gson = new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
 		
 		try {
-			int o_id = GeneralUtilityMethods.getOrganisationId(connectionSD, request.getRemoteUser(), 0);
-			boolean isOrgUser = GeneralUtilityMethods.isOrgUser(connectionSD, request.getRemoteUser());
-			boolean isSecurityManager = GeneralUtilityMethods.hasSecurityRole(connectionSD, request.getRemoteUser());
+			// Get the users locale
+			Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(sd, request, request.getRemoteUser()));
+			ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);	
 			
-			pstmt = connectionSD.prepareStatement(sql);
-			ResultSet rs = null;
-
-			pstmtGroups = connectionSD.prepareStatement(sqlGroups);
-			ResultSet rsGroups = null;
+			int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser());
+			boolean isOrgUser = GeneralUtilityMethods.isOrgUser(sd, request.getRemoteUser());
+			boolean isSecurityManager = GeneralUtilityMethods.hasSecurityRole(sd, request.getRemoteUser());
 			
-			pstmtProjects = connectionSD.prepareStatement(sqlProjects);
-			ResultSet rsProjects = null;
-			
-			pstmtRoles = connectionSD.prepareStatement(sqlRoles);
-			ResultSet rsRoles = null;
-			
-			pstmt.setInt(1, o_id);
-			log.info("Get user list: " + pstmt.toString());
-			rs = pstmt.executeQuery();
-			while(rs.next()) {
-				User user = new User();
-				
-				user.id = rs.getInt("id");
-				user.ident = rs.getString("ident");
-				user.name = rs.getString("name");
-				user.email = rs.getString("email");
-				
-				// Groups
-				if(rsGroups != null) try {rsGroups.close();} catch(Exception e) {};
-				pstmtGroups.setInt(1, user.id);
-				rsGroups = pstmtGroups.executeQuery();
-				user.groups = new ArrayList<UserGroup> ();
-				while(rsGroups.next()) {
-					UserGroup ug = new UserGroup();
-					ug.id = rsGroups.getInt("id");
-					ug.name = rsGroups.getString("name");
-					user.groups.add(ug);
-				}
-				
-				// Projects
-				if(rsProjects != null) try {rsProjects.close();} catch(Exception e) {};
-				pstmtProjects.setInt(1, user.id);
-				rsProjects = pstmtProjects.executeQuery();
-				user.projects = new ArrayList<Project> ();
-				while(rsProjects.next()) {
-					Project p = new Project();
-					p.id = rsProjects.getInt("id");
-					p.name = rsProjects.getString("name");
-					user.projects.add(p);
-				}
-				
-				// Roles
-				if(isOrgUser || isSecurityManager) {
-					if(rsRoles != null) try {rsRoles.close();} catch(Exception e) {};
-					pstmtRoles.setInt(1, user.id);
-					rsRoles = pstmtRoles.executeQuery();
-					user.roles = new ArrayList<Role> ();
-					while(rsRoles.next()) {
-						Role r = new Role();
-						r.id = rsRoles.getInt("id");
-						r.name = rsRoles.getString("name");
-						user.roles.add(r);
-					}
-				}
-				
-				users.add(user);
-			}
-			
-			Gson gson = new GsonBuilder().disableHtmlEscaping().create();
+			UserManager um = new UserManager(localisation);
+			users = um.getUserList(sd, oId, isOrgUser, isSecurityManager);
 			String resp = gson.toJson(users);
 			response = Response.ok(resp).build();
 						
@@ -237,11 +140,99 @@ public class UserList extends Application {
 			response = Response.serverError().entity(e.getMessage()).build();
 		    
 		} finally {
-			try {if (pstmt != null) {pstmt.close();	}} catch (SQLException e) {	}
-			try {if (pstmtGroups != null) {pstmtGroups.close();	}} catch (SQLException e) {	}
-			try {if (pstmtProjects != null) {pstmtProjects.close();	}} catch (SQLException e) {	}
-			try {if (pstmtRoles != null) {pstmtRoles.close();	}} catch (SQLException e) {	}
-			SDDataSource.closeConnection("surveyKPI-UserList", connectionSD);
+			
+			SDDataSource.closeConnection(requestName, sd);
+		}
+
+		return response;
+	}
+	
+	@GET
+	@Produces("application/json")
+	@Path("/simple")
+	public Response getUsersSimple(
+			@Context HttpServletRequest request
+			) { 
+
+		Response response = null;
+		String connectionString = "surveyKPI-getUsers";
+		
+		// Authorisation - Access
+		Connection sd = SDDataSource.getConnection(connectionString);
+		a.isAuthorised(sd, request.getRemoteUser());
+		// End Authorisation
+		
+		ArrayList<UserSimple> users = null;
+		Gson gson = new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
+		
+		try {
+			// Get the users locale
+			Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(sd, request, request.getRemoteUser()));
+			ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);	
+			
+			int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser());
+			boolean isOnlyViewData = GeneralUtilityMethods.isOnlyViewData(sd, request.getRemoteUser());
+			UserManager um = new UserManager(localisation);
+			users = um.getUserListSimple(sd, oId, true, isOnlyViewData, request.getRemoteUser());		// Always sort by name
+			String resp = gson.toJson(users);
+			response = Response.ok(resp).build();
+						
+			
+		} catch (Exception e) {
+			
+			log.log(Level.SEVERE,"Error: ", e);
+			response = Response.serverError().entity(e.getMessage()).build();
+		    
+		} finally {
+			
+			SDDataSource.closeConnection(connectionString, sd);
+		}
+
+		return response;
+	}
+
+
+	@GET
+	@Path("/temporary")
+	@Produces("application/json")
+	public Response getTemporaryUsers(
+			@Context HttpServletRequest request,
+			@QueryParam("action") String action,
+			@QueryParam("pId") int pId
+			) { 
+
+		Response response = null;
+		String requestName = "surveyKPI - getTemporaryUsers";
+
+		// Authorisation - Access
+		Connection sd = SDDataSource.getConnection(requestName);
+		a.isAuthorised(sd, request.getRemoteUser());
+		// End Authorisation			
+		
+		try {
+			// Localisation			
+			Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(sd, request, request.getRemoteUser()));
+			ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
+			
+			String tz = "UTC";	// Set default for timezone
+			
+			ActionManager am = new ActionManager(localisation, tz);
+			
+			int o_id = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser());
+			Gson gson = new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
+			
+			ArrayList<User> users = am.getTemporaryUsers(sd, o_id, action, 0, pId);			
+			String resp = gson.toJson(users);
+			response = Response.ok(resp).build();			
+			
+		} catch (Exception e) {
+			
+			log.log(Level.SEVERE,"Error: ", e);
+			response = Response.serverError().entity(e.getMessage()).build();
+		    
+		} finally {
+		
+			SDDataSource.closeConnection(requestName, sd);
 		}
 
 		return response;
@@ -261,21 +252,12 @@ public class UserList extends Application {
 			) { 
 
 		Response response = null;
-		
-		log.info("userList for project: " + projectId);
-		
-		try {
-		    Class.forName("org.postgresql.Driver");	 
-		} catch (ClassNotFoundException e) {
-			log.log(Level.SEVERE, "Can't find PostgreSQL JDBC Driver", e);
-			response = Response.serverError().build();
-		    return response;
-		}
-		
+		String requestName = "surveyKPI - getUsersForProject";
+
 		// Authorisation - Access
-		Connection connectionSD = SDDataSource.getConnection("surveyKPI-UserList");
-		a.isAuthorised(connectionSD, request.getRemoteUser());
-		a.isValidProject(connectionSD, request.getRemoteUser(), projectId);
+		Connection sd = SDDataSource.getConnection(requestName);
+		a.isAuthorised(sd, request.getRemoteUser());
+		a.isValidProject(sd, request.getRemoteUser(), projectId);
 		// End Authorisation
 		
 		/*
@@ -287,22 +269,7 @@ public class UserList extends Application {
 		try {
 			String sql = null;
 			ResultSet resultSet = null;
-			int o_id = 0;
-			
-			/*
-			 * Get the organisation
-			 */
-			sql = "SELECT u.o_id " +
-					" FROM users u " +  
-					" WHERE u.ident = ?;";				
-						
-			pstmt = connectionSD.prepareStatement(sql);
-			pstmt.setString(1, request.getRemoteUser());
-			log.info("Get organisation: " + pstmt.toString());
-			resultSet = pstmt.executeQuery();
-			if(resultSet.next()) {
-				o_id = resultSet.getInt(1);
-			}
+			int o_id = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser());
 			
 			/*
 			 * Get the users for this project
@@ -318,8 +285,7 @@ public class UserList extends Application {
 					"and not u.temporary " +
 					"order by u.ident";
 			
-			if(pstmt != null) try {pstmt.close();}catch(Exception e) {}
-			pstmt = connectionSD.prepareStatement(sql);
+			pstmt = sd.prepareStatement(sql);
 			pstmt.setInt(1, projectId);
 			pstmt.setInt(2, o_id);
 			log.info("Get users for project: " + pstmt.toString());
@@ -347,7 +313,82 @@ public class UserList extends Application {
 		    
 		} finally {
 			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
-			SDDataSource.closeConnection("surveyKPI-UserList", connectionSD);
+			SDDataSource.closeConnection(requestName, sd);
+		}
+
+		return response;
+	}
+	
+	/*
+	 * Get the users who have access to a specific survey
+	 */
+	@Path("/survey/{survey}")
+	@GET
+	@Produces("application/json")
+	public Response getUsersForSurvey(
+			@Context HttpServletRequest request,
+			@PathParam("survey") int sId
+			) { 
+
+		Response response = null;
+		String requestName = "surveyKPI - getUsersForSurvey";
+
+		// Authorisation - Access
+		Connection sd = SDDataSource.getConnection(requestName);
+		boolean superUser = false;
+		try {
+			superUser = GeneralUtilityMethods.isSuperUser(sd, request.getRemoteUser());
+		} catch (Exception e) {
+		}		
+		a.isAuthorised(sd, request.getRemoteUser());
+		a.isValidSurvey(sd, request.getRemoteUser(), sId, false, superUser);
+		// End Authorisation
+		
+		PreparedStatement pstmt = null;
+		ArrayList<UserSimple> users = new ArrayList<> ();
+		
+		try {
+			ResultSet resultSet = null;
+			
+			StringBuffer sql = new StringBuffer("select u.id, u.ident, u.name from survey s, users u, user_project up, project p "
+					+ "where u.id = up.u_id "
+					+ "and p.id = up.p_id "
+					+ "and s.p_id = up.p_id "
+					+ "and s.s_id = ? "
+					+ "and not temporary");
+			String sqlRBAC = " and ((s.s_id not in (select s_id from survey_role where enabled = true)) or " // No roles on survey
+					+ "(s.s_id in (select s_id from users u2, user_role ur, survey_role sr where u2.ident = u.ident and sr.enabled = true and u.id = ur.u_id and ur.r_id = sr.r_id)) " // User also has role
+					+ ") ";
+			
+			sql.append(sqlRBAC);
+			
+			pstmt = sd.prepareStatement(sql.toString());
+			pstmt.setInt(1, sId);
+			log.info("Get users of survey: " + pstmt.toString());
+			resultSet = pstmt.executeQuery();
+							
+			UserSimple user = null;
+			while(resultSet.next()) {
+				user = new UserSimple();
+				user.id = resultSet.getInt("id");
+				user.ident = resultSet.getString("ident");
+				user.name = resultSet.getString("name");
+				users.add(user);
+			}
+			
+			Gson gson = new GsonBuilder().disableHtmlEscaping().create();
+			String resp = gson.toJson(users);
+			response = Response.ok(resp).build();
+					
+				
+		} catch (Exception e) {
+			
+			log.log(Level.SEVERE,"Error: ", e);
+			response = Response.serverError().entity(e.getMessage()).build();
+		    
+		} finally {
+			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
+			SDDataSource.closeConnection(requestName, sd);
 		}
 
 		return response;
@@ -361,10 +402,11 @@ public class UserList extends Application {
 	public Response updateUser(@Context HttpServletRequest request, @FormParam("users") String users) { 
 		
 		Response response = null;
+		String requestName = "surveyKPI - updateUser";
 		
 		// Authorisation - Access
-		Connection connectionSD = SDDataSource.getConnection("surveyKPI-UserList");
-		aUpdate.isAuthorised(connectionSD, request.getRemoteUser());
+		Connection sd = SDDataSource.getConnection(requestName);
+		aUpdate.isAuthorised(sd, request.getRemoteUser());
 		// End Authorisation
 		
 		Type type = new TypeToken<ArrayList<User>>(){}.getType();		
@@ -373,36 +415,30 @@ public class UserList extends Application {
 		PreparedStatement pstmt = null;
 		try {	
 			
-			ResourceBundle localisation = null;
+			Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(sd, request, request.getRemoteUser()));
+			ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
+			
 			String sql = null;
 			int o_id;
 			String adminName = null;
-			String language;	// Language spoken by user
 			ResultSet resultSet = null;
-			boolean isOrgUser = GeneralUtilityMethods.isOrgUser(connectionSD, request.getRemoteUser());
-			boolean isSecurityManager = GeneralUtilityMethods.hasSecurityRole(connectionSD, request.getRemoteUser());
+			boolean isOrgUser = GeneralUtilityMethods.isOrgUser(sd, request.getRemoteUser());
+			boolean isSecurityManager = GeneralUtilityMethods.hasSecurityRole(sd, request.getRemoteUser());
 			
 			/*
 			 * Get the organisation and name of the user making the request
 			 */
-			sql = "SELECT u.o_id, u.name, u.language " +
+			sql = "SELECT u.o_id, u.name " +
 					" FROM users u " +  
 					" WHERE u.ident = ?;";				
 						
-			pstmt = connectionSD.prepareStatement(sql);
+			pstmt = sd.prepareStatement(sql);
 			pstmt.setString(1, request.getRemoteUser());
 			log.info("SQL: " + sql + ":" + request.getRemoteUser());
 			resultSet = pstmt.executeQuery();
 			if(resultSet.next()) {
 				o_id = resultSet.getInt(1);
-				adminName = resultSet.getString(2);
-				language = resultSet.getString(3);
-				
-				// Set locale
-				if(language == null) {
-					language = "en";
-				}
-				localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", new Locale(language));
+				adminName = resultSet.getString(2);			
 				
 				for(int i = 0; i < uArray.size(); i++) {
 					User u = uArray.get(i);
@@ -412,10 +448,10 @@ public class UserList extends Application {
 						u.email = null;
 					}
 					
-					UserManager um = new UserManager();
+					UserManager um = new UserManager(localisation);
 					if(u.id == -1) {
 						// New user
-						um.createUser(connectionSD, u, o_id,
+						um.createUser(sd, u, o_id,
 								isOrgUser,
 								isSecurityManager,
 								request.getRemoteUser(),
@@ -423,26 +459,24 @@ public class UserList extends Application {
 								request.getServerName(),
 								adminName,
 								localisation);
-	
-						lm.writeLogOrganisation(connectionSD, 
-								o_id, request.getRemoteUser(), "create", "User " + u.ident);
 								
 					} else {
 						// Existing user
-						um.updateUser(connectionSD, u, o_id,
+						um.updateUser(sd, u, o_id,
 								isOrgUser,
 								isSecurityManager,
 								request.getRemoteUser(),
 								request.getServerName(),
-								adminName);
+								adminName,
+								false);
 						
-						lm.writeLogOrganisation(connectionSD, 
-								o_id, request.getRemoteUser(), "Update", "User " + u.ident);
+						lm.writeLogOrganisation(sd, 
+								o_id, request.getRemoteUser(), "Update", "User " + u.ident + " was updated. Groups: " + getGroups(u.groups));
 					}
 					
 					// Record the user change so that devices can be notified
 					MessagingManager mm = new MessagingManager();
-					mm.userChange(connectionSD, u.ident);
+					mm.userChange(sd, u.ident);
 				}
 
 				
@@ -469,7 +503,7 @@ public class UserList extends Application {
 			
 			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
 			
-			SDDataSource.closeConnection("surveyKPI-UserList", connectionSD);
+			SDDataSource.closeConnection(requestName, sd);
 		}
 		
 		return response;
@@ -485,66 +519,142 @@ public class UserList extends Application {
 	public Response delUser(@Context HttpServletRequest request, @FormParam("users") String users) { 
 		
 		Response response = null;
+		String requestName = "surveyKPI - delUser";
 
-		try {
-		    Class.forName("org.postgresql.Driver");	 
-		} catch (ClassNotFoundException e) {
-			log.log(Level.SEVERE,"Error: Can't find PostgreSQL JDBC Driver", e);
-			response = Response.serverError().build();
-		    return response;
-		}
-		
 		// Authorisation - Access
-		Connection connectionSD = SDDataSource.getConnection("surveyKPI-UserList");
-		aUpdate.isAuthorised(connectionSD, request.getRemoteUser());
+		Connection sd = SDDataSource.getConnection(requestName);
+		aUpdate.isAuthorised(sd, request.getRemoteUser());
 		// End Authorisation
 		
 		Type type = new TypeToken<ArrayList<User>>(){}.getType();		
 		ArrayList<User> uArray = new Gson().fromJson(users, type);
 		
 		PreparedStatement pstmt = null;
-		PreparedStatement pstmtUpdate = null;
+		PreparedStatement pstmtHardDelete = null;
+		PreparedStatement pstmtHardDeleteAll = null;
+		PreparedStatement pstmtMove = null;
+		PreparedStatement pstmtGetIdent = null;
+		PreparedStatement pstmtCountOrgs = null;
+		PreparedStatement pstmtSoftDelete = null;
 		String basePath = GeneralUtilityMethods.getBasePath(request);
 		
 		try {	
-			String sql = null;
 			int o_id;
 			ResultSet resultSet = null;
 			
-			/*
-			 * Get the organisation of the person calling this service
-			 */
-			sql = "SELECT u.o_id " +
-					" FROM users u " +  
-					" WHERE u.ident = ?;";				
-						
-			pstmt = connectionSD.prepareStatement(sql);
-			pstmt.setString(1, request.getRemoteUser());
-			log.info("Get user organisation and id: " + pstmt.toString());
+			// Localisation			
+			Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(sd, request, request.getRemoteUser()));
+			ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
 			
+			// Get the organisation of the person calling this service
+			String sql = "SELECT u.o_id " +
+					" FROM users u " +  
+					" WHERE u.ident = ?;";										
+			pstmt = sd.prepareStatement(sql);
+			
+			// Get the ident of the person to be deleted
+			String sqlGetIdent = "select u.ident "
+					+ "from users u "
+					+ "where u.id = ? ";							
+			pstmtGetIdent = sd.prepareStatement(sqlGetIdent);
+			
+			// Get organisations that the user is in
+			ArrayList<Integer> organisationList = new ArrayList<> ();
+			String sqlCountOrgs = "select o_id from user_organisation where u_id = ?";
+			pstmtCountOrgs = sd.prepareStatement(sqlCountOrgs);
+			
+			// Perform a hard delete of the user
+			String sqlHardDelete = "delete from users u "  
+					+ "where u.id = ? "		// Ensure the user is in the same organisation as the administrator doing the editing
+					+ "and u.o_id = ?";					
+			pstmtHardDelete = sd.prepareStatement(sqlHardDelete);	
+			
+			// Perform a hard delete of the user from all organisations. only organisational administrators should be able to call this
+			String sqlHardDeleteAll = "delete from users u "  
+					+ "where u.id = ? ";				
+			pstmtHardDeleteAll = sd.prepareStatement(sqlHardDeleteAll);	
+			
+			// Perform a soft delete of the user
+			String sqlSoftDelete = "delete from user_organisation "  
+					+ "where u_id = ? "		// Ensure the user is in the same organisation as the administrator doing the editing
+					+ "and o_id = ?";					
+			pstmtSoftDelete = sd.prepareStatement(sqlSoftDelete);			
+			
+			// Move the user to another organisation if they are currently in the organisation from which they have been soft deleted
+			String sqlMove = "update users "  
+					+ "set o_id = (select o_id from user_organisation where u_id = ? limit 1) "
+					+ "where id = ? "
+					+ "and o_id = ?";				
+			pstmtMove = sd.prepareStatement(sqlMove);	
+			
+			// Get the organisation id
+			pstmt.setString(1, request.getRemoteUser());
+			log.info("Get user organisation and id: " + pstmt.toString());			
 			resultSet = pstmt.executeQuery();
 			if(resultSet.next()) {
 				o_id = resultSet.getInt(1);
 				
 				for(int i = 0; i < uArray.size(); i++) {
 					User u = uArray.get(i);
+					String ident = null;
 					
-					// Ensure the user is in the same organisation as the administrator doing the editing
-					sql = "DELETE FROM users u " +  
-							" WHERE u.id = ? " +
-							" AND u.o_id = ?;";				
-								
-					pstmtUpdate = connectionSD.prepareStatement(sql);
-					pstmtUpdate.setInt(1, u.id);
-					pstmtUpdate.setInt(2, o_id);
-					log.info("Delete user: " + pstmt.toString());
+					// Get the user ident to use in deleting dependent records
+					pstmtGetIdent.setInt(1, u.id);
+					ResultSet rs = pstmtGetIdent.executeQuery();
+					if(rs.next()) {
+						ident = rs.getString(1);
+					}
 					
-					int count = pstmtUpdate.executeUpdate();
+					// Get the organisations that this user is a member of
+					pstmtCountOrgs.setInt(1, u.id);
+					rs = pstmtCountOrgs.executeQuery();
+					while(rs.next()) {
+						organisationList.add(rs.getInt(1));
+					}
 					
-					// If a user was deleted then delete their directories
-					if(count > 0) {						
-						GeneralUtilityMethods.deleteDirectory(basePath + "/media/users/" + u.id);
-					}					
+					/*
+					 * Do a hard delete if 
+					 *    1) the user is a member of only one organisation
+					 *    2) All has been specified and he requesting user is an org admin
+					 */
+					if(organisationList.size() <= 1) {
+						// Only one organisation so perform a Hard delete
+						hardDelete(request, sd, 
+								pstmtHardDelete, 
+								localisation,
+								u, 
+								ident, o_id, basePath, 
+								false,
+								null);
+					} if(u.all && GeneralUtilityMethods.isOrgUser(sd, request.getRemoteUser())) {
+						// Multiple organisations but delete all has been requested
+						hardDelete(request, sd, 
+								pstmtHardDeleteAll, 
+								localisation,
+								u, 
+								ident, o_id, basePath, true, organisationList);
+					} else {
+						// soft delete
+						pstmtSoftDelete.setInt(1, u.id);
+						pstmtSoftDelete.setInt(2, o_id);
+						log.info("Soft Delete user: " + pstmtSoftDelete.toString());						
+						pstmtSoftDelete.executeUpdate();
+						
+						// If the user is currently in this organisation then move them to one of their other organisations
+						pstmtMove.setInt(1, u.id);
+						pstmtMove.setInt(2, u.id);
+						pstmtMove.setInt(3, o_id);
+						log.info("Move user: " + pstmtMove.toString());						
+						pstmtMove.executeUpdate();
+						 
+						String msg = localisation.getString("u_soft_del");
+						msg = msg.replace("%s1", ident);
+						lm.writeLogOrganisation(sd, 
+									o_id, 
+									request.getRemoteUser(), 
+									LogManager.DELETE, 
+									msg);
+					}
 
 				}
 		
@@ -567,14 +677,91 @@ public class UserList extends Application {
 		} finally {
 			
 			try {if (pstmt != null) {pstmt.close();}} catch (SQLException e) {}
-			try {if (pstmtUpdate != null) {pstmtUpdate.close();}} catch (SQLException e) {}
+			try {if (pstmtHardDelete != null) {pstmtHardDelete.close();}} catch (SQLException e) {}
+			try {if (pstmtHardDeleteAll != null) {pstmtHardDeleteAll.close();}} catch (SQLException e) {}
+			try {if (pstmtMove != null) {pstmtMove.close();}} catch (SQLException e) {}
+			try {if (pstmtGetIdent != null) {pstmtGetIdent.close();}} catch (SQLException e) {}
+			try {if (pstmtCountOrgs != null) {pstmtCountOrgs.close();}} catch (SQLException e) {}
+			try {if (pstmtSoftDelete != null) {pstmtSoftDelete.close();}} catch (SQLException e) {}
 			
-			SDDataSource.closeConnection("surveyKPI-UserList", connectionSD);
+			SDDataSource.closeConnection(requestName, sd);
 		}
 		
 		return response;
 	}
 	
+	private void hardDelete( HttpServletRequest  request, Connection sd, 
+			PreparedStatement pstmt, 
+			ResourceBundle localisation,
+			User u, 
+			String ident, 
+			int o_id, String basePath,
+			boolean delete_all,
+			ArrayList<Integer> organisationList) throws Exception {
+		
+		pstmt.setInt(1, u.id);
+		if(!delete_all) {
+			pstmt.setInt(2, o_id);
+		}
+		log.info("Hard Delete user: " + pstmt.toString());
+		
+		int count = pstmt.executeUpdate();
+		
+		if(count > 0) {	
+			// If a user was deleted then delete their directories
+			GeneralUtilityMethods.deleteDirectory(basePath + "/media/users/" + u.id);
+			
+			// Delete any csv table definitions that they have
+			SurveyTableManager stm = new SurveyTableManager(sd, localisation);
+			stm.deleteForUsers(ident);			// Delete references to this survey in the csv table 
+
+			String msg = localisation.getString("u_del");
+			msg = msg.replace("%s1", ident);
+			if(delete_all) {
+				// Write logs for other organisations
+				for(int ox : organisationList) {
+					lm.writeLogOrganisation(sd, 
+							ox, request.getRemoteUser(), "delete", msg);
+				}
+			} else {
+				lm.writeLogOrganisation(sd, 
+						o_id, request.getRemoteUser(), "delete", msg);
+			}
+		}	
+	}
+	
+	private String getGroups(ArrayList<UserGroup> groups) {
+		StringBuffer g = new StringBuffer("");
+		if(groups != null) {
+			for(UserGroup ug : groups) {
+				String name = null;
+				switch(ug.id) {
+					case 1: name = "admin";
+							break;
+					case 2: name = "analyst";
+							break;
+					case 3: name = "enum";
+							break;
+					case 4: name = "org admin";
+							break;
+					case 5: name = "manage";
+							break;
+					case 6: name = "security";
+							break;
+					case 7: name = "view data";
+							break;
+				}
+				if(name != null) {
+					if(g.length() > 0) {
+						g.append(", ");
+					}
+					g.append(name);
+				}
+				
+			}
+		}
+		return g.toString();
+	}
 
 }
 

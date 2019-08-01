@@ -53,32 +53,27 @@ public class Languages extends Application {
 	
 	Authorise a = new Authorise(null, Authorise.ANALYST);
 	
+	public Languages() {
+		ArrayList<String> authorisations = new ArrayList<String> ();	
+		authorisations.add(Authorise.ANALYST);
+		authorisations.add(Authorise.VIEW_DATA);
+		a = new Authorise(authorisations, null);
+	}
+	
 	/*
 	 * Return the list of languages in this survey
 	 */
 	@GET
 	@Produces("application/json")
 	public Response getLanguages(@Context HttpServletRequest request,
-			@PathParam("sId") String sId) { 
+			@PathParam("sId") int sId) { 
 	
 		Response response = null;
-		
-		try {
-		    Class.forName("org.postgresql.Driver");	 
-		} catch (ClassNotFoundException e) {
-		    log.log(Level.SEVERE, "SQL Exception", e);
-			response = Response.serverError().build();
-		    return response;
-		}
-		
+
 		// Authorisation - Access
 		Connection connectionSD = SDDataSource.getConnection("surveyKPI-Languages");
 		a.isAuthorised(connectionSD, request.getRemoteUser());
 		// End Authorisation
-		
-		if(sId != null) {
-			sId = sId.replace("'", "''"); 
-		} 
 			
 		ArrayList<String> langs = new ArrayList<String> ();	
 
@@ -86,13 +81,14 @@ public class Languages extends Application {
 		try {
 			String sql = null;
 
-			sql = "SELECT DISTINCT language " +
-					"FROM translation " +  
-					"WHERE s_id = " + sId + " " +
-					"ORDER BY language ASC;";
+			sql = "select distinct language "
+					+ "from translation "
+					+ "where s_id = ? "
+					+ "order by language asc";
 
 			
-			pstmt = connectionSD.prepareStatement(sql);	 			
+			pstmt = connectionSD.prepareStatement(sql);	 
+			pstmt.setInt(1,sId);
 			ResultSet resultSet = pstmt.executeQuery();
 
 			while (resultSet.next()) {				

@@ -35,10 +35,12 @@ import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
+import org.smap.sdal.managers.SurveySettingsManager;
 import org.smap.sdal.managers.SurveyViewManager;
 import org.smap.sdal.model.SurveyViewDefn;
 import org.smap.sdal.model.ChartDefn;
 import org.smap.sdal.model.MapLayer;
+import org.smap.sdal.model.SurveySettingsDefn;
 import org.smap.sdal.model.TableColumn;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -47,12 +49,14 @@ import com.google.gson.reflect.TypeToken;
 import java.lang.reflect.Type;
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.Locale;
+import java.util.ResourceBundle;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /*
  * Services to support a survey view
- * The view is one level below a dashboard and shows, charts, maps and tables of data for a single survey or query
+ * The view shows, charts, maps and tables of data for a single survey
  */
 @Path("/surveyview")
 public class SurveyView extends Application {
@@ -97,6 +101,7 @@ public class SurveyView extends Application {
 			@PathParam("viewId") int viewId,
 			@QueryParam("survey") int sId,
 			@QueryParam("managed") int managedId,
+			@QueryParam("groupSurvey") String groupSurvey,
 			@QueryParam("query") int queryId) throws Exception {
 		
 		if(managedId > 0 && sId == 0) {
@@ -106,6 +111,8 @@ public class SurveyView extends Application {
 		} else if(queryId == 0 && sId == 0) {
 			throw new Exception("You must specify either a query id or a survey id");
 		}
+		
+		System.out.println("GroupSurvey: " + groupSurvey);
 		
 		// Authorisation - Access
 		Connection sd = SDDataSource.getConnection("surveyKPI-GetReportConfig");
@@ -125,6 +132,10 @@ public class SurveyView extends Application {
 		} else if(queryId > 0) {
 			aNormal.isValidQuery(sd, request.getRemoteUser(), queryId);
 		}
+		if(groupSurvey != null) {
+			aManage.isValidGroupSurvey(sd, request.getRemoteUser(), sId, groupSurvey);
+		}
+		
 		// End Authorisation
 		
 		Connection cResults = ResultsDataSource.getConnection("surveyKPI-GetReportConfig");
@@ -132,16 +143,23 @@ public class SurveyView extends Application {
 		Gson gson=  new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd").create();
 		try {
 
-			int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser(), 0);
+			Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(sd, request, request.getRemoteUser()));
+			ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
+			
+			String tz = "UTC";	// Set default for timezone
+			
+			int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser());
 			int uId = GeneralUtilityMethods.getUserId(sd, request.getRemoteUser());
-			SurveyViewManager svm = new SurveyViewManager();
+			SurveyViewManager svm = new SurveyViewManager(localisation, tz);
+			SurveySettingsManager ssm = new SurveySettingsManager(localisation, tz);
 			
-			// Get the default view
-			if(viewId == 0) {	
-				viewId = svm.getDefaultView(sd, uId, sId, managedId, queryId);
-			}
-			
-			SurveyViewDefn sv = svm.getSurveyView(sd, cResults, uId, viewId, sId, managedId, request.getRemoteUser(), oId, superUser);
+			String sIdent = GeneralUtilityMethods.getSurveyIdent(sd, sId);
+			SurveySettingsDefn ssd = ssm.getSurveySettings(sd, uId, sIdent);
+			SurveyViewDefn sv = svm.getSurveyView(sd, 
+					cResults, 
+					uId, 
+					ssd, sId, managedId, request.getRemoteUser(), oId, superUser,
+					groupSurvey);
 			
 			/*
 			 * Remove data that is only used on the server
@@ -185,14 +203,6 @@ public class SurveyView extends Application {
 		
 		Response response = null;
 
-		try {
-		    Class.forName("org.postgresql.Driver");	 
-		} catch (ClassNotFoundException e) {
-			log.log(Level.SEVERE,"Error: Can't find PostgreSQL JDBC Driver", e);
-			response = Response.serverError().build();
-		    return response;
-		}
-		
 		// Authorisation - Access
 		Connection sd = SDDataSource.getConnection("surveyKPI-managedForms");
 		boolean superUser = false;
@@ -215,10 +225,14 @@ public class SurveyView extends Application {
 		// End Authorisation
 		
 		try {
+			Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(sd, request, request.getRemoteUser()));
+			ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
+			
+			String tz = "UTC";	// Set default for timezone
 			
 			int uId = GeneralUtilityMethods.getUserId(sd, request.getRemoteUser());	// Get user id
 			
-			SurveyViewManager svm = new SurveyViewManager();
+			SurveyViewManager svm = new SurveyViewManager(localisation, tz);
 			viewId = svm.save(sd, uId, viewId, sId, managedId, queryId, view, mapView, chartView);
 
 			// return the view id

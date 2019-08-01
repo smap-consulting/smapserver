@@ -19,9 +19,8 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 import java.sql.Connection;
-import java.sql.SQLException;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.Locale;
+import java.util.ResourceBundle;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -70,30 +69,28 @@ public class UsageReports extends Application {
 			@QueryParam("year") int year,
 			@QueryParam("period") String period) throws Exception {
 
-		GeneralUtilityMethods.assertBusinessServer(request.getServerName());   // Service only available on business servers
-		
-		try {
-		    Class.forName("org.postgresql.Driver");	 
-		} catch (ClassNotFoundException e) {
-			log.log(Level.SEVERE, "Can't find PostgreSQL JDBC Driver", e);
-		    throw new Exception("Can't find PostgreSQL JDBC Driver");
-		}
-		
+		//GeneralUtilityMethods.assertBusinessServer(request.getServerName());   // Service only available on business servers
+
 		// Authorisation - Access
-		Connection connectionSD = SDDataSource.getConnection("createPDF");	
-		a.isAuthorised(connectionSD, request.getRemoteUser());		
+		Connection sd = SDDataSource.getConnection("createPDF");	
+		a.isAuthorised(sd, request.getRemoteUser());		
 		// End Authorisation 
 		
 		// Get the base path
 		String basePath = GeneralUtilityMethods.getBasePath(request);
 		
 		// Get the organisation name
-		String org_name = GeneralUtilityMethods.getOrganisationName(connectionSD, oId);
+		String org_name = GeneralUtilityMethods.getOrganisationName(sd, oId);
 		
 		try {
-			MiscPDFManager pm = new MiscPDFManager();
+			Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(sd, request, request.getRemoteUser()));
+			ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
+			
+			String tz = "UTC";	// Set default for timezone
+			
+			MiscPDFManager pm = new MiscPDFManager(localisation, tz);
 			pm.createUsagePdf(
-					connectionSD,
+					sd,
 					response.getOutputStream(),
 					basePath, 
 					response,
@@ -108,7 +105,7 @@ public class UsageReports extends Application {
 			throw new Exception("Exception: " + e.getMessage());
 		} finally {
 			
-			SDDataSource.closeConnection("createPDF", connectionSD);	
+			SDDataSource.closeConnection("createPDF", sd);	
 			
 		}
 		return Response.ok("").build();

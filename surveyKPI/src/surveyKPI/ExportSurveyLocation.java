@@ -37,8 +37,8 @@ import org.smap.sdal.model.OptionDesc;
 import org.smap.sdal.model.SqlDesc;
 
 /*
- * Various types of export related to a survey
- *    
+ * Export location and trail data as:
+ *    a) shape file
  */
 @Path("/exportSurveyLocation/{sId}/{filename}")
 public class ExportSurveyLocation extends Application {
@@ -51,10 +51,6 @@ public class ExportSurveyLocation extends Application {
 	LogManager lm = new LogManager();		// Application log
 	
 	
-	/*
-	 * Export location and trail data as:
-	 *    a) shape file
-	 */
 	@GET
 	@Produces("application/x-download")
 	public Response exportShape (@Context HttpServletRequest request, 
@@ -70,17 +66,6 @@ public class ExportSurveyLocation extends Application {
 		HashMap<ArrayList<OptionDesc>, String> labelListMap = new  HashMap<ArrayList<OptionDesc>, String> ();
 		
 		log.info("userevent: " + request.getRemoteUser() + " Location Export " + sId + " as a "+ format + " file to " + filename + " starting from form " + fId);	
-		
-		try {
-		    Class.forName("org.postgresql.Driver");	 
-		} catch (ClassNotFoundException e) {
-			log.log(Level.SEVERE, "Can't find PostgreSQL JDBC Driver", e);
-		    try {
-		    	response = Response.serverError().entity("Survey: Error: Can't find PostgreSQL JDBC Driver").build();
-		    } catch (Exception ex) {
-		    	log.log(Level.SEVERE, "Exception", ex);
-		    }
-		}
 		
 		// Authorisation - Access
 		Connection connectionSD = SDDataSource.getConnection("surveyKPI-ExportSurvey");
@@ -197,56 +182,5 @@ public class ExportSurveyLocation extends Application {
 		return response;
 		
 	}
-	
-	/*
-	 * Generate Stata do file commands to convert date/time/geometry fields to stata format
-	 */
-	void writeStataDataConversion(PrintWriter w, ColDesc cd) {
-		 if(cd.qType != null && cd.qType.equals("date")) {
-			w.println("generate double `temp' = date(" + cd.name + ", \"YMD\")");		// Convert to double
-			w.println("format %-tdCCYY-NN-DD `temp'");
-		} else if(cd.qType != null && cd.qType.equals("time")) {
-			w.println("generate double `temp' = clock(" + cd.name + ", \"hms\")");		// Convert to double
-			w.println("format %-tcHH:MM:SS `temp'");
-		} else if(cd.qType != null && cd.qType.equals("dateTime")) {
-			w.println("generate double `temp' = clock(" + cd.name + ", \"YMDhms\")");		// Convert to double
-			w.println("format %-tcCCYY-NN-DD_HH:MM:SS `temp'");
-		} else if(cd.db_type.equals("timestamptz")) {
-			w.println("generate double `temp' = clock(" + cd.name + ", \"YMDhms\")");	// Convert to double
-			w.println("format %-tcCCYY-NN-DD_HH:MM:SS `temp'");							// Set the display format
-
-		} else {
-			return;		// Not a date / time / geometry question
-		}
-	 	
-		// rename the temp file created by the date functions 
-		w.println("move `temp' " + cd.name);										// Move to the location of the variable
-		w.println("drop " + cd.name);												// Remove the old variable
-		w.println("rename `temp' " + cd.name);										// Rename the temporary variable
-	}
-	
-	void writeStataEncodeString(PrintWriter w, ColDesc cd, String valueLabel) {
-		w.println("capture {");			// Capture errors as if there is no data then there will be a type mismatch
-		for(int i = 0; i < cd.optionLabels.size(); i++) {
-			OptionDesc od = cd.optionLabels.get(i);
-			w.println("replace " + cd.name + " = \"" + od.label + "\" if (" + cd.name + " == \"" + od.value + "\")");	// Replace values with labels
-		}
-		w.println("encode " + cd.name + ", generate(`temp') label(" + valueLabel + ")");			// Encode the variable
-		w.println("drop " + cd.name);												// Remove the old variable
-		w.println("rename `temp' " + cd.name);										// Rename the temporary variable
-		w.println("}");
-	}
-	
-	void writeStataQuestionLabel(PrintWriter w, ColDesc cd) {
-		if(cd.label != null) {
-			w.println("label variable " + cd.name + " \"" + cd.label + "\"");			// Set the label
-		}
-	}
-	
-	
-
-
-
-	
 
 }

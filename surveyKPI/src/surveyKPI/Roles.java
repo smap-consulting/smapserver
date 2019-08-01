@@ -36,6 +36,8 @@ import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.managers.RoleManager;
 import org.smap.sdal.model.Role;
+import org.smap.sdal.model.RoleName;
+
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
@@ -56,6 +58,7 @@ import java.util.logging.Logger;
 public class Roles extends Application {
 	
 	Authorise aSM = null;
+	Authorise aLowPriv = null;
 
 	private static Logger log =
 			 Logger.getLogger(Roles.class.getName());
@@ -70,6 +73,10 @@ public class Roles extends Application {
 		authorisations.add(Authorise.ORG);
 		aSM = new Authorise(authorisations, null);
 		
+		authorisations = new ArrayList<String> ();	
+		authorisations.add(Authorise.ADMIN);
+		authorisations.add(Authorise.ANALYST);
+		aLowPriv = new Authorise(authorisations, null);
 	}
 	
 	/*
@@ -84,23 +91,21 @@ public class Roles extends Application {
 
 		Response response = null;
 		
-		try {
-		    Class.forName("org.postgresql.Driver");	 
-		} catch (ClassNotFoundException e) {
-			log.log(Level.SEVERE, "Can't find PostgreSQL JDBC Driver", e);
-			response = Response.serverError().build();
-		    return response;
-		}
-		
 		// Authorisation - Access
-		Connection sd = SDDataSource.getConnection("surveyKPI-UserList");
+		Connection sd = SDDataSource.getConnection("surveyKPI-getRoles");
 		aSM.isAuthorised(sd, request.getRemoteUser());
 		
 		// End Authorisation
 		
-		RoleManager rm = new RoleManager();
+		
 		try {
-			int o_id  = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser(), 0);
+			// Get the users locale
+			Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(sd, request, request.getRemoteUser()));
+			ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
+			
+			RoleManager rm = new RoleManager(localisation);
+			
+			int o_id  = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser());
 			
 			ArrayList<Role> roles = rm.getRoles(sd, o_id);
 			Gson gson = new GsonBuilder().disableHtmlEscaping().create();
@@ -113,7 +118,7 @@ public class Roles extends Application {
 
 		} finally {
 			
-			SDDataSource.closeConnection("surveyKPI-roleList", sd);
+			SDDataSource.closeConnection("surveyKPI-getRoles", sd);
 		}
 
 		return response;
@@ -128,17 +133,9 @@ public class Roles extends Application {
 	public Response updateRoles(@Context HttpServletRequest request, @FormParam("roles") String roles) { 
 		
 		Response response = null;
-
-		try {
-		    Class.forName("org.postgresql.Driver");	 
-		} catch (ClassNotFoundException e) {
-			log.log(Level.SEVERE,"Error: Can't find PostgreSQL JDBC Driver", e);
-			response = Response.serverError().build();
-		    return response;
-		}
 		
 		// Authorisation - Access
-		Connection sd = SDDataSource.getConnection("surveyKPI-RoleList");
+		Connection sd = SDDataSource.getConnection("surveyKPI-updateRoles");
 		aSM.isAuthorised(sd, request.getRemoteUser());
 		// End Authorisation
 		
@@ -146,9 +143,12 @@ public class Roles extends Application {
 		ArrayList<Role> rArray = new Gson().fromJson(roles, type);
 		
 		try {	
-			int o_id = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser(), 0);
+			Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(sd, request, request.getRemoteUser()));
+			ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
 			
-			RoleManager rm = new RoleManager();
+			int o_id = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser());
+			
+			RoleManager rm = new RoleManager(localisation);
 			
 			for(int i = 0; i < rArray.size(); i++) {
 				Role r = rArray.get(i);
@@ -173,7 +173,7 @@ public class Roles extends Application {
 			log.log(Level.SEVERE,"Error", e);
 
 		} finally {
-			SDDataSource.closeConnection("surveyKPI-roleList", sd);
+			SDDataSource.closeConnection("surveyKPI-updateRoles", sd);
 		}
 		
 		return response;
@@ -188,27 +188,23 @@ public class Roles extends Application {
 	public Response delRole(@Context HttpServletRequest request, @FormParam("roles") String roles) { 
 		
 		Response response = null;
+		String requestName = "surveyKPI- delete roles";
 
-		try {
-		    Class.forName("org.postgresql.Driver");	 
-		} catch (ClassNotFoundException e) {
-			log.log(Level.SEVERE,"Error: Can't find PostgreSQL JDBC Driver", e);
-			response = Response.serverError().build();
-		    return response;
-		}
-		
 		// Authorisation - Access
-		Connection sd = SDDataSource.getConnection("surveyKPI-userList - delete roles");
+		Connection sd = SDDataSource.getConnection(requestName);
 		aSM.isAuthorised(sd, request.getRemoteUser());
 		// End Authorisation			
 					
 		Type type = new TypeToken<ArrayList<Role>>(){}.getType();		
 		ArrayList<Role> rArray = new Gson().fromJson(roles, type);
 		
-		RoleManager rm = new RoleManager();
-		
 		try {	
-			int o_id = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser(), 0);
+			Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(sd, request, request.getRemoteUser()));
+			ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
+			
+			RoleManager rm = new RoleManager(localisation);
+			
+			int o_id = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser());
 			rm.deleteRoles(sd, rArray, o_id);
 			response = Response.ok().build();			
 		}  catch (Exception ex) {
@@ -216,7 +212,7 @@ public class Roles extends Application {
 			response = Response.serverError().entity(ex.getMessage()).build();
 			
 		} finally {			
-			SDDataSource.closeConnection("surveyKPI-userList - delete roles", sd);
+			SDDataSource.closeConnection(requestName, sd);
 		}
 		
 		return response;
@@ -225,6 +221,7 @@ public class Roles extends Application {
 	
 	/*
 	 * Get the roles in a survey
+	 * Any administator / analyst can call this but they will only get the roles they have
 	 */
 	@Path("/survey/{sId}")
 	@GET
@@ -237,31 +234,26 @@ public class Roles extends Application {
 
 		Response response = null;
 		
-		try {
-		    Class.forName("org.postgresql.Driver");	 
-		} catch (ClassNotFoundException e) {
-			log.log(Level.SEVERE, "Can't find PostgreSQL JDBC Driver", e);
-			response = Response.serverError().build();
-		    return response;
-		}
-		
 		// Authorisation - Access
-		Connection sd = SDDataSource.getConnection("surveyKPI-UserList");
+		Connection sd = SDDataSource.getConnection("surveyKPI-getSurveyRoles");
 		boolean superUser = false;
 		try {
 			superUser = GeneralUtilityMethods.isSuperUser(sd, request.getRemoteUser());
 		} catch (Exception e) {
 		}
-		aSM.isAuthorised(sd, request.getRemoteUser());
-		aSM.isValidSurvey(sd, request.getRemoteUser(), sId, false, superUser);
+		aLowPriv.isAuthorised(sd, request.getRemoteUser());
+		aLowPriv.isValidSurvey(sd, request.getRemoteUser(), sId, false, superUser);
 		
 		// End Authorisation
 		
-		RoleManager rm = new RoleManager();
 		try {
+			Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(sd, request, request.getRemoteUser()));
+			ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
 	
-			int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser(), 0);
-			ArrayList<Role> roles = rm.getSurveyRoles(sd, sId, oId, enabledOnly);
+			RoleManager rm = new RoleManager(localisation);
+			
+			int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser());
+			ArrayList<Role> roles = rm.getSurveyRoles(sd, sId, oId, enabledOnly, request.getRemoteUser(), superUser);
 			Gson gson = new GsonBuilder().disableHtmlEscaping().create();
 			String resp = gson.toJson(roles);
 			response = Response.ok(resp).build();
@@ -272,7 +264,7 @@ public class Roles extends Application {
 
 		} finally {
 			
-			SDDataSource.closeConnection("surveyKPI-roleList", sd);
+			SDDataSource.closeConnection("surveyKPI-getSurveyRoles", sd);
 		}
 
 		return response;
@@ -294,18 +286,10 @@ public class Roles extends Application {
 
 		Response response = null;
 		
-		try {
-		    Class.forName("org.postgresql.Driver");	 
-		} catch (ClassNotFoundException e) {
-			log.log(Level.SEVERE, "Can't find PostgreSQL JDBC Driver", e);
-			response = Response.serverError().build();
-		    return response;
-		}
-		
 		Role role = new Gson().fromJson(roleString, Role.class);
 		
 		// Authorisation - Access
-		Connection sd = SDDataSource.getConnection("surveyKPI-UserList");
+		Connection sd = SDDataSource.getConnection("surveyKPI-updateSurveyRoles");
 		boolean superUser = false;
 		try {
 			superUser = GeneralUtilityMethods.isSuperUser(sd, request.getRemoteUser());
@@ -316,12 +300,13 @@ public class Roles extends Application {
 		aSM.isValidRole(sd, request.getRemoteUser(), role.id);
 		// End Authorisation
 		
-		RoleManager rm = new RoleManager();
+		
 		try {
-			
 			// Get the users locale
-			Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(sd, request.getRemoteUser()));
+			Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(sd, request, request.getRemoteUser()));
 			ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
+			
+			RoleManager rm = new RoleManager(localisation);
 			
 			if(property.equals("enabled")) {
 				role.linkid = rm.updateSurveyLink(sd, sId, role.id, role.linkid, role.enabled);
@@ -339,12 +324,57 @@ public class Roles extends Application {
 			log.log(Level.SEVERE,"Error", e);
 
 		} finally {
-			SDDataSource.closeConnection("surveyKPI-roleList", sd);
+			SDDataSource.closeConnection("surveyKPI-updateSurveyRoles", sd);
 		}
 
 		return response;
 	}
 
+	/*
+	 * Get the roles names in the organisation
+	 * This is a low privilege service to allow users who are not the security manager to get role names for pusrposes
+	 *  such as assigning tasks to members of a role
+	 */
+	@Path("/roles/names")
+	@GET
+	@Produces("application/json")
+	public Response getRolesNames(
+			@Context HttpServletRequest request
+			) { 
+
+		Response response = null;
+		
+		// Authorisation - Access
+		Connection sd = SDDataSource.getConnection("surveyKPI-getRoleNames");
+		aLowPriv.isAuthorised(sd, request.getRemoteUser());
+		
+		// End Authorisation
+		
+		try {
+			// Get the users locale
+			Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(sd, request, request.getRemoteUser()));
+			ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
+						
+			RoleManager rm = new RoleManager(localisation);
+						
+			int o_id  = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser());
+			
+			ArrayList<RoleName> roles = rm.getRoleNames(sd, o_id);
+			Gson gson = new GsonBuilder().disableHtmlEscaping().create();
+			String resp = gson.toJson(roles);
+			response = Response.ok(resp).build();
+		} catch (Exception e) {
+			
+			response = Response.serverError().entity(e.getMessage()).build();
+			log.log(Level.SEVERE,"Error", e);
+
+		} finally {
+			
+			SDDataSource.closeConnection("surveyKPI-getRoleNames", sd);
+		}
+
+		return response;
+	}
 
 }
 

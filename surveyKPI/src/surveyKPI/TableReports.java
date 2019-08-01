@@ -35,11 +35,13 @@ import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.Utilities.UtilityMethodsEmail;
 import org.smap.sdal.managers.LogManager;
 import org.smap.sdal.managers.PDFTableManager;
+import org.smap.sdal.managers.SurveySettingsManager;
 import org.smap.sdal.managers.SurveyViewManager;
 import org.smap.sdal.model.ChartData;
 import org.smap.sdal.model.KeyValue;
 import org.smap.sdal.model.SurveyViewDefn;
 import org.smap.sdal.model.Organisation;
+import org.smap.sdal.model.SurveySettingsDefn;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -67,10 +69,17 @@ public class TableReports extends Application {
 	private static Logger log =
 			 Logger.getLogger(TableReports.class.getName());
 	
-	Authorise a = new Authorise(null, Authorise.ANALYST);
+	Authorise a = null;
 	
 	LogManager lm = new LogManager();		// Application log
 
+	public TableReports() {
+		ArrayList<String> authorisations = new ArrayList<String> ();	
+		authorisations.add(Authorise.ANALYST);
+		authorisations.add(Authorise.VIEW_DATA);
+		a = new Authorise(authorisations, null);
+	}
+	
 	private class Chart {
 		public String title;
 		public String image;
@@ -92,10 +101,9 @@ public class TableReports extends Application {
 			@FormParam("title") String title,
 			@FormParam("project") String project,
 			@FormParam("chartdata") String chartData,
-			@FormParam("settings") String settingsString
+			@FormParam("settings") String settingsString,
+			@FormParam("tz") String tz
 			) throws Exception { 
-		
-		System.out.println("Chart data: " + chartData);
 		
 		// Authorisation - Access
 		Connection sd = SDDataSource.getConnection("surveyKPI-tables");
@@ -119,20 +127,28 @@ public class TableReports extends Application {
 		}
 		Connection cResults = ResultsDataSource.getConnection("surveyKPI-tables");
 		
-		String tz = "GMT";
+		if(tz == null) {
+			tz = "UTC";
+		}
+		
 		try {
 			
 			// Localisation
-			Organisation organisation = UtilityMethodsEmail.getOrganisationDefaults(sd, null, request.getRemoteUser());
-			int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser(), 0);
+			int oId = GeneralUtilityMethods.getOrganisationId(sd, request.getRemoteUser());
 			int uId = GeneralUtilityMethods.getUserId(sd, request.getRemoteUser());
 			
-			Locale locale = new Locale(organisation.locale);
+			Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(sd, request, request.getRemoteUser()));
 			ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
 			
 			// Get columns
-			SurveyViewManager qm = new SurveyViewManager();
-			SurveyViewDefn mfc = qm.getSurveyView(sd, cResults, uId, 0, sId, managedId, request.getRemoteUser(), oId, superUser);
+			SurveyViewManager svm = new SurveyViewManager(localisation, tz);
+			SurveySettingsManager ssm = new SurveySettingsManager(localisation, tz);
+			// Get the default view	
+			
+			String sIdent = GeneralUtilityMethods.getSurveyIdent(sd, sId);
+			SurveySettingsDefn ssd = ssm.getSurveySettings(sd, uId, sIdent);
+			SurveyViewDefn mfc = svm.getSurveyView(sd, cResults, uId, ssd, sId, managedId, 
+					request.getRemoteUser(), oId, superUser, null);	// TODO add support for group survey
 			
 			// Convert data to an array
 			ArrayList<ArrayList<KeyValue>> dArray = null;
@@ -174,7 +190,8 @@ public class TableReports extends Application {
 						dArray, 
 						mfc, 
 						localisation, 
-						tz, false,	 // TBD set landscape and paper size from client
+						tz, 
+						false,	 // TBD set landscape and paper size from client
 						request.getRemoteUser(),
 						basePath,
 						title,
@@ -219,16 +236,16 @@ public class TableReports extends Application {
 					for(int i = 0; i < chartArray.size(); i++) {
 						Chart chart = chartArray.get(i);
 						ZipEntry ze= new ZipEntry(chart.entry);
-			    		zos.putNextEntry(ze);
-			    		FileInputStream in = new FileInputStream(chart.filePath);
+			    			zos.putNextEntry(ze);
+			    			FileInputStream in = new FileInputStream(chart.filePath);
 			    		
-			    		int len;
-			    		while ((len = in.read(buffer)) > 0) {
-			    			zos.write(buffer, 0, len);
-			    		}
+			    			int len;
+			    			while ((len = in.read(buffer)) > 0) {
+			    				zos.write(buffer, 0, len);
+			    			}
 
-			    		in.close();
-			    		zos.closeEntry();
+			    			in.close();
+			    			zos.closeEntry();
 					}
 					zos.close();
 					
@@ -236,12 +253,6 @@ public class TableReports extends Application {
 			}
 			
 		
-		} catch (SQLException e) {
-			log.log(Level.SEVERE, "SQL Error", e);
-			throw new Exception("Exception: " + e.getMessage());			
-		} catch (Exception e) {
-			log.log(Level.SEVERE, "Error", e);
-			throw new Exception("Exception: " + e.getMessage());
 		} finally {
 			SDDataSource.closeConnection("surveyKPI-tables", sd);
 			ResultsDataSource.closeConnection("surveyKPI-tables", cResults);

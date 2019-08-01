@@ -33,10 +33,12 @@ import javax.ws.rs.core.Response.Status;
 
 import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
+import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.Utilities.UtilityMethodsEmail;
 import org.smap.sdal.managers.MessagingManager;
 import org.smap.sdal.managers.ProjectManager;
+import org.smap.sdal.managers.ServerManager;
 import org.smap.sdal.model.Organisation;
 import org.smap.sdal.model.Project;
 
@@ -47,10 +49,8 @@ import com.google.gson.reflect.TypeToken;
 import java.lang.reflect.Type;
 import java.sql.*;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.Locale;
 import java.util.ResourceBundle;
-import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -72,56 +72,26 @@ public class ProjectList extends Application {
 	public Response getProjects(@Context HttpServletRequest request) { 
 
 		Response response = null;
+		String connectionString = "surveyKPI-ProjectList";
 		
 		// Authorisation - Access
-		Connection connectionSD = SDDataSource.getConnection("surveyKPI-ProjectList");
-		a.isAuthorised(connectionSD, request.getRemoteUser());
+		Connection sd = SDDataSource.getConnection(connectionString);
+		a.isAuthorised(sd, request.getRemoteUser());
 		// End Authorisation
 		
-		/*
-		 * 
-		 */	
-		PreparedStatement pstmt = null;
-		ArrayList<Project> projects = new ArrayList<Project> ();
+		ArrayList<Project> projects = null;
 		
 		try {
-			int o_id = GeneralUtilityMethods.getOrganisationId(connectionSD, request.getRemoteUser(), 0);
-			boolean securityRole = GeneralUtilityMethods.hasSecurityRole(connectionSD, request.getRemoteUser());
-			int uId = GeneralUtilityMethods.getUserId(connectionSD, request.getRemoteUser());
-			ResultSet resultSet = null;
-			
-			if(o_id > 0) {	
+			ProjectManager pm = new ProjectManager();
+			projects = pm.getProjects(sd, request.getRemoteUser(), 
+					true	,	// always get all projects in organisation
+					false, 	// Don't get links
+					null		// Dn't need url prefix
+					);
 				
-				String sql = "select id, name, description, tasks_only, changed_by, changed_ts "
-						+ "from project "
-						+ "where o_id = ? "
-						+ "order by name ASC;";	
-					
-				pstmt = connectionSD.prepareStatement(sql);
-				pstmt.setInt(1, o_id);
-				
-				log.info("Get project list: " + pstmt.toString());
-				resultSet = pstmt.executeQuery();
-				while(resultSet.next()) {
-					Project project = new Project();
-					project.id = resultSet.getInt("id");
-					project.name = resultSet.getString("name");
-					project.desc = resultSet.getString("description");
-					project.tasks_only = resultSet.getBoolean("tasks_only");
-					project.changed_by = resultSet.getString("changed_by");
-					project.changed_ts = resultSet.getString("changed_ts");
-					projects.add(project);
-			
-				}
-				
-				Gson gson = new GsonBuilder().disableHtmlEscaping().create();
-				String resp = gson.toJson(projects);
-				response = Response.ok(resp).build();
-						
-			} else {
-				log.log(Level.SEVERE,"Error: No organisation");
-			    response = Response.serverError().build();
-			}
+			Gson gson = new GsonBuilder().disableHtmlEscaping().create();
+			String resp = gson.toJson(projects);
+			response = Response.ok(resp).build();
 				
 		} catch (Exception e) {
 			
@@ -129,9 +99,8 @@ public class ProjectList extends Application {
 		    response = Response.serverError().build();
 		    
 		} finally {
-			try {if (pstmt != null) {pstmt.close();} } catch (SQLException e) {}
 			
-			SDDataSource.closeConnection("surveyKPI-ProjectList", connectionSD);
+			SDDataSource.closeConnection(connectionString, sd);
 		}
 
 		return response;
@@ -145,14 +114,6 @@ public class ProjectList extends Application {
 	public Response updateProject(@Context HttpServletRequest request, @FormParam("projects") String projects) { 
 		
 		Response response = null;
-
-		try {
-		    Class.forName("org.postgresql.Driver");	 
-		} catch (ClassNotFoundException e) {
-			log.log(Level.SEVERE,"Error: Can't find PostgreSQL JDBC Driver", e);
-			response = Response.serverError().build();
-		    return response;
-		}
 		
 		// Authorisation - Access
 		String user = request.getRemoteUser();
@@ -270,18 +231,12 @@ public class ProjectList extends Application {
 	public Response delProject(@Context HttpServletRequest request, @FormParam("projects") String projects) { 
 		
 		Response response = null;
-
-		try {
-		    Class.forName("org.postgresql.Driver");	 
-		} catch (ClassNotFoundException e) {
-			log.log(Level.SEVERE,"Error: Can't find PostgreSQL JDBC Driver", e);
-			response = Response.serverError().build();
-		    return response;
-		}
+		String connectionString = "surveyKPI-ProjectList";
+		Connection cResults = null;
 		
 		// Authorisation - Access
-		Connection connectionSD = SDDataSource.getConnection("surveyKPI-ProjectList");
-		a.isAuthorised(connectionSD, request.getRemoteUser());
+		Connection sd = SDDataSource.getConnection(connectionString);
+		a.isAuthorised(sd, request.getRemoteUser());
 		// End Authorisation			
 					
 		Type type = new TypeToken<ArrayList<Project>>(){}.getType();		
@@ -292,10 +247,10 @@ public class ProjectList extends Application {
 			String sql = null;
 			int o_id;
 			ResultSet resultSet = null;
-			connectionSD.setAutoCommit(false);
+			sd.setAutoCommit(false);
 			
 			// Localisation
-			Organisation organisation = UtilityMethodsEmail.getOrganisationDefaults(connectionSD, null, request.getRemoteUser());
+			Organisation organisation = UtilityMethodsEmail.getOrganisationDefaults(sd, null, request.getRemoteUser());
 			Locale locale = new Locale(organisation.locale);
 			ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
 			
@@ -306,7 +261,7 @@ public class ProjectList extends Application {
 					" FROM users u " +  
 					" WHERE u.ident = ?;";				
 						
-			pstmt = connectionSD.prepareStatement(sql);
+			pstmt = sd.prepareStatement(sql);
 			pstmt.setString(1, request.getRemoteUser());
 			resultSet = pstmt.executeQuery();
 			if(resultSet.next()) {
@@ -315,38 +270,68 @@ public class ProjectList extends Application {
 				for(int i = 0; i < pArray.size(); i++) {
 					Project p = pArray.get(i);
 					
+					a.projectInUsersOrganisation(sd, request.getRemoteUser(), p.id);		// Authorise deletion of this project
+					
 					/*
 					 * Ensure that there are no undeleted surveys in this project
+					 * Don't count hidden surveys which have been replaced
 					 */
-					sql = "SELECT count(*) " +
-							" FROM survey u " +  
-							" WHERE u.p_id = ?;";
+					sql = "select count(*) "
+							+ " from survey s " 
+							+ " where s.p_id = ? "
+							+ "and s.hidden = false";
 					
-					pstmt = connectionSD.prepareStatement(sql);
+					pstmt = sd.prepareStatement(sql);
 					pstmt.setInt(1, p.id);
-					log.info("SQL: " + sql + ":" + p.id);
+					log.info("Check for undeleted surveys: " + pstmt.toString());
 					resultSet = pstmt.executeQuery();
 					if(resultSet.next()) {
 						int count = resultSet.getInt(1);
 						if(count > 0) {
 							String msg = localisation.getString("msg_undel_proj").replace("%s1", String.valueOf(p.id));
 							throw new Exception(msg);
-							//throw new Exception("Error: Project " + p.id + " has undeleted surveys. Hint: You need to erase " +
-							//		"all surveys from a project before it can be deleted. Try selecting" +
-							//		" \"Show deleted surveys\" on the template management screen for the project that you" +
-							//		" have finished with. Then erase those deleted surveys.");
 						}
 					} else {
 						throw new Exception("Error getting survey count");
+					}			
+					
+					// Erase any hidden forms 
+					ServerManager sm = new ServerManager();
+					sql = "select s_id, ident, display_name "
+							+ " from survey s " 
+							+ " where s.p_id = ? "
+							+ "and s.hidden = true";
+					try {if (pstmt != null) {pstmt.close();} } catch (SQLException e) {}
+					pstmt = sd.prepareStatement(sql);
+					pstmt.setInt(1, p.id);
+					cResults = ResultsDataSource.getConnection(connectionString);
+					String basePath = GeneralUtilityMethods.getBasePath(request);
+					
+					ResultSet rs = pstmt.executeQuery();
+					while(rs.next()) {
+						int sId = rs.getInt(1);
+						String ident = rs.getString(2);
+						String displayName = rs.getString(3);
+						sm.deleteSurvey(		// Delete the replaced survey
+								sd, 
+								cResults,
+								request.getRemoteUser(),
+								p.id,
+								sId,
+								ident,
+								displayName,
+								basePath,
+								true,
+								"yes");
 					}
 					
-					// Ensure the project is in the same organisation as the administrator doing the editing
-					sql = "DELETE FROM project p " +  
-							" WHERE p.id = ? " +
-							" AND p.o_id = ?;";				
+					// Delete the project
+					sql = "delete from project p " 
+							+ "where p.id = ? "
+							+ "and p.o_id = ?";			// Ensure the project is in the same organisation as the administrator doing the editing
 						
 					try {if (pstmt != null) {pstmt.close();} } catch (SQLException e) {}
-					pstmt = connectionSD.prepareStatement(sql);
+					pstmt = sd.prepareStatement(sql);
 					pstmt.setInt(1, p.id);
 					pstmt.setInt(2, o_id);
 					log.info("Delete project: " + pstmt.toString());
@@ -360,21 +345,21 @@ public class ProjectList extends Application {
 			    response = Response.serverError().build();
 			}
 			
-			connectionSD.commit();
+			sd.commit();
 				
 		} catch (SQLException e) {
 			String state = e.getSQLState();
 			log.info("sql state:" + state);
 			response = Response.serverError().entity(e.getMessage()).build();
 			log.log(Level.SEVERE,"Error", e);
-			try { connectionSD.rollback();} catch (Exception ex){log.log(Level.SEVERE,"", ex);}
+			try { sd.rollback();} catch (Exception ex){log.log(Level.SEVERE,"", ex);}
 			
 		} catch (Exception ex) {
 			log.info(ex.getMessage());
 			response = Response.serverError().entity(ex.getMessage()).build();
 			
 			try{
-				connectionSD.rollback();
+				sd.rollback();
 			} catch(Exception e2) {
 				
 			}
@@ -384,7 +369,8 @@ public class ProjectList extends Application {
 			try {
 				if (pstmt != null) {pstmt.close();}	} catch (SQLException e) {}
 			
-			SDDataSource.closeConnection("surveyKPI-ProjectList", connectionSD);
+			SDDataSource.closeConnection(connectionString, sd);
+			ResultsDataSource.closeConnection(connectionString, cResults);
 		}
 		
 		return response;
