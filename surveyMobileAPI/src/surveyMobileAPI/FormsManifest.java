@@ -22,13 +22,13 @@ package surveyMobileAPI;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
+import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -44,14 +44,11 @@ import javax.ws.rs.core.MediaType;
 
 import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
-import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
-import org.smap.sdal.managers.ExternalFileManager;
 import org.smap.sdal.managers.SurveyManager;
 import org.smap.sdal.managers.TranslationManager;
 import org.smap.sdal.model.ManifestValue;
 import org.smap.sdal.model.Survey;
-import org.smap.sdal.model.Translation;
 import org.apache.commons.codec.digest.*;
 
 
@@ -93,20 +90,24 @@ public class FormsManifest {
 		String protocol = "";
 		StringBuilder responseStr = new StringBuilder();
 
-		try {
-		    Class.forName("org.postgresql.Driver");	 
-		} catch (ClassNotFoundException e) {
-			log.log(Level.SEVERE, "Can't find PostgreSQL JDBC Driver", e);
-		}
 		
 		// Authorisation - Access
 		Connection connectionSD = SDDataSource.getConnection("surveyMobileAPI-FormsManifest");
 		a.isAuthorised(connectionSD, request.getRemoteUser());
-		SurveyManager sm = new SurveyManager();
-		Survey survey = sm.getSurveyId(connectionSD, key);	// Get the survey id from the templateName / key
+		
 		boolean superUser = false;
+		ResourceBundle localisation = null;
+		SurveyManager sm = null;
+		Survey survey = null;
+		
 		try {
 			superUser = GeneralUtilityMethods.isSuperUser(connectionSD, request.getRemoteUser());
+			// Get the users locale
+			Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(connectionSD, request, request.getRemoteUser()));
+			localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
+			
+			sm = new SurveyManager(localisation, "UTC");
+			survey = sm.getSurveyId(connectionSD, key);	// Get the survey id from the templateName / key
 		} catch (Exception e) {
 		}
 		a.isValidSurvey(connectionSD, request.getRemoteUser(), survey.id, false, superUser);	// Validate that the user can access this survey
@@ -120,6 +121,7 @@ public class FormsManifest {
 
 		PreparedStatement pstmt = null;
 		try {
+			
 			if(key == null) {
 				throw new Exception("Error: Missing Parameter key");
 			}			
@@ -147,15 +149,17 @@ public class FormsManifest {
 				String sIdent = GeneralUtilityMethods.getSurveyIdent(connectionSD, survey.id);
 				
 				if(m.type.equals("linked")) {
+					log.info("Linked file path: " + m.fileName);
 					filepath = basepath + "/media/" + sIdent+ "/" + 
 							request.getRemoteUser() + "/" + m.fileName;
 					filepath += ".csv";
 					m.fileName += ".csv";
 				} else {
+					log.info("CSV file path: " + m.filePath);
 					filepath = m.filePath;
 				}
 				
-				log.info("Geting manifest at: " + filepath);
+				log.info("Getting manifest at: " + filepath);
 				
 				// Check that the file exists
 				if(filepath != null) {
@@ -206,7 +210,9 @@ public class FormsManifest {
 					md5 = "md5:" + DigestUtils.md5Hex( fis );
 				}
 			} catch (Exception e) {
-				System.out.println(e.getMessage());
+				log.log(Level.SEVERE, e.getMessage(), e);
+			} finally {
+				try {fis.close();} catch (Exception e) {}
 			}
 
 		}

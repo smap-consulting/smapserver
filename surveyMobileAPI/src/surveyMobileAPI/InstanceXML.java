@@ -23,6 +23,8 @@ import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.HashSet;
+import java.util.Locale;
+import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -76,6 +78,7 @@ public class InstanceXML extends Application{
 	public Response getInstance(@Context HttpServletRequest request,
 			@PathParam("sName") String templateName,
 			@PathParam("priKey") int priKey,
+			@QueryParam("taskkey") int taskKey,	// Task id, if set initial data is from task
 			@QueryParam("key") String key,		// Optional
 			@QueryParam("keyval") String keyval	// Optional
 			) throws IOException {
@@ -85,61 +88,58 @@ public class InstanceXML extends Application{
 		
 		log.info("instanceXML: Survey=" + templateName + " priKey=" + priKey + " key=" + key + " keyval=" + keyval);
 		
-		try {
-		    Class.forName("org.postgresql.Driver");	 
-		} catch (ClassNotFoundException e) {
-			String msg = "Error: Can't find PostgreSQL JDBC Driver";
-			log.log(Level.SEVERE, msg, e);
-			response = Response.status(Status.INTERNAL_SERVER_ERROR).entity(msg).build();
-		    return response;
-		}
-		
-		// Authorisation - Access
-		try {
-		    Class.forName("org.postgresql.Driver");	 
-		} catch (ClassNotFoundException e) {
-			log.log(Level.SEVERE, "Can't find PostgreSQL JDBC Driver", e);
-		}
-		
 		String user = request.getRemoteUser();
 		
-		Connection connectionSD = SDDataSource.getConnection(connectionString);
-		SurveyManager sm = new SurveyManager();
-		Survey survey = sm.getSurveyId(connectionSD, templateName);	// Get the survey id from the templateName / key
-		a.isAuthorised(connectionSD, user);
+		// Authorisation - Access
+		Connection sd = SDDataSource.getConnection(connectionString);
+		
+		// Get the users locale
+		ResourceBundle localisation = null;
+		try {
+			Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(sd, request, request.getRemoteUser()));
+			localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
+		} catch (Exception e) {
+
+		}
+		
+		String tz = "UTC";
+		
+		SurveyManager sm = new SurveyManager(localisation, "UTC");
+		Survey survey = sm.getSurveyId(sd, templateName);	// Get the survey id from the templateName / key
+		a.isAuthorised(sd, user);
 		boolean superUser = false;
 		try {
-			superUser = GeneralUtilityMethods.isSuperUser(connectionSD, request.getRemoteUser());
+			superUser = GeneralUtilityMethods.isSuperUser(sd, request.getRemoteUser());
 		} catch (Exception e) {
 		}
-		a.isValidSurvey(connectionSD, user, survey.id, false, superUser);	// Validate that the user can access this survey
-		a.isBlocked(connectionSD, survey.id, false);			// Validate that the survey is not blocked
+		a.isValidSurvey(sd, user, survey.id, false, superUser);	// Validate that the user can access this survey
+		a.isBlocked(sd, survey.id, false);			// Validate that the survey is not blocked
 		
-		lm.writeLog(connectionSD, survey.id, request.getRemoteUser(), "view", "Get results instance: priKey=" + priKey + " key=" + key + " keyval=" + keyval);
+		lm.writeLog(sd, survey.id, request.getRemoteUser(), "view", "Get results instance: priKey=" + priKey + " key=" + key + " keyval=" + keyval);
 		
-		SDDataSource.closeConnection(connectionString, connectionSD);
+		SDDataSource.closeConnection(connectionString, sd);
 		// End Authorisation
 		 
 		// Extract the data
 		try {
 			
-           	SurveyTemplate template = new SurveyTemplate();
+           	SurveyTemplate template = new SurveyTemplate(localisation);
 			template.readDatabase(survey.id, false);
 			
-			GetXForm xForm = new GetXForm();
-			String instanceXML = xForm.getInstance(survey.id, templateName, template, key, keyval, priKey, false, false);	
+			String urlprefix = GeneralUtilityMethods.getUrlPrefix(request);
+			GetXForm xForm = new GetXForm(localisation, request.getRemoteUser(), tz);
+			String instanceXML = xForm.getInstanceXml(survey.id, templateName, template, key, keyval, priKey, false, false, taskKey, urlprefix);	
 			
 			response = Response.ok(instanceXML).build();
 		
-		} catch (SQLException e) {
-			log.log(Level.SEVERE,"Exception", e);
-			response = Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
 		} catch (ApplicationException e) {
 		    String msg = e.getMessage();	
 			log.info(msg);	
+			lm.writeLog(sd, survey.id, request.getRemoteUser(), "Error", "Failed to get instance data: " + msg);
 			response = Response.status(Status.NOT_FOUND).entity(msg).build();
 		}  catch (Exception e) {
 			log.log(Level.SEVERE,"Exception", e);
+			lm.writeLog(sd, survey.id, request.getRemoteUser(), "Error", "Failed to get instance data: " + e.getMessage());
 			response = Response.status(Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
 		} 
 				

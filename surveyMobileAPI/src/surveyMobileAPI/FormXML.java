@@ -21,9 +21,8 @@ package surveyMobileAPI;
 
 import java.io.IOException;
 import java.sql.Connection;
-import java.sql.SQLException;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.Locale;
+import java.util.ResourceBundle;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -53,66 +52,72 @@ import org.smap.server.utilities.GetXForm;
 
 @Path("/formXML")
 public class FormXML extends Application{
-	
+
 	Authorise a = new Authorise(null, Authorise.ENUM);
 
 	private static Logger log =
-			 Logger.getLogger(FormXML.class.getName());
+			Logger.getLogger(FormXML.class.getName());
 
-	
+
 	@GET
 	@Produces(MediaType.TEXT_XML)
 	public String getForm(@Context HttpServletRequest request,
-			@QueryParam("key") String templateName) throws IOException {
-		
+			@QueryParam("key") String templateName,
+			@QueryParam("deviceID") String deviceId) throws IOException {
+
 		log.info("formXML:" + templateName);
-		
+
 		// Authorisation - Access
-		try {
-		    Class.forName("org.postgresql.Driver");	 
-		} catch (ClassNotFoundException e) {
-			log.log(Level.SEVERE, "Can't find PostgreSQL JDBC Driver", e);
-		}
 
 		Survey survey = null;
 		String user = request.getRemoteUser();
 		boolean superUser = false;
-		 
+		ResourceBundle localisation = null;
+		String response = null;	
+
 		if(user != null) {
 			Connection connectionSD = SDDataSource.getConnection("surveyMobileAPI-FormXML");
+
 			try {
-				superUser = GeneralUtilityMethods.isSuperUser(connectionSD, request.getRemoteUser());
-			} catch (Exception e) {
-			}
-            a.isAuthorised(connectionSD, user);
-    		SurveyManager sm = new SurveyManager();
-    		survey = sm.getSurveyId(connectionSD, templateName);	// Get the survey id from the templateName / key
-    		a.isValidSurvey(connectionSD, user, survey.id, false, superUser);	// Validate that the user can access this survey
-    		SDDataSource.closeConnection("surveyMobileAPI-FormXML", connectionSD);
-        } else {
-        	throw new AuthorisationException();
-        }
-		// End Authorisation
 
-		String response = null;	
-		// Extract the data
-		try {	    
+				// Get some data where we will ignore a failure
+				try {
+					superUser = GeneralUtilityMethods.isSuperUser(connectionSD, user);
+					Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(connectionSD, request, request.getRemoteUser()));
+					localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
+				} catch (Exception e) {
+				}
 
-			SurveyTemplate template = new SurveyTemplate();
-			template.readDatabase(survey.id, false);
-			//template.printModel();	// debug
-			GetXForm xForm = new GetXForm();
-			response = xForm.get(template, false, true, false);
-			log.info("userevent: " + user + " : download survey : " + templateName);		
-		
-		} catch (Exception e) {
-			response = e.getMessage();
-			log.log(Level.SEVERE, response, e);
-		} 
+				String tz = "UTC";
 				
+				// Authorisation
+				a.isAuthorised(connectionSD, user);
+				SurveyManager sm = new SurveyManager(localisation, "UTC");
+				survey = sm.getSurveyId(connectionSD, templateName);	// Get the survey id from the templateName / key
+				a.isValidSurvey(connectionSD, user, survey.id, false, superUser);	// Validate that the user can access this survey
+
+				// Extract the data
+				SurveyTemplate template = new SurveyTemplate(localisation);
+				template.readDatabase(survey.id, false);
+				GetXForm xForm = new GetXForm(localisation, user, tz);
+				response = xForm.get(template, false, true, false, user);
+				log.info("userevent: " + user + " : download survey : " + templateName);		
+
+				// Record that this form was downloaded by this user
+				GeneralUtilityMethods.recordFormDownload(connectionSD, user, survey.ident, survey.version, deviceId);
+			} catch (AuthorisationException ae) { 
+				throw ae;
+			} catch (Exception e) {
+				response = e.getMessage();
+				log.log(Level.SEVERE, response, e);
+			} finally {
+				SDDataSource.closeConnection("surveyMobileAPI-FormXML", connectionSD);
+			}
+		}
+
 		return response;
 	}
-	
+
 	/*
 	 * Service called if the request includes a temporary user id
 	 */
@@ -122,50 +127,55 @@ public class FormXML extends Application{
 	public String getFormTemporaryUser(@Context HttpServletRequest request,
 			@PathParam("temp_user") String tempUser,
 			@QueryParam("key") String templateName) throws IOException {
-		
+
 		log.info("formXML temporary user:" + templateName);
-		
-		// Authorisation - Access
-		try {
-		    Class.forName("org.postgresql.Driver");	 
-		} catch (ClassNotFoundException e) {
-			log.log(Level.SEVERE, "Can't find PostgreSQL JDBC Driver", e);
-		}
 
 		Survey survey = null;
+		ResourceBundle localisation = null;
+
 		Connection connectionSD = SDDataSource.getConnection("surveyMobileAPI-FormXML");
 		boolean superUser = false;
 		try {
 			superUser = GeneralUtilityMethods.isSuperUser(connectionSD, request.getRemoteUser());
 		} catch (Exception e) {
 		}
+
+		a.isValidTemporaryUser(connectionSD, tempUser);
+		a.isAuthorised(connectionSD, tempUser);
+
+		// Get the users locale
+		try {
+			Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(connectionSD, request, request.getRemoteUser()));
+			localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
+		} catch (Exception e) {
+
+		}
+
+		String tz = "UTC";
 		
-        a.isValidTemporaryUser(connectionSD, tempUser);
-        a.isAuthorised(connectionSD, tempUser);
-        
-    	SurveyManager sm = new SurveyManager();
-    	survey = sm.getSurveyId(connectionSD, templateName);	// Get the survey id from the templateName / key
-    	a.isValidSurvey(connectionSD, tempUser, survey.id, false, superUser);	// Validate that the user can access this survey
-    	SDDataSource.closeConnection("surveyMobileAPI-FormXML", connectionSD);
-        
+		SurveyManager sm = new SurveyManager(localisation, "UTC");
+		survey = sm.getSurveyId(connectionSD, templateName);	// Get the survey id from the templateName / key
+		a.isValidSurvey(connectionSD, tempUser, survey.id, false, superUser);	// Validate that the user can access this survey
+		SDDataSource.closeConnection("surveyMobileAPI-FormXML", connectionSD);
+
 		// End Authorisation
 
 		String response = null;	
 		// Extract the data
 		try {	    
 
-			SurveyTemplate template = new SurveyTemplate();
+			SurveyTemplate template = new SurveyTemplate(localisation);
 			template.readDatabase(survey.id, false);
 			//template.printModel();	// debug
-			GetXForm xForm = new GetXForm();
-			response = xForm.get(template, false, true, false);
+			GetXForm xForm = new GetXForm(localisation, request.getRemoteUser(), tz);
+			response = xForm.get(template, false, true, false, request.getRemoteUser());
 			log.info("userevent Temporary User: " + tempUser + " : download survey : " + templateName);		
-		
+
 		} catch (Exception e) {
 			response = e.getMessage();
 			log.log(Level.SEVERE, response, e);
 		} 
-				
+
 		return response;
 	}
 

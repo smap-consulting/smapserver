@@ -22,9 +22,9 @@ package surveyMobileAPI;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.Enumeration;
-import java.util.HashSet;
-import java.util.Set;
+import java.text.SimpleDateFormat;
+import java.util.Locale;
+import java.util.ResourceBundle;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -42,14 +42,15 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.Response.Status;
 
+import org.smap.sdal.Utilities.ApplicationException;
 import org.smap.sdal.Utilities.AuthorisationException;
 import org.smap.sdal.Utilities.Authorise;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.NotFoundException;
 import org.smap.sdal.Utilities.SDDataSource;
+import org.smap.sdal.model.AssignmentDetails;
 import org.smap.server.entities.MissingTemplateException;
 
 import exceptions.SurveyBlockedException;
@@ -66,16 +67,8 @@ public class Upload extends Application {
 	private static Logger log =
 			 Logger.getLogger(Upload.class.getName());
 	
-	// Tell class loader about the root classes.  (needed as tomcat6 does not support servlet 3)
-	public Set<Class<?>> getClasses() {
-		Set<Class<?>> s = new HashSet<Class<?>>();
-		s.add(Upload.class);
-		return s;
-	}
-	
 	private static final String OPEN_ROSA_VERSION_HEADER = "X-OpenRosa-Version";
 	private static final String OPEN_ROSA_VERSION = "1.0";
-	private static final String DATE_HEADER = "Date";
 	
 	private static final String RESPONSE_MSG1 = 
 		"<OpenRosaResponse xmlns=\"http://openrosa.org/http/response\">";
@@ -147,20 +140,15 @@ public class Upload extends Application {
 		return submission(request, instanceId, key, deviceId);
 	}
 	
+	/*
+	 * Process the actual submission
+	 */
 	private Response submission(HttpServletRequest request,  String instanceId, String key, String deviceId) 
 			throws IOException {
 	
 		Response response = null;
-		
-		// Authorisation - Access
-		try {
-		    Class.forName("org.postgresql.Driver");	 
-		} catch (ClassNotFoundException e) {
-			log.log(Level.SEVERE, "Can't find PostgreSQL JDBC Driver", e);
-			response = Response.serverError().entity("Survey: Error: Can't find PostgreSQL JDBC Driver").build();
-		}
 
-		Connection connectionSD = SDDataSource.getConnection("surveyMobileAPI-Upload");
+		Connection sd = SDDataSource.getConnection("surveyMobileAPI-Upload");
 		
 		/*
 		 * Authenticate the user using either the user id associated with the key, if provided, or the
@@ -169,7 +157,7 @@ public class Upload extends Application {
 		String user = null;
 		if(key != null) {
 			try {
-				user = GeneralUtilityMethods.getDynamicUser(connectionSD, key);
+				user = GeneralUtilityMethods.getDynamicUser(sd, key);
 			} catch (SQLException e) {
 				e.printStackTrace();
 			}
@@ -178,21 +166,42 @@ public class Upload extends Application {
 		}
 		
 		if(user != null) {
-			a.isAuthorised(connectionSD, user);
+			a.isAuthorised(sd, user);
 			log.info("User: " + user);
 		}
-		
-		SDDataSource.closeConnection("surveyMobileAPI-Upload", connectionSD);
 		
 		// End Authorisation
 
 		// Extract the data
 		try {
+			Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(sd, request, request.getRemoteUser()));
+			ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
 			
 			if(user == null) {
-				log.info("Error: Attempting to upload results: user not found");
-				throw new AuthorisationException();
-			} 
+				if(key == null) {
+					log.info("Error: Attempting to upload results: user not found");
+					throw new AuthorisationException();
+				} else {
+					// This is for a task where the temporary user has been deleted
+					AssignmentDetails aDetails = GeneralUtilityMethods.getAssignmentStatusForTempUser(sd, key);
+					String message = null;
+					SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss");
+					
+					if(aDetails == null || aDetails.status == null) {
+						message = localisation.getString("wf_as");
+					} else if(aDetails.status.equals("submitted")) {
+						message = localisation.getString("wf_fs");
+						message = message.replace("%s1", sdf.format(aDetails.completed_date));
+					} else if(aDetails.status.equals("cancelled")) {
+						message = localisation.getString("wf_fc");
+						message = message.replace("%s1", sdf.format(aDetails.cancelled_date));
+					} else if(aDetails.status.equals("deleted")) {
+						message = localisation.getString("wf_fc");
+						message = message.replace("%s1", sdf.format(aDetails.deleted_date));
+					}
+					throw new ApplicationException(message);
+				}
+			}
 			
 			log.info("Upload Started ================= " + instanceId + " ==============");
 			log.info("Url:" + request.getRequestURI());
@@ -221,6 +230,8 @@ public class Upload extends Application {
 		} catch (Exception e) {
 			log.log(Level.SEVERE, "", e);
 			response = Response.status(Status.BAD_REQUEST).entity(getErrorMessage(key, e.getMessage())).build();
+		} finally {
+			SDDataSource.closeConnection("surveyMobileAPI-Upload", sd);
 		}
 
 		return response;

@@ -22,9 +22,15 @@ package surveyMobileAPI;
 import java.io.File;
 import java.io.IOException;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
+import java.util.ResourceBundle;
 import java.util.UUID;
 import java.util.logging.Logger;
 
@@ -44,7 +50,12 @@ import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.NotFoundException;
 import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.managers.LogManager;
+import org.smap.sdal.managers.QuestionManager;
 import org.smap.sdal.managers.SurveyManager;
+import org.smap.sdal.managers.UserManager;
+import org.smap.sdal.model.Form;
+import org.smap.sdal.model.MetaItem;
+import org.smap.sdal.model.Question;
 import org.smap.sdal.model.Survey;
 import org.smap.server.entities.MissingSurveyException;
 import org.smap.server.entities.MissingTemplateException;
@@ -73,6 +84,8 @@ public class XFormData {
 
 	Authorise a = new Authorise(null, Authorise.ENUM);
 
+	Survey survey = null;
+	
 	public XFormData() {
 
 	}
@@ -85,7 +98,6 @@ public class XFormData {
 
 		// Use Apache Commons file upload to get the items in the file
 		SaveDetails saveDetails = null;
-		// PersistenceContext pc = new PersistenceContext("pgsql_jpa");
 		DiskFileItemFactory factory = new DiskFileItemFactory();
 		ServletFileUpload upload = new ServletFileUpload(factory);
 
@@ -103,27 +115,30 @@ public class XFormData {
 		String auditFilePath = null;
 
 		Connection sd = null;
+		PreparedStatement pstmtIsRepeating = null;
+		ResultSet rsRepeating = null;
 
 		try {
 			sd = SDDataSource.getConnection("surveyMobileAPI-XFormData");
-			String basePath = request.getServletContext().getInitParameter("au.com.smap.files");
-			if (basePath == null) {
-				basePath = "/smap";
-			} else if (basePath.equals("/ebs1")) { // Support for legacy apache virtual hosts
-				basePath = "/ebs1/servers/" + serverName.toLowerCase();
-			}
+			
+			// Get the users locale
+			Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(sd, request, request.getRemoteUser()));
+			ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);			
+			String basePath = GeneralUtilityMethods.getBasePath(request);
 
 			/*
 			 * Save the XML submission file
 			 */
 			Iterator<FileItem> iter = items.iterator();
 			String thisInstanceId = null;
+			String thisStart = null;
+			String thisEnd = null;
+			String thisInstanceName = null;
 			while (iter.hasNext()) {
 				FileItem item = (FileItem) iter.next();
 				String name = item.getFieldName();
-				if (name.equals("xml_submission_file") || name.equals("xml_submission_data")) { // xml_submission_data
-																								// is the name used by
-																								// webForms
+				if (name.equals("xml_submission_file") || name.equals("xml_submission_data")) { // xml_submission_data is the name used by webForms
+					
 					si = new SurveyInstance(item.getInputStream());
 
 					// Extend the instance with data available in the template
@@ -133,12 +148,90 @@ public class XFormData {
 					saveDetails = saveToDisk(item, request, basePath, null, templateName, null, 0, 0);
 					log.info("Saved xml_submission file:" + saveDetails.fileName + " (FieldName: " + item.getFieldName()
 							+ ")");
+					
+					SurveyTemplate template = new SurveyTemplate(localisation);
+					templateName = template.readDatabase(sd, templateName, false);  // Update the template name if the survey has been replaced
+					
+					SurveyManager sm = new SurveyManager(localisation, "UTC");
+					survey = sm.getSurveyId(sd, templateName); // Get the survey id from the templateName / key
 
-					SurveyTemplate template = new SurveyTemplate();
-					template.readDatabase(sd, templateName, false);
-					template.extendInstance(sd, si, false);
+					template.extendInstance(sd, si, false, survey);
 
 					thisInstanceId = si.getUuid();
+					
+					/*
+					 * Get meta values from the instance
+					 */
+					
+					boolean debug = false;		// debug
+					if(survey.id == 3850) {		// debug
+						debug = true;			// debug
+					}							// debug
+					log.info("----------------------------- " + survey.displayName + " : " + debug);		// debug
+					
+					if(debug) {
+						log.info("       meta size: " + survey.meta.size());
+					}
+					String topFormPath = "/main/";
+					if(survey.meta.size() > 0) {
+						// New meta items stored with survey
+						for(MetaItem mi : survey.meta) {
+							if(mi.isPreload) {
+								if(mi.sourceParam.equals("start")) {
+									thisStart = si.getValue(topFormPath + mi.name);
+								} else if(mi.sourceParam.equals("end")) {
+									thisEnd = si.getValue(topFormPath + mi.name);
+								}
+							} else {
+								if(mi.name.toLowerCase().equals("instancename")) {
+									thisInstanceName = si.getValue(topFormPath + "meta/" + mi.name);
+								}
+							}
+						}
+					} else {
+						// Old style meta items which were questions
+						QuestionManager qm = new QuestionManager(localisation);
+						ArrayList<Question> questions = qm.getQuestionsInForm(sd, 
+								null, 		// Not checking for HRK so no need for results database
+								survey.id, 
+								0,			// Get the top level form (pass zero) 
+								false,		// Don't get deleted questions 
+								true,		// Get property questions 
+								false,		// Don't get HRK 
+								0,			// parent form 
+								null,		// HRK 
+								0,			// Number of languages only required for HRK 
+								null, 		// Table name only required for HRK
+								basePath, 
+								0,			// Organisation Id - only required to get labels 
+								null);		// Survey - only required to get labels 
+						
+						for(Question q : questions) {
+							if(debug) {			// debug
+								log.info("xxxxxx question: " + q.name + " : " + q.source_param);
+							}
+							if(q.isPreload()) {	
+								if(debug) {			// debug
+									log.info("       preload: " + q.name + " : " + q.source_param);
+								}
+								if(q.source_param != null && q.source_param.equals("start")) {
+									thisStart = si.getValue(topFormPath + q.name);
+								} else if(q.source_param != null && q.source_param.equals("end")) {
+									thisEnd = si.getValue(topFormPath + q.name);
+								} else if(q.name.toLowerCase().equals("instancename")) {
+									thisInstanceName = si.getValue(topFormPath + "meta/" + q.name);
+								}
+							}
+						}
+						if(debug) {			// debug
+							log.info("       ------------------");
+							log.info("       end: " + thisEnd);
+							log.info("       start: " + thisStart);
+							log.info("       instance: " + thisInstanceName);
+							log.info("       ------------------");
+						}
+						
+					}
 
 					break; // There is only one XML submission file
 				}
@@ -200,9 +293,6 @@ public class XFormData {
 			}
 			log.info("####################### End of Saving everything to disk ##############################");
 
-			SurveyManager sm = new SurveyManager();
-			Survey survey = sm.getSurveyId(sd, templateName); // Get the survey id from the templateName / key
-
 			if (survey.getDeleted()) {
 				String reason = survey.displayName + " has been deleted";
 				if (!GeneralUtilityMethods.hasUploadErrorBeenReported(sd, user, si.getImei(), templateName, reason)) {
@@ -219,13 +309,18 @@ public class XFormData {
 				throw new SurveyBlockedException();
 			}
 
-			try {
-				superUser = GeneralUtilityMethods.isSuperUser(sd, request.getRemoteUser());
-			} catch (Exception e) {
+			log.info("###### submitted by: " + request.getRemoteUser());
+			if(assignmentId > 0) {
+				superUser = true;		// This was an assigned task do not apply role restrictions
+			} else {
+				try {
+					superUser = GeneralUtilityMethods.isSuperUser(sd, user);
+				} catch (Exception e) {
+				}
 			}
 			a.isValidSurvey(sd, user, survey.id, false, superUser); // Throw an exception if the user is not authorised
 																	// to upload this survey
-
+			
 			/*
 			 * DeviceId should be included in the survey contents, if it is not there then
 			 * attempt to use the deviceId passed as a parameter in the submission
@@ -249,6 +344,8 @@ public class XFormData {
 			ue.setFilePath(saveDetails.filePath);
 			ue.setAuditFilePath(auditFilePath);
 			ue.setProjectId(survey.getPId());
+			ue.setOrganisationId(survey.o_id);
+			ue.setEnterpriseId(survey.e_id);
 			ue.setUploadTime(new Date());
 			ue.setFileName(saveDetails.fileName);
 			ue.setSurveyName(survey.getDisplayName());
@@ -262,6 +359,10 @@ public class XFormData {
 			ue.setIncomplete(incomplete);
 			ue.setLocationTrigger(locationTrigger);
 			ue.setSurveyNotes(surveyNotes);
+			ue.setStart(thisStart);
+			ue.setEnd(thisEnd);
+			ue.setScheduledStart(GeneralUtilityMethods.getScheduledStart(sd, assignmentId));
+			ue.setInstanceName(thisInstanceName);
 
 			JdbcUploadEventManager uem = null;
 			try {
@@ -272,11 +373,33 @@ public class XFormData {
 					uem.close();
 				}
 			}
-			// UploadEventManager uem = new UploadEventManager(pc);
-			// uem.persist(ue);
-
+			
+			/*
+			 * If the upload was for a temporary user 
+			 * who can only submit one result then delete that temporary user
+			 */
+			if(assignmentId > 0) {
+				String sqlIsRepeating = "select repeat from tasks "
+						+ "where id = (select task_id from assignments where id = ?);";
+				
+				pstmtIsRepeating = sd.prepareStatement(sqlIsRepeating);
+				pstmtIsRepeating.setInt(1, assignmentId);
+				log.info("Is repeating: " + pstmtIsRepeating.toString());
+				rsRepeating = pstmtIsRepeating.executeQuery();
+				
+				if(rsRepeating.next()) {
+					if(!rsRepeating.getBoolean(1)) {
+						log.info("Deleting temporary user");
+						UserManager um = new UserManager(localisation);
+						um.deleteSingleSubmissionTemporaryUser(sd, user);
+					}
+				}
+			}
+			
 			log.info("userevent: " + user + " : upload results : " + si.getDisplayName());
 		} finally {
+			try {if (rsRepeating != null) {rsRepeating.close();}} catch (SQLException e) {}
+			try {if (pstmtIsRepeating != null) {pstmtIsRepeating.close();}} catch (SQLException e) {}
 			SDDataSource.closeConnection("surveyMobileAPI-XFormData", sd);
 		}
 	}
@@ -319,6 +442,9 @@ public class XFormData {
 		saveDetails.iosVideoCount = iosVideoCount;
 
 		// Set the item name
+		log.info("-------------------------------- item name: " + item.getName());
+		log.info("-------------------------------- field name: " + item.getFieldName());
+		log.info("-------------------------------- base64: " + base64Data);
 		String itemName = item.getName();
 		if (base64Data != null) {
 			itemName = item.getFieldName();

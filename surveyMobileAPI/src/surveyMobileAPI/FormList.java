@@ -26,6 +26,8 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Locale;
+import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -93,14 +95,6 @@ public class FormList extends Application {
 
 		Response response = null;
 		
-		try {
-		    Class.forName("org.postgresql.Driver");	 
-		} catch (ClassNotFoundException e) {
-			log.log(Level.SEVERE, "Can't find PostgreSQL JDBC Driver", e);
-			response = Response.serverError().build();
-			return response;
-		}
-		
 		Connection connectionSD = SDDataSource.getConnection("surveyMobileAPI-FormList");
 		String user = request.getRemoteUser();
 		if(user == null) {
@@ -115,9 +109,13 @@ public class FormList extends Application {
 		ArrayList<org.smap.sdal.model.Survey> surveys = null;
 		
 		try {
-			SurveyManager sm = new SurveyManager();
+			// Get the users locale
+			Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(connectionSD, request, request.getRemoteUser()));
+			ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
+			
+			SurveyManager sm = new SurveyManager(localisation, "UTC");
 			boolean superUser = GeneralUtilityMethods.isSuperUser(connectionSD, request.getRemoteUser());
-			surveys = sm.getSurveys(connectionSD, pstmt, user, false, false, 0, superUser);
+			surveys = sm.getSurveys(connectionSD, pstmt, user, false, false, 0, superUser, false, false);
 			
 			// Determine whether or not a manifest identifying media files exists for this survey
 			TranslationManager translationMgr = new TranslationManager();
@@ -187,7 +185,6 @@ public class FormList extends Application {
 				ODKForm form = new ODKForm();
 				Survey s = surveys.get(i);
 				form.formID = String.valueOf(s.getIdent());
-				form.name = s.getName();
 				form.name = s.getDisplayName();
 				form.majorMinorVersion = " ";
 				form.version = String.valueOf(s.version);

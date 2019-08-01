@@ -30,6 +30,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
+import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.Stack;
 import java.util.logging.Level;
@@ -123,31 +125,19 @@ public class HtmlManifest extends Application{
 		Response response = null;
 		
 		log.info("htmlManifest: Survey=" + templateName);
-		
-		try {
-		    Class.forName("org.postgresql.Driver");	 
-		} catch (ClassNotFoundException e) {
-			String msg = "Error: Can't find PostgreSQL JDBC Driver";
-			log.log(Level.SEVERE, msg, e);
-			response = Response.status(Status.INTERNAL_SERVER_ERROR).entity(msg).build();
-		    return response;
-		}
-		
-		// Authorisation - Access
-		try {
-		    Class.forName("org.postgresql.Driver");	 
-		} catch (ClassNotFoundException e) {
-			log.log(Level.SEVERE, "Can't find PostgreSQL JDBC Driver", e);
-		}
-		
+	
 		String user = request.getRemoteUser();
 		Survey survey = null;
 		
 		Connection connectionSD = SDDataSource.getConnection("surveyMobileAPI-HtmlManifest");
 		// Catch authorisation errors and return 404 - not found which should clear the cache
 		try {
+			// Get the users locale
+			Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(connectionSD, request, request.getRemoteUser()));
+			ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
+			
 			a.isAuthorised(connectionSD, user);
-			SurveyManager sm = new SurveyManager();
+			SurveyManager sm = new SurveyManager(localisation, "UTC");
 			survey = sm.getSurveyId(connectionSD, templateName);	// Get the survey id from the templateName / key
 			boolean superUser = false;
 			superUser = GeneralUtilityMethods.isSuperUser(connectionSD, request.getRemoteUser());

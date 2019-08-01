@@ -50,16 +50,21 @@ import org.smap.sdal.Utilities.SDDataSource;
 import org.smap.sdal.managers.ActionManager;
 import org.smap.sdal.managers.SurveyViewManager;
 import org.smap.sdal.managers.SurveyManager;
+import org.smap.sdal.managers.SurveySettingsManager;
 import org.smap.sdal.managers.TableDataManager;
 import org.smap.sdal.model.Action;
 import org.smap.sdal.model.Form;
 import org.smap.sdal.model.SurveyViewDefn;
 import org.smap.sdal.model.Survey;
+import org.smap.sdal.model.SurveySettingsDefn;
+
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 /*
  * Allow a temporary user to complete an action
+ * There is an action service in both surveyMobileAPI and in surveyKPI.  The reason being only surveyKPI currently
+ *  has access to Apache POI for reports
  */
 
 @Path("/action")
@@ -105,18 +110,20 @@ public class ActionService extends Application {
 		Connection cResults = ResultsDataSource.getConnection(requester);
 
 		try {
-			Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(sd, request.getRemoteUser()));
+			Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(sd, request, request.getRemoteUser()));
 			ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
 
+			String tz = "UTC";	// set default tz
+			
 			// 1. Get details on the action to be performed using the user credentials
-			ActionManager am = new ActionManager();
+			ActionManager am = new ActionManager(localisation, tz);
 			Action a = am.getAction(sd, userIdent);
 
 			// 2. If temporary user does not exist then throw exception
 			if (a == null) {
 				throw new Exception(localisation.getString("mf_adnf"));
 			}
-
+			
 			response = am.processUpdate(request, sd, cResults, userIdent, a.sId, a.managedId, settings);
 
 		} finally {
@@ -135,14 +142,6 @@ public class ActionService extends Application {
 			@PathParam("status") String status) {
 
 		Response response = null;
-
-		try {
-			Class.forName("org.postgresql.Driver");
-		} catch (ClassNotFoundException e) {
-			log.log(Level.SEVERE, "Error: Can't find PostgreSQL JDBC Driver", e);
-			response = Response.serverError().build();
-			return response;
-		}
 
 		String sql = "delete from users where temporary and ident = ?";
 		PreparedStatement pstmt = null;
@@ -186,21 +185,17 @@ public class ActionService extends Application {
 		StringBuffer outputString = new StringBuffer();
 		String requester = "surveyMobileAPI-getActionForm";
 
-		try {
-			Class.forName("org.postgresql.Driver");
-		} catch (ClassNotFoundException e) {
-			log.log(Level.SEVERE, "Can't find PostgreSQL JDBC Driver", e);
-		}
-
 		Connection sd = SDDataSource.getConnection(requester);
 		Connection cResults = ResultsDataSource.getConnection(requester);
 
 		try {
-			Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(sd, request.getRemoteUser()));
+			Locale locale = new Locale(GeneralUtilityMethods.getUserLanguage(sd, request, request.getRemoteUser()));
 			ResourceBundle localisation = ResourceBundle.getBundle("org.smap.sdal.resources.SmapResources", locale);
 
+			String tz = "UTC";	// set default tz
+			
 			// 1. Get details on the action to be performed using the user credentials
-			ActionManager am = new ActionManager();
+			ActionManager am = new ActionManager(localisation, tz);
 			Action a = am.getAction(sd, userIdent);
 
 			// 2. If temporary user does not exist then throw exception
@@ -209,7 +204,7 @@ public class ActionService extends Application {
 			}
 
 			// 3. Generate the form
-			outputString.append(addActionDocument(sd, cResults, request, localisation, a, userIdent, false)); 
+			outputString.append(addActionDocument(sd, cResults, request, localisation, a, userIdent, false, tz)); 
 
 			response = Response.status(Status.OK).entity(outputString.toString()).build();
 		} catch (Exception e) {
@@ -226,20 +221,23 @@ public class ActionService extends Application {
 	 * Add the HTML
 	 */
 	private StringBuffer addActionDocument(Connection sd, Connection cResults, HttpServletRequest request,
-			ResourceBundle localisation, Action a, String uIdent, boolean superUser) throws SQLException, Exception {
+			ResourceBundle localisation, Action a, String uIdent, boolean superUser, String tz) throws SQLException, Exception {
 
 		StringBuffer output = new StringBuffer();
 
-		SurveyManager sm = new SurveyManager();
+		SurveyManager sm = new SurveyManager(localisation, "UTC");
 		Survey s = sm.getById(sd, cResults, uIdent, a.sId, false, null, null, false, false, false, false, false, null,
-				false, false, 0, null);
+				false, false, false, null,
+				false,	// child surveys
+				false	// launched only
+				);
 		if (s == null) {
 			throw new Exception(localisation.getString("mf_snf"));
 		}
 
 		output.append("<!DOCTYPE html>\n");
 
-		output.append(addHead(sd, cResults, request, a, uIdent, superUser));
+		output.append(addHead(sd, cResults, localisation, request, a, uIdent, superUser, tz));
 		output.append(addBody(request, localisation, s));
 
 		output.append("</html>\n");
@@ -249,8 +247,8 @@ public class ActionService extends Application {
 	/*
 	 * Add the head section
 	 */
-	private StringBuffer addHead(Connection sd, Connection cResults, HttpServletRequest request, Action a,
-			String uIdent, boolean superUser) throws SQLException, Exception {
+	private StringBuffer addHead(Connection sd, Connection cResults, ResourceBundle localisation, HttpServletRequest request, Action a,
+			String uIdent, boolean superUser, String tz) throws SQLException, Exception {
 
 		StringBuffer output = new StringBuffer();
 
@@ -281,14 +279,16 @@ public class ActionService extends Application {
 		output.append("<script>");
 
 		int uId = GeneralUtilityMethods.getUserId(sd, uIdent);
-		SurveyViewManager mfm = new SurveyViewManager();
-		mfc = mfm.getSurveyView(sd, cResults, uId, 0, a.sId, a.managedId, uIdent,
-				GeneralUtilityMethods.getOrganisationIdForSurvey(sd, a.sId), superUser);
+		SurveyViewManager mfm = new SurveyViewManager(localisation, tz);
+		
+		mfc = mfm.getSurveyView(sd, cResults, uId, null, a.sId, a.managedId, uIdent,
+				GeneralUtilityMethods.getOrganisationIdForSurvey(sd, a.sId), superUser,
+				null);	// TODO Add GroupSurvey
 		String urlprefix = GeneralUtilityMethods.getUrlPrefix(request);
 		Form f = GeneralUtilityMethods.getTopLevelForm(sd, a.sId);
 
 		output.append(getManagedConfig(mfc));
-		output.append(getRecord(sd, cResults, mfc, a.sId, a.prikey, urlprefix, request.getRemoteUser(), f.tableName,
+		output.append(getRecord(sd, cResults, localisation, mfc, a.sId, a.prikey, urlprefix, request.getRemoteUser(), f.tableName,
 				superUser));
 
 		output.append("var gSurvey="); // Survey id
@@ -413,30 +413,42 @@ public class ActionService extends Application {
 		return output;
 	}
 
-	private StringBuffer getRecord(Connection sd, Connection cResults, SurveyViewDefn mfc, int sId, int prikey,
+	private StringBuffer getRecord(Connection sd, Connection cResults, ResourceBundle localisation, SurveyViewDefn mfc, int sId, int prikey,
 			String urlprefix, String uIdent, String tableName, boolean superUser) throws SQLException, Exception {
 
 		StringBuffer output = new StringBuffer();
 
-		Gson gson = new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd").create();
-
-		TableDataManager tdm = new TableDataManager();
+		String tz = "UTC";	// Set default timezone
+		
+		TableDataManager tdm = new TableDataManager(localisation, tz);
 		JSONArray ja = null;
 
 		PreparedStatement pstmt = null;
 		try {
-			pstmt = tdm.getPreparedStatement(sd, cResults, mfc.columns, urlprefix, sId, tableName, 0, // parkey
-					null, // HRK
-					uIdent, null, // Sort
-					null, // Sort direction
-					true, // Management
-					false, // group
-					false, // isDt
-					prikey, 1, // Number of records to return
-					false, // get parkey
-					0, // start parkey
-					superUser, true, // Return the specific primary key
-					"none" // include bad
+			pstmt = tdm.getPreparedStatement(sd, cResults, mfc.columns, urlprefix, sId, tableName, 
+					0, 					// parkey
+					null, 				// HRK
+					uIdent, 
+					null,				// roles
+					null, 				// Sort
+					null, 				// Sort direction
+					true, 				// Management
+					false, 				// group
+					false, 				// isDt
+					prikey, 
+					false, 				// get parkey
+					0, 					// start parkey
+					superUser, 
+					true, 	// Return the specific primary key
+					"none", 				// include bad
+					null	,				// no custom filter
+					null,				// no key filter
+					tz,
+					null,
+					null	,			// advanced filter
+					null,			// Date filter name
+					null,			// Start date
+					null				// End date
 			);
 
 			if (pstmt != null) {
