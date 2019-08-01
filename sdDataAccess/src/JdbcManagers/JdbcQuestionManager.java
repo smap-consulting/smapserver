@@ -74,11 +74,13 @@ public class JdbcQuestionManager {
 			+ "l_id,"
 			+ "autoplay,"
 			+ "accuracy,"
-			+ "dataType"
+			+ "dataType,"
+			+ "compressed,"
+			+ "intent"
 			+ ") "
 			+ "values (nextval('q_seq'), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?"
-				+ ", ?, ?, ?, ?, ?, ?, ?, ?, ?, ?"
-				+ ", ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);";
+				+ ", ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?"
+				+ ", ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);";
 	
 	PreparedStatement pstmtGetBySurveyId;
 	PreparedStatement pstmtGetByFormId;
@@ -113,7 +115,9 @@ public class JdbcQuestionManager {
 			+ "l_id,"
 			+ "autoplay,"
 			+ "accuracy,"
-			+ "dataType "
+			+ "dataType,"
+			+ "compressed,"
+			+ "intent "
 			+ "from question where soft_deleted = 'false' and ";
 	String sqlGetBySurveyId = "f_id in (select f_id from form where s_id = ?)"
 			+ " order by f_id, seq";
@@ -157,7 +161,7 @@ public class JdbcQuestionManager {
 		pstmt.setString(18, q.getConstraintMsg()); // ok
 		pstmt.setString(19, q.getRequiredMsg());
 		pstmt.setString(20, q.getAppearance(false, null));
-		pstmt.setString(21, q.getParameters());
+		pstmt.setString(21, GeneralUtilityMethods.convertParametersToString(q.getParameters()));
 		
 		String nodeset = null;
 		String nodeset_value = null;
@@ -188,14 +192,19 @@ public class JdbcQuestionManager {
 		pstmt.setString(23, nodeset_value);
 		pstmt.setString(24, nodeset_label);
 		
-		pstmt.setString(25, q.getColumnName()); 
+		pstmt.setString(25, q.getColumnName(false)); 
 		pstmt.setBoolean(26, q.isPublished());
 		pstmt.setInt(27, q.getListId());  
 		pstmt.setString(28, q.getAutoPlay());
 		pstmt.setString(29, q.getAccuracy());
 		pstmt.setString(30, q.getDataType());
+		if(q.getType().equals("select")) {
+			pstmt.setBoolean(31, true);			// Set all select multiple to compressed
+		} else {
+			pstmt.setBoolean(31, false);
+		}
+		pstmt.setString(32, q.getIntent());
 		
-		//log.info("Write question: " + pstmt.toString());
 		pstmt.executeUpdate();
 		
 		ResultSet rs = pstmt.getGeneratedKeys();
@@ -237,7 +246,6 @@ public class JdbcQuestionManager {
 		Stack<String> paths = new Stack<String>();
 		String currentPath = "";
 		
-		log.info("Get question list: " + pstmtGet.toString());
 		ResultSet rs = pstmtGet.executeQuery();
 		while(rs.next()) {
 			Question q = new Question();
@@ -272,6 +280,8 @@ public class JdbcQuestionManager {
 			q.setAutoPlay(rs.getString(29));
 			q.setAccuracy(rs.getString(30));
 			q.setDataType(rs.getString(31));
+			q.setCompressed(rs.getBoolean(32));
+			q.setIntent(rs.getString(33));
 		
 			/*
 			 * If the list id exists then set the list name

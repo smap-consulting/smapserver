@@ -2,9 +2,7 @@ package org.smap.server.utilities;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
-import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.io.Writer;
@@ -18,6 +16,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.ResourceBundle;
 import java.util.Stack;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -41,8 +40,16 @@ import org.smap.sdal.Utilities.CSVParser;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.Utilities.ResultsDataSource;
 import org.smap.sdal.Utilities.SDDataSource;
+import org.smap.sdal.managers.SurveyTableManager;
+import org.smap.sdal.managers.TaskManager;
 import org.smap.sdal.managers.TranslationManager;
+import org.smap.sdal.model.Instance;
+import org.smap.sdal.model.KeyValueSimp;
+import org.smap.sdal.model.Line;
 import org.smap.sdal.model.ManifestValue;
+import org.smap.sdal.model.MetaItem;
+import org.smap.sdal.model.Point;
+import org.smap.sdal.model.Polygon;
 import org.smap.server.entities.Form;
 import org.smap.server.entities.Option;
 import org.smap.server.entities.Question;
@@ -52,6 +59,9 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
+
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 /*
  * Return an XForm built from a survey defined in the database
@@ -68,20 +78,36 @@ public class GetXForm {
 	private String gInstanceId = null;
 	private String gSurveyClass = null;
 	private ArrayList<String> gFilenames;
+	private ArrayList<String> gPaths;
 	private boolean embedExternalSearch = false;
 	private boolean gInTableList = false;
 	private boolean modelInstanceOnly = false;
 	private boolean isWebForms = false;
 	private boolean useNodesets = false;
+	private ResourceBundle localisation = null;
+	String remoteUser = null;
+	private String tz;
+	
+	private static  String FILE_MIME="text/plain,application/pdf,application/vnd.ms-excel,application/msword,text/richtext,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/zip,application/x-zip,application/x-zip-compressed" ;
 
+	private HashMap<String, Integer> gRecordCounts = new HashMap<> ();
+	
 	private static Logger log = Logger.getLogger(GetXForm.class.getName());
 
-	// Globals
-
+	public GetXForm(ResourceBundle l, String user, String tz) {
+		localisation = l;
+		if(tz == null) {
+			tz = "UTC";
+		}
+		this.tz = tz;
+		remoteUser = user;
+	}
+	
 	/*
 	 * Get the XForm as a string
 	 */
-	public String get(SurveyTemplate template, boolean isWebForms, boolean useNodesets, boolean modelInstanceOnly) throws Exception {
+	public String get(SurveyTemplate template, boolean isWebForms, boolean useNodesets, 
+			boolean modelInstanceOnly, String user) throws Exception {
 
 		// Set Globals
 		this.modelInstanceOnly = modelInstanceOnly;
@@ -92,12 +118,14 @@ public class GetXForm {
 		String response = null;
 
 		if (isWebForms) {
-			embedExternalSearch = true; // Webforms do not support search there fore embed the choices in the html
+			embedExternalSearch = true; // Webforms do not support search therefore embed the choices in the html
 		}
 
 		Connection sd = null;
+		Connection cResults = null;
 		try {
 			sd = SDDataSource.getConnection("getXForm");
+			cResults = ResultsDataSource.getConnection("getXForm");
 
 			// Create a new XML Document
 			DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
@@ -118,10 +146,10 @@ public class GetXForm {
 			if (modelInstanceOnly) {
 				parent = outputXML.createElement("model");
 				outputXML.appendChild(parent);
-				populateModel(sd, outputXML, b, parent);
+				populateModel(sd, cResults, outputXML, b, parent, user);
 			} else {
 				parent = populateRoot(outputXML);
-				populateHead(sd, outputXML, b, parent);
+				populateHead(sd, cResults, outputXML, b, parent, user);
 				populateBody(sd, outputXML, parent);
 			}
 
@@ -135,9 +163,10 @@ public class GetXForm {
 			transformer.transform(source, outStream);
 
 			response = outWriter.toString();
-			
+
 		} finally {
 			SDDataSource.closeConnection("getXForm", sd);
+			ResultsDataSource.closeConnection("getXForm", cResults);
 		}
 
 		return response;
@@ -156,6 +185,7 @@ public class GetXForm {
 		rootElement.setAttribute("xmlns:ev", "http://www.w3.org/2001/xml-events");
 		rootElement.setAttribute("xmlns:h", "http://www.w3.org/1999/xhtml");
 		rootElement.setAttribute("xmlns:jr", "http://openrosa.org/javarosa");
+		rootElement.setAttribute("xmlns:odk", "http://www.opendatakit.org/xforms");
 		rootElement.setAttribute("xmlns:orx", "http://openrosa.org/xforms");
 		rootElement.setAttribute("xmlns:xsd", "http://www.w3.org/2001/XMLSchema");
 		outputDoc.appendChild(rootElement);
@@ -168,7 +198,8 @@ public class GetXForm {
 	 * 
 	 * @param outputXML
 	 */
-	public void populateHead(Connection sd, Document outputDoc, DocumentBuilder documentBuilder, Element parent)
+	public void populateHead(Connection sd, Connection cResults, Document outputDoc, 
+			DocumentBuilder documentBuilder, Element parent, String user)
 			throws Exception {
 
 		Survey s = template.getSurvey();
@@ -184,14 +215,15 @@ public class GetXForm {
 		Element modelElement = outputDoc.createElement("model");
 		headElement.appendChild(modelElement);
 
-		populateModel(sd, outputDoc, documentBuilder, modelElement);
+		populateModel(sd, cResults, outputDoc, documentBuilder, modelElement, user);
 
 	}
 
 	/*
 	 * Populate the model
 	 */
-	private void populateModel(Connection sd, Document outputDoc, DocumentBuilder documentBuilder, Element parent)
+	private void populateModel(Connection sd, Connection cResults, Document outputDoc, DocumentBuilder documentBuilder, 
+			Element parent, String user)
 			throws Exception {
 
 		if (!modelInstanceOnly) {
@@ -204,6 +236,14 @@ public class GetXForm {
 		parent.appendChild(instanceElement);
 		populateInstance(sd, outputDoc, instanceElement);
 
+		// Add a last saved instance  <instance id="last-saved" src="jr://instance/last-saved"/>
+		if(!isWebForms) {
+			Element lastSavedElement = outputDoc.createElement("instance");
+			lastSavedElement.setAttribute("id", "last-saved");
+			lastSavedElement.setAttribute("src", "jr://instance/last-saved");
+			parent.appendChild(lastSavedElement);
+		}
+		
 		if (template.hasCascade()) {
 
 			List<CascadeInstance> cis = template.getCascadeInstances();
@@ -223,16 +263,22 @@ public class GetXForm {
 			List<ManifestValue> manifests = tm.getPulldataManifests(sd, template.getSurvey().getId());
 			for (int i = 0; i < manifests.size(); i++) {
 				ManifestValue mv = manifests.get(i);
-				if (mv.filePath != null) {
+				if (mv.filePath != null || (mv.type != null && mv.type.equals("linked"))) {
 					Element pulldataElement = outputDoc.createElement("instance");
 					pulldataElement.setAttribute("id", mv.baseName);
 					pulldataElement.setAttribute("src", "jr://csv/" + mv.baseName + ".csv");
 					parent.appendChild(pulldataElement);
 					Element rootElement = outputDoc.createElement("root");
 					pulldataElement.appendChild(rootElement);
-					populateCSVElements(outputDoc, rootElement, mv.filePath);
-				}
-
+					
+					if(mv.filePath != null) {
+						populateCSVElements(outputDoc, rootElement, mv.filePath);
+					} else {
+						int oId = GeneralUtilityMethods.getOrganisationId(sd, remoteUser);
+						SurveyTableManager stm = new SurveyTableManager(sd, cResults, localisation, oId, mv.sId, mv.fileName, user);
+						populateCSVElementsFromSurvey(outputDoc, rootElement, stm);
+					}
+				} 
 			}
 		}
 
@@ -249,7 +295,6 @@ public class GetXForm {
 			throws SQLException {
 
 		Survey s = template.getSurvey();
-		enableTranslationElements(sd, firstForm); // Enable the translations that are actually used
 
 		HashMap<String, HashMap<String, HashMap<String, Translation>>> translations = template.getTranslations();
 		// Write the translation objects
@@ -271,70 +316,68 @@ public class GetXForm {
 
 					Translation trans = (Translation) itrT.next();
 
-					if (trans.getEnabled()) {
-
-						if (languageElement == null) {
-							languageElement = outputDoc.createElement("translation");
-							languageElement.setAttribute("lang", trans.getLanguage());
-							if (s.getDefLang() != null && s.getDefLang().equals(trans.getLanguage())) {
-								languageElement.setAttribute("default", "true()"); // set default language
-							}
-							parent.appendChild(languageElement);
+					if (languageElement == null) {
+						languageElement = outputDoc.createElement("translation");
+						languageElement.setAttribute("lang", trans.getLanguage());
+						if (s.getDefLang() != null && s.getDefLang().equals(trans.getLanguage())) {
+							languageElement.setAttribute("default", "true()"); // set default language
 						}
-
-						if (textElement == null) {
-							textElement = outputDoc.createElement("text");
-							textElement.setAttribute("id", trans.getTextId());
-							languageElement.appendChild(textElement);
-						}
-
-						Element valueElement = outputDoc.createElement("value");
-
-						/*
-						 * Add the translation XML fragment to the output
-						 */
-						String type = trans.getType().trim();
-						Document xfragDoc;
-						if (type.equals("image") || type.equals("video") || type.equals("audio")) {
-							String base = type;
-							if (type.equals("image")) {
-								base = "images";
-							}
-							String fileLocn = trans.getValue(); // Location of file on disk, only file name is used by
-																// fieldTask
-							String filename = "";
-							if (fileLocn != null) {
-								int idx = fileLocn.lastIndexOf('/');
-								if (idx > 0) {
-									filename = fileLocn.substring(idx + 1);
-								} else {
-									filename = fileLocn;
-								}
-							}
-
-							valueElement.setTextContent("jr://" + base + "/" + filename);
-
-						} else {
-							// The text could be an xml fragment
-							try {
-
-								String v = trans.getValueXML(template.getQuestionPaths(), 0);
-								// valueElement.setTextContent(v);
-								xfragDoc = builder.parse(new InputSource(new StringReader(v)));
-								Element rootFrag = xfragDoc.getDocumentElement();
-								addXmlFrag(outputDoc, valueElement, rootFrag);
-
-							} catch (Exception e) {
-								e.printStackTrace();
-							}
-						}
-
-						if (!type.equals("none")) {
-							valueElement.setAttribute("form", type);
-						}
-
-						textElement.appendChild(valueElement);
+						parent.appendChild(languageElement);
 					}
+
+					if (textElement == null) {
+						textElement = outputDoc.createElement("text");
+						textElement.setAttribute("id", trans.getTextId());
+						languageElement.appendChild(textElement);
+					}
+
+					Element valueElement = outputDoc.createElement("value");
+
+					/*
+					 * Add the translation XML fragment to the output
+					 */
+					String type = trans.getType().trim();
+					Document xfragDoc;
+					if (type.equals("image") || type.equals("video") || type.equals("audio")) {
+						String base = type;
+						if (type.equals("image")) {
+							base = "images";
+						}
+						String fileLocn = trans.getValue(); // Location of file on disk, only file name is used by
+						// fieldTask
+						String filename = "";
+						if (fileLocn != null) {
+							int idx = fileLocn.lastIndexOf('/');
+							if (idx > 0) {
+								filename = fileLocn.substring(idx + 1);
+							} else {
+								filename = fileLocn;
+							}
+						}
+
+						valueElement.setTextContent("jr://" + base + "/" + filename);
+
+					} else {
+						// The text could be an xml fragment
+						try {
+
+							String v = trans.getValueXML(template.getQuestionPaths(), 0);
+							// valueElement.setTextContent(v);
+							xfragDoc = builder.parse(new InputSource(new StringReader(v)));
+							Element rootFrag = xfragDoc.getDocumentElement();
+							addXmlFrag(outputDoc, valueElement, rootFrag);
+
+						} catch (Exception e) {
+							e.printStackTrace();
+						}
+					}
+
+					if (!type.equals("none")) {
+						valueElement.setAttribute("form", type);
+					}
+
+					textElement.appendChild(valueElement);
+
 				}
 			}
 		}
@@ -348,87 +391,6 @@ public class GetXForm {
 		if (fragList != null) {
 			for (int i = 0; i < fragList.getLength(); i++) {
 				main.appendChild(outputDoc.importNode(fragList.item(i), true));
-			}
-		}
-	}
-
-	/*
-	 * Enable the translation elements if there is an enabled question that
-	 * references the element This function is required because not all questions in
-	 * a survey are enabled and it would be inefficient to download the iText for
-	 * disabled questions
-	 */
-	public void enableTranslationElements(Connection sd, Form f) throws SQLException {
-		if (firstForm != null && f != null) {
-
-			HashMap<String, HashMap<String, HashMap<String, Translation>>> translations = template.getTranslations();
-			Collection<HashMap<String, HashMap<String, Translation>>> c = translations.values();
-
-			List<Question> questions = f.getQuestions(sd, f.getPath(null));
-			for (Question q : questions) {
-
-				if (q.getEnabled()) {
-					String labelRef = q.getQTextId();
-					String hintRef = q.getInfoTextId();
-
-					enableTranslationRef(c, labelRef);
-					enableTranslationRef(c, hintRef);
-
-					// If this is a choice question, add the items
-					if (q.getType().startsWith("select")) {
-						Collection<Option> options = null;
-						if (embedExternalSearch) {
-							options = q.getValidChoices(sd);
-						} else {
-							options = q.getChoices(sd);
-						}
-						List<Option> optionList = new ArrayList<Option>(options);
-
-						for (Option o : optionList) {
-							String oRef = o.getLabelId();
-							enableTranslationRef(c, oRef);
-						}
-					}
-
-					// If this is a repeating group then add the questions from the sub form
-					if (q.getType().equals("begin repeat") || q.getType().equals("geolinestring")
-							|| q.getType().equals("geopolygon")) {
-
-						Form subForm = template.getSubForm(f, q);
-						enableTranslationElements(sd, subForm);
-
-					}
-
-				} else {
-					log.info("----------Not enabled:" + q.getName());
-				}
-			}
-
-		}
-
-	}
-
-	/*
-	 * Enable the translation element for the provided reference
-	 */
-	public void enableTranslationRef(Collection<HashMap<String, HashMap<String, Translation>>> c, String ref) {
-		Iterator<HashMap<String, HashMap<String, Translation>>> itr = c.iterator();
-
-		if (ref != null) {
-			while (itr.hasNext()) { // Get each language
-				HashMap<String, HashMap<String, Translation>> l = itr.next(); // Single language
-				HashMap<String, Translation> types = l.get(ref); // Get the types for this string identifier
-
-				if (types != null) {
-					Collection<Translation> tCollection = types.values();
-					Iterator<Translation> itrT = tCollection.iterator();
-					while (itrT.hasNext()) { // Enable all types for this reference
-						Translation t = (Translation) itrT.next();
-						t.setEnabled(true);
-					}
-				} else {
-					log.info("Info. enableTranslationRef(): No types for:" + ref);
-				}
 			}
 		}
 	}
@@ -450,8 +412,7 @@ public class GetXForm {
 			if (!isWebForms) {
 				formElement.setAttribute("project", String.valueOf(template.getProject().getName()));
 			}
-			populateForm(sd, outputDoc, formElement, INSTANCE, firstForm); // Process the top
-																			// level form
+			populateForm(sd, outputDoc, formElement, INSTANCE, firstForm); // Process the top form
 			parent.appendChild(formElement);
 		}
 	}
@@ -477,8 +438,7 @@ public class GetXForm {
 			gSurveyClass = surveyClass;
 		}
 		if (firstForm != null) {
-			populateForm(sd, outputDoc, bodyElement, BODY, firstForm); // Process the top level
-																		// form
+			populateForm(sd, outputDoc, bodyElement, BODY, firstForm); // Process the top level form
 		}
 
 		parent.appendChild(bodyElement);
@@ -505,16 +465,92 @@ public class GetXForm {
 		Stack<Element> elementStack = new Stack<Element>(); // Store the elements for non repeat groups
 
 		/*
+		 * If this is the top level form add the meta and preload data for the survey
+		 */
+		if(!f.hasParent()) {
+
+			ArrayList<MetaItem> preloads = template.getSurvey().getMeta();	// // preloads
+			if(location == INSTANCE) {
+				// Add the meta group
+				Element metaGroup = outputDoc.createElement("meta");
+				currentParent.appendChild(metaGroup);
+				Element instanceID = outputDoc.createElement("instanceID");
+				metaGroup.appendChild(instanceID);
+				Element instanceName = outputDoc.createElement("instanceName");
+				metaGroup.appendChild(instanceName);
+
+				// Add a timing element if we have entered the meta group and timing is enabled
+				if (template.getSurvey().getTimingData()) {
+					Element audit = outputDoc.createElement("audit");
+					metaGroup.appendChild(audit);
+				}
+
+				if(preloads != null) {
+					for(MetaItem mi : preloads) {
+						if(mi.isPreload) {
+							Element preload = outputDoc.createElement(mi.name);
+							currentParent.appendChild(preload);
+						}
+					}
+				}
+
+			} else if(location == BIND) {
+				Element instanceId = outputDoc.createElement("bind");
+				instanceId.setAttribute("nodeset", "/main/meta/instanceID");
+				instanceId.setAttribute("type", "string");
+				instanceId.setAttribute("calculate", "concat('uuid:', uuid())");
+				currentParent.appendChild(instanceId);
+				
+				String instanceNameCalculate = UtilityMethods.convertAllxlsNames(template.getSurvey().getInstanceName(), false,
+						template.getQuestionPaths(), f.getId(), false, "instanceName");
+				if(instanceNameCalculate != null && instanceNameCalculate.trim().length() > 0) {
+					Element instanceName = outputDoc.createElement("bind");
+					instanceName.setAttribute("nodeset", "/main/meta/instanceName");
+					instanceName.setAttribute("type", "string");					
+					instanceName.setAttribute("calculate", instanceNameCalculate);
+					currentParent.appendChild(instanceName);
+				}
+
+				if(preloads != null) {
+					for(MetaItem mi : preloads) {
+						if(mi.isPreload) {
+							Element preload = outputDoc.createElement("bind");
+							preload.setAttribute("nodeset", "/main/" + mi.name);
+							preload.setAttribute("type", mi.type);
+							preload.setAttribute("jr:preload", mi.dataType);
+							preload.setAttribute("jr:preloadParams", mi.sourceParam);
+							currentParent.appendChild(preload);
+						}
+					}
+				}
+				
+				// Add parameters to control auditing of location if this is requested
+				if (template.getSurvey().getTimingData()) {
+					Element audit = outputDoc.createElement("bind");
+					audit.setAttribute("nodeset", "/main/meta/audit");
+					audit.setAttribute("type", "binary");
+					if (template.getSurvey().getAuditLocationData()) {
+						audit.setAttribute("odk:location-priority", "balanced");
+						audit.setAttribute("odk:location-min-interval", "10");
+						audit.setAttribute("odk:location-max-age", "60");
+					}
+					if (template.getSurvey().getTrackChanges()) {
+						audit.setAttribute("odk:track-changes", "true");
+					}
+					currentParent.appendChild(audit);
+				}
+			} 
+		}
+		/*
 		 * Add the questions from the template
 		 */
 		List<Question> questions = f.getQuestions(sd, f.getPath(null));
 		for (Question q : questions) {
 
-			// Skip questions that are not enabled
-			if (!q.getEnabled()) {
+			// Backward compatability - Ignore Meta  questions 
+			if(GeneralUtilityMethods.isMetaQuestion(q.getName())) {
 				continue;
 			}
-
 			Element questionElement = null;
 			String qType = q.getType();
 
@@ -564,18 +600,13 @@ public class GetXForm {
 					elementStack.push(currentParent);
 					currentParent = questionElement;
 
-					// Add a timing element if we have entered the meta group and timing is enabled
-					if (q.getName().equals("meta")) {
-						if (template.getSurvey().getTimingData()) {
-							questionElement = outputDoc.createElement("audit");
-							currentParent.appendChild(questionElement);
-						}
-					}
-
 					// Add a dummy instance element for the table list labels if this is a table
 					// list question
 					if (q.isTableList) {
 						Element labelsElement = getTableListLabelsElement(sd, outputDoc, f, q, f.getPath(null));
+						if(labelsElement == null) {
+							throw new ApplicationException(localisation.getString("ts_ns"));
+						}
 						currentParent.appendChild(labelsElement);
 					}
 
@@ -598,12 +629,14 @@ public class GetXForm {
 				// if(subForm != null) {
 				if (qType.equals("begin repeat") || qType.equals("geolinestring") || qType.equals("geopolygon")) {
 
+					Form subForm = template.getSubForm(f, q);
+
 					// Apply bind for repeat question
 					questionElement = populateBindQuestion(outputDoc, f, q, f.getPath(null), false);
 					currentParent.appendChild(questionElement);
 
 					// Process sub form
-					Form subForm = template.getSubForm(f, q);
+
 					populateForm(sd, outputDoc, currentParent, BIND, subForm);
 					if (subForm.getRepeats(true, template.getQuestionPaths()) != null) {
 						// Add the calculation for repeat count
@@ -622,10 +655,15 @@ public class GetXForm {
 
 					questionElement = populateBindQuestion(outputDoc, f, q, f.getPath(null), false);
 					currentParent.appendChild(questionElement);
+					
 
 				}
 
 			} else if (location == BODY) {
+				String appearance = q.getAppearance(true, template.getQuestionPaths());
+				if(appearance != null && appearance.equals("hidden")) {
+					continue;
+				}
 				// if(subForm != null) {
 				if (qType.equals("begin repeat") || qType.equals("geolinestring") || qType.equals("geopolygon")) {
 					Form subForm = template.getSubForm(f, q);
@@ -646,7 +684,7 @@ public class GetXForm {
 					repeatElement.setAttribute("nodeset", subForm.getPath(null));
 
 					// Add appearance
-					String appearance = q.getAppearance(true, template.getQuestionPaths());
+					appearance = q.getAppearance(true, template.getQuestionPaths());
 					if (appearance != null) {
 						repeatElement.setAttribute("appearance", appearance);
 					}
@@ -656,11 +694,15 @@ public class GetXForm {
 						String repeatCountPath = template.getQuestionPaths().get(q.getName()) + "_count";
 						repeatElement.setAttribute("jr:count", repeatCountPath);
 						repeatElement.setAttribute("jr:noAddRemove", "true()");
+					} else if(q.isReference()) {
+						repeatElement.setAttribute("jr:noAddRemove", "true()");
 					}
 					groupElement.appendChild(repeatElement);
 
 					populateForm(sd, outputDoc, repeatElement, BODY, subForm);
 
+				} else if(qType.equals("end group")) { 
+					// Ignore end group
 				} else { // Add question to output
 					if (q.isVisible() || qType.equals("begin group")) {
 
@@ -694,44 +736,6 @@ public class GetXForm {
 	}
 
 	/*
-	 * Populate a repeating group
-	 */
-	public void createRepeatingGroup(Connection sd, Document outputXML, Element parent, Form subF, int location,
-			String parentXPath, Question parentQuestion) throws Exception {
-
-		if (location == INSTANCE) {
-
-			Element subFormParent = outputXML.createElement(parentQuestion.getName());
-			populateForm(sd, outputXML, subFormParent, location, subF);
-			parent.appendChild(subFormParent);
-
-		} else if (location == BIND) {
-
-			populateForm(sd, outputXML, parent, location, subF);
-
-		} else { // BODY
-
-			Element subFormParent = outputXML.createElement("group");
-			subFormParent.setAttribute("ref", subF.getPath(null));
-
-			// TODO Sets the repeat label to the parent question
-			Element labelElement = outputXML.createElement("label");
-			String jrRef = "jr:itext('" + parentQuestion.getQTextId() + "')";
-			labelElement.setTextContent(jrRef);
-			subFormParent.appendChild(labelElement);
-
-			Element repeatElement = outputXML.createElement("repeat");
-			repeatElement.setAttribute("nodeset", subF.getPath(null));
-			subFormParent.appendChild(repeatElement);
-
-			populateForm(sd, outputXML, repeatElement, location, subF);
-			parent.appendChild(subFormParent);
-
-		}
-
-	}
-
-	/*
 	 * Populate the question element if this is part of the XForm bind
 	 */
 	public Element populateBindQuestion(Document outputXML, Form f, Question q, String parentXPath, boolean count)
@@ -742,15 +746,19 @@ public class GetXForm {
 		// Add type
 		String type = q.getType();
 		String dataType = q.getDataType();
-		
-		if(type.equals("range") && dataType == null) {
+
+		if(type.equals("range")) {
 			dataType = getDataTypeFromRange(q.getParameters());
 		}
-		
-		if (type.equals("audio") || type.equals("video") || type.equals("image")) {
+
+		if (type.equals("audio") || type.equals("video") || type.equals("image") || type.equals("file")) {
 			type = "binary";
 		} else if (type.equals("begin repeat") && count) {
 			type = "string"; // For a calculate
+		} else if (type.equals("calculate")) {
+			type = "string";
+		} else if (type.equals("note")) {
+			type = "string";
 		}
 		if (!type.equals("begin group") && !type.equals("begin repeat") && !type.equals("geopolygon")
 				&& !type.equals("geolinestring")) {
@@ -772,7 +780,7 @@ public class GetXForm {
 
 		if (!count) {
 			// Add read only
-			if (q.isReadOnly()) {
+			if (q.isReadOnly() || q.getType().equals("note")) {	
 				questionElement.setAttribute("readonly", "true()");
 			}
 
@@ -804,19 +812,11 @@ public class GetXForm {
 			if (constraintMsg != null && constraintMsg.trim().length() > 0) {
 				questionElement.setAttribute("jr:constraintMsg", constraintMsg);
 			}
-			
-			// Add parameters
-			String parameters = q.getParameters();
-			if (parameters != null && parameters.trim().length() > 0) {
-				String[] pArray = parameters.split(" ");
-				for(int i = 0; i < pArray.length; i++) {
-					String[] px = pArray[i].split("=");
-					if(px.length == 2) {
-						if(px[0].trim().equals("max-pixels")) {
-							questionElement.setAttribute("orx:max-pixels", px[1].trim());
-						} 
-					}	
-				}
+
+			// Add bind parameters
+			String pixelParam = GeneralUtilityMethods.getSurveyParameter("max-pixels", q.getParameters());
+			if(pixelParam != null) {
+				questionElement.setAttribute("orx:max-pixels", pixelParam);
 			}
 		}
 
@@ -824,7 +824,7 @@ public class GetXForm {
 		String calculate = null;
 		if (q.getName().equals("instanceName")) {
 			calculate = UtilityMethods.convertAllxlsNames(template.getSurvey().getInstanceName(), false,
-					template.getQuestionPaths(), f.getId(), false);
+					template.getQuestionPaths(), f.getId(), false, q.getName());
 			if (calculate == null) {
 				// Allow for legacy forms that were loaded before the instance name was
 				// set in the survey table
@@ -836,7 +836,7 @@ public class GetXForm {
 			if (repeats != null && repeats.trim().length() > 0) { // Add the path to the repeat count question
 				calculate = repeats;
 			}
-		} else {
+		} else if(!q.getType().equals("begin group")) {
 			calculate = q.getCalculate(true, template.getQuestionPaths(), template.getXFormFormName());
 		}
 		if (calculate != null && calculate.trim().length() > 0) {
@@ -877,7 +877,7 @@ public class GetXForm {
 
 		String type = q.getType();
 		if (type.equals("string") || type.equals("int") || type.equals("dateTime") || type.equals("decimal")
-				|| type.equals("barcode") || type.equals("date") || type.equals("geopoint") || type.equals("time")) {
+				|| type.equals("barcode") || type.equals("date") || type.equals("geopoint") || type.equals("time") || type.equals("note")) {
 			questionElement = outputXML.createElement("input");
 		} else if (type.equals("select")) {
 			questionElement = outputXML.createElement("select");
@@ -892,6 +892,9 @@ public class GetXForm {
 		} else if (type.equals("video")) {
 			questionElement = outputXML.createElement("upload");
 			questionElement.setAttribute("mediatype", "video/*"); // Add the media type attribute
+		} else if (type.equals("file")) {
+			questionElement = outputXML.createElement("upload");
+			questionElement.setAttribute("mediatype", FILE_MIME); // Add the media type attribute
 		} else if (type.equals("begin group") || type.equals("begin repeat") || type.equals("geolinestring")
 				|| type.equals("geopolygon")) {
 			questionElement = outputXML.createElement("group");
@@ -899,6 +902,8 @@ public class GetXForm {
 			questionElement = outputXML.createElement("trigger");
 		} else if (type.equals("range")) {
 			questionElement = outputXML.createElement("range");
+		} else if (type.equals("rank")) {
+			questionElement = outputXML.createElement("odk:rank");
 		} else {
 			log.info("Warning Unknown type- populateBodyQuestion: " + type);
 			questionElement = outputXML.createElement("input");
@@ -931,24 +936,12 @@ public class GetXForm {
 				questionElement.setAttribute("appearance", appearance);
 			}
 		}
-		
-		// Add Parameters
-		String parameters = q.getParameters();
-		if (parameters != null && parameters.trim().length() > 0) {
-			String[] pArray = parameters.split(" ");
-			for(int i = 0; i < pArray.length; i++) {
-				String[] px = pArray[i].split("=");
-				if(px.length == 2) {
-					String px0 = px[0].trim();
-					String px1 = px[1].trim();
-					if(px0.equals("start")) {
-						questionElement.setAttribute("start", px1);
-					} else if(px0.equals("end")) {
-						questionElement.setAttribute("end", px1);
-					} else if(px0.equals("step")) {
-						questionElement.setAttribute("step", px1);
-					}
-				}
+
+		// Add Body Parameters
+		ArrayList<KeyValueSimp> parameters = q.getParameters();
+		if (parameters != null) {
+			for(KeyValueSimp kv : parameters) {
+				questionElement.setAttribute(kv.k, kv.v);
 			}
 		}
 
@@ -965,6 +958,14 @@ public class GetXForm {
 			String accuracy = q.getAccuracy();
 			if (accuracy != null) {
 				questionElement.setAttribute("accuracyThreshold", accuracy);
+			}
+		}
+		
+		// Add the body intent
+		if (questionElement != null) {
+			String intent = q.getIntent();
+			if (intent != null) {
+				questionElement.setAttribute("intent", intent);
 			}
 		}
 
@@ -1013,11 +1014,13 @@ public class GetXForm {
 					q.getNodeset(), q.getAppearance(false, null), q.getFormId());
 			// Add the itemset
 			if (nodeset != null
-					&& (!GeneralUtilityMethods.isExternalChoices(q.getAppearance(true, template.getQuestionPaths()))
+					&& (!GeneralUtilityMethods.isAppearanceExternalFile(q.getAppearance(true, template.getQuestionPaths()))
 							|| embedExternalSearch)) {
 				cascade = true;
 				Element isElement = outputXML.createElement("itemset");
-				isElement.setAttribute("nodeset", nodeset);
+				String adjustedNodeset = GeneralUtilityMethods.addNodesetFunctions(nodeset, 
+						GeneralUtilityMethods.getSurveyParameter("randomize", q.getParameters())); 
+				isElement.setAttribute("nodeset", adjustedNodeset);
 
 				Element vElement = outputXML.createElement("value");
 				vElement.setAttribute("ref", q.getNodesetValue());
@@ -1250,49 +1253,85 @@ public class GetXForm {
 		try {
 			FileReader reader = new FileReader(file);
 			br = new BufferedReader(reader);
-			CSVParser parser = new CSVParser();
+			CSVParser parser = new CSVParser(localisation);
 
 			// Get Header
-			String line = br.readLine();
+			String line = GeneralUtilityMethods.removeBOM(br.readLine());
 			String cols[] = parser.parseLine(line);
 
 			while (line != null) {
 				line = br.readLine();
-				if (line != null) {
+				if (line != null && line.trim().length() > 0) {
 					String[] values = parser.parseLine(line);
-
-					Element item = outputXML.createElement("item");
-					parent.appendChild(item);
-					Element elem = null;
-					for (int i = 0; i < cols.length; i++) {
-						try {
-							elem = outputXML.createElement(cols[i]);
-							elem.setTextContent(values[i]);
-							item.appendChild(elem);
-						} catch (Exception e) {
-							throw new Exception ("Error: Invalid name (" +  cols[i] + ") for a column header in CSV file " + file.getName());
+					
+					if(values.length == cols.length) {
+						Element item = outputXML.createElement("item");
+						parent.appendChild(item);
+						Element elem = null;
+						for (int i = 0; i < cols.length; i++) {
+							try {
+								elem = outputXML.createElement(cols[i]);
+								String v = values[i];
+								v = v.replaceAll("'", "");
+								elem.setTextContent(v);
+								item.appendChild(elem);
+							} catch (Exception e) {
+								log.log(Level.SEVERE, e.getMessage(), e);
+								String msg = localisation.getString("msg_inv_col");
+								msg = msg.replaceAll("%s1", cols[i]);
+								msg = msg.replaceAll("%s2", file.getName());
+								throw new Exception (msg);
+							}
 						}
+					} else {
+						log.info("Error: Values length is " + values.length + " and column length is " + cols.length);
 					}
 				}
 			}
 		} finally {
-			try {
-				br.close();
-			} catch (Exception e) {
+			try {br.close();} catch (Exception e) {}
+		}
+	}
+	
+	public void populateCSVElementsFromSurvey(Document outputXML, Element parent, SurveyTableManager stm) throws Exception {
+
+		
+		PreparedStatement pstmt = null;
+		ArrayList<KeyValueSimp> line = null;
+		try {
+			stm.initData(pstmt, "all", null, null, null, null, null, tz);
+			line = stm.getLine();
+			while(line != null) {
+				// process line
+				Element item = outputXML.createElement("item");
+				parent.appendChild(item);
+				Element elem = null;
+				for(KeyValueSimp kv : line) {
+					elem = outputXML.createElement(kv.k);
+					String v = kv.v.replaceAll("'", "");
+					elem.setTextContent(v);
+					item.appendChild(elem);
+				}
+				line = stm.getLine();
+				
 			}
-			;
+
+		} finally {
+			if (pstmt != null) try {	pstmt.close();} catch (Exception e) {};
 		}
 	}
 
 	/*
-	 * Get the instance data for an XForm as a string
+	 * Get the instance data for an XForm
 	 */
-	public String getInstance(int sId, String templateName, SurveyTemplate template, String key, String keyval,
-			int priKey, boolean simplifyMedia, boolean isWebForms) throws ParserConfigurationException, ClassNotFoundException,
-			SQLException, TransformerException, ApplicationException {
-		
+	public String getInstanceXml(int sId, String templateName, SurveyTemplate template, String key, String keyval,
+			int priKey, boolean simplifyMedia, 
+			boolean isWebForms, int taskKey,
+			String urlprefix) 
+			throws ParserConfigurationException, ClassNotFoundException, SQLException, TransformerException, ApplicationException {
+
 		this.isWebForms = isWebForms;
-		
+
 		String instanceXML = null;
 
 		Connection cResults = null;
@@ -1306,19 +1345,16 @@ public class GetXForm {
 		Result outStream = new StreamResult(outWriter);
 
 		gFilenames = new ArrayList<String>();
+		gPaths = new ArrayList<String>();
 		gInstanceId = null;
 
+		log.info("Getting instance data: " + templateName + " : " + key + " : " + keyval);
+		
 		// Get template details
 		String firstFormRef = template.getFirstFormRef();
 		Form firstForm = template.getForm(firstFormRef);
 
 		// Get database driver and connection to the results database
-
-		try {
-			Class.forName("org.postgresql.Driver");
-		} catch (ClassNotFoundException e) {
-			log.log(Level.SEVERE, "Can't find PostgreSQL JDBC Driver", e);
-		}
 
 		String requester = "GetXForm - getInstance";
 		cResults = ResultsDataSource.getConnection(requester);
@@ -1336,7 +1372,7 @@ public class GetXForm {
 						priKey = 0;
 					}
 				} else {
-					priKey = getPrimaryKey(sd, cResults, firstForm, key, keyval);
+					priKey = getPrimaryKey(sd, cResults, firstForm, key, keyval, sId);
 				}
 			} else {
 				if (!priKeyValid(cResults, firstForm, priKey)) {
@@ -1348,12 +1384,18 @@ public class GetXForm {
 			boolean hasData = false;
 			if (priKey > 0) {
 				hasData = true;
-				populateForm(outputXML, firstForm, priKey, -1, cResults, sd, template, null, sId, templateName, false,
-						simplifyMedia);
+				populateFormData(outputXML, firstForm, priKey, -1, cResults, sd, template, null, sId, templateName, false,
+						simplifyMedia, null, -1);
 			} else if (key != null && keyval != null) {
 				// Create a blank form containing only the key values
 				hasData = true;
 				populateBlankForm(outputXML, firstForm, sd, template, null, sId, key, keyval, templateName, false);
+			} else if(taskKey > 0) {
+				// Create a form containing only the initial task data
+				hasData = true;
+				TaskManager tm = new TaskManager(localisation, tz);
+				Instance instance = tm.getInstance(sd, taskKey);
+				populateTaskDataForm(outputXML, firstForm, sd, template, null, sId, templateName, instance, urlprefix, true);
 			}
 
 			// Write the survey to a string and return it to the calling program
@@ -1381,9 +1423,17 @@ public class GetXForm {
 	public String getInstanceId() {
 		return gInstanceId;
 	}
+	
+	public HashMap<String, Integer> getRecordCounts() {
+		return gRecordCounts;
+	}
 
 	public ArrayList<String> getFilenames() {
 		return gFilenames;
+	}
+	
+	public ArrayList<String> getMediaPaths() {
+		return gPaths;
 	}
 
 	public String getSurveyClass() {
@@ -1402,8 +1452,13 @@ public class GetXForm {
 		// / replaced
 		// This was added in version 15.05, at some point it may be safe to remove the
 		// check for the "Replaced by " string and _bad
-		String sql = "select count(*) from " + table + " where prikey = ? "
-				+ "and _modified = 'false' and (_bad = false or (_bad = true and _bad_reason not like 'Replaced by%'));";
+		// Update - allow the returning of modified data.  It is quite reasonable that a task may reference
+		// an old source data record. This happens due to multiple assignements.
+		// The processing of a submission from this old data is being updated to apply a "merge"
+		//String sql = "select count(*) from " + table + " where prikey = ? "
+		//		+ "and _modified = 'false' and (_bad = false or (_bad = true and _bad_reason not like 'Replaced by%'));";
+		String sql = "select count(*) from " + table + " where prikey = ? ";
+				
 		PreparedStatement pstmt = connection.prepareStatement(sql);
 
 		ResultSet rs = null;
@@ -1428,12 +1483,7 @@ public class GetXForm {
 				e.printStackTrace();
 			}
 		} finally {
-			if (pstmt != null)
-				try {
-					pstmt.close();
-				} catch (Exception e) {
-				}
-			;
+			if (pstmt != null) try {	pstmt.close();} catch (Exception e) {};
 		}
 
 		return isValid;
@@ -1443,7 +1493,7 @@ public class GetXForm {
 	 * Get the primary key from the passed in key values The key must be in the top
 	 * level form
 	 */
-	int getPrimaryKey(Connection sd, Connection cResults, Form firstForm, String key, String keyval)
+	int getPrimaryKey(Connection sd, Connection cResults, Form firstForm, String key, String keyval, int sId)
 			throws ApplicationException, SQLException {
 		int prikey = 0;
 		String table = firstForm.getTableName().replace("'", "''"); // Escape apostrophes
@@ -1452,15 +1502,34 @@ public class GetXForm {
 		String keyColumnName = null;
 
 		// Get the key type
-		List<Question> questions = firstForm.getQuestions(sd, firstForm.getPath(null));
-		for (int i = 0; i < questions.size(); i++) {
-			Question q = questions.get(i);
-			if (q.getName().toLowerCase().trim().equals(key)) {
-				type = q.getType();
-				keyColumnName = q.getColumnName();
-				break;
+		if(key.equals("instanceid")) {
+			keyColumnName = key;
+			type = "string";
+			// Get the latest instance id in the thread
+			keyval = GeneralUtilityMethods.getLatestInstanceId(cResults, table, keyval);
+		} else {
+			List<Question> questions = firstForm.getQuestions(sd, firstForm.getPath(null));
+			for (int i = 0; i < questions.size(); i++) {
+				Question q = questions.get(i);
+				if (q.getName().toLowerCase().trim().equals(key)) {
+					type = q.getType();
+					keyColumnName = q.getColumnName(false);
+					break;
+				}
 			}
 		}
+		if (type == null) {
+			// Check the prelaods
+			ArrayList<MetaItem> meta = GeneralUtilityMethods.getPreloads(sd, sId);
+			for(MetaItem mi : meta) {
+				if(mi.isPreload && mi.name.equals(key)) {
+					type = mi.type;
+					keyColumnName = mi.columnName;
+					break;
+				}
+			}
+		}
+
 		if (type == null) {
 			throw new ApplicationException("Key: " + key + " not found");
 		}
@@ -1519,7 +1588,7 @@ public class GetXForm {
 	 */
 	public void populateBlankForm(Document outputDoc, Form form, Connection sd, SurveyTemplate template,
 			Element parentElement, int sId, String key, String keyval, String survey_ident, boolean isTemplate)
-			throws SQLException {
+					throws SQLException {
 
 		List<Results> record = new ArrayList<Results>();
 
@@ -1539,20 +1608,20 @@ public class GetXForm {
 				Form subForm = template.getSubForm(form, q);
 
 				if (subForm != null) {
-					record.add(new Results(qName, subForm, null, false, false, false, null));
+					record.add(new Results(qName, subForm, null, false, false, false, null, q.getParameters(), false));
 				}
 
 			} else if (qType.equals("begin group")) {
 
-				record.add(new Results(qName, null, null, true, false, false, null));
+				record.add(new Results(qName, null, null, true, false, false, null, q.getParameters(), false));
 
 			} else if (qType.equals("end group")) {
 
-				record.add(new Results(qName, null, null, false, true, false, null));
+				record.add(new Results(qName, null, null, false, true, false, null, q.getParameters(), false));
 
 			} else {
 
-				record.add(new Results(qName, null, value, false, false, false, null));
+				record.add(new Results(qName, null, value, false, false, false, null, null, false));
 			}
 		}
 
@@ -1604,23 +1673,181 @@ public class GetXForm {
 		}
 
 	}
+	
+	/*
+	 * Create a form poplulated with the initial data supplied in a task
+	 * 
+	 * @param outputDoc
+	 */
+	public void populateTaskDataForm(Document outputDoc, Form form, Connection sd, SurveyTemplate template,
+				Element parentElement, int sId, String survey_ident, 
+				Instance instance,
+				String urlprefix,
+				boolean isTopLevel)
+			throws SQLException {
+
+		List<Results> record = new ArrayList<Results>();
+
+		List<Question> questions = form.getQuestions(sd, form.getPath(null));
+		if(isTopLevel) {		// Add meta group
+			Question q = new Question();
+			q.setType("begin group");
+			q.setName("meta");
+			questions.add(q);
+			
+			q = new Question();
+			q.setType("text");
+			q.setName("instanceID");
+			questions.add(q);
+			
+			q = new Question();
+			q.setType("text");
+			q.setName("instanceName");
+			questions.add(q);
+			
+			q = new Question();
+			q.setType("end group");
+			q.setName("meta");
+			questions.add(q);
+			
+		}
+		for (Question q : questions) {
+
+			String qName = q.getName();
+			String qType = q.getType();
+
+			// Set the value from the instance data
+			String value = "";
+			if(instance != null) {
+				if(qType.equals("geopoint")  || qType.equals("geoshape") || qType.equals("geotrace")) {
+
+					if(qType.equals("geopoint") && instance.point_geometry != null) {		
+						value = instance.point_geometry.getAsOdk();
+					} else if(qType.equals("geoshape") && instance.polygon_geometry != null) {
+						value = GeneralUtilityMethods.getOdkPolygon(instance.polygon_geometry);
+					} else if(qType.equals("geotrace") && instance.line_geometry != null) {
+						value = GeneralUtilityMethods.getOdkLine(instance.line_geometry);
+					}
+					
+				} else {
+					String qValue = instance.values.get(qName); 
+					if(qValue != null) {
+						if(qType.equals("image")  || qType.equals("audio") || qType.equals("video")) {
+							// Hack for special situation on localhost
+							if(urlprefix.equals("http://localhost/")) {
+								urlprefix = "https://localhost/";
+							}
+							if(qValue.startsWith(urlprefix)) {
+								int idx = qValue.lastIndexOf("/");
+								if(qValue.length() > idx) {
+									value = qValue.substring(idx + 1);
+									gFilenames.add(value);
+								} else {
+									value = qValue;
+								}
+								String path = qValue.substring(urlprefix.length());	// Local image remove prefix
+								gPaths.add(path);
+							} else {
+								value = qValue;
+							}
+						} else {
+							value = qValue;
+						}
+					}
+				}
+			}
+
+			if (qType.equals("begin repeat") || qType.equals("geolinestring") || qType.equals("geopolygon")) {
+
+				Form subForm = template.getSubForm(form, q);
+
+				if (subForm != null) {
+					record.add(new Results(qName, subForm, null, false, false, false, null, q.getParameters(), false));
+				}
+
+			} else if (qType.equals("begin group")) {
+
+				record.add(new Results(qName, null, null, true, false, false, null, q.getParameters(), false));
+
+			} else if (qType.equals("end group")) {
+
+				record.add(new Results(qName, null, null, false, true, false, null, q.getParameters(), false));
+
+			} else {
+
+				record.add(new Results(qName, null, value, false, false, false, null, null, false));
+			}
+		}
+
+		Element currentParent = outputDoc.createElement(form.getName()); // Create a form element
+
+		Results item = null;
+		Stack<Element> elementStack = new Stack<Element>(); // Store the elements for non repeat groups
+		for (int j = 0; j < record.size(); j++) {
+
+			item = record.get(j);
+
+			if (item.subForm != null) {
+				Instance iSub = null;
+				if(instance != null) {
+					ArrayList<Instance> subInstanceList = instance.repeats.get(item.name);
+					if(subInstanceList.size() > j) {
+						iSub = subInstanceList.get(j);
+					}
+				}
+				populateTaskDataForm(outputDoc, item.subForm, sd, template, currentParent, sId, 
+						survey_ident, iSub, urlprefix, false);		
+
+				Element childElement = null;
+				childElement = outputDoc.createElement(item.name);
+				currentParent.appendChild(childElement);
+
+				elementStack.push(currentParent);
+				currentParent = childElement;
+
+			} else { // Question
+
+				// Create the question element
+				Element childElement = null;
+				childElement = outputDoc.createElement(item.name);
+				childElement.setTextContent(item.value);
+				currentParent.appendChild(childElement);
+			}
+
+		}
+
+		// Append this new form to its parent (if the parent is null append to output doc)
+		if (parentElement != null) {
+			parentElement.appendChild(currentParent);
+		} else {
+			currentParent.setAttribute("id", survey_ident);
+			outputDoc.appendChild(currentParent);
+		}
+
+	}
 
 	/*
 	 * Add the data for this form
 	 * 
 	 * @param outputDoc
 	 */
-	public void populateForm(Document outputDoc, Form form, int id, int parentId, Connection cResults, Connection sd,
+	public void populateFormData(Document outputDoc, Form form, int id, int parentId, Connection cResults, Connection sd,
 			SurveyTemplate template, Element parentElement, int sId, String survey_ident, boolean isFirstSubForm,
-			boolean simplifyMedia) throws SQLException {
+			boolean simplifyMedia, String order, int count) throws SQLException {
 
 		List<List<Results>> results = null;
 		if (GeneralUtilityMethods.tableExists(cResults, form.getTableName())) {
-			results = getResults(form, id, parentId, cResults, sd, template, simplifyMedia); // Add the child elements
+			results = getResults(form, id, parentId, cResults, sd, template, simplifyMedia, sId, order, count); // Add the child elements
 		} else {
 			results = new ArrayList<List<Results>>(); // Create an empty list
 		}
 
+		/*
+		 * Store a link between the form name and the number of records
+		 * This is used to calculate the repeat count of reference forms
+		 */
+		gRecordCounts.put(form.getName(), results.size());
+		
 		boolean generatedTemplate = false;
 		// For each record returned from the database add a form element
 		for (int i = 0; i < results.size(); i++) {
@@ -1640,9 +1867,23 @@ public class GetXForm {
 				item = record.get(j);
 
 				if (item.subForm != null) {
+					count = -1;
+					order = GeneralUtilityMethods.getSurveyParameter("instance_order", item.parameters);
+					String c = GeneralUtilityMethods.getSurveyParameter("instance_count", item.parameters);
+
+					if(c != null) {
+						try {
+							count = Integer.parseInt(c);
+						} catch (Exception e) {
+							// ignore
+						}
+					}
+					
+
 					boolean needTemplate = (!generatedTemplate && (parentElement == null));
-					populateForm(outputDoc, item.subForm, -1, Integer.parseInt(priKey.value), cResults, sd, template,
-							currentParent, sId, survey_ident, needTemplate, simplifyMedia);
+					populateFormData(outputDoc, item.subForm, -1, Integer.parseInt(priKey.value), cResults, sd, template,
+							currentParent, sId, survey_ident, needTemplate, simplifyMedia, order, count);
+					
 				} else if (item.begin_group) {
 					Element childElement = null;
 					childElement = outputDoc.createElement(item.name);
@@ -1657,15 +1898,11 @@ public class GetXForm {
 
 				} else { // Question
 
-					// remove _task_key functionality
-					// Set some default values for task management questions
-					// if(item.name != null && item.name.equals("_task_key")) {
-					// item.value = priKey.value;
-					// } else
 					if (item.name != null && item.name.toLowerCase().equals("instanceid")) {
 						gInstanceId = item.value;
 					} else if (item.media && item.filename != null && !item.filename.equals("null")) {
 						gFilenames.add(item.filename);
+						gPaths.add(item.value);
 					}
 
 					// Create the question element
@@ -1678,7 +1915,9 @@ public class GetXForm {
 						escValue = item.value.replace("'", "\\\'");
 					}
 
-					childElement.setTextContent(escValue);
+					if(!item.isStartPreload) {		// Don't add start time as this needs to be reset when editing the form instance
+						childElement.setTextContent(escValue);
+					}
 					currentParent.appendChild(childElement);
 				}
 
@@ -1686,16 +1925,6 @@ public class GetXForm {
 			// Append this new form to its parent (if the parent is null append to output
 			// doc)
 			if (parentElement != null) {
-				/*
-				 * The following code attempts to put a template section into instance data
-				 * however it does not appear to be needed This template section is probably
-				 * only required in the form model
-				 *
-				 * 
-				 * if(isFirstSubForm && !generatedTemplate) { Add a template for enketo
-				 * populateBlankForm(outputDoc, form, connection, template, parentElement, sId,
-				 * null, null, survey_ident, true); generatedTemplate = true; }
-				 */
 				parentElement.appendChild(currentParent);
 			} else {
 				currentParent.setAttribute("id", survey_ident);
@@ -1715,50 +1944,132 @@ public class GetXForm {
 	 * @param parentId
 	 */
 	List<List<Results>> getResults(Form form, int id, int parentId, Connection cResults, Connection sd,
-			SurveyTemplate template, boolean simplifyMedia) throws SQLException {
+			SurveyTemplate template, boolean simplifyMedia, int sId, String order, int count) throws SQLException {
 
 		List<List<Results>> output = new ArrayList<List<Results>>();
 
-		/*
-		 * Retrieve the results record from the database (excluding select questions)
-		 * Select questions are retrieved using a separate query as there are multiple
-		 * columns per question
-		 */
-		String sql = "select prikey";
+		Form processForm = null;		
 		List<Question> questions = form.getQuestions(sd, form.getPath(null));
+		Gson gson=  new GsonBuilder().disableHtmlEscaping().setDateFormat("yyyy-MM-dd").create();
+		
+		/*
+		 * If this is a reference form then get the form that has the data
+		 */
+		boolean isReference = form.getReference();
+		
+		log.info("Get results for form: " + form.getId() + " name : " + form.getName() + " reference: " + isReference);
+		
+		if(isReference) {
+			/*
+			 * Get the form that has the data referred to from this reference form
+			 */
+			List<Form> forms = template.getAllForms();
+			for(Form f : forms) {
+				if(f.getTableName().equals(form.getTableName()) && !f.getReference()) {
+					processForm = f;
+					break;
+				}
+			}
+		} else {
+			processForm = form;
+		}
+		
+
+		/*
+		 * Retrieve the results record from the database (excluding uncompressed select questions)
+		 */
+		StringBuffer sql = new StringBuffer("select prikey");
+
+		if(parentId <= 0) {
+			// Add Meta
+			sql.append(",instanceID, instanceName");
+			ArrayList<MetaItem> preloads = GeneralUtilityMethods.getPreloads(sd, sId);
+			for(MetaItem mi : preloads) {
+				if(mi.isPreload) {
+					sql.append(",").append(mi.columnName);
+				}
+			}
+		}
+
+		/*
+		 * Get the data
+		 */
+		boolean hasPoint = false;
+		boolean hasPointAltitude = false;
 		for (Question q : questions) {
 			String col = null;
 
-			if (q.isPublished()) {
-				if (template.getSubForm(form, q) == null) {
+			// Backward compatability - Ignore Meta  questions 
+			if(GeneralUtilityMethods.isMetaQuestion(q.getName())) {
+				continue;
+			}
+			
+			if (q.isPublished() || isReference) {		// Referenced questions are never published
+				if (template.getSubForm(processForm, q) == null) {
 					// This question is not a place holder for a subform
-					if (q.getSource() != null) { // Ignore questions with no source, these can only be dummy questions
-													// that indicate the position of a subform
+					if (q.getSource() != null) { // Ignore questions with no source, these can only be dummy questions that indicate the position of a subform
+
 						String qType = q.getType();
-						if (qType.equals("geopoint")) {
-							col = "ST_AsText(" + q.getColumnName() + ")";
-						} else if (qType.equals("select")) {
-							continue; // Select data columns are retrieved separately as there are multiple columns
-										// per question
+						if (qType.equals("geopoint") || qType.equals("geoshape") || qType.equals("geotrace")) {
+							col = "ST_AsGeoJson(" + q.getColumnName(isReference) + ")";
+							if(qType.equals("geopoint")) {
+								hasPoint = true;
+							}
+						} else if (qType.equals("select") && !q.isCompressed()) {
+							continue; 
 						} else {
-							col = q.getColumnName();
+							col = q.getColumnName(isReference);
 						}
 
-						sql += "," + col;
+						if(!isReference) {
+							sql.append(",").append(col);			// Normal data question
+						} else if(isReference) {
+							if(q.getName().startsWith("_")) {
+								// Reference question, check that the column exists as we cannot rely "on publish"
+								if(GeneralUtilityMethods.hasColumn(cResults, processForm.getTableName(), col)) {
+									sql.append(",").append(col);
+								} else {
+									sql.append(",").append("''");
+								}
+							} else {
+								sql.append(",").append("''");	// Read only reference questions
+							}
+						}
 					}
 				}
 			}
 
 		}
-		sql += " from " + form.getTableName();
-		if (id != -1) {
-			sql += " where prikey=" + id + ";";
-		} else {
-			sql += " where parkey=" + parentId + ";";
+		/*
+		 * Get geometry altitude and accuracy of they are available
+		 */
+		if(hasPoint) {
+			if(GeneralUtilityMethods.hasColumn(cResults, processForm.getTableName(), "the_geom_alt")) {
+				sql.append(",the_geom_alt, the_geom_acc");
+				hasPointAltitude = true;
+			}
 		}
 		
-		PreparedStatement pstmt = cResults.prepareStatement(sql);
-		log.info(pstmt.toString());
+		sql.append(" from ").append(processForm.getTableName());
+		if (id != -1) {
+			sql.append(" where prikey=").append(id);
+		} else {
+			sql.append(" where parkey=").append(parentId);
+		}
+		//sql.append(" and _bad = false");		Allow bad data when getting the data for an existing record
+
+		if(order != null && order.equals("reverse")) {
+			sql.append(" order by prikey desc");
+		} else {
+			sql.append(" order by prikey asc");
+		}
+
+		if(count >= 0) {
+			sql.append(" limit ").append(count);
+		}
+
+		PreparedStatement pstmt = cResults.prepareStatement(sql.toString());
+		log.info("Get data for instance XML: " + pstmt.toString());
 		ResultSet resultSet = pstmt.executeQuery();
 
 		// For each record returned from the database add the data values to the
@@ -1768,53 +2079,78 @@ public class GetXForm {
 			List<Results> record = new ArrayList<Results>();
 
 			String priKey = resultSet.getString(1);
-			record.add(new Results("prikey", null, priKey, false, false, false, null));
+			record.add(new Results("prikey", null, priKey, false, false, false, null, null, false));
 
 			/*
 			 * Add data for the remaining questions
 			 */
 			int index = 2;
 
+			if(parentId <= 0) {
+				// Add Meta
+				record.add(new Results("meta", null, null, true, false, false, null, null, false));
+				record.add(new Results("instanceID", null, resultSet.getString(index++), false, false, false, null, null, false));	
+				record.add(new Results("instanceName", null, resultSet.getString(index++), false, false, false, null, null, false));	
+				record.add(new Results("meta_groupEnd", null, null, false, true, false, null, null, false));
+
+				ArrayList<MetaItem> preloads = GeneralUtilityMethods.getPreloads(sd, sId);
+				for(MetaItem mi : preloads) {
+					if(mi.isPreload) {
+						String value = resultSet.getString(index++);
+						boolean isStartPreload = false;
+						if(mi.sourceParam != null && mi.sourceParam.equals("start")) {
+							isStartPreload = true;
+						}
+						record.add(new Results(mi.name, null, value, false, false, false, null, null, isStartPreload));	
+					}
+				}
+
+			}
+
 			for (Question q : questions) {
 
+				// Backward compatability - Ignore Meta  questions 
+				if(GeneralUtilityMethods.isMetaQuestion(q.getName())) {
+					continue;
+				}
+				
 				String qName = q.getName();
 				String qType = q.getType();
-				// String qPath = q.getPath();
 				String qSource = q.getSource();
 
 				if (qType.equals("begin repeat") || qType.equals("geolinestring") || qType.equals("geopolygon")) {
-					Form subForm = template.getSubForm(form, q);
+					Form subForm = template.getSubForm(processForm, q);
 
 					if (subForm != null) {
-						record.add(new Results(qName, subForm, null, false, false, false, null));
+						record.add(new Results(qName, subForm, null, false, false, false, null, q.getParameters(), false));
 					}
 
 				} else if (qType.equals("begin group")) {
 
-					record.add(new Results(qName, null, null, true, false, false, null));
+					record.add(new Results(qName, null, null, true, false, false, null, q.getParameters(), false));
 
 				} else if (qType.equals("end group")) {
 
-					record.add(new Results(qName, null, null, false, true, false, null));
+					record.add(new Results(qName, null, null, false, true, false, null, q.getParameters(), false));
 
-				} else if (qType.equals("select")) { // Get the data from all the option columns
+				} else if (qType.equals("select") && !q.isCompressed()) { // Get the data from all the option columns
 
 					String optValue = "";
-					if (q.isPublished()) { // Get the data from the table if this question has been published
+					if (q.isPublished() || isReference) { // Get the data from the table if this question has been published
 						String sqlSelect = "select ";
 						List<Option> options = new ArrayList<Option>(q.getValidChoices(sd));
 						UtilityMethods.sortOptions(options); // Order within an XForm is not actually required, this is
-																// just for consistency of reading
+						// just for consistency of reading
 
 						boolean hasColumns = false;
 						for (Option option : options) {
 							if (hasColumns) {
 								sqlSelect += ",";
 							}
-							sqlSelect += q.getColumnName() + "__" + option.getColumnName();
+							sqlSelect += q.getColumnName(isReference) + "__" + option.getColumnName();
 							hasColumns = true;
 						}
-						sqlSelect += " from " + form.getTableName() + " where prikey=" + priKey + ";";
+						sqlSelect += " from " + processForm.getTableName() + " where prikey=" + priKey + ";";
 
 						pstmt = cResults.prepareStatement(sqlSelect);
 						log.info(pstmt.toString());
@@ -1823,7 +2159,7 @@ public class GetXForm {
 
 						hasColumns = false;
 						for (Option option : options) {
-							String opt = q.getColumnName() + "__" + option.getColumnName();
+							String opt = q.getColumnName(isReference) + "__" + option.getColumnName();
 							boolean optSet = resultSetOptions.getBoolean(opt);
 							log.fine("Option " + opt + ":" + resultSetOptions.getString(opt));
 							if (optSet) {
@@ -1836,15 +2172,12 @@ public class GetXForm {
 						}
 					}
 
-					// record.add(new Results(UtilityMethods.getLastFromPath(qPath), null, optValue,
-					// false, false, false, null));
-					record.add(new Results(qName, null, optValue, false, false, false, null));
+					record.add(new Results(qName, null, optValue, false, false, false, null, q.getParameters(), false));
 
-				} else if (qType.equals("image") || qType.equals("audio") || qType.equals("video")) { // Get the file
-																										// name
+				} else if (GeneralUtilityMethods.isAttachmentType(qType)) { // Get the file name
 
 					String value = null;
-					if (q.isPublished()) { // Get the data from the table if this question has been published
+					if (q.isPublished() || isReference) { // Get the data from the table if this question has been published
 						value = resultSet.getString(index);
 					}
 					String filename = null;
@@ -1855,57 +2188,62 @@ public class GetXForm {
 						}
 						if (filename != null && !filename.equals("null")) {
 							gFilenames.add(filename);
+							gPaths.add(value);
 						}
 					}
 					if (simplifyMedia) {
 						value = filename;
 					}
-					// record.add(new Results(UtilityMethods.getLastFromPath(qPath), null, value,
-					// false, false, false, filename));
-					record.add(new Results(qName, null, value, false, false, false, filename));
 
-					if (q.isPublished()) {
+					record.add(new Results(qName, null, value, false, false, false, filename, q.getParameters(), false));
+
+					if (q.isPublished() || isReference) {
 						index++;
 					}
 
 				} else if (qSource != null) {
 
 					String value = null;
-					if (q.isPublished()) { // Get the data from the table if this question has been published
+					if (q.isPublished() || isReference) { // Get the data from the table if this question has been published
 						value = resultSet.getString(index);
+						if(/*isWebForms && */ value != null && q.getType().equals("dateTime")) {
+							// Add the T separator 
+							value = value.replace(' ',  'T');
+							value = GeneralUtilityMethods.workAroundJava8bug00(value);
+						}
 					}
 
 					if (value != null && qType.equals("geopoint")) {
-						int idx1 = value.indexOf('(');
-						int idx2 = value.indexOf(')');
-						if (idx1 > 0 && (idx2 > idx1)) {
-							value = value.substring(idx1 + 1, idx2);
-							// These values are in the order longitude latitude. This needs to be reversed
-							// for the XForm
-							String[] coords = value.split(" ");
-							if (coords.length > 1) {
-								value = coords[1] + " " + coords[0] + " 0 0";
-							}
-						} else {
-							log.severe("Invalid value for geopoint");
-							value = null;
+						Point p = gson.fromJson(value, Point.class);
+						if(hasPointAltitude) {
+							log.info("Altitude: " + resultSet.getDouble("the_geom_alt"));
+							log.info("Accuracy: " + resultSet.getDouble("the_geom_acc"));
+							p.altitude = resultSet.getDouble("the_geom_alt");
+							p.accuracy = resultSet.getDouble("the_geom_acc");
 						}
+						value = p.getAsOdk();
+						log.info("Point value: " + value);
+						
+					} else if (value != null && qType.equals("geoshape")) {
+						Polygon p = gson.fromJson(value, Polygon.class);
+						value = GeneralUtilityMethods.getOdkPolygon(p);
+					} else if (value != null && qType.equals("geotrace")) {
+						Line l = gson.fromJson(value, Line.class);
+						value = GeneralUtilityMethods.getOdkLine(l);
 					}
+					
 
 					// Ignore data not provided by user
 					if (!qSource.equals("user")) {
 						value = "";
 					}
 
-					// record.add(new Results(UtilityMethods.getLastFromPath(qPath), null, value,
-					// false, false, false, null));
-					record.add(new Results(qName, null, value, false, false, false, null));
+					record.add(new Results(qName, null, value, false, false, false, null, q.getParameters(), false));
 
-					if (q.isPublished()) {
+					if (q.isPublished() || isReference) {
 						index++;
 					}
 				}
-
 			}
 			output.add(record);
 		}
@@ -1924,26 +2262,23 @@ public class GetXForm {
 		if (key.equals("the_geom")) {
 			key = fId + key;
 		}
+
 		return paths.get(key);
 	}
-	
+
 	/*
 	 * Work out the range data type from its parameters
 	 */
-	private String getDataTypeFromRange(String parameters) {
-		
+	private String getDataTypeFromRange(ArrayList<KeyValueSimp> parameters) {
+
 		String dataType = "integer";
-		
+
 		if(parameters != null) {
-			String[] pArray = parameters.split(" ");
-			for(int i = 0; i < pArray.length; i++) {
-				String[] px = pArray[i].split("=");
-				if(px.length == 2) {
-					if(px[0].equals("start") || px[0].equals("end") || px[0].equals("step")) {
-						if(px[1].indexOf(".") >= 0) {
-							dataType = "decimal";
-							break;
-						}
+			for(KeyValueSimp kv : parameters) {			
+				if(kv.k.equals("start") || kv.k.equals("end") || kv.k.equals("step")) {
+					if(kv.v.indexOf(".") >= 0) {
+						dataType = "decimal";
+						break;
 					} 
 				}
 			}

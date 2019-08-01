@@ -28,6 +28,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
@@ -42,6 +43,7 @@ public class JdbcTranslationManager {
 	String sql = "insert into translation (s_id, language, text_id, type, value) values (?, ?, ?, ?, ?);";
 	
 	PreparedStatement pstmtGetBySurveyId = null;
+	PreparedStatement pstmtGetBySurveyIdNoExternal = null;
 	String sqlGet = "select "
 			+ "t_id,"
 			+ "s_id,"
@@ -49,16 +51,18 @@ public class JdbcTranslationManager {
 			+ "text_id,"
 			+ "type,"
 			+ "value "
-			+ "from translation where ";
-	String sqlGetBySurveyId = "s_id = ? "
-			+ "order by language;";
+			+ "from translation "
+			+ "where s_id = ? ";
+	String sqlNoExternal = " and external = false ";
+	String sqlOrder = "order by language;";
 			
 	/*
 	 * Constructor
 	 */
 	public JdbcTranslationManager(Connection sd) throws SQLException {
 		pstmt = sd.prepareStatement(sql);
-		pstmtGetBySurveyId = sd.prepareStatement(sqlGet + sqlGetBySurveyId);
+		pstmtGetBySurveyId = sd.prepareStatement(sqlGet + sqlOrder);
+		pstmtGetBySurveyIdNoExternal = sd.prepareStatement(sqlGet + sqlNoExternal + sqlOrder);
 	}
 	
 	/*
@@ -100,9 +104,14 @@ public class JdbcTranslationManager {
 	/*
 	 * Get translations by survey id
 	 */
-	public List<Translation> getBySurveyId(int sId) throws SQLException {
-		pstmtGetBySurveyId.setInt(1, sId);
-		return getTranslationList(pstmtGetBySurveyId);
+	public List<Translation> getBySurveyId(int sId, boolean getExternal) throws SQLException {
+		if(getExternal) {
+			pstmtGetBySurveyId.setInt(1, sId);
+			return getTranslationList(pstmtGetBySurveyId);
+		} else {
+			pstmtGetBySurveyIdNoExternal.setInt(1, sId);
+			return getTranslationList(pstmtGetBySurveyIdNoExternal);
+		}
 	}
 	/*
 	 * Close prepared statements
@@ -110,12 +119,14 @@ public class JdbcTranslationManager {
 	public void close() {
 		try {if(pstmt != null) {pstmt.close();}} catch(Exception e) {};
 		try {if(pstmtGetBySurveyId != null) {pstmtGetBySurveyId.close();}} catch(Exception e) {};
+		try {if(pstmtGetBySurveyIdNoExternal != null) {pstmtGetBySurveyIdNoExternal.close();}} catch(Exception e) {};
 	}
 	
 	private List<Translation> getTranslationList(PreparedStatement pstmt) throws SQLException {
 	
 		ArrayList <Translation> trans = new ArrayList<Translation> ();
 		
+		log.info("Get Translations: " + pstmt.toString());
 		ResultSet rs = pstmt.executeQuery();
 		while(rs.next()) {
 			Translation t = new Translation();

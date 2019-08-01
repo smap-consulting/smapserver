@@ -20,9 +20,16 @@ along with SMAP.  If not, see <http://www.gnu.org/licenses/>.
 package org.smap.server.entities;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.HashMap;
 
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
+import org.smap.sdal.model.MetaItem;
 import org.smap.server.utilities.UtilityMethods;
+
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
 
 /*
  * Class to store Survey objects
@@ -57,11 +64,19 @@ public class Survey implements Serializable {
 	
 	private boolean timingData;
 	
+	private boolean auditLocationData;
+	
+	private boolean trackChanges;
+	
+	private boolean hideOnDevice;
+	
 	private String surveyClass;
 	
 	private boolean loaded_from_xls = false;
 	
 	private String hrk = null;
+	
+	private ArrayList<MetaItem> meta = null;
 	
 	/*
 	 * Constructor
@@ -124,6 +139,18 @@ public class Survey implements Serializable {
 		return timingData;
 	}
 	
+	public boolean getAuditLocationData() {
+		return auditLocationData;
+	}
+	
+	public boolean getTrackChanges() {
+		return trackChanges;
+	}
+	
+	public boolean getHideOnDevice() {
+		return hideOnDevice;
+	}
+	
 	// Get the display name with any HTML reserved characters escaped
 	public String getDisplayNameForHTML() {
 		return GeneralUtilityMethods.esc(display_name);
@@ -131,6 +158,10 @@ public class Survey implements Serializable {
 	
 	public String getHrk() {
 		return hrk;
+	}
+	
+	public ArrayList<MetaItem> getMeta() {
+		return meta;
 	}
 	
 	/*
@@ -193,8 +224,27 @@ public class Survey implements Serializable {
 		timingData = v;
 	}
 	
+	public void setAuditLocationData(boolean v) {
+		auditLocationData = v;
+	}
+	
+	public void setTrackChanges(boolean v) {
+		trackChanges = v;
+	}
+	
+	public void setHideOnDevice(boolean v) {
+		hideOnDevice = v;
+	}
+	
 	public void setHrk(String v) {
 		hrk = v;
+	}
+	
+	public void setMeta(String v) {
+		if(v != null) {
+			Gson gson = new GsonBuilder().disableHtmlEscaping().create();
+			meta = gson.fromJson(v, new TypeToken<ArrayList<MetaItem>>() {}.getType());
+		}
 	}
 	
 

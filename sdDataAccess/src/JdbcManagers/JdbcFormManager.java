@@ -66,9 +66,10 @@ public class JdbcFormManager {
 			+ "parentform, "
 			+ "parentquestion, "
 			+ "repeats, "
-			+ "path "
+			+ "reference "
 			+ "from form where ";
 	String sqlGetBySurveyId = "s_id = ?;";
+	
 	
 	/*
 	 * Constructor
@@ -89,7 +90,6 @@ public class JdbcFormManager {
 		pstmt.setInt(4, f.getParentForm());
 		pstmt.setInt(5, f.getParentQuestionId());
 		pstmt.setString(6, f.getRepeats(false, null));
-		//pstmt.setString(7, f.getPath());  rmpath
 		pstmt.setString(7, "path in database deprecated");
 		pstmt.executeUpdate();
 		
@@ -111,7 +111,7 @@ public class JdbcFormManager {
 	}
 	
 	/*
-	 * Get a list of forms using for the specified survey id
+	 * Get a list of forms for the specified survey id
 	 */
 	public List <Form> getBySurveyId(int sId) throws SQLException {
 		pstmtGetBySurveyId.setInt(1, sId);
@@ -144,11 +144,12 @@ public class JdbcFormManager {
 			f.setParentForm(rs.getInt(5));
 			f.setParentQuestionId(rs.getInt(6));
 			f.setRepeats(rs.getString(7));
-			// f.setPath(rs.getString(8));   rmpath
+			f.setReference(rs.getBoolean(8));
 			
 			forms.add(f);
 		}
 		
 		return forms;
 	}
+	
 }

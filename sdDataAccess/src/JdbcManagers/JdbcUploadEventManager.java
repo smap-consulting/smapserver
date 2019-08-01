@@ -47,6 +47,8 @@ public class JdbcUploadEventManager {
 			+ "server_name,"
 			+ "s_id,"
 			+ "p_id,"
+			+ "o_id,"
+			+ "e_id,"
 			+ "form_status,"
 			+ "file_path,"
 			+ "orig_survey_ident,"
@@ -57,12 +59,16 @@ public class JdbcUploadEventManager {
 			+ "assignment_id,"
 			+ "survey_notes,"
 			+ "location_trigger,"
-			+ "audit_file_path) "
+			+ "audit_file_path,"
+			+ "start_time,"
+			+ "end_time,"
+			+ "instance_name,"
+			+ "scheduled_start) "
 			+ "values (nextval('ue_seq'), now(), ?, ?, ?, ?, ?, ?, ?, ?, ?"
-			+ ", ?, ?, ?, ?, ?, ?, ?, ?, ?, ?"
-			+ ", ?, ?);";
+			+ ", ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?"
+			+ ", ?, ?, ?, ?, ?, ?);";
 	
-	PreparedStatement pstmtFailed = null;
+	PreparedStatement pstmtUnprocessed = null;
 	String sqlGet = "select "
 			+ "ue.ue_id, "
 			+ "ue.upload_time, "
@@ -90,20 +96,26 @@ public class JdbcUploadEventManager {
 			+ "from upload_event ue "
 				+ "where ue.status = 'success' "
 				+ "and ue.s_id is not null "
-				+ "and ue.incomplete = 'false' "
-				+ "and not exists (select se.se_id from subscriber_event se "
-					+ "where se.subscriber = ? and se.ue_id = ue.ue_id)";
+				+ "and ue.incomplete = 'false' ";
+	String sqlNotResultsDB = " and not exists (select se.se_id from subscriber_event se "
+				+ "where se.subscriber = ? and se.ue_id = ue.ue_id) ";
+	
+	PreparedStatement pstmtUnprocessedResultsDB = null;
+	String sqlProcessedFilter = " and not ue.results_db_applied";
 	
 	PreparedStatement pstmtFailedForward = null;
 	String sqlForwardFilter = " and ue.s_id = ?";
+	
+	String sqlOrder = " order by ue.ue_id asc";
 	
 	/*
 	 * Constructor
 	 */
 	public JdbcUploadEventManager(Connection sd) throws SQLException {
 		pstmt = sd.prepareStatement(sql);
-		pstmtFailed = sd.prepareStatement(sqlGet);
-		pstmtFailedForward = sd.prepareStatement(sqlGet + sqlForwardFilter);
+		pstmtUnprocessed = sd.prepareStatement(sqlGet + sqlNotResultsDB + sqlOrder);
+		pstmtUnprocessedResultsDB = sd.prepareStatement(sqlGet + sqlProcessedFilter + sqlOrder);
+		pstmtFailedForward = sd.prepareStatement(sqlGet + sqlNotResultsDB + sqlForwardFilter + sqlOrder);
 	}
 	
 	/*
@@ -120,28 +132,38 @@ public class JdbcUploadEventManager {
 		pstmt.setString(8, ue.getServerName());
 		pstmt.setInt(9, ue.getSurveyId());
 		pstmt.setInt(10,  ue.getProjectId());
-		pstmt.setString(11, ue.getFormStatus());
-		pstmt.setString(12, ue.getFilePath());
-		pstmt.setString(13, ue.getOrigSurveyIdent());
-		pstmt.setString(14,  ue.getUpdateId());
-		pstmt.setString(15,  ue.getIdent());
-		pstmt.setBoolean(16, ue.getIncomplete());
-		pstmt.setString(17, ue.getInstanceId());
-		pstmt.setInt(18, ue.getAssignmentId());
-		pstmt.setString(19, ue.getSurveyNotes());
-		pstmt.setString(20, ue.getLocationTrigger());
-		pstmt.setString(21, ue.getAuditFilePath());
+		pstmt.setInt(11,  ue.getOrganisationId());
+		pstmt.setInt(12,  ue.getEnterpriseId());
+		pstmt.setString(13, ue.getFormStatus());
+		pstmt.setString(14, ue.getFilePath());
+		pstmt.setString(15, ue.getOrigSurveyIdent());
+		pstmt.setString(16,  ue.getUpdateId());
+		pstmt.setString(17,  ue.getIdent());
+		pstmt.setBoolean(18, ue.getIncomplete());
+		pstmt.setString(19, ue.getInstanceId());
+		pstmt.setInt(20, ue.getAssignmentId());
+		pstmt.setString(21, ue.getSurveyNotes());
+		pstmt.setString(22, ue.getLocationTrigger());
+		pstmt.setString(23, ue.getAuditFilePath());
+		pstmt.setTimestamp(24, ue.getStart());
+		pstmt.setTimestamp(25, ue.getEnd());
+		pstmt.setString(26, ue.getInstanceName());
+		pstmt.setTimestamp(27, ue.getScheduledStart());
 	
 		pstmt.executeUpdate();
 	}
 	
 
 	/*
-	 * Get Uplaods that have not been processed by the subscriber
+	 * Get Uploads that have not been processed by the subscriber
 	 */
 	public List<UploadEvent> getFailed(String subscriber) throws SQLException {
-		pstmtFailed.setString(1, subscriber);
-		return getUploadEventList(pstmtFailed);
+		if(subscriber.equals("results_db")) {
+			return getUploadEventList(pstmtUnprocessedResultsDB);
+		} else {
+			pstmtUnprocessed.setString(1, subscriber);
+			return getUploadEventList(pstmtUnprocessed);
+		}
 	}
 	
 	public List<UploadEvent> getFailedForward(String subscriber, int sId) throws SQLException {
@@ -155,7 +177,8 @@ public class JdbcUploadEventManager {
 	 */
 	public void close() {
 		try {if(pstmt != null) {pstmt.close();}} catch(Exception e) {};
-		try {if(pstmtFailed != null) {pstmtFailed.close();}} catch(Exception e) {};
+		try {if(pstmtUnprocessed != null) {pstmtUnprocessed.close();}} catch(Exception e) {};
+		try {if(pstmtUnprocessedResultsDB != null) {pstmtUnprocessedResultsDB.close();}} catch(Exception e) {};
 		try {if(pstmtFailedForward != null) {pstmtFailedForward.close();}} catch(Exception e) {};
 	}
 	

@@ -194,7 +194,6 @@ public class Option implements Serializable{
     		cascade_filters = "{}";
     	} 
     	if(cascade_filters.trim().startsWith("{") && cascade_filters.trim().endsWith("}")) {
-    		// New JSON storage
 	    	Type type = new TypeToken<HashMap<String, String>>(){}.getType();
 			Gson gson=  new GsonBuilder().setDateFormat("yyyy-MM-dd").create();
 			cascadeKeyValues = gson.fromJson(cascade_filters, type);

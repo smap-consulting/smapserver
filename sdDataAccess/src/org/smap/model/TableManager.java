@@ -8,24 +8,27 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
+import java.util.ResourceBundle;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.smap.model.SurveyTemplate;
+
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
+import org.smap.sdal.constants.SmapQuestionTypes;
+import org.smap.sdal.constants.SmapServerMeta;
+import org.smap.sdal.managers.SurveyTableManager;
 import org.smap.sdal.managers.SurveyViewManager;
 import org.smap.sdal.model.ChangeItem;
+import org.smap.sdal.model.MetaItem;
 import org.smap.sdal.model.SurveyViewDefn;
 import org.smap.sdal.model.TableColumn;
+import org.smap.sdal.model.TableUpdateStatus;
 import org.smap.server.entities.Form;
 import org.smap.server.entities.Option;
 import org.smap.server.entities.Question;
 import org.smap.server.utilities.UtilityMethods;
 
-
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-
-import sun.rmi.runtime.Log;
 
 /*****************************************************************************
 
@@ -54,6 +57,9 @@ public class TableManager {
 	private static Logger log =
 			Logger.getLogger(TableManager.class.getName());
 
+	private ResourceBundle localisation;
+	private String tz;
+	
 	/*
 	 * Class to store information about geometry columns
 	 * Needed to support two phase creation of geometry columns in tables
@@ -72,52 +78,14 @@ public class TableManager {
 		}
 	}
 
-	/*
-	 * Create the table if it does not already exit in the database
-	 */
-	public boolean createTable(Connection cResults, Connection sd, String tableName, String sName, 
-			int sId,
-			int managedId) throws Exception {
-		boolean tableCreated = false;
-		String sql = "select count(*) from information_schema.tables where table_name =?;";
-
-		PreparedStatement pstmt = null;
-		try {
-			pstmt = cResults.prepareStatement(sql);
-			pstmt.setString(1, tableName);
-			log.info("SQL: " + pstmt.toString());
-			ResultSet res = pstmt.executeQuery();
-			int count = 0;
-
-			if(res.next()) {
-				count = res.getInt(1);
-			}
-			if(count > 0) {
-				log.info("        Table Exists");
-			} else {
-				log.info("        Table does not exist");
-				SurveyTemplate template = new SurveyTemplate();   
-				template.readDatabase(sd, sName, false);	
-				writeAllTableStructures(sd, cResults, template);
-				tableCreated = true;
-			}
-		} catch (Exception e) {
-			log.info("        Error checking for existence of table:" + e.getMessage());
-		} finally {
-			try {if (pstmt != null) {pstmt.close();	}} catch (SQLException e) {	}
+	public TableManager(ResourceBundle l, String tz) {
+		localisation = l;
+		if(tz == null) {
+			tz = "UTC";
 		}
-
-		if(tableCreated) {
-			markPublished(sd, sId);
-			markAllChangesApplied(sd, sId);
-		}
-
-		if(tableCreated || managedId > 0) {
-			addManagementColumns(cResults, sd, sId, managedId);
-		}
-
-		return tableCreated;
+		this.tz = tz;
 	}
+	
 
 	public void addManagementColumns(Connection cResults, Connection sd, int sId, int managedId) throws Exception {
 
@@ -148,7 +116,7 @@ public class TableManager {
 			PreparedStatement pstmtAdd = null;
 
 			SurveyViewDefn svd = new SurveyViewDefn();
-			SurveyViewManager qm = new SurveyViewManager();
+			SurveyViewManager qm = new SurveyViewManager(localisation, tz);
 			qm.getDataProcessingConfig(sd, managedId, svd, null, GeneralUtilityMethods.getOrganisationIdForSurvey(sd, sId));
 
 			org.smap.sdal.model.Form f = GeneralUtilityMethods.getTopLevelForm(sd, sId);	// Get the table name of the top level form
@@ -168,8 +136,8 @@ public class TableManager {
 						type = tc.type;
 					}
 
-					if(!GeneralUtilityMethods.hasColumn(cResults, f.tableName, tc.name)) {
-						sqlAdd = "alter table " + f.tableName + " add column " + tc.name + " " + type;
+					if(!GeneralUtilityMethods.hasColumn(cResults, f.tableName, tc.column_name)) {
+						sqlAdd = "alter table " + f.tableName + " add column " + tc.column_name + " " + type;
 
 						pstmtAdd = cResults.prepareStatement(sqlAdd);
 						log.info("Adding management column: " + pstmtAdd.toString());
@@ -187,117 +155,119 @@ public class TableManager {
 						}
 					}
 				} else {
-					log.info("Error: managed column not added as type was null: " + tc.name);
+					log.info("Error: managed column not added as type was null: " + tc.column_name);
 				}
 			}
 		}
 	}
 
 	/*
-	 * Mark all the questions and options in the survey as published
-	 * Mark as published any questions in other surveys that share this results table
+	 * Mark all the questions and options in the form as published
+	 * Mark as published any questions in other forms that share this results table
 	 */
-	public void markPublished(Connection sd, int sId) throws SQLException {
+	public void markPublished(Connection sd, int fId, int sId) throws SQLException {
 
 		class FormDetail {
 			boolean isSubmitter;
 			int fId;
 			int submittingFormId;
-			String table_name;
 		}
 		ArrayList<FormDetail> forms = new ArrayList<FormDetail> ();
 
+		String sqlGetSharingForms = "select f.f_id from form f, survey s "
+				+ "where f.table_name in (select table_name from form where f_id = ? and not reference) "
+				+ "and f.s_id = s.s_id "
+				+ "and not s.deleted "
+				+ "and not f.reference";
 
-		String sqlGetSharingForms = "select f.s_id, f.f_id, f.table_name from form f, survey s "
-				+ "where s.s_id = f.s_id "
-				+ "and s.deleted = 'false' "
-				+ "and f.table_name in (select table_name from form where s_id = ?);";
-
-		String sqlSetPublishedThisForm = "update question set published = 'true' where f_id = ?;";
-
-		String sqlSetOptionsPublishedThisForm = "update option set published = 'true' "
-				+ "where l_id in (select l_id from question q where f_id = ?);";
+		String sqlSetPublishedThisForm = "update question set published = 'true' where f_id = ?";
+		
+		String sqlSetPublishedParentQuestion = "update question set published = 'true' "
+				+ "where q_id = (select parentquestion from form where f_id = ?);";
+		
+		String sqlSetPublishedParentQuestionSharedForm = "update question set published = 'true' "
+				+ "where q_id = (select parentquestion from form where f_id = ?)"
+				+ "and column_name in (select column_name from question where f_id = ?);";
 
 		String sqlSetPublishedSharedForm = "update question set published = 'true' "
 				+ "where f_id = ? "
 				+ "and column_name in (select column_name from question where f_id = ?);";
 
-		String sqlSetOptionsPublishedSharedForm = "update option set published = 'true' "
-				+ "where l_id in (select l_id from question q where f_id = ? "
-				+ "and column_name in (select column_name from question where f_id = ?));";
 
 		PreparedStatement pstmtGetForms = null;
 		PreparedStatement pstmtSetPublishedThisForm = null;
 		PreparedStatement pstmtSetPublishedSharedForm = null;
-		PreparedStatement pstmtSetOptionsPublishedThisForm = null;
-		PreparedStatement pstmtSetOptionsPublishedSharedForm = null;
+		PreparedStatement pstmtSetPublishedParentQuestion = null;
+		PreparedStatement pstmtSetPublishedParentQuestionSharedForm = null;
 
 		try {
 
 			pstmtGetForms = sd.prepareStatement(sqlGetSharingForms);
 			pstmtSetPublishedThisForm = sd.prepareStatement(sqlSetPublishedThisForm);
 			pstmtSetPublishedSharedForm = sd.prepareStatement(sqlSetPublishedSharedForm);
-			pstmtSetOptionsPublishedThisForm = sd.prepareStatement(sqlSetOptionsPublishedThisForm);
-			pstmtSetOptionsPublishedSharedForm = sd.prepareStatement(sqlSetOptionsPublishedSharedForm);
+			pstmtSetPublishedParentQuestion = sd.prepareStatement(sqlSetPublishedParentQuestion);
+			pstmtSetPublishedParentQuestionSharedForm = sd.prepareStatement(sqlSetPublishedParentQuestionSharedForm);
 
 			// 1. Get all the affected forms
-			pstmtGetForms.setInt(1, sId);
-
+			pstmtGetForms.setInt(1, fId);
 			log.info("Get sharing forms: " + pstmtGetForms.toString());
 			ResultSet rs = pstmtGetForms.executeQuery();
 
 			while(rs.next()) {
 
 				FormDetail fd = new FormDetail();
-				fd.isSubmitter = (sId == rs.getInt(1));
-				fd.fId = rs.getInt(2);
-				fd.table_name = rs.getString(3);
+				fd.fId = rs.getInt(1);
+				fd.isSubmitter = (fId == fd.fId);
+				fd.submittingFormId = fId;
 				forms.add(fd);
 			}
 
-			// 2. For all shared forms record the matching formId of the submitting form
-			for(FormDetail fd : forms) {
-				if(!fd.isSubmitter) {
-					for(FormDetail fd2 : forms) {
-						if(fd2.isSubmitter && fd.table_name.equals(fd2.table_name)) {
-							fd.submittingFormId = fd2.fId;
-							break;
-						}
-					}
-				}
-			}
-
-			// 3. Mark the forms published
+			// 2. Mark the forms published
 			for(FormDetail fd : forms) {
 
 				if(fd.isSubmitter) {
 
+					log.info("--------------- submitter: " + fd.fId);
 					// 3.1a Update questions in the submitting form
 					pstmtSetPublishedThisForm.setInt(1, fd.fId);
 					log.info("Mark published: " + pstmtSetPublishedThisForm.toString());
 					pstmtSetPublishedThisForm.executeUpdate();
-
-					// 3.2a Update Options in the submitting form
-					pstmtSetOptionsPublishedThisForm.setInt(1, fd.fId);
-					log.info("Mark published: " + pstmtSetOptionsPublishedThisForm.toString());
-					pstmtSetOptionsPublishedThisForm.executeUpdate();
+					
+					// 3.3a Update parent question in the submitting form
+					pstmtSetPublishedParentQuestion.setInt(1, fd.fId);
+					log.info("Mark published: " + pstmtSetPublishedParentQuestion.toString());
+					pstmtSetPublishedParentQuestion.executeUpdate();
 
 				} else {
 
+					log.info("+++++++++++++++ shared: " + fd.fId);
 					// 3.1b Update questions in the shared form
 					pstmtSetPublishedSharedForm.setInt(1, fd.fId);
 					pstmtSetPublishedSharedForm.setInt(2, fd.submittingFormId);
-					log.info("Mark published: " + pstmtSetPublishedSharedForm.toString());
+					log.info("Mark shared questions published: " + pstmtSetPublishedSharedForm.toString());
 					pstmtSetPublishedSharedForm.executeUpdate();
 
-					// 3.1b Update options in the shared form
-					pstmtSetOptionsPublishedSharedForm.setInt(1, fd.fId);
-					pstmtSetOptionsPublishedSharedForm.setInt(2, fd.submittingFormId);
-					log.info("Mark published: " + pstmtSetOptionsPublishedSharedForm.toString());
-					pstmtSetOptionsPublishedSharedForm.executeUpdate();
+					// 3.2b Update options in the shared form
+					//pstmtSetOptionsPublishedSharedForm.setInt(1, fd.fId);
+					//pstmtSetOptionsPublishedSharedForm.setInt(2, fd.submittingFormId);
+					//log.info("Mark shared options published: " + pstmtSetOptionsPublishedSharedForm.toString());
+					//pstmtSetOptionsPublishedSharedForm.executeUpdate();
+					
+					// 3.3b Update parent question in the shared form
+					pstmtSetPublishedParentQuestionSharedForm.setInt(1, fd.fId);
+					pstmtSetPublishedParentQuestionSharedForm.setInt(2, fd.submittingFormId);
+					log.info("Mark published: " + pstmtSetPublishedParentQuestionSharedForm.toString());
+					pstmtSetPublishedParentQuestionSharedForm.executeUpdate();
 				}
 
 			}
+			try {
+				SurveyTableManager stm = new SurveyTableManager(sd, localisation);
+				stm.delete(sId);			// Delete references to this survey in the csv table so that they get regenerated
+			} catch (Exception e) {
+				log.log(Level.SEVERE, e.getMessage(), e);
+			}
+			
 		} catch (SQLException e) {
 			e.printStackTrace();
 			throw e;
@@ -305,8 +275,10 @@ public class TableManager {
 			try {if (pstmtGetForms != null) {pstmtGetForms.close();}} catch (Exception e) {}
 			try {if (pstmtSetPublishedThisForm != null) {pstmtSetPublishedThisForm.close();}} catch (Exception e) {}
 			try {if (pstmtSetPublishedSharedForm != null) {pstmtSetPublishedSharedForm.close();}} catch (Exception e) {}
-			try {if (pstmtSetOptionsPublishedThisForm != null) {pstmtSetOptionsPublishedThisForm.close();}} catch (Exception e) {}
-			try {if (pstmtSetOptionsPublishedSharedForm != null) {pstmtSetOptionsPublishedSharedForm.close();}} catch (Exception e) {}
+			//try {if (pstmtSetOptionsPublishedThisForm != null) {pstmtSetOptionsPublishedThisForm.close();}} catch (Exception e) {}
+			//try {if (pstmtSetOptionsPublishedSharedForm != null) {pstmtSetOptionsPublishedSharedForm.close();}} catch (Exception e) {}
+			try {if (pstmtSetPublishedParentQuestion != null) {pstmtSetPublishedParentQuestion.close();}} catch (Exception e) {}
+			try {if (pstmtSetPublishedParentQuestionSharedForm != null) {pstmtSetPublishedParentQuestionSharedForm.close();}} catch (Exception e) {}
 		}
 
 	}
@@ -340,23 +312,63 @@ public class TableManager {
 	/*
 	 * Create the tables for the survey
 	 */
-	private void writeAllTableStructures(Connection sd, Connection cResults, SurveyTemplate template) {
+	public void writeAllTableStructures(Connection sd, Connection cResults, int sId, SurveyTemplate template, int managedId) {
 
 		String response = null;
-		boolean hasHrk = (template.getHrk() != null);
+		//boolean hasHrk = (template.getHrk() != null);
+		boolean hasHrk = true;		// Always create the hrk column
+		boolean resAutoCommitSetFalse = false;
 
+		boolean tableCreated = false;
+		String sql = "select count(*) from information_schema.tables where table_name =?";		
+		PreparedStatement pstmt = null;
 		try {
 			//Class.forName(dbClass);	 
 
 			List<Form> forms = template.getAllForms();	
-			cResults.setAutoCommit(false);
-			for(Form form : forms) {		
-				writeTableStructure(form, sd, cResults, hasHrk);
+			if(cResults.getAutoCommit()) {
+				log.info("Set autocommit results false");
+				resAutoCommitSetFalse = true;
+				cResults.setAutoCommit(false);
+			}
+			
+			for(Form form : forms) {
+				if(!form.getReference()) {
+					
+					// Test to see if this table already exists
+					try {if (pstmt != null) {pstmt.close();	}} catch (SQLException e) {}
+					pstmt = cResults.prepareStatement(sql);
+					pstmt.setString(1, form.getTableName());
+					log.info("SQL: " + pstmt.toString());
+					ResultSet res = pstmt.executeQuery();
+					int count = 0;
+					if(res.next()) {
+						count = res.getInt(1);
+					}
+					
+					if(count > 0) {
+						log.info("        Table Exists");
+					} else {
+						// Create the table
+						log.info("        Table does not exist");
+						writeTableStructure(form, sd, cResults, hasHrk, template);
+						tableCreated = true;
+					}
+				}
 				cResults.commit();
+				
+				if(tableCreated) {
+					markPublished(sd, form.getId(), sId);
+
+				}
+
+				// Add managed columns if a top level form has been created or a mangedId was passed
+				if((tableCreated && !form.hasParent()) || managedId > 0) {
+					addManagementColumns(cResults, sd, sId, managedId);
+				}
+
 			}	
-			cResults.setAutoCommit(true);
-
-
+			
 
 		} catch (Exception e) {
 			if(cResults != null) {
@@ -372,11 +384,16 @@ public class TableManager {
 			}
 
 		} finally {
-			try {if (cResults != null) {cResults.setAutoCommit(true);}} catch (SQLException e) {}
+			try {if (pstmt != null) {pstmt.close();	}} catch (SQLException e) {}
+			if(resAutoCommitSetFalse) {
+				log.info("Set autocommit results true");
+				resAutoCommitSetFalse = false;
+				try {cResults.setAutoCommit(true);} catch(Exception e) {}
+			}
 		}		
 	}
 
-	private void writeTableStructure(Form form, Connection sd, Connection cResults, boolean hasHrk) throws Exception {
+	private void writeTableStructure(Form form, Connection sd, Connection cResults, boolean hasHrk, SurveyTemplate template) throws Exception {
 
 		String tableName = form.getTableName();
 		List<Question> columns = form.getQuestions(sd, form.getPath(null));
@@ -392,22 +409,40 @@ public class TableManager {
 					"parkey int default 0";
 
 			/*
-			 * Create default columns
-			 * only add _user and _version, _complete, _modified to the top level form
+			 * Create default columns in the top level form
 			 */
-			sql += ", _bad boolean DEFAULT FALSE, _bad_reason text, _audit text";
+			sql += ", _bad boolean DEFAULT FALSE, _bad_reason text, _audit text, _audit_raw text, _assigned text";
 			if(!form.hasParent()) {
 				sql += ", _user text, _version text, _survey_notes text, _location_trigger text,"
 						+ "_complete boolean default true, "
-						+ "_modified boolean default false"
-						+ ", _upload_time timestamp with time zone, _s_id integer";
+						+ "_modified boolean default false,"
+						+ SmapServerMeta.UPLOAD_TIME_NAME + " timestamp with time zone, "
+						+ SmapServerMeta.SURVEY_ID_NAME + " integer,"
+						+ "instanceid text, "
+						+ "instancename text,"
+						+ SmapServerMeta.SCHEDULED_START_NAME + " timestamp with time zone";
 
 				if(hasHrk) {
 					sql += ", _hrk text ";
 				}
+				
+				// Add preloads
+				ArrayList<MetaItem> meta = template.getSurvey().getMeta();
+				if(meta != null) {
+					for(MetaItem mi : meta) {
+						if(mi.isPreload) {
+							String type = " text";
+							if(mi.dataType.equals("timestamp")) {
+								type = " timestamp with time zone";
+							} else if(mi.dataType.equals("date")) {
+								type = " date";
+							}
+							sql += "," + mi.columnName + type;
+						}
+					}
+				}
 			}
-
-
+			
 			for(Question q : columns) {
 
 				boolean hasExternalOptions = GeneralUtilityMethods.isAppearanceExternalFile(q.getAppearance(false, null));
@@ -427,26 +462,13 @@ public class TableManager {
 				}
 
 				// Ignore questions with no source, these can only be dummy questions that indicate the position of a subform
-
-				if(source != null) {
-
-					// Set column type for postgres
-					if(colType.equals("string")) {
-						colType = "text";
-					} else if(colType.equals("decimal")) {
-						colType = "double precision";
-					} else if(colType.equals("select1")) {
-						colType = "text";
-					} else if(colType.equals("barcode")) {
-						colType = "text";
-					} else if(colType.equals("acknowledge")) {
-						colType = "text";
-					} else if(colType.equals("range")) {
-						colType = "double precision";
-					} else if(colType.equals("geopoint")) {
+				// Also ignore meta - these are now added separately and not from the question list
+				if(source != null && !GeneralUtilityMethods.isMetaQuestion(q.getName())) {
+					
+					if(colType.equals("geopoint")) {
 
 						// Add geometry columns after the table is created using AddGeometryColumn()
-						GeometryColumn gc = new GeometryColumn(tableName, q.getColumnName(), "POINT");
+						GeometryColumn gc = new GeometryColumn(tableName, "the_geom", "POINT");
 						geoms.add(gc);
 						sql += ", the_geom_alt double precision, the_geom_acc double precision";
 						continue;
@@ -454,7 +476,7 @@ public class TableManager {
 					} else if(colType.equals("geopolygon") || colType.equals("geoshape")) {
 
 						// remove the automatically generated string _parentquestion from the question name
-						String qName = q.getColumnName();
+						String qName = q.getColumnName(false);
 						int idx = qName.lastIndexOf("_parentquestion");
 						if(idx > 0) {
 							qName = qName.substring(0, idx);
@@ -465,7 +487,7 @@ public class TableManager {
 
 					} else if(colType.equals("geolinestring") || colType.equals("geotrace")) {
 
-						String qName = q.getColumnName();
+						String qName = q.getColumnName(false);
 						int idx = qName.lastIndexOf("_parentquestion");
 						if(idx > 0) {
 							qName = qName.substring(0, idx);
@@ -474,14 +496,10 @@ public class TableManager {
 						geoms.add(gc);
 						continue;
 
-					} else if(colType.equals("dateTime")) {
-						colType = "timestamp with time zone";					
-					} else if(colType.equals("audio") || colType.equals("image") || 
-							colType.equals("video")) {
-						colType = "text";					
-					}
-
-					if(colType.equals("select")) {
+					} 
+					
+					
+					if(colType.equals("select") && !q.isCompressed()) {
 						// Create a column for each option
 						// Values in this column can only be '0' or '1', not using boolean as it may be easier for analysis with an integer
 						Collection<Option> options = q.getValidChoices(sd);
@@ -495,7 +513,7 @@ public class TableManager {
 								//  or its not an external choice and this question does not use external choices
 								if(hasExternalOptions && option.getExternalFile() || !hasExternalOptions && !option.getExternalFile()) {
 
-									String name = q.getColumnName() + "__" + option.getColumnName();
+									String name = q.getColumnName(false) + "__" + option.getColumnName();
 									if(uniqueColumns.get(name) == null) {
 										uniqueColumns.put(name, name);
 										sql += ", " + name + " integer";
@@ -506,10 +524,11 @@ public class TableManager {
 							log.info("Warning: No Options for Select:" + q.getName());
 						}
 					} else {
-						sql += ", " + q.getColumnName() + " " + colType;
+						colType = GeneralUtilityMethods.getPostgresColType(colType, q.isCompressed());
+						sql += ", " + q.getColumnName(false) + " " + colType;
 					}
 				} else {
-					log.info("Info: Ignoring question with no source:" + q.getName());
+					// log.info("Info: Ignoring question with no source:" + q.getName());
 				}
 			}
 			sql += ");";
@@ -528,7 +547,7 @@ public class TableManager {
 
 					if(pstmtGeom != null) try{pstmtGeom.close();}catch(Exception e) {}
 					pstmtGeom = cResults.prepareStatement(gSql);
-					log.info("Sql statement: " + pstmtGeom.toString());
+					log.info("Add geometry columns: " + pstmtGeom.toString());
 					pstmtGeom.executeUpdate();
 				}
 			} catch (SQLException e) {
@@ -541,6 +560,8 @@ public class TableManager {
 		}
 
 	}
+	
+
 
 	/*
 	 * Apply changes to results table due to changes in the form
@@ -557,10 +578,8 @@ public class TableManager {
 		boolean hasExternalOptions;
 		String type;
 		String table;
-	}
-	private class TableUpdateStatus {
-		String msg;
-		boolean tableAltered;
+		boolean reference;
+		boolean compressed;
 	}
 
 	public boolean applyTableChanges(Connection connectionSD, Connection cResults, int sId) throws Exception {
@@ -615,6 +634,7 @@ public class TableManager {
 				 * 		new select multiple options 
 				 * 		questions that have been moved to a new table
 				 * 		questions whose column_name has been changed
+				 * It is not altered if the question is in a reference form
 				 */
 				if(ci.type != null && ci.action != null && 
 						(ci.type.equals("question") || ci.type.equals("option") &&
@@ -631,7 +651,6 @@ public class TableManager {
 					log.info("table is altered");
 
 					ArrayList<String> columns = new ArrayList<String> ();	// Column names in results table
-					int l_id = 0;											// List ID
 					TableUpdateStatus status = null;
 
 					// Check for a new option or updating an existing option
@@ -682,12 +701,12 @@ public class TableManager {
 
 							while(rsQuestions.next()) {
 								// Get the question details
-								int qId = rsQuestions.getInt(1);
+								int qId = rsQuestions.getInt(1);		// Select questions are returned in the Result Set
 								QuestionDetails qd = getQuestionDetails(connectionSD, qId);
 
-								if(qd != null) {
+								if(qd != null && !qd.reference && !qd.compressed) {
 									if(qd.hasExternalOptions && externalFile || !qd.hasExternalOptions && !externalFile) {
-										status = alterColumn(cResults, qd.table, "integer", qd.columnName + "__" + optionColumnName);
+										status = GeneralUtilityMethods.alterColumn(cResults, qd.table, "integer", qd.columnName + "__" + optionColumnName, qd.compressed);
 										if(status.tableAltered) {
 											tableChanged = true;
 										}
@@ -696,7 +715,7 @@ public class TableManager {
 
 							}
 						} else {
-							log.info("Option column name for list: " + listId + " and value: " + ci.option.value + " was not found.");
+							log.info("Option column name for list: " + listId + " was not found.");
 						}
 
 
@@ -712,71 +731,57 @@ public class TableManager {
 						if(qId != 0) {
 							try {
 								QuestionDetails qd = getQuestionDetails(connectionSD, qId);
-
-								if(qd.type.equals("begin group") || qd.type.equals("end group")) {
-									// Ignore group changes
-								} else if(qd.type.equals("begin repeat")) {
-									// Get the table name
-									String sqlGetTable = "select table_name from form where s_id = ? and parentquestion = ?;";
-									pstmtGetTableName = connectionSD.prepareStatement(sqlGetTable);
-									pstmtGetTableName.setInt(1, sId);
-									pstmtGetTableName.setInt(2, qId);
-									ResultSet rsTableName = pstmtGetTableName.executeQuery();
-									if(rsTableName.next()) {
-										String tableName = rsTableName.getString(1);
-
-										String sqlCreateTable = "create table " + tableName + " ("
-												+ "prikey SERIAL PRIMARY KEY, "
-												+ "parkey int,"
-												+ "_bad boolean DEFAULT FALSE, _bad_reason text)";
-										pstmtCreateTable = cResults.prepareStatement(sqlCreateTable);
-										pstmtCreateTable.executeUpdate();
-									}
-
-								} else {
-									columns.add(qd.columnName);		// Usually this is the case unless the question is a select multiple
-
-									if(qd.type.equals("string")) {
-										qd.type = "text";
-									} else if(qd.type.equals("dateTime")) {
-										qd.type = "timestamp with time zone";					
-									} else if(qd.type.equals("audio") || qd.type.equals("image") || qd.type.equals("video")) {
-										qd.type = "text";					
-									} else if(qd.type.equals("decimal")) {
-										qd.type = "double precision";
-									} else if(qd.type.equals("range")) {
-										qd.type = "double precision";
-									} else if(qd.type.equals("barcode")) {
-										qd.type = "text";
-									} else if(qd.type.equals("note")) {
-										qd.type = "text";
-									} else if(qd.type.equals("select1")) {
-										qd.type = "text";
-									} else if (qd.type.equals("select")) {
-										qd.type = "integer";
-
-										columns.clear();
-										pstmtGetOptions.setInt(1, qId);
-
-										log.info("Get options to add: "+ pstmtGetOptions.toString());
-										ResultSet rsOptions = pstmtGetOptions.executeQuery();
-										while(rsOptions.next()) {			
-											// Create if its an external choice and this question uses external choices
-											//  or its not an external choice and this question does not use external choices
-											String o_col_name = rsOptions.getString(1);
-											boolean externalFile = rsOptions.getBoolean(2);
-
-											if(qd.hasExternalOptions && externalFile || !qd.hasExternalOptions && !externalFile) {
-												String column =  qd.columnName + "__" + o_col_name;
-												columns.add(column);
-											}
-										} 
-									}
-
-									// Apply each column
-									for(String col : columns) {
-										status = alterColumn(cResults, qd.table, qd.type, col);
-										tableChanged = true;
+								
+								if(!qd.reference) {
+									if(qd.type.equals("begin group") || qd.type.equals("end group")) {
+										// Ignore group changes
+									} else if(qd.type.equals("begin repeat")) {
+										// Get the table name
+										String sqlGetTable = "select table_name from form where s_id = ? and parentquestion = ?;";
+										pstmtGetTableName = connectionSD.prepareStatement(sqlGetTable);
+										pstmtGetTableName.setInt(1, sId);
+										pstmtGetTableName.setInt(2, qId);
+										ResultSet rsTableName = pstmtGetTableName.executeQuery();
+										if(rsTableName.next()) {
+											String tableName = rsTableName.getString(1);
+	
+											String sqlCreateTable = "create table " + tableName + " ("
+													+ "prikey SERIAL PRIMARY KEY, "
+													+ "parkey int,"
+													+ "_bad boolean DEFAULT FALSE, _bad_reason text)";
+											pstmtCreateTable = cResults.prepareStatement(sqlCreateTable);
+											pstmtCreateTable.executeUpdate();
+										}
+	
+									} else {
+										columns.add(qd.columnName);		// Usually this is the case unless the question is a select multiple
+	
+										if (qd.type.equals("select") && !qd.compressed) {
+											qd.type = "integer";
+	
+											columns.clear();
+											pstmtGetOptions.setInt(1, qId);
+	
+											log.info("Get options to add: "+ pstmtGetOptions.toString());
+											ResultSet rsOptions = pstmtGetOptions.executeQuery();
+											while(rsOptions.next()) {			
+												// Create if its an external choice and this question uses external choices
+												//  or its not an external choice and this question does not use external choices
+												String o_col_name = rsOptions.getString(1);
+												boolean externalFile = rsOptions.getBoolean(2);
+	
+												if(qd.hasExternalOptions && externalFile || !qd.hasExternalOptions && !externalFile) {
+													String column =  qd.columnName + "__" + o_col_name;
+													columns.add(column);
+												}
+											} 
+										}
+	
+										// Apply each column
+										for(String col : columns) {
+											status = GeneralUtilityMethods.alterColumn(cResults, qd.table, qd.type, col, qd.compressed);
+											tableChanged = true;
+										}
 									}
 								}
 							} catch (Exception e) {
@@ -816,14 +821,17 @@ public class TableManager {
 
 	}
 
-	public boolean addUnpublishedColumns(Connection connectionSD, Connection cResults, int sId) throws Exception {
+	public boolean addUnpublishedColumns(Connection connectionSD, Connection cResults, int sId, String tableName) throws Exception {
 
 		boolean tablePublished = false;
 
-		String sqlGetUnpublishedQuestions = "select q.q_id, q.qtype, q.column_name, q.l_id, q.appearance, f.table_name "
+		String sqlGetUnpublishedQuestions = "select "
+				+ "q.q_id, q.qtype, q.column_name, q.l_id, q.appearance, f.table_name, q.compressed "
 				+ "from question q, form f "
 				+ "where q.f_id = f.f_id "
-				+ "and q.published = 'false' "
+				+ "and (q.published = 'false' or (q.compressed = 'false' and q.qtype = 'select')) "
+				+ "and f.reference = 'false' "
+				+ "and q.soft_deleted = 'false' "
 				+ "and f.s_id = ?";
 
 		String sqlGetUnpublishedOptions = "select o_id, column_name, externalfile "
@@ -838,6 +846,8 @@ public class TableManager {
 		log.info("######## Apply unpublished questions");
 		try {
 
+			addUnpublishedPreloads(connectionSD, cResults, sId, tableName);
+			
 			pstmtGetUnpublishedQuestions = connectionSD.prepareStatement(sqlGetUnpublishedQuestions);
 			pstmtGetUnpublishedOptions = connectionSD.prepareStatement(sqlGetUnpublishedOptions);
 
@@ -853,60 +863,41 @@ public class TableManager {
 				int l_id = rs.getInt(4);				// List Id
 				boolean hasExternalOptions = GeneralUtilityMethods.isAppearanceExternalFile(rs.getString(5));
 				String table_name = rs.getString(6);
+				boolean compressed = rs.getBoolean(7);
 
 				columns.clear();
 
 				if(qType.equals("begin group") || qType.equals("end group")) {
 					// Ignore group changes
 				} else if(qType.equals("begin repeat")) {
-					// TODO
 
-				} else {
-					columns.add(columnName);		// Usually this is the case unless the question is a select multiple
+				} else if (qType.equals("select") && !compressed) {
+					qType = "integer";
 
-					if(qType.equals("string")) {
-						qType = "text";
-					} else if(qType.equals("dateTime")) {
-						qType = "timestamp with time zone";					
-					} else if(qType.equals("audio") || qType.equals("image") || qType.equals("video")) {
-						qType = "text";					
-					} else if(qType.equals("decimal")) {
-						qType = "real";
-					} else if(qType.equals("barcode")) {
-						qType = "text";
-					} else if(qType.equals("note")) {
-						qType = "text";
-					} else if(qType.equals("select1")) {
-						qType = "text";
-					} else if(qType.equals("acknowledge")) {
-						qType = "text";
-					} else if (qType.equals("select")) {
-						qType = "integer";
+					pstmtGetUnpublishedOptions.setInt(1, l_id);
 
-						columns.clear();
-						pstmtGetUnpublishedOptions.setInt(1, l_id);
+					log.info("Get unpublished options to add: "+ pstmtGetUnpublishedOptions.toString());
+					ResultSet rsOptions = pstmtGetUnpublishedOptions.executeQuery();
+					while(rsOptions.next()) {			
+						// Create if its an external choice and this question uses external choices
+						//  or its not an external choice and this question does not use external choices
+						String o_col_name = rsOptions.getString(2);
+						boolean externalFile = rsOptions.getBoolean(3);
 
-						log.info("Get unpublished options to add: "+ pstmtGetUnpublishedOptions.toString());
-						ResultSet rsOptions = pstmtGetUnpublishedOptions.executeQuery();
-						while(rsOptions.next()) {			
-							// Create if its an external choice and this question uses external choices
-							//  or its not an external choice and this question does not use external choices
-							String o_col_name = rsOptions.getString(2);
-							boolean externalFile = rsOptions.getBoolean(3);
-
-							if(hasExternalOptions && externalFile || !hasExternalOptions && !externalFile) {
-								String column =  columnName + "__" + o_col_name;
-								columns.add(column);
-							}
+						if(hasExternalOptions && externalFile || !hasExternalOptions && !externalFile) {
+							String column =  columnName + "__" + o_col_name;
+							columns.add(column);
 						}
 					}
-
 					// Apply each column
 					for(String col : columns) {
-						alterColumn(cResults, table_name, qType, col);
+						GeneralUtilityMethods.alterColumn(cResults, table_name, qType, col, compressed);
 						tablePublished = true;
-					}					
-				} 
+					}	
+				} else {
+					GeneralUtilityMethods.alterColumn(cResults, table_name, qType, columnName, compressed);
+					tablePublished = true;
+				}
 
 			}
 
@@ -921,97 +912,37 @@ public class TableManager {
 		return tablePublished;
 
 	}
+	
+	public void addUnpublishedPreloads(Connection connectionSD, 
+			Connection cResults, 
+			int sId,
+			String tableName) throws Exception {
 
-	/*
-	 * Alter the table
-	 */
-	private TableUpdateStatus alterColumn(Connection cResults, String table, String type, String column) {
+		ArrayList<MetaItem> preloads = GeneralUtilityMethods.getPreloads(connectionSD, sId);
 
-		PreparedStatement pstmtAlterTable = null;
-		PreparedStatement pstmtApplyGeometryChange = null;
-
-		TableUpdateStatus status = new TableUpdateStatus();
-		status.tableAltered = true;
-		status.msg = "";
-
-		try {
-			if(type.equals("geopoint") || type.equals("geotrace") || type.equals("geoshape")) {
-
-				String geoType = null;
-
-				if(type.equals("geopoint")) {
-					geoType = "POINT";
-				} else if (type.equals("geotrace")) {
-					geoType = "LINESTRING";
-				} else if (type.equals("geoshape")) {
-					geoType = "POLYGON";
-				}
-				String gSql = "SELECT AddGeometryColumn('" + table + 
-						"', 'the_geom', 4326, '" + geoType + "', 2);";
-				log.info("Add geometry column: " + gSql);
-
-				pstmtApplyGeometryChange = cResults.prepareStatement(gSql);
-				try { 
-					pstmtApplyGeometryChange.executeQuery();
-				} catch (Exception e) {
-					// Allow this to fail where an older version added a geometry, which was then deleted, then a new 
-					//  geometry with altitude was added we need to go on and add the altitude and accuracy
-					log.info("Error altering table -- continuing: " + e.getMessage());
-					try {cResults.rollback();} catch(Exception ex) {}
-				}
-
-				// Add altitude and accuracy
-				if(type.equals("geopoint")) {
-					String sqlAlterTable = "alter table " + table + " add column the_geom_alt double precision";
-					pstmtAlterTable = cResults.prepareStatement(sqlAlterTable);
-					log.info("Alter table: " + pstmtAlterTable.toString());					
-					pstmtAlterTable.executeUpdate();
-
-					try {if (pstmtAlterTable != null) {pstmtAlterTable.close();}} catch (Exception e) {}
-					sqlAlterTable = "alter table " + table + " add column the_geom_acc double precision";
-					pstmtAlterTable = cResults.prepareStatement(sqlAlterTable);
-					log.info("Alter table: " + pstmtAlterTable.toString());					
-					pstmtAlterTable.executeUpdate();
-				}
-
-				// Commit this change to the database
-				try { cResults.commit();	} catch(Exception ex) {}
-			} else {
-
-				String sqlAlterTable = "alter table " + table + " add column " + column + " " + type + ";";
-				pstmtAlterTable = cResults.prepareStatement(sqlAlterTable);
-				log.info("Alter table: " + pstmtAlterTable.toString());
-
-				pstmtAlterTable.executeUpdate();
-
-				// Commit this change to the database
-				try {cResults.commit();} catch(Exception ex) {}
-			} 
-		} catch (Exception e) {
-			// Report but otherwise ignore any errors
-			log.info("Error altering table -- continuing: " + e.getMessage());
-
-			// Rollback this change
-			try {cResults.rollback();} catch(Exception ex) {}
-
-			// Only record the update as failed if the problem was not due to the column already existing
-			status.msg = e.getMessage();
-			if(status.msg == null || !status.msg.contains("already exists")) {
-				status.tableAltered = false;
+		log.info("######## Apply unpublished preloads");
+		for(MetaItem mi : preloads) {
+			if(mi.isPreload) {
+			
+				if(!GeneralUtilityMethods.hasColumn(cResults, tableName, mi.columnName)) {
+					String type = mi.type;
+					if(type.equals("string")) {
+						type = "text";
+					}
+					GeneralUtilityMethods.alterColumn(cResults, tableName, type, mi.columnName, false);						
+				} 
 			}
-		} finally {
-			try {if (pstmtAlterTable != null) {pstmtAlterTable.close();}} catch (Exception e) {}
-			try {if (pstmtApplyGeometryChange != null) {pstmtApplyGeometryChange.close();}} catch (Exception e) {}
-		}
-		return status;
+		} 
 	}
+
+
 
 	private QuestionDetails getQuestionDetails(Connection sd, int qId) throws Exception {
 
 		QuestionDetails qd = new QuestionDetails();
 		PreparedStatement pstmt = null;;
 
-		String sqlGetQuestionDetails = "select q.column_name, q.appearance, q.qtype, f.table_name "
+		String sqlGetQuestionDetails = "select q.column_name, q.appearance, q.qtype, f.table_name, f.reference, q.compressed "
 				+ "from question q, form f "
 				+ "where q.f_id = f.f_id "
 				+ "and q_id = ?;";
@@ -1028,6 +959,8 @@ public class TableManager {
 				qd.hasExternalOptions = GeneralUtilityMethods.isAppearanceExternalFile(rsDetails.getString(2));
 				qd.type = rsDetails.getString(3);
 				qd.table = rsDetails.getString(4);
+				qd.reference = rsDetails.getBoolean(5);
+				qd.compressed = rsDetails.getBoolean(6);
 			} else {
 				throw new Exception("Can't find question details: " + qId);
 			}

@@ -47,13 +47,13 @@ public class JdbcSurveyManager {
 			+ "instance_name,"
 			+ "loaded_from_xls,"
 			+ "created) "
-			+ "values (nextval('s_seq'), ?, now(), ?, ?, ?, ?, ?, ?, ?, ?, ?, now());";
+			+ "values (nextval('s_seq'), ?, now(), ?, ?, ?, ?, ?, ?, ?, ?, ?, now())";
 	
 	// Update survey ident based on id
 	PreparedStatement pstmtUpdate = null;
 	String sqlUpdate = "update survey set "
 			+ "ident = ? "
-			+ "where s_id = ?;";
+			+ "where s_id = ?";
 	
 	// Retrieve
 	PreparedStatement pstmtGetByIdent = null;
@@ -71,14 +71,22 @@ public class JdbcSurveyManager {
 			+ "instance_name,"
 			+ "deleted,"
 			+ "hrk,"
-			+ "timing_data "
+			+ "timing_data,"
+			+ "audit_location_data,"
+			+ "track_changes,"
+			+ "hide_on_device,"
+			+ "meta "
 			+ "from survey where ";
-	String sqlIdentWhere = "ident = ?;";
-	String sqlIdWhere = "s_id = ?;";
+	String sqlIdentWhere = "ident = ?";
+	String sqlIdWhere = "s_id = ?";
 
 	// Check existence
 	PreparedStatement pstmtExists = null;
-	String sqlExists = "select count(*) from survey where display_name = ? and p_id = ?;";
+	String sqlExists = "select count(*) from survey where display_name = ? and p_id = ?";
+	
+	// Get replacement ident
+	PreparedStatement pstmtReplacement = null;
+	String sqlReplacement = "select new_ident from replacement where old_ident = ?";
 	
 	/*
 	 * Constructor
@@ -91,6 +99,7 @@ public class JdbcSurveyManager {
 		pstmtGetByIdent = sd.prepareStatement(sqlGet + sqlIdentWhere);
 		pstmtGetById = sd.prepareStatement(sqlGet + sqlIdWhere);
 		pstmtExists = sd.prepareStatement(sqlExists);
+		pstmtReplacement = sd.prepareStatement(sqlReplacement);
 	}
 	
 	/*
@@ -131,27 +140,24 @@ public class JdbcSurveyManager {
 		pstmtUpdate.executeUpdate();
 	}
 	
-	
-	/*
-	 * Update reference to self in calculations
-	 *
-	public void updateSelfCalcs(String ident, int sId) throws SQLException {
-		pstmtUpdateSelfCalcs.setString(1, ident);
-		pstmtUpdateSelfCalcs.setInt(2, sId);
-		pstmtUpdateSelfCalcs.executeUpdate();
-		
-		pstmtUpdateSelfCalcsManifest.setString(1, ident);
-		pstmtUpdateSelfCalcsManifest.setInt(2, sId);
-		pstmtUpdateSelfCalcsManifest.executeUpdate();
-	}
-	*/
-	
 	/*
 	 * Get a survey using its ident
 	 */
 	public Survey getByIdent(String ident) throws SQLException {
-		pstmtGetByIdent.setString(1, ident);
-		return getSurvey(pstmtGetByIdent);
+		
+		pstmtGetByIdent.setString(1, ident);		
+		Survey s = getSurvey(pstmtGetByIdent);
+		
+		if(s == null || s.getDeleted()) {
+			// Try to get a replacement survey ident
+			pstmtReplacement.setString(1, ident);
+			ResultSet rs = pstmtReplacement.executeQuery();
+			if(rs.next()) {
+				pstmtGetByIdent.setString(1, rs.getString(1));
+				s = getSurvey(pstmtGetByIdent);
+			}
+		}
+		return s;
 	}
 	
 	/*
@@ -186,10 +192,9 @@ public class JdbcSurveyManager {
 	public void close() {
 		try {if(pstmt != null) {pstmt.close();}} catch(Exception e) {};
 		try {if(pstmtUpdate != null) {pstmtUpdate.close();}} catch(Exception e) {};
-		//try {if(pstmtUpdateSelfCalcs != null) {pstmtUpdateSelfCalcs.close();}} catch(Exception e) {};
-		//try {if(pstmtUpdateSelfCalcsManifest != null) {pstmtUpdateSelfCalcsManifest.close();}} catch(Exception e) {};
 		try {if(pstmtGetByIdent != null) {pstmtGetByIdent.close();}} catch(Exception e) {};
 		try {if(pstmtGetById != null) {pstmtGetById.close();}} catch(Exception e) {};
+		try {if(pstmtReplacement != null) {pstmtReplacement.close();}} catch(Exception e) {};
 	}
 	
 	/*
@@ -215,6 +220,11 @@ public class JdbcSurveyManager {
 			s.setDeleted(rs.getBoolean(11));
 			s.setHrk(rs.getString(12));
 			s.setTimingData(rs.getBoolean(13));
+			s.setAuditLocationData(rs.getBoolean(14));
+			s.setTrackChanges(rs.getBoolean(15));
+			s.setHideOnDevice(rs.getBoolean(16));
+			s.setMeta(rs.getString(17));
+		
 		}
 		return s;
 	}

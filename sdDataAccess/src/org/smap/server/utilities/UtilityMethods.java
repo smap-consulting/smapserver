@@ -1,12 +1,18 @@
 package org.smap.server.utilities;
 
+import java.sql.Connection;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
+import java.util.ResourceBundle;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
+import org.smap.model.FormDesc;
 import org.smap.model.IE;
+import org.smap.model.SurveyTemplate;
+import org.smap.model.TableManager;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.server.entities.Option;
 import org.w3c.dom.Node;
@@ -140,7 +146,8 @@ public class UtilityMethods {
 			boolean forLabel,
 			HashMap<String, String> questionPaths,
 			int f_id,
-			boolean webform) throws Exception {
+			boolean webform,
+			String calledForQuestion) throws Exception {
 		
 		if(input == null) {
 			return input;
@@ -192,7 +199,8 @@ public class UtilityMethods {
 				}
 				
 				if(qPath == null) {
-					throw new Exception("Question path not found for question: " + qname);
+					throw new Exception("Question path not found for question: " + qname + " in " + input + 
+							" of " + calledForQuestion);
 				}
 			}
 			output.append(qPath);
@@ -260,11 +268,45 @@ public class UtilityMethods {
 		}		
 		
 		if(convertToXPath) {
-			v = convertAllxlsNames(v, false, questionPaths, f_id, false);
+			v = convertAllxlsNames(v, false, questionPaths, f_id, false, "unknown");
 		} else if(convertToXLSName) {
 			v = GeneralUtilityMethods.convertAllXpathNames(v, true);
 		}
+		
 		return v;
+	}
+    
+	/*
+	 * Create the results tables if they do not exist
+	 */
+	public static void createSurveyTables(Connection sd, Connection results, 
+			ResourceBundle localisation, 
+			int sId,
+			ArrayList<FormDesc> formList,
+			String sIdent,
+			String tz) throws Exception {
+		
+		TableManager tm = new TableManager(localisation, tz);
+		FormDesc topForm = formList.get(0);
+		
+		SurveyTemplate template = new SurveyTemplate(localisation); 
+		template.readDatabase(sd, sIdent, false);	
+		tm.writeAllTableStructures(sd, results, sId, template,  0);
+		
+		boolean tableChanged = false;
+		boolean tablePublished = false;
+	
+		// Apply any updates that have been made to the table structure since the last submission
+	
+		tableChanged = tm.applyTableChanges(sd, results, sId);
+	
+		// Add any previously unpublished columns not in a changeset (Occurs if this is a new survey sharing an existing table)
+		tablePublished = tm.addUnpublishedColumns(sd, results, sId, topForm.table_name);			
+		if(tableChanged || tablePublished) {
+			for(FormDesc f : formList) {
+				tm.markPublished(sd, f.f_id, sId);		// only mark published if there have been changes made
+			}
+		}
 	}
 	
 }

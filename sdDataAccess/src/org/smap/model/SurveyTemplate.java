@@ -1,6 +1,5 @@
 package org.smap.model;
 
-import java.io.File;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -9,6 +8,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.ResourceBundle;
 import java.util.logging.Logger;
 import java.util.Set;
 import java.util.Vector;
@@ -16,9 +16,8 @@ import java.util.Vector;
 import org.smap.sdal.Utilities.GeneralUtilityMethods;
 import org.smap.sdal.managers.LogManager;
 import org.smap.sdal.managers.MessagingManager;
-import org.smap.sdal.model.ChangeItem;
-import org.smap.sdal.model.ChangeSet;
 import org.smap.sdal.model.ManifestInfo;
+import org.smap.sdal.model.MetaItem;
 import org.smap.server.entities.Form;
 import org.smap.server.entities.MissingTemplateException;
 import org.smap.server.entities.Option;
@@ -65,10 +64,12 @@ public class SurveyTemplate {
 	private int nextQuestionSeq = 0;
 	private int MAX_COLUMNS = 1600 - 20;		// Max number of columns in Postgres is 1600, allow for automcatically generated columns
 
+	private ResourceBundle localisation;
 	/*
 	 * Constructor
 	 */
-	public SurveyTemplate() {
+	public SurveyTemplate(ResourceBundle l) {
+		localisation = l;
 	}
 
 	public HashMap<String, HashMap<String, HashMap<String, Translation>>> getTranslations() {
@@ -602,7 +603,7 @@ public class SurveyTemplate {
 	/*
 	 * Method to count total questions per form and  table columns per form
 	 * Geometry questions are limited to 1 per form
-	 * Total table colimns are limited by Postgres to 1,600
+	 * Total table columns are limited by Postgres to 1,600
 	 */
 	private class FormDesc {
 		int geoms = 0;
@@ -823,10 +824,10 @@ public class SurveyTemplate {
 	/*
 	 * Method to write the model to the database
 	 */
-	public void writeDatabase() throws Exception {
+	public int writeDatabase() throws Exception {
 		
-		// Start using plain old JDBC as we are migrating away from hibernate
 		Connection sd = org.smap.sdal.Utilities.SDDataSource.getConnection("SurveyTemplate-Write Database");
+		log.info("Set autocommit false");
 		sd.setAutoCommit(false);
 		
 		JdbcSurveyManager sm = null;
@@ -1029,6 +1030,11 @@ public class SurveyTemplate {
 					q.setFormId(f.getId());
 					q.setSeq(f.qSeq++);
 					q.setListId(sd, survey.getId());
+					if(q.getName().equals("the_geom")) {		// OK lets allow more than one geom - since this is an XML file otherwise how can it be fixed?
+						if(f.geomCount++ > 0) {
+							q.setName(q.getName() + f.geomCount);
+						}
+					}
 					if(!q.isRepeatCount()) {
 						qm.write(q, getXFormFormName());
 					}
@@ -1120,6 +1126,9 @@ public class SurveyTemplate {
 			try{sd.rollback();} catch(Exception ex) {}
 			throw e;
 		} finally {
+			
+			log.info("Set autocommit true");
+			sd.setAutoCommit(true);
 			if(sm != null) {sm.close();};
 			if(fm != null) {fm.close();};
 			if(qm != null) {qm.close();};
@@ -1128,6 +1137,8 @@ public class SurveyTemplate {
 			
 			org.smap.sdal.Utilities.SDDataSource.closeConnection("SurveyTemplate-Write Database", sd);
 		}
+		
+		return survey.getId();
 
 	}
 
@@ -1173,9 +1184,11 @@ public class SurveyTemplate {
 	 * 
 	 * @param surveyIdent the ident of the survey
 	 */
-	public void readDatabase(Connection sd, String surveyIdent, boolean embedExternalSearch) throws MissingTemplateException, SQLException {
+	public String readDatabase(Connection sd, String surveyIdent, boolean embedExternalSearch) throws MissingTemplateException, SQLException {
 
 		JdbcSurveyManager sm = null;
+		
+		String newSurveyIdent = surveyIdent;
 		
 		try {
 			// Locate the survey object
@@ -1188,6 +1201,7 @@ public class SurveyTemplate {
 			
 			if(survey != null) {
 				readDatabase(survey, sd, embedExternalSearch);	// Get the rest of the survey
+				newSurveyIdent = survey.getIdent();
 			} else {
 				log.info("Error: Survey Template not found: " + surveyId);
 				throw new MissingTemplateException("Error: Survey Template not found: " + surveyId);
@@ -1195,6 +1209,8 @@ public class SurveyTemplate {
 		} finally {
 			if(sm != null) {sm.close();}
 		}
+		
+		return newSurveyIdent;
 
 	}
 	
@@ -1250,6 +1266,18 @@ public class SurveyTemplate {
 		JdbcTranslationManager tm = null;
 		
 		try {
+			/*
+			 * Add preloads to the questionPaths hashmap so they can be referenced
+			 */
+			ArrayList<MetaItem> preloads = survey.getMeta();
+			if(preloads != null) {
+				for(MetaItem mi : preloads) {
+					if(mi.isPreload) {
+						questionPaths.put(mi.name, "/main/" + mi.name);
+					}
+				}
+			}
+			
 			pm = new JdbcProjectManager(sd);
 			project = pm.getById(survey.getProjectId());
 			
@@ -1286,6 +1314,7 @@ public class SurveyTemplate {
 			 * Post processing of question list
 			 */
 			for(int i= 0; i < qList.size(); i++) {
+				boolean cascadeInstanceAlreadyLoaded = false;
 				Question q = qList.get(i);
 				int f_id = q.getFormId();
 				Form f = getFormById(f_id);
@@ -1323,7 +1352,7 @@ public class SurveyTemplate {
 								q.getNodeset(),
 								q.getAppearance(false, null),
 								q.getFormId());
-						isExternal = GeneralUtilityMethods.isExternalChoices(q.getAppearance(true, getQuestionPaths()));
+						isExternal = GeneralUtilityMethods.isAppearanceExternalFile(q.getAppearance(true, getQuestionPaths()));
 					} catch (Exception e) {
 						
 					}
@@ -1360,6 +1389,8 @@ public class SurveyTemplate {
 						
 						if(!cascadeInstanceLoaded(cascadeName)) {
 							cascadeInstances.add(ci);
+						} else {
+							cascadeInstanceAlreadyLoaded = true;
 						}
 						cascade = true;
 					}
@@ -1388,21 +1419,24 @@ public class SurveyTemplate {
 						o.setQuestionRef(qRef);
 						String oRef = qRef + "/" + o.getId();
 						if(oRef != null) {
-							if(cascade) {
+							if(cascade && !cascadeInstanceAlreadyLoaded) {
 
 								if((includeExternal && o.getExternalFile()) || (!includeExternal && !o.getExternalFile())) {
 									o.setListName(cascadeName);
 									// Cascade options are shared, check that this option has not been added already by another question
-									String existingRef = cascadeOptionLoaded(cascadeName, o.getLabelId(), o.getValue());
-									if(existingRef == null) {
-										cascade_options.put(oRef, o);
+									//String existingRef = cascadeOptionLoaded(cascadeName, o.getLabelId(), o.getValue());
+									//if(existingRef == null) {
+									cascade_options.put(oRef, o);
+									/*
 									} else {
 										/*
 										 * Replace existing if the new option has more cascading filters
 										 * All this complexity is required because pyxform puts a list in two places
 										 *  in the xform output depending on whether or not it has cascades
 										 *  We want to give preference to options that have a cascade
-										 */
+										 *  
+										 *  No longer needed as pyxform has been removed
+										 *
 										// 
 										if(o.getCascadeFilters() != null) {
 											boolean replace = false;
@@ -1420,6 +1454,7 @@ public class SurveyTemplate {
 											}
 										}
 									}
+								*/
 								}
 							} else {
 								options.put(oRef, o);
@@ -1433,7 +1468,7 @@ public class SurveyTemplate {
 			 * Get translations
 			 */
 			tm = new JdbcTranslationManager(sd);
-			List <Translation> tList = tm.getBySurveyId(survey.getId());
+			List <Translation> tList = tm.getBySurveyId(survey.getId(), embedExternalSearch);
 			//List <Translation> tList = tPersist.getBySurvey(survey);
 			for(Translation t : tList) {
 				HashMap<String, HashMap<String, Translation>> languageMap = translations.get(t.getLanguage());
@@ -1536,7 +1571,7 @@ public class SurveyTemplate {
 	 *  useExternalChoices is set false when getting an XForm
 	 *      Return the dummy choice that points to the external file columns
 	 */
-	public void extendInstance(Connection sd, SurveyInstance instance, boolean useExternalChoices) throws SQLException {
+	public void extendInstance(Connection sd, SurveyInstance instance, boolean useExternalChoices, org.smap.sdal.model.Survey sdalSurvey) throws SQLException {
 		List<Form> formList  = getAllForms(); 
 		
 		// Set the display name
@@ -1545,9 +1580,26 @@ public class SurveyTemplate {
 		 * Extend the forms
 		 */
 		for(Form f : formList) {
-			instance.setForm(f.getPath(formList), f.getTableName(), f.getType());
+			instance.setForm(f.getPath(formList), f.getTableName(), f.getType(), f.getReference());
 			List <Question> questionList = f.getQuestions(sd, f.getPath(formList));
 			extendQuestions(sd, instance, questionList, f.getPath(formList), useExternalChoices);
+			if(!f.hasParent()) {
+				extendMeta(sdalSurvey.meta, instance);
+			}
+		}
+	}
+	
+	private void extendMeta(ArrayList<MetaItem> meta, SurveyInstance instance) {
+		
+		instance.setQuestion("/main/meta", "begin group", "meta", false, null, null, false);
+		for(MetaItem mq : meta) {
+			String questionPath = null;
+			if(mq.name.contains("instanceID") || mq.name.contains("instanceName") || mq.name.contains("audit")) {
+				questionPath = "/main/meta/" + mq.name;
+			} else {
+				questionPath = "/main/" + mq.name;
+			}
+			instance.setQuestion(questionPath, mq.type, mq.name, false, mq.columnName, mq.dataType, false);
 		}
 	}
 	
@@ -1572,14 +1624,18 @@ public class SurveyTemplate {
 			// Set the question type for "begin group" questions
 			if(q.getType() != null && q.getType().equals("begin group")) {
 				
-				instance.setQuestion(questionPath, q.getType(), q.getName(), q.getPhoneOnly(), q.getColumnName(), q.getDataType());
+				instance.setQuestion(questionPath, q.getType(), q.getName(), q.getPhoneOnly(), q.getColumnName(false), 
+						q.getDataType(), q.isCompressed());
 				
 			}
 			
 			if(q.getSource() != null) {
 				// Extend any other questions that have a source (ie not meta data)
 				
-				instance.setQuestion(questionPath, q.getType(), q.getName(), q.getPhoneOnly(), q.getColumnName(), q.getDataType());
+				instance.setQuestion(questionPath, q.getType(), q.getName(), 
+						q.getPhoneOnly(), q.getColumnName(false), 
+						q.getDataType(),
+						q.isCompressed());
 				
 				// Set the overall survey location to the last geopoint type found in the survey				
 				if(q.getType().equals("geopoint") || q.getType().equals("geoshape") || q.getType().equals("geotrace")) {
@@ -1600,7 +1656,7 @@ public class SurveyTemplate {
 						
 						// This value must be populated for multi select questions
 
-						String optionColumn = q.getColumnName() + "__" + o.getColumnName();												
+						String optionColumn = q.getColumnName(false) + "__" + o.getColumnName();												
 						instance.setOption(questionPath, o.getValue(), o.getValue(), o.getSeq(), optionColumn);
 					}
 				}
@@ -1608,80 +1664,4 @@ public class SurveyTemplate {
 		}
 	}
 	
-	/*
-	 * Add the options from the csv file
-	 */
-	public void writeExternalChoices() {
-		
-		org.smap.sdal.managers.SurveyManager sm = new org.smap.sdal.managers.SurveyManager();
-		List<Question> questionList = new ArrayList<Question>(questions.values());
-		Connection connectionSD = org.smap.sdal.Utilities.SDDataSource.getConnection("fieldManager-SurveyTemplate");
-		Connection cResults = org.smap.sdal.Utilities.ResultsDataSource.getConnection("fieldManager-SurveyTemplate");
-		ArrayList<ChangeSet> changes = new ArrayList<ChangeSet> ();
-
-		try {
-			for(Question q : questionList) {
-	
-				if(q.getType().startsWith("select")) {
-					
-					// Check to see if this appearance references a manifest file
-					String appearance = q.getAppearance(false, null);
-					if(appearance != null && appearance.toLowerCase().trim().contains("search(")) {
-						// Yes it references a manifest
-						
-						int idx1 = appearance.indexOf('(');
-						int idx2 = appearance.indexOf(')');
-						if(idx1 > 0 && idx2 > idx1) {
-							String criteriaString = appearance.substring(idx1 + 1, idx2);
-							
-							String criteria [] = criteriaString.split(",");
-							if(criteria.length > 0) {
-								
-								if(criteria[0] != null && criteria[0].length() > 2) {	// allow for quotes
-									String filename = criteria[0].trim();
-									filename = filename.substring(1, filename.length() -1);
-									filename += ".csv";
-									log.info("We have found a manifest link to " + filename);
-									
-									ChangeSet cs = new ChangeSet();
-									cs.changeType = "option";
-									cs.source = "file";
-									cs.items = new ArrayList<ChangeItem> ();
-									changes.add(cs);
-	
-									int oId = org.smap.sdal.Utilities.GeneralUtilityMethods.getOrganisationId(connectionSD, user, 0);
-					
-									String filepath = basePath + "/media/organisation/" + oId + "/" + filename;		
-									File file = new File(filepath);
-	
-									org.smap.sdal.Utilities.GeneralUtilityMethods.getOptionsFromFile(
-										connectionSD,
-										cs.items,
-										file,
-										null,
-										filename,
-										q.getName(),
-										q.getListId(),
-										q.getId(),				
-										"select",
-										appearance);
-					
-								}
-							}
-						}
-					}
-				}
-			}
-			
-			sm.applyChangeSetArray(connectionSD, cResults, survey.getId(), user, changes, false);
-			
-		} catch(Exception e) {
-			// Record exception but otherwise ignore
-			e.printStackTrace();
-		} finally {
-			org.smap.sdal.Utilities.SDDataSource.closeConnection("fieldManager-SurveyTemplate", connectionSD);
-			org.smap.sdal.Utilities.ResultsDataSource.closeConnection("fieldManager-SurveyTemplate", cResults);
-		}
-			
-	}
 }

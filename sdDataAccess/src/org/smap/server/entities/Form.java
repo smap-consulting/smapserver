@@ -65,7 +65,11 @@ public class Form implements Serializable {
 	
 	private String parentQuestionRef = null;
 	
+	private boolean reference = false;
+	
 	public int qSeq = 0;		// Used to store current sequence while saving a forms questions
+	
+	public int geomCount = 0;		// Used to count the geoms in a form
 	/*
 	 * Constructor
 	 */
@@ -113,10 +117,7 @@ public class Form implements Serializable {
 	public List<Question> getQuestions(Connection sd, String formPath) throws SQLException {
 		
 		if(questions == null) {
-			//PersistenceContext pc = new PersistenceContext("pgsql_jpa");
-			//QuestionManager qm = new QuestionManager(pc);
-			//questions = qm.getByFormId(f_id);
-			
+
 			JdbcQuestionManager qm = null;
 			try {
 				qm = new JdbcQuestionManager(sd);
@@ -150,7 +151,7 @@ public class Form implements Serializable {
 		String v = repeats;
 		
 		if(convertToXPath) {
-			v = UtilityMethods.convertAllxlsNames(v, false, questionPaths, f_id, false);
+			v = UtilityMethods.convertAllxlsNames(v, false, questionPaths, f_id, false, name);
 		} else {		// default to xls names ${...}
 			v = GeneralUtilityMethods.convertAllXpathNames(v, true);
 		}
@@ -168,6 +169,7 @@ public class Form implements Serializable {
 		if(path == null && forms != null) {
 			path = calculateFormPath(getName(), this, forms);
 		}
+		
 		return path;
 	}
 	
@@ -177,6 +179,10 @@ public class Form implements Serializable {
 			v = relativePath;
 		}
 		return v;
+	}
+	
+	public boolean getReference() {
+		return reference;
 	}
 
 	public void setId(int value) {
@@ -230,6 +236,10 @@ public class Form implements Serializable {
 	
 	public void setRelativePath(String v) {			// Path to this form within its parent form
 		relativePath = v;
+	}
+	
+	public void setReference(boolean v) {
+		reference = v;
 	}
 	
 	private String calculateFormPath(String name, Form currentForm, List <Form> forms) {

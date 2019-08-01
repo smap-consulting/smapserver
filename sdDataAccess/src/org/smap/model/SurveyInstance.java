@@ -25,7 +25,9 @@ public class SurveyInstance {
 	private String displayName = null;
 	private String surveyGeopoint = null;		// A location that can be used as the location of the survey (Used by monitor, some analysis programs)
 	private String imei = null;
+	
 	private String uuid = null;
+	
 	private int version = 1;
 	
 	private IE topInstanceElement = null;
@@ -108,17 +110,32 @@ public class SurveyInstance {
 		}
 	}
 	
-	public void setForm(String ref, String tableName, String formType) {
+	public String getValue(String ref) {
+		String value = null;
+		List<IE> matches = topInstanceElement.getMatchingElements(ref);
+		if(matches.size() > 0) {
+			value = matches.get(0).getValue();
+		}
+		
+		return value;
+	}
+	
+	public void setForm(String ref, String tableName, String formType, boolean reference) {
 		List<IE> matches = topInstanceElement.getMatchingElements(ref);
 		for(IE match : matches) {
-			match.setType("form");
+			if(reference) {
+				match.setType("ref_form");
+			} else {
+				match.setType("form");
+			}
 			match.setTableName(tableName);
 			match.setQType(formType);
 			forms.add(match);
 		}
 	}
 	
-	public void setQuestion(String ref, String qType, String qname, boolean phoneOnly, String columnName, String dataType) {
+	public void setQuestion(String ref, String qType, String qname, boolean phoneOnly, 
+			String columnName, String dataType, boolean compressed) {
 		List<IE> matches = topInstanceElement.getMatchingElements(ref);
 		if(matches.size() == 0 && ref.endsWith("meta/instanceID")) {
 			// Also check for _instanceid
@@ -140,6 +157,7 @@ public class SurveyInstance {
 					match.setQType(qType);
 					match.setDataType(dataType);
 					match.setPhoneOnly(phoneOnly);
+					match.setCompressed(compressed);
 				}
 			}
 		}
@@ -194,7 +212,6 @@ public class SurveyInstance {
 					}
 					if(temp_att == null) {
 						IE ie = new IE(n.getNodeName(), n.getTextContent());
-						
 	
 						// Save the device name so it can be recorded by the survey upload monitor
 						if(n.getNodeName().equals("_device")) {

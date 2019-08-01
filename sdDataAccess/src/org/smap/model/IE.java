@@ -21,6 +21,7 @@ public class IE {
 	private int seq = 0;
 	private String path = null;	// The path by which this element is known in the XML template
 	private ArrayList <IE> children = new ArrayList <IE> ();
+	private boolean compressed = false;		// Set true for select multiples to stores data in a single column
 	
 	public IE(String name, String value) {
 		this.name = name;
@@ -68,6 +69,10 @@ public class IE {
 		return phoneOnly;
 	}
 	
+	public boolean isCompressed() {
+		return compressed;
+	}
+	
 	public int getSeq() {
 		return seq;
 	}
@@ -106,6 +111,10 @@ public class IE {
 	
 	public void setPhoneOnly(boolean v) {
 		this.phoneOnly = v;
+	}
+	
+	public void setCompressed(boolean v) {
+		this.compressed = v;
 	}
 	
 	public void setSeq(int v) {
@@ -169,6 +178,7 @@ public class IE {
 					if(qt != null) {
 						if(qt.equals("string") 		// simple questions
 								|| qt.equals("int")
+								|| qt.equals("note")
 								|| qt.equals("date")
 								|| qt.equals("decimal")
 								|| qt.equals("select")
@@ -177,6 +187,7 @@ public class IE {
 								|| qt.equals("audio")
 								|| qt.equals("image")
 								|| qt.equals("video")
+								|| qt.equals("file")
 								|| qt.equals("dateTime")
 								|| qt.equals("range")
 								|| qt.equals("time")
@@ -184,13 +195,14 @@ public class IE {
 								|| qt.equals("geoshape")
 								|| qt.equals("geotrace")
 								|| qt.equals("acknowledge")
-								|| qt.equals("begin group"))
-								{	
+								|| qt.equals("calculate")
+								|| qt.equals("rank")
+								|| qt.equals("odk:rank")
+								|| qt.equals("begin group")) {
 							questions.add(child);
 							
 						} else if (qt.equals("geopolygon")		// Complex questions
-								|| qt.equals("geolinestring"))
-							{
+								|| qt.equals("geolinestring")) {
 							// Get the constructed complex question
 							String name = child.getName();
 							IE complex = complexQuestions.get(name);
@@ -211,7 +223,9 @@ public class IE {
 							}
 							
 						} else {
-							log.info("Warning question ignored, type:" + child.getQType());
+							if(child.getQType() != null && !child.getQType().equals("form") && !child.getQType().equals("note")) {
+								log.info("Warning question ignored, type:" + child.getQType());
+							}
 						}
 					}
 				}

@@ -42,9 +42,6 @@ public class Translation implements Serializable{
 	private String type;
 	
 	private String value = null;	// The translated text
-	
-	// Other attributes
-	private boolean enabled = false; // Unique reference to this question
 
 	public Translation() {
 		
@@ -53,7 +50,6 @@ public class Translation implements Serializable{
 	// Copy constructor
 	public Translation(Translation o) {
 		this.setSurveyId(o.getSurveyId());
-		this.setEnabled(o.getEnabled());
 		this.setLanguage(o.getLanguage());
 		this.setTextId(o.getTextId());
 		this.setType(o.getType());
@@ -103,12 +99,8 @@ public class Translation implements Serializable{
 		frag = frag.replaceAll("<", "&lt;");	// Escape angled brackets
 		frag = frag.replaceAll(">", "&gt;");	// Escape angled brackets
 
-		return "<t>" + UtilityMethods.convertAllxlsNames(frag, true, questionPaths, f_id, false) + "</t>";
+		return "<t>" + UtilityMethods.convertAllxlsNames(frag, true, questionPaths, f_id, false, "an sql fragment") + "</t>";
 	
-	}
-	
-	public boolean getEnabled() {
-		return enabled;
 	}
 	 
 	/*
@@ -139,10 +131,6 @@ public class Translation implements Serializable{
 		value = value.replaceAll("&lt;", "<");
 		value = value.replaceAll("&gt;", ">");
 		this.value = value;
-	}
-	
-	public void setEnabled(boolean v) {
-		this.enabled = v;
 	}
 	
 }
