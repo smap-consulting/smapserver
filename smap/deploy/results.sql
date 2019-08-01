@@ -47,3 +47,15 @@ alter table change_history add column option_column_name text;
 
 --Upgrade to: 16.07 from 16.06 ===========
 CREATE EXTENSION fuzzystrmatch;
+
+-- Upgrade to: 17.11 ============
+CREATE SEQUENCE sync_seq START 1;
+ALTER SEQUENCE sync_seq OWNER TO ws;
+
+create TABLE sync (
+	id INTEGER DEFAULT NEXTVAL('sync_seq') CONSTRAINT pk_sync PRIMARY KEY,
+	s_id integer,
+	n_id integer,
+	prikey integer				-- Primary key of synchronised record
+	);
+ALTER TABLE sync OWNER TO ws;

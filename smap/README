@@ -16,8 +16,6 @@ cd ~/smap/deploy
 sudo ./patchdb.sh
 sudo ./deploy.sh
 
-Version 15.09
--------------
 Only version 2.4 of Apache web server is supported in version 15.09.
 
 From version 15.09 onwards the location of file storage is assumed to be "/smap".  The install scripts no longer
@@ -131,7 +129,7 @@ After running the script the steps described in Post Install Configuration will 
 	
 
 Pre-requisites / assumptions:
-	1. Ubuntu server. Testing has been done with Versions 12.04 and 14.04
+	1. Ubuntu server. Testing has been done with Versions 14.04 and 16.04
 	2. Hardware (minimum)
 		2 GB of memory
 		1 CPU

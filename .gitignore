@@ -94,3 +94,7 @@ Temporary Items
 libraries
 notifications
 patches
+smap/EULA
+smap/deploy/version1/resources/properties/
+smap/cleanTempFiles.sh
+smap/deploy/rates.sql

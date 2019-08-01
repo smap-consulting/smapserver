@@ -1,4 +1,24 @@
 #!/bin/sh
+deploy_from="version1"
+
+# Apply security updates
+unattended-upgrades
+
+# Set flag for ubuntu version
+u1404=`lsb_release -r | grep -c "14\.04"`
+u1604=`lsb_release -r | grep -c "16\.04"`
+u1804=`lsb_release -r | grep -c "18\.04"`
+
+if [ $u1804 -eq 1 ]; then
+    TOMCAT_VERSION=tomcat8
+else
+    TOMCAT_VERSION=tomcat7
+fi
+
+CATALINA_HOME=/usr/share/$TOMCAT_VERSION
+
+# Copy postgres driver
+cp -r $deploy_from/jdbc/* $CATALINA_HOME/lib/ 
 
 echo '##### 0. check configuration'
 # Set flag if this is apache2.4
@@ -41,7 +61,7 @@ then
 	sudo sed -i "s#{your_files}#/smap#g" /etc/init/subscribers_fwd.conf
 	echo "Modifying URLs of attachments to remove hostname, also moving uploaded files to facilitate forwarding of old surveys"
 	java -jar version1/patch.jar apply survey_definitions results
-	sudo chown -R tomcat7 /smap/uploadedSurveys
+	sudo chown -R $TOMCAT_version /smap/uploadedSurveys
 fi
 
 # version 14.08
@@ -62,7 +82,7 @@ fi
 if [ $version -lt "1410" ]
 then
 echo "Applying patches for version 14.10"
-sudo chown -R tomcat7 /var/log/subscribers
+sudo chown -R $TOMCAT_version /var/log/subscribers
 fi
 
 # version 14.11
@@ -70,7 +90,7 @@ fi
 if [ $version -lt "1411" ]
 then
 echo "Applying patches for version 14.11"
-sudo chown -R tomcat7 /smap/attachments
+sudo chown -R $TOMCAT_version /smap/attachments
 fi
 
 
@@ -79,14 +99,14 @@ if [ $version -lt "1501" ]
 then
 echo "Applying patches for version 15.01"
 sudo mkdir /smap/media/organisation
-sudo chown -R tomcat7 /smap/media
+sudo chown -R $TOMCAT_version /smap/media
 fi
 
 # version 15.02
 if [ $version -lt "1502" ]
 then
 echo "Applying patches for version 15.02"
-sudo rm /var/lib/tomcat7/webapps/fieldManager.war
+sudo rm /var/lib/$TOMCAT_VERSION/webapps/fieldManager.war
 fi
 
 # version 15.03
@@ -123,7 +143,7 @@ cd ../deploy
 
 # Create miscelaneous directory
 sudo mkdir /smap/misc
-sudo chown tomcat7 /smap/misc
+sudo chown $TOMCAT_version /smap/misc
 
 fi
 
@@ -174,7 +194,7 @@ sudo rm -rf /smap_bin/pyxform
 sudo cp -r src/pyxform/pyxform/ /smap_bin
 sudo a2enmod headers
 
-sudo chown -R tomcat7 /smap_bin
+sudo chown -R $TOMCAT_version /smap_bin
 
 fi
 
@@ -182,9 +202,18 @@ fi
 if [ $version -lt "1612" ]
 then
 	echo '# copy subscriber upstart files'
-	u1604=`lsb_release -r | grep -c "16\.04"`
 	upstart_dir="/etc/init"			
 	service_dir="/etc/systemd/system"
+	if [ $u1804 -eq 1 ]; then
+		sudo cp ../install/config_files/subscribers.service $service_dir
+		sudo chmod 664 $service_dir/subscribers.service
+		sudo cp ../install/config_files/subscribers_fwd.service $service_dir
+		sudo chmod 664 $service_dir/subscribers_fwd.service
+		
+		sudo sed -i "s#tomcat7#tomcat8#g" $service_dir/subscribers.service
+		sudo sed -i "s#tomcat7#tomcat8#g" $service_dir/subscribers_fwd.service
+	fi
+	
 	if [ $u1604 -eq 1 ]; then
 		sudo cp ../install/config_files/subscribers.service $service_dir
 		sudo chmod 664 $service_dir/subscribers.service
@@ -192,11 +221,17 @@ then
 		sudo chmod 664 $service_dir/subscribers_fwd.service
 	fi
 	
-	if [ $u1604 -eq 0 ]; then
+	if [ $u1404 -eq 1 ]; then
 		sudo cp ../install/config_files/subscribers.conf $upstart_dir
 		sudo cp ../install/config_files/subscribers_fwd.conf $upstart_dir
 	fi
 
+fi
+
+# version 17.10
+if [ ! -e /usr/share/$TOMCAT_VERSION/.aws ]
+then
+sudo mkdir /usr/share/$TOMCAT_VERSION/.aws
 fi
 
 
@@ -208,10 +243,10 @@ cd ../install
 chmod +x apacheConfig.sh
 ./apacheConfig.sh
 cd ../deploy
-
+ 
 # Patch pyxform
-sudo sed -i "s/from pyxform import constants/import constants/g" /smap_bin/pyxform/survey.py
+#sudo sed -i "s/from pyxform import constants/import constants/g" /smap_bin/pyxform/survey.py
 
 # update version reference
-new_version="1710"
+new_version="1906"
 echo "$new_version" > ~/smap_version

@@ -6,7 +6,6 @@
 vacuum analyze;
 
 -- Upgrade to:  13.08 from 13.07 =======
-alter table tasks add column existing_record integer;
 
 -- Upgrade to:  13.09 from 13.08 =======
 -- None
@@ -97,10 +96,7 @@ ALTER TABLE regions OWNER TO ws;
 -- Upgrade to:  14.08 from 14.05 =======
 
 -- Make deleting of surveys flow through to deleting of tasks
-alter table tasks alter column form_id type integer using (form_id::integer);
-delete from tasks where form_id not in (select s_id from survey);
-alter table tasks drop constraint if exists tasks_form_id_fkey;
-alter table tasks add foreign key (form_id) references survey(s_id) on delete cascade;
+-- alter table tasks alter column form_id type integer using (form_id::integer); -- form_id replaced with survey_ident
 
 -- Changes for survey editor:
 -- alter table question add column list_name text;
@@ -167,8 +163,6 @@ alter table upload_event add column incomplete boolean default false;
 update upload_event set incomplete = 'false';
 
 -- Upgrade to:  14.11.1 from 14.10.2 =======
-alter table organisation add column ft_delete_submitted boolean;
-alter table organisation add column ft_send_trail boolean;
 
 CREATE SEQUENCE task_completion_id_seq START 1;
 ALTER TABLE task_completion_id_seq OWNER TO ws;
@@ -199,7 +193,7 @@ ALTER TABLE public.user_trail OWNER TO ws;
 
 update users set email = null where trim(email) = '';
 
-alter table assignments drop constraint assignee;
+alter table assignments drop constraint if exists assignee;
 alter table assignments add constraint assignee FOREIGN KEY (assignee)
 	REFERENCES users (id) MATCH SIMPLE
 	ON UPDATE NO ACTION ON DELETE CASCADE;
@@ -507,7 +501,6 @@ alter table tasks add column repeat_count integer default 0;
 
 -- Upgrade to 16.06 from 16.05
 alter table survey add column hrk text;
---alter table question add column linked_survey int default 0;
 alter table question add column list_name text;
 
 -- Log table
@@ -527,7 +520,6 @@ ALTER TABLE log OWNER TO ws;
 
 -- Information on survey creation
 alter table survey add column based_on text;
-alter table survey add column shared_table boolean default false;
 alter table survey add column created timestamp with time zone;
 
 alter table server add column google_key text;
@@ -535,7 +527,6 @@ alter table server add column google_key text;
 -- Upgrade to 16.07 from 16.06
 
 insert into groups(id,name) values(6,'security');
-insert into user_group (u_id, g_id) select u_id, 6 from user_group where g_id = 4;
 
 
 CREATE SEQUENCE custom_report_seq START 2;
@@ -687,7 +678,6 @@ ALTER TABLE message OWNER TO ws;
 
 alter table users add column created timestamp with time zone;
 alter table question add column linked_target text;
-update question set linked_target = cast(linked_survey as text) where linked_survey > 0 and linked_target is null ;
 
 CREATE SEQUENCE custom_query_seq START 1;
 ALTER SEQUENCE custom_query_seq OWNER TO ws;
@@ -702,44 +692,44 @@ create TABLE custom_query (
 ALTER TABLE custom_query OWNER TO ws;
 
 -- Create view tables
-CREATE SEQUENCE survey_view_seq START 1;
-ALTER SEQUENCE survey_view_seq OWNER TO ws;
+--CREATE SEQUENCE survey_view_seq START 1;
+--ALTER SEQUENCE survey_view_seq OWNER TO ws;
 
-create TABLE survey_view (
-	id integer DEFAULT NEXTVAL('survey_view_seq') CONSTRAINT pk_survey_view PRIMARY KEY,
-	s_id integer,		-- optional survey id
-	m_id integer,		-- optional managed id requires s_id to be set
-	query_id integer,	-- optional query id
-	view text
-);
-ALTER TABLE survey_view OWNER TO ws;
+--create TABLE survey_view (
+--	id integer DEFAULT NEXTVAL('survey_view_seq') CONSTRAINT pk_survey_view PRIMARY KEY,
+--	s_id integer,		-- optional survey id
+--	m_id integer,		-- optional managed id requires s_id to be set
+--	query_id integer,	-- optional query id
+--	view text
+--);
+--ALTER TABLE survey_view OWNER TO ws;
 
-CREATE SEQUENCE user_view_seq START 1;
-ALTER SEQUENCE user_view_seq OWNER TO ws;
+--CREATE SEQUENCE user_view_seq START 1;
+--ALTER SEQUENCE user_view_seq OWNER TO ws;
 
-create TABLE user_view (
-	id INTEGER DEFAULT NEXTVAL('user_view_seq') CONSTRAINT pk_user_view PRIMARY KEY,
-	u_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-	v_id INTEGER REFERENCES survey_view(id) ON DELETE CASCADE,
-	access text		-- read || write || owner
-	);
-ALTER TABLE user_view OWNER TO ws;
+--create TABLE user_view (
+--	id INTEGER DEFAULT NEXTVAL('user_view_seq') CONSTRAINT pk_user_view PRIMARY KEY,
+--	u_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+--	v_id INTEGER REFERENCES survey_view(id) ON DELETE CASCADE,
+--	access text		-- read || write || owner
+--	);
+--ALTER TABLE user_view OWNER TO ws;
 
-CREATE SEQUENCE default_user_view_seq START 1;
-ALTER SEQUENCE default_user_view_seq OWNER TO ws;
+--CREATE SEQUENCE default_user_view_seq START 1;
+--ALTER SEQUENCE default_user_view_seq OWNER TO ws;
 
-create TABLE default_user_view (
-	id INTEGER DEFAULT NEXTVAL('default_user_view_seq') CONSTRAINT pk_default_user_view PRIMARY KEY,
-	u_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-	s_id integer,		-- survey id
-	m_id integer,		-- managed id requires s_id to be set
-	query_id integer,	-- query id
-	v_id integer REFERENCES survey_view(id) ON DELETE CASCADE		-- view id
-	);
-ALTER TABLE default_user_view OWNER TO ws;
+--create TABLE default_user_view (
+--	id INTEGER DEFAULT NEXTVAL('default_user_view_seq') CONSTRAINT pk_default_user_view PRIMARY KEY,
+--	u_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+--	s_id integer,		-- survey id
+--	m_id integer,		-- managed id requires s_id to be set
+--	query_id integer,	-- query id
+--	v_id integer REFERENCES survey_view(id) ON DELETE CASCADE		-- view id
+--	);
+--ALTER TABLE default_user_view OWNER TO ws;
 
-alter TABLE survey_view add column map_view text;
-alter TABLE survey_view add column chart_view text;
+--alter TABLE survey_view add column map_view text;
+--alter TABLE survey_view add column chart_view text;
 
 CREATE SEQUENCE message_seq START 1;
 ALTER SEQUENCE message_seq OWNER TO ws;
@@ -778,10 +768,6 @@ ALTER TABLE report OWNER TO ws;
 alter table server add column sms_url text;
 delete from survey_change where changes like '%"action":"external option"%' ;
 
--- Upgrade to 17.07
-alter table organisation add column ft_send_wifi boolean default false;
-alter table organisation add column ft_send_wifi_cell boolean default false;
-
 CREATE SEQUENCE form_dependencies_seq START 1;
 ALTER TABLE form_dependencies_seq OWNER TO ws;
 
@@ -803,3 +789,475 @@ alter table survey add column auto_updates text;
 
 -- Upgrade to 17.10
 alter table forward add column filter text;
+
+-- Upgrade to 17.11
+alter table organisation add column ft_send text;
+alter table organisation add column ft_delete text;
+update organisation set ft_delete = 'not set' where ft_delete is null;
+
+-- Upgrade to 17.12
+alter table server add column document_sync boolean;
+alter table server add column doc_server text;
+alter table server add column doc_server_user text;
+alter table server add column doc_server_password text;
+
+alter table survey add column meta text;
+alter table report add column url text;
+
+alter table survey add column group_survey_id integer default 0;
+update survey set group_survey_id = 0 where group_survey_id is null;
+
+alter table task_group add column target_s_id integer;
+DROP INDEX IF EXISTS SurveyDisplayName;
+alter table form add column reference boolean default false;
+update form set reference = false where reference is null;
+
+alter table organisation add column ft_number_tasks integer default 20;
+alter table survey_change add column visible boolean default true;
+update survey_change set visible = true where visible is null;
+
+CREATE SEQUENCE replacement_seq START 1;
+ALTER SEQUENCE replacement_seq OWNER TO ws;
+
+create TABLE replacement (
+	id INTEGER DEFAULT NEXTVAL('replacement_seq') CONSTRAINT pk_replacement PRIMARY KEY,
+	old_id integer REFERENCES survey(s_id) ON DELETE CASCADE,
+	old_ident text,				-- Survey ident of the replaced survey
+	new_ident text				-- Survey ident of the new survey
+	);
+ALTER TABLE replacement OWNER TO ws;
+
+alter table question add column compressed boolean default false;
+alter table organisation add column ft_specify_instancename boolean default false;
+alter table organisation add column ft_admin_menu boolean default false;
+update organisation set ft_specify_instancename = false where ft_specify_instancename is null;
+update organisation set ft_admin_menu = false where ft_admin_menu is null;
+
+-- Upgrade to 18.01
+alter table organisation add column ft_send_location text;
+alter table translation add column external boolean default false;
+update translation set external = false where external is null;
+insert into groups(id,name) values(7,'view data');
+alter table notification_log add column message_id integer;
+
+-- Upgrade to 18.02
+alter table question add column external_choices text;
+alter table question add column external_table text;
+alter table survey add column public_link text;
+
+alter table form_downloads drop constraint IF EXISTS form_downloads_form_ident_fkey;
+alter table task_completion drop constraint IF EXISTS task_completion_form_ident_fkey;
+alter table form add column merge boolean default false;
+
+-- Upgrade to 18.03
+alter table survey add column hidden boolean default false;
+alter table survey add column original_ident text;
+update survey set hidden = 'true'  where deleted and ident like 's%\_%\_%' and not hidden;
+
+-- Upgrade to 18.04
+-- Create table to manage csv files
+CREATE SEQUENCE csv_seq START 1;
+ALTER SEQUENCE csv_seq OWNER TO ws;
+
+create TABLE csvtable (
+	id integer default nextval('csv_seq') constraint pk_csvtable primary key,
+	o_id integer references organisation(id) on delete cascade,
+	s_id integer,				-- Survey id may be 0 for organisation level csv hence do not reference
+	filename text,				-- Name of the CSV file
+	headers text,				-- Mapping between file headers and table headers
+	ts_initialised TIMESTAMP WITH TIME ZONE
+	);
+ALTER TABLE csvtable OWNER TO ws;
+CREATE SCHEMA csv AUTHORIZATION ws;
+
+ALTER TABLE dashboard_settings add column ds_advanced_filter text;
+alter table forward drop constraint if exists forward_s_id_fkey;	-- Notifications may now be transferred to a new survey if survey replaced
+
+CREATE SEQUENCE du_seq START 1;
+ALTER SEQUENCE du_seq OWNER TO ws;
+
+create TABLE disk_usage (
+	id integer default nextval('du_seq') constraint pk_diskusage primary key,
+	o_id integer,
+	total bigint,					-- Total disk usage
+	upload bigint,					-- Disk used in upload directory
+	media bigint,					-- Disk used in media directory
+	template bigint,					-- Disk used in template directory
+	attachments bigint,				-- Disk used in attachments directory
+	when_measured TIMESTAMP WITH TIME ZONE
+	);
+ALTER TABLE disk_usage OWNER TO ws;
+
+-- Upgrade to 18.05
+alter table organisation add column billing_enabled boolean default false;
+
+alter table csvtable add column survey boolean default false;
+alter table csvtable add column user_ident text;
+alter table csvtable add column chart boolean default false;
+alter table csvtable add column non_unique_key boolean default false;
+alter table csvtable add column sqldef text;
+
+alter table assignments add column completed_date timestamp with time zone;
+
+-- Upgrade to 18.06
+
+-- update tasks table
+alter table tasks drop column if exists type;
+alter table tasks drop column if exists geo_type;
+alter table tasks drop column if exists assigned_by;
+alter table tasks drop column if exists from_date;
+alter table tasks drop column if exists geo_linestring;
+alter table tasks drop column if exists geo_polygon;
+
+alter table tasks add column deleted boolean default false;
+alter table tasks add column created_at timestamp with time zone;
+alter table tasks add column deleted_at timestamp with time zone;
+
+alter table tasks alter column schedule_at type timestamp with time zone;
+alter table tasks alter column schedule_finish type timestamp with time zone;
+
+SELECT AddGeometryColumn('tasks', 'geo_point_actual', 4326, 'POINT', 2);
+
+alter table tasks add column p_name text;
+update tasks t set p_name = (select name from project p where p.id = t.p_id ) where t.p_name is null;
+
+alter table tasks add column survey_name text; 
+
+alter table tasks add column tg_name text;
+update tasks t set tg_name = (select name from task_group tg where tg.tg_id = t.tg_id ) where t.tg_name is null;
+
+alter table tasks drop constraint if exists tasks_form_id_fkey;
+alter table tasks drop constraint if exists tasks_tg_id_fkey;
+alter table tasks drop constraint if exists tasks_p_id_fkey;
+
+-- update assignments table
+alter table assignments drop column if exists assigned_by;			
+alter table assignments drop column if exists last_status_changed_date;		
+
+alter table assignments alter column assigned_date type timestamp with time zone;
+
+alter table assignments add column assignee_name text;
+update assignments a set assignee_name = (select name from users u where u.id = a.assignee ) where a.assignee_name is null;
+
+alter table assignments add column cancelled_date timestamp with time zone;
+alter table assignments add column deleted_date timestamp with time zone;
+alter table assignments add column completed_date timestamp with time zone;
+
+alter table assignments drop constraint if exists assignee;
+alter table assignments drop constraint if exists assigner;
+
+-- Unsubscribing
+CREATE SEQUENCE people_seq START 1;
+ALTER SEQUENCE people_seq OWNER TO ws;
+
+create TABLE people (
+	id integer default nextval('people_seq') constraint pk_people primary key,
+	o_id integer,
+	email text,								
+	unsubscribed boolean default false,
+	uuid text,								-- Uniquely identify this person
+	when_unsubscribed TIMESTAMP WITH TIME ZONE,
+	when_subscribed TIMESTAMP WITH TIME ZONE
+	);
+ALTER TABLE people OWNER TO ws;
+
+-- Add email to assignments
+alter table assignments add column email text;
+alter table assignments add column action_link text;
+alter table tasks add column instance_id text;			-- ID of the record that prompted this task
+
+-- Improve performance of user_trail and delete opeations on users table
+create index idx_user_trail_u_id on user_trail(u_id);
+
+-- Improve performance of queries that access user ident in upload_event
+create index idx_ue_ident on upload_event(user_name);
+
+alter table users add column single_submission boolean default false;
+alter table tasks add column complete_all boolean default false;
+alter table task_group add column email_details text;
+
+alter table organisation add column email_task boolean;
+
+-- Speed up loading of data into results db
+alter table upload_event add column results_db_applied boolean default false;
+create index idx_ue_applied on upload_event(results_db_applied);
+update upload_event set results_db_applied = 'true' where not results_db_applied and ue_id in (select ue_id from subscriber_event where subscriber = 'results_db');
+
+-- Prevent spamming
+alter table people add column when_requested_subscribe TIMESTAMP WITH TIME ZONE;
+
+alter table form add column replace boolean default false;
+alter table organisation add column server_description text;
+
+alter table organisation add column ft_image_size text;
+update organisation set ft_image_size = 'not set' where ft_image_size is null;
+
+-- Foreign keys
+CREATE SEQUENCE apply_foreign_keys_seq START 1;
+ALTER SEQUENCE apply_foreign_keys_seq OWNER TO ws;
+
+create TABLE apply_foreign_keys (
+	id integer default nextval('apply_foreign_keys_seq') constraint pk_apply_foreign_keys primary key,
+	update_id text,
+	s_id integer REFERENCES survey(s_id) ON DELETE CASCADE,
+	qname text,
+	instanceid text,
+	prikey integer,
+	table_name text,
+	applied boolean default false,
+	comment text,
+	ts_created TIMESTAMP WITH TIME ZONE,
+	ts_applied TIMESTAMP WITH TIME ZONE
+	);
+ALTER TABLE apply_foreign_keys OWNER TO ws;
+
+alter table server add column keep_erased_days integer default 0;
+alter table organisation add column sensitive_data text;
+
+-- Organisation select
+CREATE SEQUENCE user_organisation_seq START 1;
+ALTER SEQUENCE user_organisation_seq OWNER TO ws;
+
+create TABLE user_organisation (
+	id INTEGER DEFAULT NEXTVAL('user_organisation_seq') CONSTRAINT pk_user_organisation PRIMARY KEY,
+	u_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+	o_id INTEGER REFERENCES organisation(id) ON DELETE CASCADE,
+	settings text
+	);
+CREATE UNIQUE INDEX idx_user_organisation ON user_organisation(u_id,o_id);
+ALTER TABLE user_organisation OWNER TO ws;
+
+-- Version 18.12
+
+-- Billing upgrade
+drop table if exists billing;
+drop sequence if exists bill_seq;
+
+CREATE SEQUENCE bill_rates_seq START 1;
+ALTER SEQUENCE bill_rates_seq OWNER TO ws;
+
+create table bill_rates (
+	id integer default nextval('bill_rates_seq') constraint pk_bill_rates primary key,
+	o_id integer,	-- If 0 then all organisations (In enterprise or server)
+	e_id integer,	-- If 0 then all enterprises (ie server level)
+	rates text,		-- json object
+	currency text,
+	created_by text,
+	ts_created TIMESTAMP WITH TIME ZONE,
+	ts_applies_from TIMESTAMP WITH TIME ZONE
+	);
+alter table bill_rates OWNER TO ws;
+
+alter table disk_usage add column e_id integer default 0;
+update disk_usage set e_id = 0 where e_id is null;
+
+insert into groups(id,name) values(8,'enterprise admin');
+insert into groups(id,name) values(9,'server owner');
+
+-- Save org id and enterprise id on upload
+alter table upload_event add column o_id integer default 0;
+alter table upload_event add column e_id integer default 0;
+update upload_event ue set o_id = (select p.o_id from project p where p.id = ue.p_id) where o_id is null or o_id = 0; 
+
+-- Enterprise
+CREATE SEQUENCE enterprise_seq START 1;
+ALTER SEQUENCE enterprise_seq OWNER TO ws;
+
+create TABLE enterprise (
+	id INTEGER DEFAULT NEXTVAL('enterprise_seq') CONSTRAINT pk_enterprise PRIMARY KEY,
+	name text,
+	changed_by text,
+	changed_ts TIMESTAMP WITH TIME ZONE
+	);
+CREATE UNIQUE INDEX idx_enterprise ON enterprise(name);
+ALTER TABLE enterprise OWNER TO ws;
+
+alter table organisation add column e_id integer references enterprise(id) on delete cascade;
+insert into enterprise(id, name, changed_by, changed_ts) values(1, 'Default', '', now());
+update organisation set e_id = 1 where e_id is null or e_id = 0;
+update upload_event set e_id = 1 where e_id is null or e_id = 0;
+-- Clear all the externalfile options
+delete from option where externalfile = 'true';
+
+alter table forward add column name text;
+
+-- Performance patches for message
+CREATE index msg_outbound ON message(outbound);
+CREATE index msg_processing_time ON message(processed_time);
+
+-- Performance patches for upload event when checking for duplicate error messages
+CREATE index ue_survey_ident ON upload_event(ident);
+
+alter table users add column timezone text;
+
+-- Make sure we can't create duplicate billing rate entries
+create unique index idx_bill_rates on bill_rates(o_id, e_id, ts_applies_from);
+
+alter table enterprise add column billing_enabled boolean default false;
+alter table server add column billing_enabled boolean default false;
+alter table log add column e_id integer;
+update log set e_id = 1 where e_id is null or e_id = 0;
+alter table dashboard_settings add column ds_subject_type text;
+alter table dashboard_settings add column ds_u_id integer;
+
+-- Organisation permissions
+alter table organisation add column can_notify boolean default true;
+alter table organisation add column can_use_api boolean default true;
+alter table organisation add column can_submit boolean default true;
+update organisation set can_notify = true, can_use_api = true, can_submit = true where can_notify is null;
+
+-- Add display name to choices
+alter table option add column display_name text;
+
+-- Add additional information to upload event
+alter table upload_event add column start_time timestamp with time zone;
+alter table upload_event add column end_time timestamp with time zone;
+alter table upload_event add column instance_name text;
+
+-- Webform parameters
+alter table organisation add column webform text;
+
+alter table upload_event add column scheduled_start timestamp with time zone;
+
+alter table survey add column hide_on_device boolean;
+
+alter table apply_foreign_keys add column instanceIdLaunchingForm text;
+
+-- Backward navigation
+alter table organisation add column ft_backward_navigation text;
+update organisation set ft_backward_navigation = 'not set' where ft_backward_navigation is null;
+update organisation set ft_send = 'not set' where ft_send is null;
+
+-- Upgrade to 19.02
+alter table survey add column audit_location_data boolean;
+update organisation set ft_send_location = 'not set' where ft_send_location is null;
+
+-- Upgrade to 19.03
+alter table question add column intent text;
+alter table organisation add column ft_pw_policy integer default -1;
+alter table translation alter column type type text;
+
+-- Upgrade to 19.04
+alter table tasks add column initial_data_source text;
+update tasks set initial_data_source = 'none' where initial_data_source is null and update_id is null;
+update tasks set initial_data_source = 'survey' where initial_data_source is null and update_id is not null;
+update tasks set initial_data = null where initial_data_source is null or initial_data_source != 'task';
+
+alter table organisation add column ft_navigation text;
+update organisation set ft_navigation = 'not set' where ft_navigation is null;
+
+CREATE SEQUENCE last_refresh_seq START 1;
+ALTER SEQUENCE last_refresh_seq OWNER TO ws;
+
+create TABLE last_refresh (
+	id integer default nextval('last_refresh_seq') constraint pk_last_refresh primary key,
+	o_id integer,
+	user_ident text,
+	refresh_time TIMESTAMP WITH TIME ZONE
+	);
+SELECT AddGeometryColumn('last_refresh', 'geo_point', 4326, 'POINT', 2);
+ALTER TABLE last_refresh OWNER TO ws;
+
+-- Change dl_dist to show_dist in tasks
+alter table tasks add column show_dist integer;
+update tasks set show_dist = dl_dist where show_dist is null;
+--update tasks set show_dist = 0 where show_dist is null;
+--alter table tasks drop column dl_dist;  -- Keep tempoarily in case a deployment needs to be reversed
+
+alter table task_group add column dl_dist integer;
+
+-- 19.05
+alter table organisation add column ft_exit_track_menu boolean default false;
+update organisation set ft_exit_track_menu = false where ft_exit_track_menu is null;
+SELECT AddGeometryColumn('locations', 'the_geom', 4326, 'POINT', 2);
+CREATE UNIQUE INDEX location_index ON locations(locn_group, name);
+
+alter table tasks add column location_group text;
+alter table tasks add column location_name text;
+
+-- 19.06
+alter table organisation add column set_as_theme boolean default false;
+alter table survey add column track_changes boolean;
+
+alter table forward add column trigger text;
+update forward set trigger = 'submission' where trigger is null;
+
+alter table forward add column tg_id integer default 0;
+alter table forward add column period text;
+
+CREATE SEQUENCE reminder_seq START 1;
+ALTER SEQUENCE reminder_seq OWNER TO ws;
+
+CREATE TABLE reminder (
+	id integer DEFAULT NEXTVAL('reminder_seq') CONSTRAINT pk_reminder PRIMARY KEY,
+	n_id integer references forward(id) ON DELETE CASCADE,
+	a_id integer references assignments(id) ON DELETE CASCADE,
+	reminder_date timestamp with time zone
+	);
+ALTER TABLE reminder OWNER TO ws;
+
+alter table tasks add column survey_ident text;
+update tasks t set survey_ident = (select ident from survey s where s.s_id = t.form_id ) where t.survey_ident is null;
+update tasks t set survey_name = (select display_name from survey s where s.ident = t.survey_ident ) where t.survey_name is null;
+
+alter table notification_log add column type text;
+
+-- Upgrade 19.07
+alter table organisation add column navbar_color text;
+update organisation set navbar_color = '#2c3c28' where navbar_color is null;
+alter table organisation add column can_sms boolean default false;
+
+-- Default key policy is now 'merge', policy of 'add' is to be replaced with 'merge' as it is no longer supported
+update survey set key_policy = 'merge' where key_policy = 'none';
+update survey set key_policy = 'merge' where key_policy = 'add';
+
+CREATE SEQUENCE group_survey_seq START 1;
+ALTER SEQUENCE group_survey_seq OWNER TO ws;
+
+create TABLE group_survey (
+	id integer default nextval('group_survey_seq') constraint pk_group_survey primary key,
+	u_ident text REFERENCES users(ident) ON DELETE CASCADE,
+	s_id integer REFERENCES survey(s_id) ON DELETE CASCADE,
+	group_ident text REFERENCES survey(ident) ON DELETE CASCADE
+	);
+ALTER TABLE group_survey OWNER TO ws;
+
+CREATE SEQUENCE survey_settings_seq START 1;
+ALTER SEQUENCE survey_settings_seq OWNER TO ws;
+
+ create TABLE survey_settings (
+	id integer DEFAULT NEXTVAL('survey_settings_seq') CONSTRAINT pk_survey_settings PRIMARY KEY,
+	s_ident text,		-- Survey ident
+	u_id integer,		-- User
+	view text,			-- Overall view (json)
+	map_view text,		-- Map view data
+	chart_view text		-- Chart view data	
+);
+ALTER TABLE survey_settings OWNER TO ws;
+
+alter table assignments add column comment text;
+
+CREATE SEQUENCE re_seq START 1;
+ALTER SEQUENCE re_seq OWNER TO ws;
+
+CREATE TABLE record_event (
+	id integer DEFAULT NEXTVAL('re_seq') CONSTRAINT pk_record_changes PRIMARY KEY,
+	table_name text,								-- Main table containing unique key	
+	key text,									-- HRK of change or notification
+	instanceid text,								-- instance of change or notification	
+	status text,									-- Status of event - determines how it is displayed
+	event text,									-- created || change || task || reminder || deleted
+	changes text,								-- Details of the change as json object	
+	task text,									-- Details of task changes as json object
+	notification text,							-- Details of notification as json object
+	description text,
+	success boolean default false,				-- Set true of the event was a success
+	msg text,									-- Error messages
+	changed_by integer,							-- Person who made a change	
+	change_survey text,							-- Survey ident that applied the change
+	change_survey_version integer,				-- Survey version that made the change
+	assignment_id integer,						-- Record if this is an task event	
+	task_id integer,								-- Record if this is an task event			
+	event_time TIMESTAMP WITH TIME ZONE			-- Time and date of event
+	);
+ALTER TABLE record_event OWNER TO ws;

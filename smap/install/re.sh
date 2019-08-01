@@ -8,4 +8,6 @@ echo `cat passwordfile` | gpg  --batch -q --passphrase-fd 0 -o $file  -d $gpgfil
 
 tar -xzf $file -C restore
 
+-- pg_restore -c -d survey_definitions sd.dmp
+-- pg_restore -c -d results results.dmp
 

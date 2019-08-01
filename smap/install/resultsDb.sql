@@ -90,3 +90,16 @@ CREATE TABLE change_history (
   	option_column_name text
 	);
 ALTER TABLE change_history OWNER TO ws;
+
+DROP SEQUENCE IF EXISTS sync_seq CASCADE;
+CREATE SEQUENCE sync_seq START 1;
+ALTER SEQUENCE sync_seq OWNER TO ws;
+
+DROP TABLE IF EXISTS sync CASCADE;
+create TABLE sync (
+	id INTEGER DEFAULT NEXTVAL('sync_seq') CONSTRAINT pk_sync PRIMARY KEY,
+	s_id integer,
+	n_id integer,
+	prikey integer				-- Primary key of synchronised record
+	);
+ALTER TABLE sync OWNER TO ws;
