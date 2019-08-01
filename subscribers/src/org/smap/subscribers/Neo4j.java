@@ -27,6 +27,7 @@ import java.net.URI;
 import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.ResourceBundle;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -57,6 +58,7 @@ import org.apache.http.impl.client.HttpClients;
 //import org.neo4j.kernel.GraphDatabaseAPI;
 //import org.neo4j.server.WrappingNeoServerBootstrapper;
 import org.smap.model.SurveyInstance;
+import org.smap.sdal.model.Survey;
 import org.smap.server.entities.SubscriberEvent;
 import org.w3c.dom.Document;
 
@@ -114,8 +116,9 @@ public class Neo4j extends Subscriber {
 	public void upload(SurveyInstance instance, InputStream is, String remoteUser, 
 			String server, String device, SubscriberEvent se, String confFilePath, String formStatus,
 			String basePath, String filePath, String updateId, int ue_id, Date uploadTime, 
-			String surveyNotes, String locationTrigger, String auditFilePath)  {
+			String surveyNotes, String locationTrigger, String auditFilePath, ResourceBundle l, Survey survey)  {
 		
+		localisation = l;
 		gBasePath = basePath;
 		gFilePath = filePath;
 

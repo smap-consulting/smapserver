@@ -45,8 +45,22 @@ public class Manager {
 			subscriberType = args[2];	
 		}
 		
-		System.out.println("Starting subscriber: " + smapId + " : " + fileLocn + " : " + subscriberType);
+		/*
+		 * Start asynchronous worker threads in upload processor
+		 * 1. Message processor
+		 */
+		if(subscriberType.equals("upload")) {
+			MessageProcessor mp = new MessageProcessor();
+			mp.go(smapId, fileLocn);
+		}
+		
+		System.out.println("Starting prop subscriber: " + smapId + " : " + fileLocn + " : " + subscriberType);
 		int delaySecs = 4;
+		
+		// Forwarding can happen less frequently, this reduce the load due to searching for items to forward
+		if(subscriberType.equals("forward")) {
+			delaySecs = 30;					
+		}
 		
 		while(true) {
 
